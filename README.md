@@ -17,6 +17,14 @@ https://store.steampowered.com/app/2904000/_/?l=koreana
 
 ## 👥 협업 규칙
 
+### 🔹 커밋 규칙
+`<타입>: <메시지>` 형식을 사용합니다.
+```
+NEW: 신규 기능
+CHG: 코드 변경
+FIX: 문제 수정
+```
+
 ### 브랜치 전략 (Git Flow)
 - main  
   - 실제 서비스가 가능한 안정(stable) 버전 유지  
@@ -46,14 +54,3 @@ class TEST_5_6_API UBlinkComponent : public UActorComponent
 {
     ...
 };
-
-
-## 👥 협업 규칙
-
-### 🔹 커밋 규칙
-`<타입>: <메시지>` 형식을 사용합니다.
-```
-NEW: 신규 기능
-CHG: 코드 변경
-FIX: 문제 수정
-```
