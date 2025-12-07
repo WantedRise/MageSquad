@@ -7,7 +7,11 @@
 		{
 			"Name": "MageSquad",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"UMG"
+			]
 		}
 	],
 	"Plugins": [
@@ -28,6 +32,10 @@
 		},
 		{
 			"Name": "ModelViewViewModel",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemSteam",
 			"Enabled": true
 		}
 	]
