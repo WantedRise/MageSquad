@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
-#include "MS_PlayerAttributeSet.generated.h"
+#include "MSPlayerAttributeSet.generated.h"
 
 // Getter와 Setter를 자동 생성
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
@@ -22,12 +22,12 @@ GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
  * 플레이어 캐릭터의 모든 능력치 집합, 능력치 변경을 트래킹하고 복제함
  */
 UCLASS()
-class MAGESQUAD_API UMS_PlayerAttributeSet : public UAttributeSet
+class MAGESQUAD_API UMSPlayerAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 
 public:
-	UMS_PlayerAttributeSet();
+	UMSPlayerAttributeSet();
 
 	// AttributeSet 속성 값 수정 콜백 함수
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
@@ -38,14 +38,14 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, Health)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Health)
 
 	/*
 	* 최대 체력
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, MaxHealth)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, MaxHealth)
 
 	/*
 	* 체력 재생량
@@ -53,7 +53,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_HealthRegen)
 	FGameplayAttributeData HealthRegen;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, HealthRegen)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, HealthRegen)
 
 	/*
 	* 방어력
@@ -61,7 +61,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Defense)
 	FGameplayAttributeData Defense;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, Defense)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Defense)
 
 	/*
 	* 회피율
@@ -69,7 +69,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_DodgeRate)
 	FGameplayAttributeData DodgeRate;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, DodgeRate)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, DodgeRate)
 
 	/*
 	* 이동 속도 보정
@@ -77,7 +77,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MoveSpeedMod)
 	FGameplayAttributeData MoveSpeedMod;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, MoveSpeedMod)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, MoveSpeedMod)
 
 	/*
 	* 피해량 보정
@@ -85,7 +85,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_DamageMod)
 	FGameplayAttributeData DamageMod;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, DamageMod)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, DamageMod)
 
 	/*
 	* 주문 크기 보정
@@ -93,7 +93,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_SpellSizeMod)
 	FGameplayAttributeData SpellSizeMod;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, SpellSizeMod)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, SpellSizeMod)
 
 	/*
 	* 쿨다운 감소
@@ -101,7 +101,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CooldownReduction)
 	FGameplayAttributeData CooldownReduction;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, CooldownReduction)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, CooldownReduction)
 
 	/*
 	* 치명타 확률
@@ -109,7 +109,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CritChance)
 	FGameplayAttributeData CritChance;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, CritChance)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, CritChance)
 
 	/*
 	* 치명타 피해
@@ -117,7 +117,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CritDamage)
 	FGameplayAttributeData CritDamage;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, CritDamage)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, CritDamage)
 
 	/*
 	* 획득 반경 보정
@@ -125,7 +125,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_PickupRangeMod)
 	FGameplayAttributeData PickupRangeMod;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, PickupRangeMod)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, PickupRangeMod)
 
 	/*
 	* 경험치 획득량 보정
@@ -133,7 +133,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_ExperienceGainMod)
 	FGameplayAttributeData ExperienceGainMod;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, ExperienceGainMod)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, ExperienceGainMod)
 
 	/*
 	* 행운
@@ -141,7 +141,7 @@ public:
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Luck)
 	FGameplayAttributeData Luck;
-	ATTRIBUTE_ACCESSORS(UMS_PlayerAttributeSet, Luck)
+	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Luck)
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

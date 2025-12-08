@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "MS_GameInstance.generated.h"
+#include "MSGameInstance.generated.h"
 
 /**
  * 게임 레벨에서 사용하는 게임 인스턴스 클래스
  */
 UCLASS()
-class MAGESQUAD_API UMS_GameInstance : public UGameInstance
+class MAGESQUAD_API UMSGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 

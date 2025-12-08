@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameInstance/MS_GameInstance.h"
+#include "GameInstance/MSGameInstance.h"
 #include "AbilitysystemGlobals.h"
 
-void UMS_GameInstance::Init()
+void UMSGameInstance::Init()
 {
 	Super::Init();
 
