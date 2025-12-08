@@ -29,6 +29,14 @@
 		{
 			"Name": "ModelViewViewModel",
 			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "SkeletalMerging",
+			"Enabled": true
 		}
 	]
 }
