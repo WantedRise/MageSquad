@@ -3,17 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemComponent.h"
-#include "MSPlayerAbilitySystemComponent.generated.h"
+#include "GameFramework/GameModeBase.h"
+#include "MSGameModeBase.generated.h"
 
 /**
  * 작성자: 김준형
  * 작성일: 25/12/08
  * 
- * 플레이어 캐릭터 ASC
+ * MageSquad의 Game 규칙 게임 모드
  */
 UCLASS()
-class MAGESQUAD_API UMSPlayerAbilitySystemComponent : public UAbilitySystemComponent
+class MAGESQUAD_API AMSGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	

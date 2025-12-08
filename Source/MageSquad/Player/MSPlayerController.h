@@ -19,4 +19,6 @@ class MAGESQUAD_API AMSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	virtual void BeginPlay() override;
 };
