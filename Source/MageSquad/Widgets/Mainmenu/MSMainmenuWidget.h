@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,10 +7,10 @@
 #include "MSMainmenuWidget.generated.h"
 
 /*
-* ÀÛ¼ºÀÚ: ÀÌ»óÁØ
-* ÀÛ¼ºÀÏ: 25/12/07
-* ¸ŞÀÎ¸Ş´º À§Á¬ÀÌ¸ç ÇÃ·¹ÀÌ ¹öÆ°À¸·Î ·Îºñ·Î ÀÌµ¿
-* ¹öÆ° Å¬¸¯½Ã ½ºÆÀ¼¼¼ÇÀ» »ı¼ºÇÏ¸ç ·Îºñ·Î ÀÌµ¿
+* ì‘ì„±ì: ì´ìƒì¤€
+* ì‘ì„±ì¼: 25/12/07
+* ë©”ì¸ë©”ë‰´ ìœ„ì ¯ì´ë©° í”Œë ˆì´ ë²„íŠ¼ìœ¼ë¡œ ë¡œë¹„ë¡œ ì´ë™
+* ë²„íŠ¼ í´ë¦­ì‹œ ìŠ¤íŒ€ì„¸ì…˜ì„ ìƒì„±í•˜ë©° ë¡œë¹„ë¡œ ì´ë™
 */
 UCLASS()
 class MAGESQUAD_API UMSMainmenuWidget : public UUserWidget

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -9,9 +9,9 @@
 #include "MSSteamManagerSubsystem.generated.h"
 
 /*
-* ÀÛ¼ºÀÚ: ÀÌ»óÁØ
-* ÀÛ¼ºÀÏ: 25/12/05
-* ½ºÆÀ ¿¬µ¿ ¹× ¼¼¼Ç »ı¼º/Âü°¡/ÃÊ´ë¸¦ À§ÇÑ Å¬·¡½º
+* ì‘ì„±ì: ì´ìƒì¤€
+* ì‘ì„±ì¼: 25/12/05
+* ìŠ¤íŒ€ ì—°ë™ ë° ì„¸ì…˜ ìƒì„±/ì°¸ê°€/ì´ˆëŒ€ë¥¼ ìœ„í•œ í´ë˜ìŠ¤
 */
 UCLASS()
 class MAGESQUAD_API UMSSteamManagerSubsystem : public UGameInstanceSubsystem
@@ -26,18 +26,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Network")
 	void DestroySteamSession();
 	UFUNCTION(BlueprintCallable, Category = "Network")
-	void FindSteamSessions(bool bIsLAN);
+	void ShowFriendInvitationScreen();
 
 protected:
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-	void OnFindSessionsComplete(bool bWasSuccessful);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 protected:
 	IOnlineSessionPtr SessionInterface;
 	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
 	FOnSessionUserInviteAcceptedDelegate OnSessionUserInviteAcceptedDelegate;
-	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
 	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
 };

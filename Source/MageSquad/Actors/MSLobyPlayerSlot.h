@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,9 +7,9 @@
 #include "MSLobyPlayerSlot.generated.h"
 
 /*
-* ÀÛ¼ºÀÚ: ÀÌ»óÁØ
-* ÀÛ¼ºÀÏ: 25/12/07
-* PlayerStart¸¦ ´ë½ÅÇÏ¿© AMSLobyGameMode¿¡¼­ ÇÃ·¹ÀÌ¾îÀÇ À§Ä¡ ÁöÁ¤, ÃÊ´ë Ç¥½Ã¸¦ ´ã´çÇÏ´Â Å¬·¡½º
+* ì‘ì„±ì: ì´ìƒì¤€
+* ì‘ì„±ì¼: 25/12/07
+* PlayerStartë¥¼ ëŒ€ì‹ í•˜ì—¬ AMSLobyGameModeì—ì„œ í”Œë ˆì´ì–´ì˜ ìœ„ì¹˜ ì§€ì •, ì´ˆëŒ€ í‘œì‹œë¥¼ ë‹´ë‹¹í•˜ëŠ” í´ë˜ìŠ¤
 */
 UCLASS()
 class MAGESQUAD_API AMSLobyPlayerSlot : public AActor
@@ -19,9 +19,17 @@ class MAGESQUAD_API AMSLobyPlayerSlot : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AMSLobyPlayerSlot();
-
+	AController* GetController() const { return PlayerController; }
+	void SetController(AController* NewPlayer) { PlayerController = NewPlayer; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+protected:
+	//UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess = "true"))
+	//class UWidgetComponent* PlaySlotWidgetComponent;
+	//UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	//TSubclassOf<class UUserWidget> PlaySlotWidgetClass;
+	//UPROPERTY()
+	//class UPlayerSlotWidget* UPlayerSlotWidget;
+	class AController* PlayerController;
 };

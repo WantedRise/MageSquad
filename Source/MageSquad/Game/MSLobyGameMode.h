@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,9 +7,9 @@
 #include "MSLobyGameMode.generated.h"
 
 /*
-* ÀÛ¼ºÀÚ: ÀÌ»óÁØ
-* ÀÛ¼ºÀÏ: 25/12/06
-* ·Îºñ¿¡¼­ ÇÃ·¹ÀÌ¾î ½ÃÀÛÀ§Ä¡¿Í °ÔÀÓ½ÃÀÛ/°ÔÀÓ°á°ú¸¦ Á¦¾î¸¦ À§ÇÑ Å¬·¡½º
+* ì‘ì„±ì: ì´ìƒì¤€
+* ì‘ì„±ì¼: 25/12/06
+* ë¡œë¹„ì—ì„œ í”Œë ˆì´ì–´ ì‹œì‘ìœ„ì¹˜ì™€ ê²Œì„ì‹œì‘/ê²Œì„ê²°ê³¼ë¥¼ ì œì–´ë¥¼ ìœ„í•œ í´ë˜ìŠ¤
 */
 UCLASS()
 class MAGESQUAD_API AMSLobyGameMode : public AGameMode
@@ -17,4 +17,5 @@ class MAGESQUAD_API AMSLobyGameMode : public AGameMode
 	GENERATED_BODY()
 public:
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };

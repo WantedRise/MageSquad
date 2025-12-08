@@ -1,10 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Subsystem/MSSteamManagerSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
+#include "GameFramework/PlayerController.h"
 
 const FName SESSION_NAME_GAME = FName(TEXT("MSSteamSeesion"));
 
@@ -35,18 +36,19 @@ void UMSSteamManagerSubsystem::CreateSteamSession(bool bIsLAN, int32 MaxPlayers)
 		{
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnCreateSessionComplete);
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnDestroySessionComplete);
-			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnFindSessionsComplete);
 			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnJoinSessionComplete);
+			SessionInterface->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnSessionUserInviteAccepted);
 
 			FOnlineSessionSettings SessionSettings;
-			SessionSettings.bIsLANMatch = bIsLAN;
+			SessionSettings.bIsLANMatch = false;
 			SessionSettings.bUsesPresence = true;
 			SessionSettings.NumPublicConnections = MaxPlayers;
 			SessionSettings.bAllowJoinViaPresence = true;
-			SessionSettings.bIsDedicated = false;        // Àü¿ë ¼­¹ö°¡ ¾Æ´Ô
-			SessionSettings.bAllowJoinInProgress = true; // °ÔÀÓ Áß Âü¿© Çã¿ë
-			SessionSettings.bShouldAdvertise = true;     // Ä£±¸µéÀÌ ¼¼¼ÇÀ» Ã£À» ¼ö ÀÖµµ·Ï ¾Ë¸²
-			SessionSettings.bUseLobbiesIfAvailable = true; // ·Îºñ »ç¿ë
+			SessionSettings.bIsDedicated = false;        // ì „ìš© ì„œë²„ê°€ ì•„ë‹˜
+			SessionSettings.bAllowJoinInProgress = true; // ê²Œìž„ ì¤‘ ì°¸ì—¬ í—ˆìš©
+			SessionSettings.bShouldAdvertise = true;     // ì¹œêµ¬ë“¤ì´ ì„¸ì…˜ì„ ì°¾ì„ ìˆ˜ ìžˆë„ë¡ ì•Œë¦¼
+			SessionSettings.bUseLobbiesIfAvailable = true; // ë¡œë¹„ ì‚¬ìš©
+			SessionSettings.Set(FName("Session Type"), FString("AdvertisedSessionHost"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing); //ì¹œêµ¬ ì´ˆëŒ€ë¥¼ ìœ„í•œ ì„¤ì •
 			SessionInterface->CreateSession(0, SESSION_NAME_GAME, SessionSettings);
 		}
 	}
@@ -57,7 +59,6 @@ void UMSSteamManagerSubsystem::OnCreateSessionComplete(FName SessionName, bool b
 	if (bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Session '%s' created successfully!"), *SessionName.ToString());
-		FindSteamSessions(true);
 	}
 }
 void UMSSteamManagerSubsystem::DestroySteamSession()
@@ -79,7 +80,7 @@ void UMSSteamManagerSubsystem::OnDestroySessionComplete(FName SessionName, bool 
 	UE_LOG(LogTemp, Warning, TEXT("Session '%s' OnDestroySessionComplete! %s"), *SessionName.ToString(),bWasSuccessful?TEXT("true"):TEXT("false"));
 }
 
-void UMSSteamManagerSubsystem::FindSteamSessions(bool bIsLAN)
+void UMSSteamManagerSubsystem::ShowFriendInvitationScreen()
 {
 	UE_LOG(LogTemp, Warning, TEXT("FindSteamSessions"));
 	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
@@ -90,29 +91,46 @@ void UMSSteamManagerSubsystem::FindSteamSessions(bool bIsLAN)
 		{
 			if (!SessionInterface.IsValid())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("SessionInterface"));
+				UE_LOG(LogTemp, Warning, TEXT("NULL SessionInterface"));
 				return;
 			}
 			if (nullptr == SessionInterface->GetNamedSession(SESSION_NAME_GAME))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("GetNamedSession"));
+				UE_LOG(LogTemp, Warning, TEXT("NULL GetNamedSession"));
 				return;
 			}
 
-			UE_LOG(LogTemp, Warning, TEXT("UIPtr %s %s"), UIPtr->ShowInviteUI(0, SESSION_NAME_GAME) ? TEXT("true") : TEXT("false"), SessionInterface->GetNamedSession(SESSION_NAME_GAME)->SessionInfo.IsValid()? TEXT("true") : TEXT("false"));
+			UIPtr->ShowInviteUI(0, SESSION_NAME_GAME);
 		}
 	}
 }
 
-void UMSSteamManagerSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
-{
-
-}
 void UMSSteamManagerSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-
+	FString TravelURL;
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController && SessionInterface->GetResolvedConnectString(SessionName, TravelURL))
+	{
+		FString MapPath = TEXT("/Game/Level/LobyLevel");
+		TravelURL += MapPath;
+		UE_LOG(LogTemp, Warning, TEXT("ClientTravel. Joining session Complete... %s"),*TravelURL);
+		PlayerController->ClientTravel(TravelURL, ETravelType::TRAVEL_Absolute);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Joining session Fail..."));
+	}
 }
+
 void UMSSteamManagerSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
 {
-
+	if (bWasSuccessful)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invite accepted. Joining session..."));
+		SessionInterface->JoinSession(0, SESSION_NAME_GAME, InviteResult);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to accept invite..."));
+	}
 }
