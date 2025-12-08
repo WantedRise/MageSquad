@@ -1,7 +1,7 @@
 
-#include "MS_GameplayTags.h"
+#include "MSGameplayTags.h"
 
-namespace MS_GameplayTags
+namespace MSGameplayTags
 {
 	/* Input Tags */
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Move, "InputTag.Move");
