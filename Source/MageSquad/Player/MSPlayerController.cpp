@@ -9,4 +9,6 @@ void AMSPlayerController::BeginPlay()
 
 	FInputModeGameAndUI InputMode;
 	SetInputMode(InputMode);
+
+	bShowMouseCursor = true;
 }

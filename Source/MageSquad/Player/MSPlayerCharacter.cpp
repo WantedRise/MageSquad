@@ -21,8 +21,7 @@
 
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.bCanEverTick = true;
 	GetMesh()->bReceivesDecals = false;
 
 	// 네트워크 설정
@@ -49,8 +48,11 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->SetRelativeRotation(FRotator(-40.f, 0.f, 0.f));
-	SpringArm->TargetArmLength = 1000.f;
+	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
+	SpringArm->SocketOffset = FVector(0.f, 0.f, -100.f);
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->CameraLagSpeed = 2.5f;
+	SpringArm->TargetArmLength = 2000.f;
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = false;
 	SpringArm->bInheritRoll = true;
@@ -60,6 +62,14 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
+
+	StaffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Staff"));
+	StaffMesh->SetupAttachment(GetMesh(), StaffAttachSocketName);
+	StaffMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	StaffMesh->SetGenerateOverlapEvents(false);
+	StaffMesh->PrimaryComponentTick.bCanEverTick = false;
+	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
+	StaffMesh->bReceivesDecals = false;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UMSPlayerAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
@@ -95,6 +105,14 @@ void AMSPlayerCharacter::BeginPlay()
 	{
 		SetPlayerStartAbilityData(PlayerStartUpDataAsset->PlayerStartAbilityData);
 	}
+}
+
+void AMSPlayerCharacter::Tick(float DeltaSecond)
+{
+	Super::Tick(DeltaSecond);
+
+	// 카메라 줌 인/아웃 보간 수행
+	UpdateCameraZoom(DeltaSecond);
 }
 
 void AMSPlayerCharacter::PossessedBy(AController* NewController)
@@ -133,6 +151,22 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	// 다만, HUD 초기화 등은 가능
 }
 
+void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
+{
+	if (!SpringArm)
+	{
+		return;
+	}
+
+	const float CurrentLength = SpringArm->TargetArmLength;
+
+	// 목표 줌 길이까지 부드럽게 보간
+	const float NewLength =
+		FMath::FInterpTo(CurrentLength, TargetArmLength, DeltaTime, CameraZoomInterpSpeed);
+
+	SpringArm->TargetArmLength = NewLength;
+}
+
 void AMSPlayerCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
@@ -151,8 +185,11 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Move
+		// 이동 입력 맵핑
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::Move);
+
+		// 카메라 줌 인/아웃 입력 맵핑
+		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::CameraZoom);
 	}
 }
 
@@ -186,6 +223,24 @@ void AMSPlayerCharacter::Move(const FInputActionValue& Value)
 	{
 		AddMovementInput(RightDirection, MoveValue.X);
 	}
+}
+
+void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
+{
+	const float AxisValue = Value.Get<float>();
+
+	// 값이 너무 작으면 패스
+	if (FMath::IsNearlyZero(AxisValue))
+	{
+		return;
+	}
+
+	// 위로 스크롤(+): 카메라를 캐릭터와 가까이
+	// 아래로 스크롤(-): 카메라를 캐릭터와 멀리
+	TargetArmLength -= AxisValue * CameraZoomStep;
+
+	// 최대/최소 카메라 줌 길이로 Clamp
+	TargetArmLength = FMath::Clamp(TargetArmLength, MinCameraZoomLength, MaxCameraZoomLength);
 }
 
 void AMSPlayerCharacter::AutoAttack()

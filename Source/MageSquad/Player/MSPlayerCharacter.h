@@ -35,6 +35,7 @@ public:
 
 	virtual void PostLoad() override;
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSecond) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -51,11 +52,49 @@ public:
 	* Player Section
 	*****************************************************/
 protected:
+	// 지팡이 메시
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Weapon")
+	TObjectPtr<class UStaticMeshComponent> StaffMesh;
+
+	// 지팡이 메시를 부착할 소켓 이름
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Weapon")
+	FName StaffAttachSocketName = TEXT("s_Staff");
+
+
+
+	/*****************************************************
+	* Camera Section
+	*****************************************************/
+protected:
+	// 카메라 줌 업데이트 함수
+	void UpdateCameraZoom(float DeltaTime);
+
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
 	TObjectPtr<class UCameraComponent> Camera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
 	TObjectPtr<class USpringArmComponent> SpringArm;
+
+	// 현재 카메라 줌의 목표 길이 (SpringArm TargetArmLength의 목표값)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
+	float TargetArmLength = 2000.f;
+
+	// 카메라 줌 최소 거리
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
+	float MinCameraZoomLength = 1000.f;
+
+	// 카메라 줌 최대 거리
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
+	float MaxCameraZoomLength = 2500.f;
+
+	// 마우스 휠 한 번당 변경되는 거리 값
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
+	float CameraZoomStep = 300.f;
+
+	// 줌 인/아웃 보간 속도 (값이 클수록 빠르게 따라감)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
+	float CameraZoomInterpSpeed = 4.f;
 
 
 
@@ -66,7 +105,11 @@ protected:
 	virtual void PawnClientRestart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// 이동 함수
 	void Move(const FInputActionValue& Value);
+
+	// 카메라 줌 인/아웃 함수
+	void CameraZoom(const FInputActionValue& Value);
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
@@ -74,6 +117,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> MoveAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> CameraZoomAction;
 
 
 
