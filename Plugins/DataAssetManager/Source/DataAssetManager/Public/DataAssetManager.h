@@ -15,7 +15,7 @@ public:
 private:
 	void CreateMenu(FMenuBarBuilder& MenuBarBuilder);
 	void OpenWindow(FMenuBuilder& MenuBarBuilder);
-	TSharedRef<SDockTab> OnSpawnDataAssetManagerTab(const FSpawnTabArgs&);
+	TSharedRef<SDockTab> OnSpawnDataAssetManagerTab(const FSpawnTabArgs& SpawnTabArgs);
 	
 private:
 	TSharedPtr<FExtender> MenuExtender;

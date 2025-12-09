@@ -2,6 +2,7 @@
 
 #include "DataAssetManager.h"
 #include "LevelEditor.h"
+#include "../SlateWidgets/DataAssetManagerWidget.h"
 
 #define LOCTEXT_NAMESPACE "FDataAssetManagerModule"
 
@@ -50,9 +51,12 @@ void FDataAssetManagerModule::OpenWindow(FMenuBuilder& MenuBarBuilder)
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("DataAssetManager"));
 }
 
-TSharedRef<SDockTab> FDataAssetManagerModule::OnSpawnDataAssetManagerTab(const FSpawnTabArgs&)
+TSharedRef<SDockTab> FDataAssetManagerModule::OnSpawnDataAssetManagerTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	return SNew(SDockTab).TabRole(NomadTab);
+	return SNew(SDockTab).TabRole(NomadTab)
+	[ 
+		SNew(SDataAssetManagerTab).TestString(TEXT("I am passing data"))
+	];
 }
 
 
