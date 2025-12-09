@@ -20,7 +20,7 @@ public:
     UMSMainmenuWidget(const FObjectInitializer& ObjectInitializer);
     void NativeConstruct() override;
     UFUNCTION()
-    void CreateSessionAndTravalToLoby();
+    void CreateSessionAndTravalToLobby();
 public:
     UPROPERTY(meta=(BindWidget))
     class UButton* Button_Play;

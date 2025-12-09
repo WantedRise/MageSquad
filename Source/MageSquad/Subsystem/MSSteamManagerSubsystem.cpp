@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
 #include "GameFramework/PlayerController.h"
+#include "MageSquad.h"
 
 const FName SESSION_NAME_GAME = FName(TEXT("MSSteamSeesion"));
 
@@ -38,6 +39,7 @@ void UMSSteamManagerSubsystem::CreateSteamSession(bool bIsLAN, int32 MaxPlayers)
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnDestroySessionComplete);
 			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnJoinSessionComplete);
 			SessionInterface->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnSessionUserInviteAccepted);
+			SessionInterface->OnSessionInviteReceivedDelegates.AddUObject(this, &UMSSteamManagerSubsystem::OnSessionInviteReceived);
 
 			FOnlineSessionSettings SessionSettings;
 			SessionSettings.bIsLANMatch = false;
@@ -58,7 +60,7 @@ void UMSSteamManagerSubsystem::OnCreateSessionComplete(FName SessionName, bool b
 {
 	if (bWasSuccessful)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Session '%s' created successfully!"), *SessionName.ToString());
+		UE_LOG(LogMSNetwork, Warning, TEXT("%s Session  created successfully!"),*SessionName.ToString());
 	}
 }
 void UMSSteamManagerSubsystem::DestroySteamSession()
@@ -77,26 +79,26 @@ void UMSSteamManagerSubsystem::OnDestroySessionComplete(FName SessionName, bool 
 		SessionInterface->OnFindSessionsCompleteDelegates.RemoveAll(this);
 		SessionInterface->OnJoinSessionCompleteDelegates.RemoveAll(this);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Session '%s' OnDestroySessionComplete! %s"), *SessionName.ToString(),bWasSuccessful?TEXT("true"):TEXT("false"));
+	UE_LOG(LogMSNetwork, Warning, TEXT("Session '%s' OnDestroySessionComplete! %s"), *SessionName.ToString(),bWasSuccessful?TEXT("true"):TEXT("false"));
 }
 
 void UMSSteamManagerSubsystem::ShowFriendInvitationScreen()
 {
-	UE_LOG(LogTemp, Warning, TEXT("FindSteamSessions"));
+	UE_LOG(LogMSNetwork, Warning, TEXT("ShowFriendInvitationScreen"));
 	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
 	if (OnlineSub)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OnlineSub"));
+		UE_LOG(LogMSNetwork, Warning, TEXT("OnlineSub"));
 		if (IOnlineExternalUIPtr UIPtr = OnlineSub->GetExternalUIInterface())
 		{
 			if (!SessionInterface.IsValid())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("NULL SessionInterface"));
+				UE_LOG(LogMSNetwork, Warning, TEXT("NULL SessionInterface"));
 				return;
 			}
 			if (nullptr == SessionInterface->GetNamedSession(SESSION_NAME_GAME))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("NULL GetNamedSession"));
+				UE_LOG(LogMSNetwork, Warning, TEXT("NULL GetNamedSession"));
 				return;
 			}
 
@@ -111,14 +113,14 @@ void UMSSteamManagerSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinS
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (PlayerController && SessionInterface->GetResolvedConnectString(SessionName, TravelURL))
 	{
-		FString MapPath = TEXT("/Game/Level/LobyLevel");
-		TravelURL += MapPath;
-		UE_LOG(LogTemp, Warning, TEXT("ClientTravel. Joining session Complete... %s"),*TravelURL);
+		FString MapPath = TEXT("/Game/Level/LobbyLevel");
+		//TravelURL += MapPath;
+		UE_LOG(LogMSNetwork, Warning, TEXT("ClientTravel. Joining session Complete... %s"),*TravelURL);
 		PlayerController->ClientTravel(TravelURL, ETravelType::TRAVEL_Absolute);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Joining session Fail..."));
+		UE_LOG(LogMSNetwork, Warning, TEXT("Joining session Fail..."));
 	}
 }
 
@@ -126,11 +128,16 @@ void UMSSteamManagerSubsystem::OnSessionUserInviteAccepted(const bool bWasSucces
 {
 	if (bWasSuccessful)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Invite accepted. Joining session..."));
-		SessionInterface->JoinSession(0, SESSION_NAME_GAME, InviteResult);
+		UE_LOG(LogMSNetwork, Warning, TEXT("OnSessionUserInviteAccepted Invite accepted. Joining session..."));
+		//SessionInterface->JoinSession(0, SESSION_NAME_GAME, InviteResult);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Fail to accept invite..."));
+		UE_LOG(LogMSNetwork, Warning, TEXT("OnSessionUserInviteAccepted Fail to accept invite..."));
 	}
+}
+
+void UMSSteamManagerSubsystem::OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult)
+{
+	UE_LOG(LogMSNetwork, Warning, TEXT("OnSessionInviteReceived %s "),*AppId);
 }

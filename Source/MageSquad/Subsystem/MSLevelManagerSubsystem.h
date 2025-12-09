@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,9 +7,9 @@
 #include "MSLevelManagerSubsystem.generated.h"
 
 /*
-* ÀÛ¼ºÀÚ: ÀÌ»óÁØ
-* ÀÛ¼ºÀÏ: 25/12/07
-* ·¹º§ ÀÌµ¿°ú ·¹º§ÀÌµ¿½Ã Àü´ŞÇÒ µ¥ÀÌÅÍ¸¦ °ü¸®ÇÏ±â À§ÇÑ ¸Å´ÏÀú Å¬·¡½º
+* ì‘ì„±ì: ì´ìƒì¤€
+* ì‘ì„±ì¼: 25/12/07
+* ë ˆë²¨ ì´ë™ê³¼ ë ˆë²¨ì´ë™ì‹œ ì „ë‹¬í•  ë°ì´í„°ë¥¼ ê´€ë¦¬í•˜ê¸° ìœ„í•œ ë§¤ë‹ˆì € í´ë˜ìŠ¤
 */
 UCLASS()
 class MAGESQUAD_API UMSLevelManagerSubsystem : public UGameInstanceSubsystem
@@ -25,7 +25,7 @@ public:
 
 private:
     UPROPERTY(VisibleAnywhere)
-    FString LobyLevelURL;
+    FString LobbyLevelURL;
     UPROPERTY(VisibleAnywhere)
     FString LoadingLevelURL;
 };

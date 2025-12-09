@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MSLobyPlayerSlotWidget.generated.h"
+#include "MSLobbyPlayerSlotWidget.generated.h"
 
 /*
 * 작성자: 이상준
@@ -12,7 +12,7 @@
 * 로비에서 초대 표시하는 위젯 클래스
 */
 UCLASS()
-class MAGESQUAD_API UMSLobyPlayerSlotWidget : public UUserWidget
+class MAGESQUAD_API UMSLobbyPlayerSlotWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:

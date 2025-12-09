@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Subsystem/MSLevelManagerSubsystem.h"
@@ -9,7 +9,7 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    LobyLevelURL = FString::Printf(TEXT("/Game/Level/LobyLevel?listen"));
+    LobbyLevelURL = FString::Printf(TEXT("/Game/Level/LobbyLevel?listen"));
     LoadingLevelURL = FString::Printf(TEXT("/Game/Level/LoadingLevel"));
 }
 
@@ -26,5 +26,5 @@ void UMSLevelManagerSubsystem::TravelToLoadingLevel()
 
 void UMSLevelManagerSubsystem::HostGameAndTravelToLobby()
 {
-    GetWorld()->ServerTravel(LobyLevelURL, true);
+    GetWorld()->ServerTravel(LobbyLevelURL, true);
 }

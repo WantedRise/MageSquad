@@ -1,19 +1,19 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Widgets/Loby/MSLobyPlayerSlotWidget.h"
+#include "Widgets/Lobby/MSLobbyPlayerSlotWidget.h"
 #include "Components/Button.h"
 #include "Subsystem/MSSteamManagerSubsystem.h"
 
-void UMSLobyPlayerSlotWidget::NativeConstruct()
+void UMSLobbyPlayerSlotWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	if (Button_Invite)
 	{
-		Button_Invite->OnClicked.AddDynamic(this, &UMSLobyPlayerSlotWidget::ShowFriendList);
+		Button_Invite->OnClicked.AddDynamic(this, &UMSLobbyPlayerSlotWidget::ShowFriendList);
 	}
 }
-void UMSLobyPlayerSlotWidget::ShowFriendList()
+void UMSLobbyPlayerSlotWidget::ShowFriendList()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ShowFriendList successfully!"));
 	UMSSteamManagerSubsystem* MSSteamManagerSubsystem = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
