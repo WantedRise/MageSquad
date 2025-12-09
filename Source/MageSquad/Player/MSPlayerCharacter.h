@@ -11,10 +11,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "MSPlayerCharacter.generated.h"
 
-class UMSVFXSFXBudgetManager;
-class AMSBaseProjectile;
-class UMSBlinkAbilityComponent;
-
 /**
  * 작성자: 김준형
  * 작성일: 25/12/08
@@ -187,11 +183,14 @@ public:
 	void ApplyPlayerStartEffects();
 
 private:
-	// ASC
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | GAS", meta = (AllowPrivateAccess = "true"))
+	// 실제 인스턴스는 PlayerState가 소유하며, 캐릭터는 포인터만 참조
+	// PossessedBy/OnRep_PlayerState에서 할당된다.
+
+	// PlayerState의 ASC를 참조
+	UPROPERTY(Transient)
 	TObjectPtr<class UMSPlayerAbilitySystemComponent> AbilitySystemComponent;
 
-	// 플레이어 능력치(스탯)
+	// PlayerState의 AttributeSet을 참조
 	UPROPERTY(Transient)
 	TObjectPtr< class UMSPlayerAttributeSet> AttributeSet;
 };

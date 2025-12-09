@@ -2,6 +2,8 @@
 
 
 #include "Player/MSPlayerCharacter.h"
+#include "Player/MSPlayerState.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 
@@ -15,8 +17,6 @@
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 
-#include "DataAssets/Player/DA_PlayerStartUpData.h"
-
 #include "Net/UnrealNetwork.h"
 
 AMSPlayerCharacter::AMSPlayerCharacter()
@@ -27,7 +27,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	// 네트워크 설정
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	SetNetUpdateFrequency(30.f);
+	SetNetUpdateFrequency(30.f); // 기본값보다 낮춰서 대역폭 절약
 	SetMinNetUpdateFrequency(5.f);
 
 	// 캐릭터 & 카메라 설정
@@ -39,19 +39,15 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 600.0f, 0.0f);
-	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->GroundFriction = 4.f;
-	GetCharacterMovement()->MaxWalkSpeed = 400.f;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 	SpringArm->SocketOffset = FVector(0.f, 0.f, -100.f);
 	SpringArm->bEnableCameraLag = true;
-	SpringArm->CameraLagSpeed = 2.5f;
+	SpringArm->CameraLagSpeed = 4.f;
 	SpringArm->TargetArmLength = 2000.f;
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = false;
@@ -70,14 +66,6 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	StaffMesh->PrimaryComponentTick.bCanEverTick = false;
 	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
 	StaffMesh->bReceivesDecals = false;
-
-	AbilitySystemComponent = CreateDefaultSubobject<UMSPlayerAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-
-	// Minimal 모드는 클라이언트에는 필요한 정보만 복제하여 네트워크 부하를 줄임
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-
-	AttributeSet = CreateDefaultSubobject<UMSPlayerAttributeSet>(TEXT("AttributeSet"));
 
 	// 자동 공격 설정
 	AutoAttackCooldown = 0.5f;
@@ -100,11 +88,7 @@ void AMSPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 런타임 중이라도, 시작 데이터 에셋이 존재하지만 아직 세팅이 되지 않았다면, 한번 더 세팅
-	if (PlayerStartUpDataAsset && !PlayerStartAbilityData.Abilties.Num())
-	{
-		SetPlayerStartAbilityData(PlayerStartUpDataAsset->PlayerStartAbilityData);
-	}
+	// Todo: 김준형 | 게임 인스턴스 설정
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -119,9 +103,18 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	// PlayerState 가져오기
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS) return;
+
+	// ASC, AttributeSet 초기화
+	AbilitySystemComponent = Cast<UMSPlayerAbilitySystemComponent>(PS->GetAbilitySystemComponent());
+	AttributeSet = PS->GetAttributeSet();
+
 	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		// GAS의 액터 정보를 소유자는 PlayerState로, 아바타는 자신으로 초기화
+		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
 	// 시작 데이터 기반으로 어빌리티/이펙트 부여 (서버 전용)
@@ -141,22 +134,27 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	// 클라이언트 ASC 초기화
+	// PlayerState 가져오기
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS) return;
+
+	// 클라이언트 ASC, AttributeSet 초기화
+	AbilitySystemComponent = Cast<UMSPlayerAbilitySystemComponent>(PS->GetAbilitySystemComponent());
+	AttributeSet = PS->GetAttributeSet();
+
 	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		// GAS의 액터 정보를 소유자는 PlayerState로, 아바타는 자신으로 초기화
+		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
 	// 시작 데이터 기반으로 어빌리티/이펙트 부여는 서버 전용이므로 호출 안 함
-	// 다만, HUD 초기화 등은 가능
+	// HUD 초기화 등은 가능
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
 {
-	if (!SpringArm)
-	{
-		return;
-	}
+	if (!SpringArm) return;
 
 	const float CurrentLength = SpringArm->TargetArmLength;
 
@@ -261,7 +259,7 @@ void AMSPlayerCharacter::OnRep_PlayerStartAbilityData()
 
 void AMSPlayerCharacter::InitFromPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData, bool bFromReplication)
 {
-
+	// 파생 클래스에서 추가 초기화를 진행할 경우, 구현
 }
 
 UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const

@@ -29,9 +29,6 @@ class MAGESQUAD_API UMSPlayerAttributeSet : public UAttributeSet
 public:
 	UMSPlayerAttributeSet();
 
-	// AttributeSet 속성 값 수정 콜백 함수
-	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
-
 	/*
 	* 현재 체력
 	* 캐릭터가 받는 피해에 따라 감소
@@ -144,7 +141,11 @@ public:
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Luck)
 
 protected:
+	// 복제 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// 속성 값 변경 콜백 함수
+	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	/*
 	* GAMEPLAYATTRIBUTE_REPNOTIFY 매크로를 사용하는 OnRep 구현
@@ -194,6 +195,9 @@ protected:
 	virtual void OnRep_Luck(const FGameplayAttributeData& OldValue);
 
 private:
-	// 플레이어 캐릭터의 기본 이동 속도
+	// 플레이어 기본 이동 속도 (게임 시작 시 한 번 캐싱)
 	float DefaultMovementSpeed = 0.f;
+	
+	// 플레이어 기본 획득 반경 (게임 시작 시 한 번 캐싱)
+	float DefaultPickupRadius = 0.f;
 };

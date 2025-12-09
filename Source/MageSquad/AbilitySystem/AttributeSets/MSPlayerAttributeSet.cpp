@@ -55,53 +55,34 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		const int32 AddedMaxHealth = GetMaxHealth() - GetHealth();
 		SetHealth(FMath::Clamp(GetHealth() + AddedMaxHealth, UE_KINDA_SMALL_NUMBER, GetMaxHealth()));
 	}
-
-	// 체력 재생량 갱신
-	else if (Data.EvaluatedData.Attribute == GetHealthRegenAttribute())
-	{
-		SetHealthRegen(GetHealthRegen());
-	}
-
-	// 방어력 갱신
-	else if (Data.EvaluatedData.Attribute == GetDefenseAttribute())
-	{
-		SetDefense(GetDefense());
-	}
-
-	// 회피율 갱신
-	else if (Data.EvaluatedData.Attribute == GetDodgeRateAttribute())
-	{
-		SetDodgeRate(GetDodgeRate());
-	}
-
 	// 이동 속도 보정 갱신
 	else if (Data.EvaluatedData.Attribute == GetMoveSpeedModAttribute())
 	{
-		SetMoveSpeedMod(GetMoveSpeedMod());
+		// 새 보정 값 (ex. 0.1 = +10%)
+		float NewMoveSpeedMod = GetMoveSpeedMod();
 
-		// 소유자의 무브먼트 컴포넌트 가져오기
-		ACharacter* OwningCharacter = Cast<ACharacter>(GetOwningActor());
-		UCharacterMovementComponent* CharacterMovement = OwningCharacter ? OwningCharacter->GetCharacterMovement() : nullptr;
+		// 최소/최대 이동 속도 Clamp (-90% ~ +500%)
+		NewMoveSpeedMod = FMath::Clamp(NewMoveSpeedMod, -0.9f, 5.0f);
+		SetMoveSpeedMod(NewMoveSpeedMod);
 
-		if (CharacterMovement)
+		// 아바타의 무브먼트 컴포넌트 가져오기
+		ACharacter* Avatar = Cast<ACharacter>(Data.Target.GetAvatarActor());
+		if (!Avatar) return;
+
+		UCharacterMovementComponent* MoveComp = Avatar->GetCharacterMovement();
+		if (!MoveComp) return;
+
+		// 기본 이동 속도를 한 번만 캐싱
+		if (DefaultMovementSpeed <= 0.f)
 		{
-			if (DefaultMovementSpeed < 10.f)
-			{
-				DefaultMovementSpeed = CharacterMovement->MaxWalkSpeed;
-			}
-
-			// 소유자의 이동 속도 설정
-			CharacterMovement->MaxWalkSpeed =
-				DefaultMovementSpeed + (DefaultMovementSpeed * GetMoveSpeedMod());
+			DefaultMovementSpeed = MoveComp->MaxWalkSpeed;
 		}
-	}
 
-	// 피해량 보정 갱신
-	else if (Data.EvaluatedData.Attribute == GetDamageModAttribute())
-	{
-		SetDamageMod(GetDamageMod());
+		// 최종 이동 속도 = 기본 속도 * (1 + 보정 값)
+		// ex) 보정 0.1 → 1.1배, -0.3 → 0.7배
+		const float FinalMoveSpeed = DefaultMovementSpeed * (1.f + NewMoveSpeedMod);
+		MoveComp->MaxWalkSpeed = FinalMoveSpeed;
 	}
-
 	// 주문 크기 보정 갱신
 	else if (Data.EvaluatedData.Attribute == GetSpellSizeModAttribute())
 	{
@@ -129,19 +110,11 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	// 획득 반경 보정 갱신
 	else if (Data.EvaluatedData.Attribute == GetPickupRangeModAttribute())
 	{
-		SetPickupRangeMod(GetPickupRangeMod());
-	}
+		// 새 획득 반경
+		float NewRangeMod = GetMoveSpeedMod();
+		SetPickupRangeMod(NewRangeMod);
 
-	// 경험치 획득량 보정 갱신
-	else if (Data.EvaluatedData.Attribute == GetExperienceGainModAttribute())
-	{
-		SetExperienceGainMod(GetExperienceGainMod());
-	}
-
-	// 행운 갱신
-	else if (Data.EvaluatedData.Attribute == GetLuckAttribute())
-	{
-		SetLuck(GetLuck());
+		// Todo: 김준형 | 경험치 시스템 구현 후, 획득 반경 속성 갱신 구현하기
 	}
 }
 
@@ -149,7 +122,11 @@ void UMSPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// 각 속성을 소유자에게만 복제. REPNOTIFY_Always는 값을 항상 OnRep 호출하도록 설정한다.
+	/*
+	* 각 속성을 소유자에게만 복제
+	* REPNOTIFY_Always는 값을 항상 OnRep 호출하도록 설정
+	* REPNOTIFY_Always는 부동 소수점 반올림으로 인해 값이 변경되지 않더라도 OnRep 함수가 호출되도록 한다.
+	*/
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSPlayerAttributeSet, MaxHealth, COND_OwnerOnly, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSPlayerAttributeSet, Health, COND_OwnerOnly, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSPlayerAttributeSet, HealthRegen, COND_OwnerOnly, REPNOTIFY_Always);
