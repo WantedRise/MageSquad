@@ -71,6 +71,9 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	AutoAttackCooldown = 0.5f;
 	TimeSinceLastAttack = 0.0f;
 	bAutoAttacking = true;
+
+	// 액터 태그 설정
+	Tags.AddUnique(TEXT("Player"));
 }
 
 void AMSPlayerCharacter::PostLoad()
