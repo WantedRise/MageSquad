@@ -9,8 +9,8 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    LobbyLevelURL = FString::Printf(TEXT("/Game/Level/LobbyLevel?listen"));
-    LoadingLevelURL = FString::Printf(TEXT("/Game/Level/LoadingLevel"));
+    LobbyLevelURL = TEXT("LobbyLevel?Listen");
+    LoadingLevelURL = TEXT("LoadingLevel");
 }
 
 void UMSLevelManagerSubsystem::Deinitialize()
@@ -21,10 +21,10 @@ void UMSLevelManagerSubsystem::Deinitialize()
 
 void UMSLevelManagerSubsystem::TravelToLoadingLevel()
 {
-    UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("LoadingLevel")));
+    UGameplayStatics::OpenLevel(GetWorld(), FName(LoadingLevelURL));
 }
 
 void UMSLevelManagerSubsystem::HostGameAndTravelToLobby()
 {
-    GetWorld()->ServerTravel(LobbyLevelURL, true);
+    GetWorld()->ServerTravel(LobbyLevelURL, false ,false);
 }

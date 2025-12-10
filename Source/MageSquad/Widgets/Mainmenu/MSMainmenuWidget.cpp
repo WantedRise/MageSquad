@@ -18,6 +18,12 @@ void UMSMainmenuWidget::NativeConstruct()
     {
         Button_Play->OnClicked.AddDynamic(this, &UMSMainmenuWidget::CreateSessionAndTravalToLobby);
     }
+
+    UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
+    if (SteamManager)
+    {
+        SteamManager->TryInvitedJoinSession();
+    }
 }
 
 void UMSMainmenuWidget::CreateSessionAndTravalToLobby()

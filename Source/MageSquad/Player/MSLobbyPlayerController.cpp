@@ -9,6 +9,7 @@
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
+	//카메라 시점 제어를 위한 설정
 	bAutoManageActiveCameraTarget = false;
 }
 

@@ -19,6 +19,7 @@ class MAGESQUAD_API UMSMainmenuWidget : public UUserWidget
 public:
     UMSMainmenuWidget(const FObjectInitializer& ObjectInitializer);
     void NativeConstruct() override;
+
     UFUNCTION()
     void CreateSessionAndTravalToLobby();
 public:
