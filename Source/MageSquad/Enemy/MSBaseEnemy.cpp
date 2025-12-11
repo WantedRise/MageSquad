@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -15,6 +16,12 @@ AMSBaseEnemy::AMSBaseEnemy()
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	GetMesh()->bReceivesDecals = false;
+	
+	// 메시의 콜리전은 NoCollision으로 설정
+	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
+	
+	// Enemy 전용 콜리전으로 설정
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSEnemy"));
 	
 	// GAS 컴포넌트
 	ASC = CreateDefaultSubobject<UMSEnemyAbilitySystemComponent>(TEXT("ASC"));
