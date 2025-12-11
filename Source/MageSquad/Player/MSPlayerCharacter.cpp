@@ -53,7 +53,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	SpringArm->bInheritPitch = false;
 	SpringArm->bInheritRoll = true;
 	SpringArm->bInheritYaw = true;
-	SpringArm->bDoCollisionTest = true;
+	SpringArm->bDoCollisionTest = false;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
@@ -91,7 +91,12 @@ void AMSPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Todo: 김준형 | 게임 인스턴스 설정
+	// 게임 인스턴스에서 서브시스템을 가져와 초기화
+	/*if (GetGameInstance())
+	{
+		VFXSFXBudgetSystem = GetGameInstance()->GetSubsystem<UMSVFXSFXBudgetSystem>();
+		ProjectilePoolSystem = GetGameInstance()->GetSubsystem<UMSProjectilePoolSystem>();
+	}*/
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -242,10 +247,6 @@ void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
 
 	// 최대/최소 카메라 줌 길이로 Clamp
 	TargetArmLength = FMath::Clamp(TargetArmLength, MinCameraZoomLength, MaxCameraZoomLength);
-}
-
-void AMSPlayerCharacter::AutoAttack()
-{
 }
 
 void AMSPlayerCharacter::SetPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData)

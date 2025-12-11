@@ -19,7 +19,7 @@
  * - 기본 이동 및 기본 공격 자동 발사
  * - 이동 스킬(점멸)
  * - 경험치 / 스킬 슬롯 시스템
- * - GAS를 통한 어빌리티 및 능력치(스탯) 관리
+ * - GAS를 통한 어빌리티 및 능력치(스탯) 관리 (PlayerState에서 관리)
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySystemInterface
@@ -131,7 +131,7 @@ protected:
 	float AutoAttackCooldown;
 	float TimeSinceLastAttack;
 
-	// 자동 공격 중인지 여부
+	// 스킬 자동 중인지 여부
 	bool bAutoAttacking = false;
 
 
@@ -193,4 +193,17 @@ private:
 	// PlayerState의 AttributeSet을 참조
 	UPROPERTY(Transient)
 	TObjectPtr< class UMSPlayerAttributeSet> AttributeSet;
+
+
+	/*****************************************************
+	* System Section
+	*****************************************************/
+private:
+	// VFX/SFX 비용 관리 시스템
+	//UPROPERTY()
+	//TObjectPtr<class UMSVFXSFXBudgetSystem> VFXSFXBudgetSystem;
+
+	// 발사체 풀링 시스템
+	//UPROPERTY()
+	//TObjectPtr<class UMSProjectilePoolSystem> ProjectilePoolSystem;
 };
