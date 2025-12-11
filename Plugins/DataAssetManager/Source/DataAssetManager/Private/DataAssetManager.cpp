@@ -19,6 +19,11 @@ void FDataAssetManagerModule::StartupModule()
 		nullptr,
 		FMenuBarExtensionDelegate::CreateRaw(this, &FDataAssetManagerModule::CreateMenu)
 	);
+	
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("DataAssetManager"),
+    		FOnSpawnTab::CreateRaw(this, &FDataAssetManagerModule::OnSpawnDataAssetManagerTab))
+    		// .SetDisplayName(FText::FromString(TEXT("DataAssetManager")))
+			.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 }
@@ -37,17 +42,10 @@ void FDataAssetManagerModule::CreateMenu(FMenuBarBuilder& MenuBarBuilder)
 	FNewMenuDelegate::CreateRaw(this, &FDataAssetManagerModule::OpenWindow),
 	"Data"
 	);
-	
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("DataAssetManager"),
-		FOnSpawnTab::CreateRaw(this, &FDataAssetManagerModule::OnSpawnDataAssetManagerTab)).SetDisplayName(FText::FromString(TEXT("DataAsset Manager")));
-	
 }
 
 void FDataAssetManagerModule::OpenWindow(FMenuBuilder& MenuBarBuilder)
-{
-	// FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("DataAssetManager"),
-	// 	FOnSpawnTab::CreateRaw(this, &FDataAssetManagerModule::OnSpawnDataAssetManagerTab)).SetDisplayName(FText::FromString(TEXT("DataAsset Manager")));
-	
+{	
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("DataAssetManager"));
 }
 
