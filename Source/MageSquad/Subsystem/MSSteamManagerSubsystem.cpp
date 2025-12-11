@@ -5,6 +5,7 @@
 #include "OnlineSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
+#include "Interfaces/OnlineIdentityInterface.h"
 #include "GameFramework/PlayerController.h"
 #include "MageSquad.h"
 
@@ -208,6 +209,7 @@ void UMSSteamManagerSubsystem::OnSessionUserInviteAccepted(const bool bWasSucces
 			return;
 		}
 
+		//참여중인 세션을 종료하고 초대받은 세션을 저장
 		AcceptedInviteResult = InviteResult;
 		DestroySteamSession();
 
@@ -258,4 +260,20 @@ bool UMSSteamManagerSubsystem::IsPlayerHostingSession()
 void UMSSteamManagerSubsystem::OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult)
 {
 	UE_LOG(LogMSNetwork, Warning, TEXT("OnSessionInviteReceived %s "),*AppId);
+}
+
+bool UMSSteamManagerSubsystem::IsSteamConnected()
+{
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+
+	if (OnlineSub)
+	{
+		// 현재 기본 플랫폼 서비스가 "Steam"인지
+		if (OnlineSub->GetSubsystemName() == STEAM_SUBSYSTEM)
+		{
+			return true;
+		}
+	}
+
+	return false; // 스팀 서브시스템이 없거나 로그인되지 않음
 }

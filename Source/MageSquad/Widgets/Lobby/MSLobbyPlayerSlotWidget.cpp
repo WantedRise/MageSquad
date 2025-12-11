@@ -3,7 +3,9 @@
 
 #include "Widgets/Lobby/MSLobbyPlayerSlotWidget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Subsystem/MSSteamManagerSubsystem.h"
+#include "MSLobbyPlayerEntryWidget.h"
 
 void UMSLobbyPlayerSlotWidget::NativeConstruct()
 {
@@ -23,3 +25,5 @@ void UMSLobbyPlayerSlotWidget::ShowFriendList()
 		MSSteamManagerSubsystem->ShowFriendInvitationScreen();
 	}
 }
+
+

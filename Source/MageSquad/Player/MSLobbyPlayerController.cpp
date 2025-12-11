@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Pawn.h"
 #include "MageSquad.h"
-
+#include "GameFramework/PlayerState.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {

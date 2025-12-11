@@ -33,7 +33,7 @@ public:
 	void ShowFriendInvitationScreen();
 	//초대받은 세션에 입장 시도
 	void TryInvitedJoinSession();
-
+	bool IsSteamConnected();
 protected:
 
 	void OnEndSessionComplete(FName SessionName, bool bWasSuccessful);
@@ -50,6 +50,7 @@ protected:
 	void OnFindFriendSession(int32 LocalUserNum, bool bWasSuccessful,const TArray<FOnlineSessionSearchResult>& SessionResults);
 	
 	void OnSessionInviteReceived(const FUniqueNetId& UserId,const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
+	
 protected:
 	IOnlineSessionPtr SessionInterface;
 	FOnlineSessionSearchResult AcceptedInviteResult;

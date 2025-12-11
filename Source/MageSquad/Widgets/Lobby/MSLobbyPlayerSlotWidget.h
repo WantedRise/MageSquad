@@ -20,7 +20,11 @@ public:
 
 	UFUNCTION()
 	void ShowFriendList();
+	void SetTextNickName(FString InNickName);
+		
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Button_Invite;
+
+	class UTextBlock* Text_NickName;
 };

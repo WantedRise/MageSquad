@@ -24,6 +24,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	// Called every frame
@@ -31,5 +33,18 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+protected:
+	UFUNCTION()
+	void OnRep_UserNickName();
+	UFUNCTION()
+	void OnRep_IsHostIconVisible();
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	class UWidgetComponent* LobbyPlayerEntryWidgetComponent;
+	UPROPERTY()
+	class UMSLobbyPlayerEntryWidget* LobbyPlayerEntryWidget;
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_UserNickName)
+	FString UserNickName;
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHostIconVisible)
+	uint8 bIsHostIconVisible : 1;
 };

@@ -21,15 +21,17 @@ public:
 	AMSLobbyPlayerSlot();
 	AController* GetController() const { return PlayerController; }
 	void SetController(AController* NewPlayer) { PlayerController = NewPlayer; }
+	void HiddenInviteWidgetComponent();
+	void ShowInviteWidgetComponent();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 protected:
-	//UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess = "true"))
-	//class UWidgetComponent* PlaySlotWidgetComponent;
-	//UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	//TSubclassOf<class UUserWidget> PlaySlotWidgetClass;
-	//UPROPERTY()
-	//class UPlayerSlotWidget* UPlayerSlotWidget;
+	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess = "true"))
+	class UWidgetComponent* PlaySlotWidgetComponent;
+	UPROPERTY()
+	class UMSLobbyPlayerSlotWidget* UPlayerSlotWidget;
+	UPROPERTY(VisibleAnywhere)
 	class AController* PlayerController;
+
 };

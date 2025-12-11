@@ -12,6 +12,7 @@
 * 작성자: 이상준
 * 작성일: 25/12/07
 * 로비에서의 플레이어 컨트롤러
+* 카메라 시점 제어
 */
 UCLASS()
 class MAGESQUAD_API AMSLobbyPlayerController : public APlayerController
