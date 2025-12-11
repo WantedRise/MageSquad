@@ -27,10 +27,10 @@ AMSBaseProjectile::AMSBaseProjectile()
 	Tags.AddUnique(TEXT("Projectile"));
 }
 
-void AMSBaseProjectile::InitProjectile(const FVector_NetQuantize& SpawnLocation, const FVector_NetQuantize& Direction, float Speed, float LifeTime)
+void AMSBaseProjectile::InitProjectile(const FTransform& SpawnTransform, const FVector_NetQuantize& Direction, float Speed, float LifeTime)
 {
 	LifeDuration = LifeTime;
-	SetActorLocation(SpawnLocation);
+	SetActorTransform(SpawnTransform);
 	MovementComp->Velocity = Direction * Speed;
 	MovementComp->Activate();
 
@@ -42,7 +42,9 @@ void AMSBaseProjectile::InitProjectile(const FVector_NetQuantize& SpawnLocation,
 			FTimerDelegate::CreateLambda(
 				[&]()
 				{
-					Destroy();
+					// 발사체 생명주기 종료 이벤트 호출
+					// 발사체 풀링 시스템에 의해 관리
+					OnProjectileFinished.Broadcast(this);
 				}
 			), LifeDuration, false
 		);
@@ -60,8 +62,16 @@ void AMSBaseProjectile::OnProjectileOverlap(UPrimitiveComponent* OverlappedComp,
 	{
 		if (OtherActor && OtherActor != this)
 		{
-			// 대미지 적용
-			Destroy();
+			// TODO: 김준형 | 발사체 대미지 로직
+			// 대미지 적용하기. 일단 로그만
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(0, 10.f, FColor::Blue, FString("Projectile Hit"));
+			}
+
+			// 발사체 생명주기 종료 이벤트 호출
+			// 발사체 풀링 시스템에 의해 관리
+			OnProjectileFinished.Broadcast(this);
 		}
 	}
 }

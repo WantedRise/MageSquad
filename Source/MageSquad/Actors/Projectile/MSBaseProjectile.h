@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayEffectTypes.h"
 #include "MSBaseProjectile.generated.h"
+
+// 발사체 생명주기 종료 델리게이트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnProjectileFinishedSig, AMSBaseProjectile*);
 
 /**
  * 작성자: 김준형
@@ -29,13 +33,17 @@ public:
 	* LifeTime		: 생명주기
 	*/
 	// 발사체 초기화 함수
-	virtual void InitProjectile(const FVector_NetQuantize& SpawnLocation, const FVector_NetQuantize& Direction, float Speed, float LifeTime);
+	virtual void InitProjectile(const FTransform& SpawnTransform, const FVector_NetQuantize& Direction, float Speed, float LifeTime);
 
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	void OnProjectileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+public:
+	// 발사체 생명주기 종료 델리게이트 객체
+	FOnProjectileFinishedSig OnProjectileFinished;
 
 protected:
 	// 발사체 무브먼트 컴포넌트
@@ -46,9 +54,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TObjectPtr<class UBoxComponent> CollisionComp;
 
-	// 발사체 대미지 (이후에 스킬과 연동하면서 없어질 가능성 농후)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float Damage;
+	// 발사체 대미지 이펙트 스펙 핸들
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | Projectile", meta = (ExposeOnSpawn = "true"))
+	FGameplayEffectSpecHandle ProjectileDamegeEffectSpecHandle;
 
 	// 발사체 생명주기 타이머
 	FTimerHandle LifeTimerHandle;
