@@ -7,6 +7,12 @@
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "MSMonsterStaticData.generated.h"
 
+/*
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/11
+ * 몬스터들이 공통으로 필요로 하는 데이터 모음
+ */
+
 USTRUCT(BlueprintType)
 struct FMSMonsterStaticData : public FTableRowBase
 {

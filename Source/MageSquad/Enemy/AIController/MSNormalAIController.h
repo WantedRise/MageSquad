@@ -7,7 +7,9 @@
 #include "MSNormalAIController.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/11
+ * 일반 몬스터들의 AIController
  */
 UCLASS()
 class MAGESQUAD_API AMSNormalAIController : public AMSBaseAIController
@@ -19,7 +21,7 @@ public:
 	
 public:
 	virtual void OnPossess(APawn* InPawn) override;
-	virtual void RunAI();
-	virtual void StopAI();
+	virtual void RunAI() override;
+	virtual void StopAI() override;
 	
 };
