@@ -3,6 +3,10 @@
 
 #include "Enemy/MSBaseEnemy.h"
 
+#include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 // Sets default values
 AMSBaseEnemy::AMSBaseEnemy()
 {
@@ -11,7 +15,22 @@ AMSBaseEnemy::AMSBaseEnemy()
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	GetMesh()->bReceivesDecals = false;
-
+	
+	// GAS 컴포넌트
+	ASC = CreateDefaultSubobject<UMSEnemyAbilitySystemComponent>(TEXT("ASC"));
+	ASC->SetIsReplicated(true);  // GAS는 리플리케이트
+	AttributeSet = CreateDefaultSubobject<UMSEnemyAttributeSet>(TEXT("AttributeSet"));
+	
+	// Character는 리플리케이트
+	bReplicates = true;
+	ACharacter::SetReplicateMovement(true);  // Movement 리플리케이트 (기본값)
+    
+	// RVO 설정
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	MoveComp->bUseRVOAvoidance = true;
+	MoveComp->AvoidanceConsiderationRadius = 500.0f;
+	MoveComp->AvoidanceWeight = 0.5f;
+	MoveComp->SetAvoidanceGroup(1);
 }
 
 // Called when the game starts or when spawned
@@ -19,10 +38,21 @@ void AMSBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	
+	ASC->InitAbilityActorInfo(this, this);
+}
+
+void AMSBaseEnemy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
 }
 
 UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 {
-	return nullptr;
+	if (ASC == nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("ASC is nullptr"));
+		return nullptr;
+	}
+	
+	return ASC;
 }
