@@ -39,8 +39,4 @@ protected:
 	/** 발사체 생존 시간(초) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill|Projectile")
 	float ProjectileLifeTime = 5.f;
-
-	/** 발사체 개수 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill|Projectile")
-	float ProjectileLifeTime = 1.f;
 };
