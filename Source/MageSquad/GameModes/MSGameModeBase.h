@@ -10,11 +10,13 @@
  * 작성자: 김준형
  * 작성일: 25/12/08
  * 
- * MageSquad의 Game 규칙 게임 모드
+ * 게임 데이터 관리 및 게임 플로우 관리
  */
 UCLASS()
 class MAGESQUAD_API AMSGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void BeginPlay() override;
 };
