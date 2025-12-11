@@ -33,7 +33,7 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 		UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
 		if (MoveComp && !MoveComp->bUseRVOAvoidance)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"), 
+			UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"),   
 				   *InPawn->GetName());
 		}
 	}
