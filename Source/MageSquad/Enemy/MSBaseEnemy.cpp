@@ -38,6 +38,22 @@ AMSBaseEnemy::AMSBaseEnemy()
 	MoveComp->AvoidanceConsiderationRadius = 500.0f;
 	MoveComp->AvoidanceWeight = 0.5f;
 	MoveComp->SetAvoidanceGroup(1);
+	
+	// 기본 회전 설정
+	MoveComp->bOrientRotationToMovement = true;
+	MoveComp->bUseControllerDesiredRotation = false;
+	MoveComp->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // 중간 속도
+    
+	// 가속/감속으로 자연스러운 움직임
+	MoveComp->MaxAcceleration = 800.0f;
+	MoveComp->BrakingDecelerationWalking = 800.0f;
+	MoveComp->MaxWalkSpeed = 400.0f;
+    
+	// 곡선 이동을 위한 설정
+	MoveComp->bRequestedMoveUseAcceleration = true;
+	
+	// 액터 태그 설정
+	Tags.AddUnique(TEXT("Enemy"));
 }
 
 // Called when the game starts or when spawned
