@@ -29,6 +29,11 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	GetMesh()->bReceivesDecals = false;
+	
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	// Enemy 전용 콜리전으로 설정
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSPlayer"));
 
 	// 네트워크 설정
 	bReplicates = true;

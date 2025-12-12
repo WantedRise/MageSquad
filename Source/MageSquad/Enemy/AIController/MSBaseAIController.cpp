@@ -13,6 +13,8 @@ class UCharacterMovementComponent;
 
 AMSBaseAIController::AMSBaseAIController()
 {
+	// MoveTo 시 회전 방식 설정
+	bAllowStrafe = false;  // 무조건 회전해서 이동
 }
 
 void AMSBaseAIController::OnPossess(APawn* InPawn)
@@ -31,7 +33,7 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 		UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
 		if (MoveComp && !MoveComp->bUseRVOAvoidance)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"), 
+			UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"),   
 				   *InPawn->GetName());
 		}
 	}
