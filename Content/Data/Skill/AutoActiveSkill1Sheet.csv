@@ -1,0 +1,11 @@
+RowName,SkillID,SkillName,SkillLevel,SkillDescription,SkillDamage,CoolTime,ProjectileNumber,Penetration,Duration,Range
+1,1,IceSpear,1,바라보고 있는 방향으로 투사체를 발사합니다,20,3,1,0,0,0
+2,1,IceSpear,2,투사체의 개수가 2개로 증가합니다,20,3,2,0,0,0
+3,1,IceSpear,3,투사체의 개수가 3개로 증가합니다,20,3,3,0,0,0
+4,1,IceSpear,4,데미지가 50% 증가합니다,30,3,3,0,0,0
+5,1,IceSpear,5,투사체의 개수가 4개로 증가합니다,30,3,4,0,0,0
+6,1,IceSpear,6,투사체가 적을 1번 관통합니다,30,3,4,1,0,0
+7,1,IceSpear,7,데미지가 50% 증가합니다,45,3,4,1,0,0
+8,1,IceSpear,8,투사체의 개수가 5개로 증가합니다,45,3,5,1,0,0
+9,1,IceSpear,9,투사체가 적을 2번 관통합니다,45,3,5,2,0,0
+10,1,IceSpear,10,데미지가 100% 증가합니다,90,3,5,2,0,0

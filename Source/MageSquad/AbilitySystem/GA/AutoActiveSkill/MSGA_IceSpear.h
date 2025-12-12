@@ -28,9 +28,9 @@ public:
 		const FGameplayEventData* TriggerEventData) override;
 
 protected:
-	/** 아이스 스피어 스킬 레벨 데이터 */
+	/** 스킬 데이터 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill|Data")
-	UDataTable* SkillLevelDataTable;
+	UDataTable* SkillDataTable;
 
 	// 투사체 속도
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
@@ -51,4 +51,8 @@ protected:
 	// 데미지
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	float CurrentSkillDamage = 20.f;
+
+	// 쿨타임
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
+	float CoolTime = 3.f;
 };
