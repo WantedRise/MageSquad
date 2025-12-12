@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "DA_MonsterAnimationSetData.generated.h"
 
+class UMSEnemyAnimInstance;
 /**
  * ¿€º∫¿⁄ : ¿”»Òº∑
  * ¿€º∫¿œ : 2025/12/11
@@ -17,15 +18,18 @@ class MAGESQUAD_API UDA_MSMonsterAnimationSet : public UDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> IdleAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Animation Blueprint")
+	TSubclassOf<UMSEnemyAnimInstance> AnimationBlueprint;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> IdleAnim;
     
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> WalkAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> WalkAnim;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> AttackAnim;
     
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> AttackAnim;
-    
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> DeadAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> DeadAnim;
 };

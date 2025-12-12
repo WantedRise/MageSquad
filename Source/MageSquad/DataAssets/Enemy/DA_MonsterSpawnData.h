@@ -35,7 +35,7 @@ public:
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	// FMSMonsterStats BaseStats;
     
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(EditCondition="Tier != EMonsterTier::Normal"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
 	
 };
