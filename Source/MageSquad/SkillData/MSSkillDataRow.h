@@ -3,7 +3,12 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "MSSkillDataRow.generated.h"
-
+/**
+ * 작성자: 박세찬
+ * 작성일: 25/12/12
+ * 
+ * 스킬들의 데이터를 가지고 있는 데이터테이블을 만들기 위한 구조체
+ */
 USTRUCT(BlueprintType)
 struct FMSSkillDataRow : public FTableRowBase
 {
