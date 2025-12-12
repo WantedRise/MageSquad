@@ -7,7 +7,9 @@
 #include "MSNormalEnemy.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/12
+ * 일반 몬스터들 클래스, 기본적인 동작만 가진다. 
  */
 UCLASS()
 class MAGESQUAD_API AMSNormalEnemy : public AMSBaseEnemy
@@ -19,5 +21,6 @@ public:
 public:
 	virtual void BeginPlay() override;	
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void InitEnemyData(UDA_MonsterSpawnData* InEnemyData) override;
 	
 };

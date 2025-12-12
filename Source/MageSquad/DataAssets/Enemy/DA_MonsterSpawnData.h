@@ -30,7 +30,7 @@ public:
 	TObjectPtr<USkeletalMesh> SkeletalMesh;
     
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UDA_MonsterSpawnData> AnimationSet;
+	TObjectPtr<UDA_MonsterAnimationSet> AnimationSet;
     
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	// FMSMonsterStats BaseStats;

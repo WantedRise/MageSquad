@@ -21,7 +21,7 @@ public:
 	UMSEnemyAttributeSet();
 
 	UFUNCTION()
-	virtual void OnRep_Health(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
@@ -36,7 +36,7 @@ public:
 	virtual void OnRep_AttackRange(const FGameplayAttributeData& OldValue);
 
 public:
-	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, Health)
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, CurrentHealth)
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, MaxHealth)
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, MoveSpeed)
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, AttackDamage)
@@ -50,8 +50,8 @@ protected:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	
 private:
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_Health, meta = (AllowPrivateAccess = "true")) 
-	FGameplayAttributeData Health;
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_CurrentHealth, meta = (AllowPrivateAccess = "true")) 
+	FGameplayAttributeData CurrentHealth;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_MaxHealth, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData MaxHealth;

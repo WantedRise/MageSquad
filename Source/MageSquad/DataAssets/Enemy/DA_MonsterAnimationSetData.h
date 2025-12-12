@@ -13,13 +13,13 @@ class UMSEnemyAnimInstance;
  * 일반 몬스터 애니메이션 정보를 담을 데이터 에셋
  */
 UCLASS(BlueprintType)
-class MAGESQUAD_API UDA_MSMonsterAnimationSet : public UDataAsset
+class MAGESQUAD_API UDA_MonsterAnimationSet : public UDataAsset
 {
 	GENERATED_BODY()
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Animation Blueprint")
-	TSubclassOf<UMSEnemyAnimInstance> AnimationBlueprint;
+	TSubclassOf<UMSEnemyAnimInstance> AnimationClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
 	TObjectPtr<UAnimMontage> IdleAnim;
