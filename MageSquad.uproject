@@ -1,4 +1,4 @@
-{
+﻿{
 	"FileVersion": 3,
 	"EngineAssociation": "5.6",
 	"Category": "",
@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"GameplayAbilities",
-				"AIModule"
+				"AIModule",
+				"UMG"
 			]
 		}
 	],
@@ -41,6 +42,14 @@
 		},
 		{
 			"Name": "SkeletalMerging",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemSteam",
+			"Enabled": true
+		},
+		{
+			"Name": "SteamSockets",
 			"Enabled": true
 		}
 	]
