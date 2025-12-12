@@ -47,4 +47,6 @@ protected:
 	FString UserNickName;
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHostIconVisible)
 	uint8 bIsHostIconVisible : 1;
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHostIconVisible)
+	uint8 bIsReady : 1;
 };

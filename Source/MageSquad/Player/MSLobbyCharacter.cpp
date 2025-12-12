@@ -16,6 +16,8 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+	bIsHostIconVisible = false;
+	bIsReady = false;
 
 	LobbyPlayerEntryWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("LobbyPlayerEntryWidgetComponent"));
 	LobbyPlayerEntryWidgetComponent->SetupAttachment(RootComponent);

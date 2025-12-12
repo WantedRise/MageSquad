@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
+#include "GameFramework/GameModeBase.h"
 #include "MSLobbyGameMode.generated.h"
 
 /*
@@ -12,7 +12,7 @@
 * 로비에서 플레이어 시작위치와 게임시작/게임결과를 제어를 위한 클래스
 */
 UCLASS()
-class MAGESQUAD_API AMSLobbyGameMode : public AGameMode
+class MAGESQUAD_API AMSLobbyGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 public:
