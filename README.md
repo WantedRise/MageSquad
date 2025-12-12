@@ -11,7 +11,7 @@ https://store.steampowered.com/app/2904000/_/?l=koreana
 ## ⚙️ 개발 환경
 - 엔진: Unreal Engine  
 - 언어: C++ / Blueprint  
-- IDE: Visual Studio  
+- IDE: Visual Studio, JetBrain Rider
 - 버전 관리: Git (Git Flow 기반)  
 - 협업 도구: JIRA(일정·업무 관리), Discord(커뮤니케이션)
 
