@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Subsystem/MSSteamManagerSubsystem.h"
+#include "System/MSSteamManagerSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/OnlineExternalUIInterface.h"

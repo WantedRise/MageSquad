@@ -3,8 +3,8 @@
 
 #include "Widgets/Mainmenu/MSMainmenuWidget.h"
 #include "Components/Button.h"
-#include "Subsystem/MSLevelManagerSubsystem.h"
-#include "Subsystem/MSSteamManagerSubsystem.h"
+#include "System/MSLevelManagerSubsystem.h"
+#include "System/MSSteamManagerSubsystem.h"
 
 UMSMainmenuWidget::UMSMainmenuWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

@@ -4,7 +4,7 @@
 #include "Widgets/Lobby/MSLobbyPlayerSlotWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "Subsystem/MSSteamManagerSubsystem.h"
+#include "System/MSSteamManagerSubsystem.h"
 #include "MSLobbyPlayerEntryWidget.h"
 
 void UMSLobbyPlayerSlotWidget::NativeConstruct()

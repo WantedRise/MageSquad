@@ -4,7 +4,7 @@
 #include "Player/MSLobbyCharacter.h"
 #include "Components/WidgetComponent.h"
 #include "Widgets/Lobby/MSLobbyPlayerEntryWidget.h"
-#include "Subsystem/MSSteamManagerSubsystem.h"
+#include "System/MSSteamManagerSubsystem.h"
 #include "GameFramework/PlayerController.h" 
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
