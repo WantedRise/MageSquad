@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
@@ -23,31 +23,31 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 SkillLevel = 1;
 
-    // ¼³¸í
+    // ì„¤ëª…
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString SkillDescription;
 
-    // ÇÇÇØ·®
+    // í”¼í•´ëŸ‰
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float SkillDamage = 0.f;
 
-    // ÄğÅ¸ÀÓ
+    // ì¿¨íƒ€ì„
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CoolTime = 0.f;
 
-    // Åõ»çÃ¼ °³¼ö
+    // íˆ¬ì‚¬ì²´ ê°œìˆ˜
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 ProjectileNumber = 0;
 
-    // °üÅë È½¼ö
+    // ê´€í†µ íšŸìˆ˜
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 Penetration = 0;
 
-    // Áö¼Ó½Ã°£
+    // ì§€ì†ì‹œê°„
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Duration = 0.f;
 
-    // ½ºÅ³ ¹üÀ§
+    // ìŠ¤í‚¬ ë²”ìœ„
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Range = 0.f;
 };
