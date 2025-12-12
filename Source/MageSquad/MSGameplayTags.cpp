@@ -3,8 +3,8 @@
 
 namespace MSGameplayTags
 {
-	/* Input Tags */
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Move, "InputTag.Move");
+	/* Player Ability Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_DefaultAttack, "Player.Ability.DefaultAttack");
 
 
 }

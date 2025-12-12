@@ -10,6 +10,14 @@
 // 발사체 생명주기 종료 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnProjectileFinishedSig, AMSBaseProjectile*);
 
+// 발사체 대미지 타입
+UENUM(BlueprintType)
+enum class EProjectileDamagePolicy : uint8
+{
+	OnHit,			// 단일 대미지 타입
+	OnBeginOverlap,	// 지속 대미지 타입(관통)
+};
+
 /**
  * 작성자: 김준형
  * 작성일: 25/12/10
@@ -46,6 +54,10 @@ public:
 	FOnProjectileFinishedSig OnProjectileFinished;
 
 protected:
+	// 발사체 대미지 타입
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	EProjectileDamagePolicy ProjectileDamagePolicy = EProjectileDamagePolicy::OnHit;
+
 	// 발사체 무브먼트 컴포넌트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TObjectPtr<class UProjectileMovementComponent> MovementComp;
@@ -63,4 +75,8 @@ protected:
 
 	// 발사체 생명주기
 	float LifeDuration;
+
+private:
+	// 발사체에 오버랩된 액터 배열
+	TArray<AActor*> OverlapActors;
 };

@@ -20,11 +20,12 @@ class MAGESQUAD_API UMSVFXSFXBudgetSystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
-	UMSVFXSFXBudgetSystem();
-
-	// 서브시스템 초기화 함수 (풀과 예산 초기화)
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
+	// VFXSFX 서브시스템 Getter
+	UFUNCTION(BlueprintCallable, Category = "Custom | System", meta = (WorldContext = "WorldContextObject"))
+	static UMSVFXSFXBudgetSystem* GetVFXSFXBudgetSystem(UObject* WorldContextObject);
 
 	/*
 	* VFX 스폰 함수

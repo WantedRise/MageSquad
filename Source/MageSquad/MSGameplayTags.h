@@ -4,8 +4,8 @@
 
 namespace MSGameplayTags
 {
-	/* Input Tags */
-	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Move);
+	/* Player Ability Tags */
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Ability_DefaultAttack);
 
 
 }

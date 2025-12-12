@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MSVFXSFXBudgetSystem.h"
+#include "System/MSVFXSFXBudgetSystem.h"
 
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
@@ -13,20 +13,41 @@
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 
-UMSVFXSFXBudgetSystem::UMSVFXSFXBudgetSystem()
-{
-}
-
 void UMSVFXSFXBudgetSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	// 풀링 배열 초기화 및 초기 예산 설정
 	VFXPool.Reset();
-	VFXPool.Reserve(10);
+	VFXPool.Reserve(20);
 
 	SFXPool.Reset();
-	SFXPool.Reserve(10);
+	SFXPool.Reserve(20);
+}
+
+void UMSVFXSFXBudgetSystem::Deinitialize()
+{
+	// 풀링 리스트 초기화
+	VFXPool.Empty();
+	SFXPool.Empty();
+
+	Super::Deinitialize();
+}
+
+UMSVFXSFXBudgetSystem* UMSVFXSFXBudgetSystem::GetVFXSFXBudgetSystem(UObject* WorldContextObject)
+{
+	if (!WorldContextObject) return nullptr;
+
+	// 해당 컨텍스트 오브젝트의 월드에서 이 서브시스템을 반환
+	if (UWorld* World = WorldContextObject->GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			return GI->GetSubsystem<UMSVFXSFXBudgetSystem>();
+		}
+	}
+
+	return nullptr;
 }
 
 UFXSystemComponent* UMSVFXSFXBudgetSystem::SpawnVFX(UFXSystemAsset* System, const FTransform& Transform)

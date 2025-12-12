@@ -107,6 +107,12 @@ protected:
 	// 카메라 줌 인/아웃 함수
 	void CameraZoom(const FInputActionValue& Value);
 
+	// 좌클릭 공격 함수
+	void UseLeftSkill(const FInputActionValue& Value);
+
+	// 우클릭 공격 함수
+	void UseRightSkill(const FInputActionValue& Value);
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
@@ -117,22 +123,24 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> CameraZoomAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> LeftSkillAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> RightSkillAction;
+
 
 
 	/*****************************************************
 	* Attack Section
 	*****************************************************/
-public:
-	// 자동 공격 함수
-	void AutoAttack();
-
 protected:
-	// 자동 공격 발사 지연 타이머
-	float AutoAttackCooldown;
-	float TimeSinceLastAttack;
+	// 기본 공겨 어빌리티 클래스
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
+	//TSubclassOf<class UGameplayAbility> BasicAttackAbilityClass;
 
-	// 스킬 자동 중인지 여부
-	bool bAutoAttacking = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
+	TSubclassOf<class AMSBaseProjectile> ProjectileClass;
 
 
 
@@ -193,17 +201,4 @@ private:
 	// PlayerState의 AttributeSet을 참조
 	UPROPERTY(Transient)
 	TObjectPtr< class UMSPlayerAttributeSet> AttributeSet;
-
-
-	/*****************************************************
-	* System Section
-	*****************************************************/
-private:
-	// VFX/SFX 비용 관리 시스템
-	//UPROPERTY()
-	//TObjectPtr<class UMSVFXSFXBudgetSystem> VFXSFXBudgetSystem;
-
-	// 발사체 풀링 시스템
-	//UPROPERTY()
-	//TObjectPtr<class UMSProjectilePoolSystem> ProjectilePoolSystem;
 };
