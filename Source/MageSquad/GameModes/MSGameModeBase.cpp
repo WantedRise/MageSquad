@@ -13,6 +13,6 @@ void AMSGameModeBase::BeginPlay()
 	{
 		// 발사체 풀링 시스템 초기화
 		// 기본 발사체 클래스 지정 + 200개 풀링
-		ProjectilePoolSystem->Configure(AMSBaseProjectile::StaticClass(), 200);
+		ProjectilePoolSystem->Configure(ProjectileClass, 200);
 	}
 }

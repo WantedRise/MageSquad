@@ -17,6 +17,12 @@
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 
+#include "System/MSVFXSFXBudgetSystem.h"
+#include "System/MSProjectilePoolSystem.h"
+#include "Actors/Projectile/MSBaseProjectile.h"
+
+#include "AbilitySystem/GA/Player/MSGA_PlayerDefaultAttack.h"
+
 #include "Net/UnrealNetwork.h"
 
 AMSPlayerCharacter::AMSPlayerCharacter()
@@ -67,11 +73,6 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
 	StaffMesh->bReceivesDecals = false;
 
-	// 자동 공격 설정
-	AutoAttackCooldown = 0.5f;
-	TimeSinceLastAttack = 0.0f;
-	bAutoAttacking = true;
-
 	// 액터 태그 설정
 	Tags.AddUnique(TEXT("Player"));
 }
@@ -91,12 +92,6 @@ void AMSPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 게임 인스턴스에서 서브시스템을 가져와 초기화
-	/*if (GetGameInstance())
-	{
-		VFXSFXBudgetSystem = GetGameInstance()->GetSubsystem<UMSVFXSFXBudgetSystem>();
-		ProjectilePoolSystem = GetGameInstance()->GetSubsystem<UMSProjectilePoolSystem>();
-	}*/
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -196,6 +191,12 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		// 카메라 줌 인/아웃 입력 맵핑
 		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::CameraZoom);
+
+		// 좌클릭 공격 입력 맵핑
+		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseLeftSkill);
+
+		// 우클릭 공격 입력 맵핑
+		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseRightSkill);
 	}
 }
 
@@ -247,6 +248,26 @@ void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
 
 	// 최대/최소 카메라 줌 길이로 Clamp
 	TargetArmLength = FMath::Clamp(TargetArmLength, MinCameraZoomLength, MaxCameraZoomLength);
+}
+
+void AMSPlayerCharacter::UseLeftSkill(const FInputActionValue& Value)
+{
+	//FActorSpawnParameters Params;
+	//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	//// 새 발사체 스폰
+	//AMSBaseProjectile* NewProjectile
+	//	= GetWorld()->SpawnActor<AMSBaseProjectile>(ProjectileClass, GetTransform(), Params);
+
+	//if (GEngine && NewProjectile)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(0, 10.f, FColor::Blue, FString("Projectile Hit"));
+	//}
+}
+
+void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
+{
+
 }
 
 void AMSPlayerCharacter::SetPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData)

@@ -19,4 +19,8 @@ class MAGESQUAD_API AMSGameModeBase : public AGameModeBase
 	
 public:
 	virtual void BeginPlay() override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
+	TSubclassOf<class AMSBaseProjectile> ProjectileClass;
 };

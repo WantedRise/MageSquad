@@ -61,8 +61,8 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		// 새 보정 값 (ex. 0.1 = +10%)
 		float NewMoveSpeedMod = GetMoveSpeedMod();
 
-		// 최소/최대 이동 속도 Clamp (-90% ~ +500%)
-		NewMoveSpeedMod = FMath::Clamp(NewMoveSpeedMod, -0.9f, 5.0f);
+		// 최소/최대 이동 속도 Clamp (-90% ~ +300%)
+		NewMoveSpeedMod = FMath::Clamp(NewMoveSpeedMod, -0.9f, 3.0f);
 		SetMoveSpeedMod(NewMoveSpeedMod);
 
 		// 아바타의 무브먼트 컴포넌트 가져오기
