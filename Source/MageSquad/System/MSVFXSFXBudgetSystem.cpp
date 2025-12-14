@@ -1,186 +1,314 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "System/MSVFXSFXBudgetSystem.h"
-
-#include "NiagaraComponent.h"
-#include "NiagaraSystem.h"
-
-#include "Particles/ParticleSystem.h"
-#include "Particles/ParticleSystemComponent.h"
-#include "Particles/ParticleEmitter.h"
-
-#include "Sound/SoundBase.h"
-#include "Components/AudioComponent.h"
-
-void UMSVFXSFXBudgetSystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-
-	// Ç®¸µ ¹è¿­ ÃÊ±âÈ­ ¹× ÃÊ±â ¿¹»ê ¼³Á¤
-	VFXPool.Reset();
-	VFXPool.Reserve(20);
-
-	SFXPool.Reset();
-	SFXPool.Reserve(20);
-}
-
-void UMSVFXSFXBudgetSystem::Deinitialize()
-{
-	// Ç®¸µ ¸®½ºÆ® ÃÊ±âÈ­
-	VFXPool.Empty();
-	SFXPool.Empty();
-
-	Super::Deinitialize();
-}
-
-UMSVFXSFXBudgetSystem* UMSVFXSFXBudgetSystem::GetVFXSFXBudgetSystem(UObject* WorldContextObject)
-{
-	if (!WorldContextObject) return nullptr;
-
-	// ÇØ´ç ÄÁÅØ½ºÆ® ¿ÀºêÁ§Æ®ÀÇ ¿ùµå¿¡¼­ ÀÌ ¼­ºê½Ã½ºÅÛÀ» ¹İÈ¯
-	if (UWorld* World = WorldContextObject->GetWorld())
-	{
-		if (UGameInstance* GI = World->GetGameInstance())
-		{
-			return GI->GetSubsystem<UMSVFXSFXBudgetSystem>();
-		}
-	}
-
-	return nullptr;
-}
-
-UFXSystemComponent* UMSVFXSFXBudgetSystem::SpawnVFX(UFXSystemAsset* System, const FTransform& Transform)
-{
-	if (!System) return nullptr;
-
-	UWorld* World = GetWorld();
-	if (!World) return nullptr;
-
-	UFXSystemComponent* Comp = nullptr;
-
-	// VFX Ç®¸µ ¹è¿­¿¡¼­ ºñÈ°¼ºÈ­ÁßÀÎ °°Àº °´Ã¼¸¦ Ã£¾Æ¼­ Àç»ç¿ëÇÏ±â
-	for (int32 i = 0; i < VFXPool.Num(); ++i)
-	{
-		UFXSystemComponent* Pooled = VFXPool[i];
-		if (Pooled && !Pooled->IsActive())
-		{
-			// ½ºÆùÇÒ °´Ã¼¸¦ Àç»ç¿ëÇÒ °´Ã¼·Î ÃÊ±âÈ­
-			Comp = Pooled;
-			VFXPool.RemoveAt(i);
-			break;
-		}
-	}
-
-	// Àç»ç¿ëÇÒ °´Ã¼°¡ ¾ø´Â °æ¿ì »õ·Î ¸¸µé±â
-	if (!Comp)
-	{
-		// Å¸ÀÔ¿¡ ¸Â´Â »õ °´Ã¼ ¸¸µé±â
-		if (UNiagaraSystem* NiagaraSystem = Cast<UNiagaraSystem>(System))
-		{
-			// »õ ³ªÀÌ¾Æ°¡¶ó °´Ã¼¸¦ ¸¸µé¾î ÀúÀå
-			UNiagaraComponent* NiagaraComp = NewObject<UNiagaraComponent>(World);
-			NiagaraComp->SetAutoDestroy(false);
-			NiagaraComp->RegisterComponent();
-			Comp = NiagaraComp;
-		}
-		else if (UParticleSystem* CascadeSystem = Cast<UParticleSystem>(System))
-		{
-			// »õ Ä³½ºÄÉÀÌµå °´Ã¼¸¦ ¸¸µé¾î ÀúÀå
-			UParticleSystemComponent* PSC = NewObject<UParticleSystemComponent>(World);
-			PSC->bAutoDestroy = false;
-			PSC->RegisterComponent();
-			Comp = PSC;
-		}
-		else return nullptr;
-	}
-
-	// VFX ½ºÆù(È°¼ºÈ­)ÇÏ±â
-	if (UNiagaraComponent* NiagaraComp = Cast<UNiagaraComponent>(Comp))
-	{
-		NiagaraComp->SetAsset(CastChecked<UNiagaraSystem>(System));
-		NiagaraComp->SetWorldTransform(Transform);
-		NiagaraComp->SetAutoDestroy(false);
-		NiagaraComp->SetVisibility(true);
-		NiagaraComp->Activate(true);
-
-		// VFX »ç¿ëÀÌ ³¡³ª¸é Ç®¸µ¿¡ ÀúÀåµÇµµ·Ï Äİ¹é ¼³Á¤
-		NiagaraComp->OnSystemFinished.Clear();
-		NiagaraComp->OnSystemFinished.AddDynamic(this, &UMSVFXSFXBudgetSystem::OnNiagaraSystemPooled);
-	}
-	else if (UParticleSystemComponent* PSC = Cast<UParticleSystemComponent>(Comp))
-	{
-		PSC->SetTemplate(CastChecked<UParticleSystem>(System));
-		PSC->SetWorldTransform(Transform);
-		PSC->bAutoDestroy = false;
-		PSC->SetVisibility(true);
-		PSC->ActivateSystem(true);
-
-		// VFX »ç¿ëÀÌ ³¡³ª¸é Ç®¸µ¿¡ ÀúÀåµÇµµ·Ï Äİ¹é ¼³Á¤
-		PSC->OnSystemFinished.Clear();
-		PSC->OnSystemFinished.AddDynamic(this, &UMSVFXSFXBudgetSystem::OnParticleSystemPooled);
-	}
-
-	return Comp;
-}
-
-UAudioComponent* UMSVFXSFXBudgetSystem::PlaySFX(USoundBase* Sound, const FVector& Location)
-{
-	if (!Sound) return nullptr;
-
-	UWorld* World = GetWorld();
-	if (!World) return nullptr;
-
-	UAudioComponent* Comp = nullptr;
-
-	// SFX Ç®¸µ ¹è¿­¿¡¼­ ºñÀç»ıÁßÀÎ °°Àº °´Ã¼¸¦ Ã£¾Æ¼­ Àç»ç¿ëÇÏ±â
-	for (int32 i = 0; i < SFXPool.Num(); ++i)
-	{
-		UAudioComponent* Pooled = SFXPool[i];
-		if (Pooled && !Pooled->IsPlaying())
-		{
-			// ½ºÆùÇÒ °´Ã¼¸¦ Àç»ç¿ëÇÒ °´Ã¼·Î ÃÊ±âÈ­
-			Comp = Pooled;
-			SFXPool.RemoveAt(i);
-			break;
-		}
-	}
-
-	// Àç»ç¿ëÇÒ °´Ã¼°¡ ¾ø´Â °æ¿ì »õ·Î ¸¸µé±â
-	if (!Comp)
-	{
-		Comp = NewObject<UAudioComponent>(World);
-		Comp->bAutoDestroy = false;
-		Comp->RegisterComponent();
-	}
-
-	// SFX Àç»ıÇÏ±â
-	Comp->SetSound(Sound);
-	Comp->SetWorldLocation(Location);
-	Comp->bAutoDestroy = false;
-	Comp->Play();
-
-	// SFX Àç»ıÀÌ ³¡³ª¸é Ç®¸µ¿¡ ÀúÀå
-	Comp->OnAudioFinished.Clear();
-	Comp->OnAudioFinishedNative.Clear();
-	Comp->OnAudioFinishedNative.AddLambda(
-		[this](UAudioComponent* FinishedComponent) 
-		{
-			FinishedComponent->Stop();
-			SFXPool.Add(FinishedComponent);
-		});
-
-	return Comp;
-}
-
-void UMSVFXSFXBudgetSystem::OnNiagaraSystemPooled(UNiagaraComponent* FinishedComponent)
-{
-	FinishedComponent->Deactivate();
-	FinishedComponent->SetVisibility(false);
-	VFXPool.Add(FinishedComponent);
-}
-
-void UMSVFXSFXBudgetSystem::OnParticleSystemPooled(UParticleSystemComponent* PSC)
-{
-	VFXPool.Add(PSC);
-}
+//// Fill out your copyright notice in the Description page of Project Settings.
+//
+//
+//#include "System/MSVFXSFXBudgetSystem.h"
+//
+//#include "NiagaraComponent.h"
+//#include "NiagaraSystem.h"
+//
+//#include "Sound/SoundBase.h"
+//#include "Components/AudioComponent.h"
+//
+//void UMSVFXSFXBudgetSystem::Initialize(FSubsystemCollectionBase& Collection)
+//{
+//	Super::Initialize(Collection);
+//
+//	// ë§µ ì´ˆê¸°í™”
+//	VFXPools.Empty();
+//	SFXPools.Empty();
+//	VFXComponentToAsset.Empty();
+//	SFXComponentToAsset.Empty();
+//}
+//
+//void UMSVFXSFXBudgetSystem::Deinitialize()
+//{
+//	// í’€ë§ëœ ì¸ìŠ¤í„´ìŠ¤ë“¤ì„ ëª¨ë‘ Destroy
+//	for (auto& Pair : VFXPools)
+//	{
+//		for (UNiagaraComponent* Comp : Pair.Value.Pool)
+//		{
+//			if (Comp)
+//			{
+//				Comp->DestroyComponent();
+//			}
+//		}
+//	}
+//	for (auto& Pair : SFXPools)
+//	{
+//		for (UAudioComponent* Comp : Pair.Value.Pool)
+//		{
+//			if (Comp)
+//			{
+//				Comp->DestroyComponent();
+//			}
+//		}
+//	}
+//
+//	// ë§µ ì´ˆê¸°í™”
+//	VFXPools.Empty();
+//	SFXPools.Empty();
+//	VFXComponentToAsset.Empty();
+//	SFXComponentToAsset.Empty();
+//
+//	Super::Deinitialize();
+//}
+//
+//UMSVFXSFXBudgetSystem* UMSVFXSFXBudgetSystem::Get(UObject* WorldContextObject)
+//{
+//	if (!WorldContextObject) return nullptr;
+//
+//	if (UWorld* World = WorldContextObject->GetWorld())
+//	{
+//		if (UGameInstance* GI = World->GetGameInstance())
+//		{
+//			return GI->GetSubsystem<UMSVFXSFXBudgetSystem>();
+//		}
+//	}
+//	return nullptr;
+//}
+//
+//UNiagaraComponent* UMSVFXSFXBudgetSystem::SpawnVFX(UNiagaraSystem* System, const FTransform& Transform)
+//{
+//	if (!System) return nullptr;
+//
+//	FVFXPoolData& Data = VFXPools.FindOrAdd(System);
+//
+//	// ì²˜ìŒ ìƒì„± ì‹œ, ì´ˆê¸° í’€ ì„¸íŒ…
+//	PrewarmVFXPool(System);
+//
+//	// ìµœëŒ€ ê°œìˆ˜ê°€ ë„˜ì–´ê°€ëŠ” ê²½ìš° ì¢…ë£Œ
+//	if (Data.ActiveCount >= Data.Budget)
+//	{
+//		return nullptr;
+//	}
+//
+//	// ìƒì„±ëœ VFX
+//	UNiagaraComponent* Comp = nullptr;
+//
+//	// í’€ì—ì„œ ì‚¬ìš© ê°€ëŠ¥í•œ VFX ì°¾ê¸°
+//	for (int32 i = 0; i < Data.Pool.Num(); ++i)
+//	{
+//		UNiagaraComponent* Candidate = Data.Pool[i];
+//		if (Candidate && !Candidate->IsActive())
+//		{
+//			Comp = Candidate;
+//			Data.Pool.RemoveAtSwap(i);
+//			break;
+//		}
+//	}
+//
+//	// ì‚¬ìš© ê°€ëŠ¥í•œ ì¸ìŠ¤í„´ìŠ¤ê°€ ì—†ìœ¼ë©´ ìƒˆë¡œ ìƒì„±
+//	if (!Comp)
+//	{
+//		Comp = CreateNewVFX(System);
+//	}
+//	if (!Comp) return nullptr;
+//
+//	// VFX í™œì„±í™” ì„¤ì •
+//	Comp->SetAsset(System);
+//	Comp->SetWorldTransform(Transform);
+//	Comp->SetAutoDestroy(false);
+//	Comp->SetVisibility(true);
+//	Comp->Activate(true);
+//
+//	// VFX ìƒëª…ì£¼ê¸° ì¢…ë£Œ ì½œë°± í•¨ìˆ˜ ë°”ì¸ë”©
+//	Comp->OnSystemFinished.Clear();
+//	Comp->OnSystemFinished.AddDynamic(this, &UMSVFXSFXBudgetSystem::OnVFXFinished);
+//
+//	// í™œì„±í™” ì¹´ìš´íŠ¸ ì¦ê°€ ë° ë§µì— ì €ì¥
+//	Data.ActiveCount++;
+//	VFXComponentToAsset.Add(Comp, System);
+//	return Comp;
+//}
+//
+//UAudioComponent* UMSVFXSFXBudgetSystem::PlaySFX(USoundBase* Sound, const FVector& Location)
+//{
+//	if (!Sound) return nullptr;
+//
+//	FSFXPoolData& Data = SFXPools.FindOrAdd(Sound);
+//
+//	// ì²˜ìŒ ìƒì„± ì‹œ, ì´ˆê¸° í’€ ì„¸íŒ…
+//	PrewarmSFXPool(Sound);
+//
+//	// ìµœëŒ€ ê°œìˆ˜ê°€ ë„˜ì–´ê°€ëŠ” ê²½ìš° ì¢…ë£Œ
+//	if (Data.ActiveCount >= Data.Budget)
+//	{
+//		return nullptr;
+//	}
+//
+//	// ìƒì„±ëœ SFX
+//	UAudioComponent* Comp = nullptr;
+//
+//	// í’€ì—ì„œ ì‚¬ìš© ê°€ëŠ¥í•œ SFX ì°¾ê¸°
+//	for (int32 i = 0; i < Data.Pool.Num(); ++i)
+//	{
+//		UAudioComponent* Candidate = Data.Pool[i];
+//		if (Candidate && !Candidate->IsPlaying())
+//		{
+//			Comp = Candidate;
+//			Data.Pool.RemoveAtSwap(i);
+//			break;
+//		}
+//	}
+//
+//	// ì‚¬ìš© ê°€ëŠ¥í•œ ì¸ìŠ¤í„´ìŠ¤ê°€ ì—†ìœ¼ë©´ ìƒˆë¡œ ìƒì„±
+//	if (!Comp)
+//	{
+//		Comp = CreateNewSFX(Sound);
+//	}
+//	if (!Comp) return nullptr;
+//
+//	// SFX í™œì„±í™” ì„¤ì •
+//	Comp->SetSound(Sound);
+//	Comp->SetWorldLocation(Location);
+//	Comp->bAutoDestroy = false;
+//	Comp->Play();
+//
+//	// SFX ìƒëª…ì£¼ê¸° ì¢…ë£Œ ì½œë°± í•¨ìˆ˜ ë°”ì¸ë”©
+//	Comp->OnAudioFinished.Clear();
+//	Comp->OnAudioFinishedNative.Clear();
+//	Comp->OnAudioFinishedNative.AddLambda([this](UAudioComponent* Finished)
+//		{
+//			OnSFXFinished(Finished);
+//		});
+//
+//	// í™œì„±í™” ì¹´ìš´íŠ¸ ì¦ê°€ ë° ë§µì— ì €ì¥
+//	Data.ActiveCount++;
+//	SFXComponentToAsset.Add(Comp, Sound);
+//	return Comp;
+//}
+//
+//void UMSVFXSFXBudgetSystem::SetVFXBudget(UNiagaraSystem* System, int32 NewBudget)
+//{
+//	if (!System || NewBudget < 0) return;
+//
+//	// ì˜ˆì‚° ì´ˆê¸°í™”
+//	FVFXPoolData& Data = VFXPools.FindOrAdd(System);
+//	Data.Budget = NewBudget;
+//}
+//
+//void UMSVFXSFXBudgetSystem::SetSFXBudget(USoundBase* Sound, int32 NewBudget)
+//{
+//	if (!Sound || NewBudget < 0) return;
+//
+//	// ì˜ˆì‚° ì´ˆê¸°í™”
+//	FSFXPoolData& Data = SFXPools.FindOrAdd(Sound);
+//	Data.Budget = NewBudget;
+//}
+//
+//UNiagaraComponent* UMSVFXSFXBudgetSystem::CreateNewVFX(UNiagaraSystem* System)
+//{
+//	UWorld* World = GetWorld();
+//	if (!World || !System) return nullptr;
+//
+//	// ìƒˆ VFX ìƒì„± ë° ì„¤ì •
+//	UNiagaraComponent* Comp = NewObject<UNiagaraComponent>(World);
+//	Comp->SetAutoDestroy(false);
+//	Comp->RegisterComponent();
+//	return Comp;
+//}
+//
+//UAudioComponent* UMSVFXSFXBudgetSystem::CreateNewSFX(USoundBase* Sound)
+//{
+//	UWorld* World = GetWorld();
+//	if (!World) return nullptr;
+//
+//	// ìƒˆ SFX ìƒì„± ë° ì„¤ì •
+//	UAudioComponent* Comp = NewObject<UAudioComponent>(World);
+//	Comp->bAutoDestroy = false;
+//	Comp->RegisterComponent();
+//	return Comp;
+//}
+//
+//void UMSVFXSFXBudgetSystem::PrewarmVFXPool(UNiagaraSystem* System)
+//{
+//	if (!System) return;
+//	FVFXPoolData& Data = VFXPools.FindOrAdd(System);
+//
+//	UWorld* World = GetWorld();
+//	if (!World) return;
+//
+//	// ì´ˆê¸° ì¸ìŠ¤í„´ìŠ¤ë¥¼ ìƒì„±í•˜ì—¬ í’€ ì´ˆê¸°í™”
+//	int32 CurrentCount = Data.Pool.Num() + Data.ActiveCount;
+//	for (int32 i = CurrentCount; i < Data.InitialSize; ++i)
+//	{
+//		UNiagaraComponent* Comp = CreateNewVFX(System);
+//		if (Comp)
+//		{
+//			Comp->SetAsset(System);
+//			Comp->SetVisibility(false);
+//			Data.Pool.Add(Comp);
+//		}
+//	}
+//}
+//
+//void UMSVFXSFXBudgetSystem::PrewarmSFXPool(USoundBase* Sound)
+//{
+//	if (!Sound) return;
+//	FSFXPoolData& Data = SFXPools.FindOrAdd(Sound);
+//
+//	UWorld* World = GetWorld();
+//	if (!World) return;
+//
+//	// ì´ˆê¸° ì¸ìŠ¤í„´ìŠ¤ë¥¼ ìƒì„±í•˜ì—¬ í’€ ì´ˆê¸°í™”
+//	int32 CurrentCount = Data.Pool.Num() + Data.ActiveCount;
+//	for (int32 i = CurrentCount; i < Data.InitialSize; ++i)
+//	{
+//		UAudioComponent* Comp = CreateNewSFX(Sound);
+//		if (Comp)
+//		{
+//			Data.Pool.Add(Comp);
+//		}
+//	}
+//}
+//
+//void UMSVFXSFXBudgetSystem::OnVFXFinished(UNiagaraComponent* FinishedComponent)
+//{
+//	if (!FinishedComponent) return;
+//
+//	// VFX ë¹„í™œì„±í™”
+//	FinishedComponent->Deactivate();
+//	FinishedComponent->SetVisibility(false);
+//
+//	// í’€ í´ë˜ìŠ¤ ì°¾ê¸°
+//	if (auto* AssetPtr = VFXComponentToAsset.Find(FinishedComponent))
+//	{
+//		UNiagaraSystem* Asset = *AssetPtr;
+//		if (FVFXPoolData* Data = VFXPools.Find(Asset))
+//		{
+//			Data->ActiveCount = FMath::Max(0, Data->ActiveCount - 1);
+//			Data->Pool.Add(FinishedComponent);
+//		}
+//		VFXComponentToAsset.Remove(FinishedComponent);
+//	}
+//	else
+//	{
+//		// ì˜ˆì™¸ VFXì˜ ê²½ìš° ì œê±°
+//		FinishedComponent->DestroyComponent();
+//	}
+//}
+//
+//void UMSVFXSFXBudgetSystem::OnSFXFinished(UAudioComponent* FinishedComponent)
+//{
+//	if (!FinishedComponent) return;
+//
+//	// SFX ë¹„í™œì„±í™”
+//	FinishedComponent->Stop();
+//
+//	// í’€ í´ë˜ìŠ¤ ì°¾ê¸°
+//	if (auto* AssetPtr = SFXComponentToAsset.Find(FinishedComponent))
+//	{
+//		USoundBase* Asset = *AssetPtr;
+//		if (FSFXPoolData* Data = SFXPools.Find(Asset))
+//		{
+//			Data->ActiveCount = FMath::Max(0, Data->ActiveCount - 1);
+//			Data->Pool.Add(FinishedComponent);
+//		}
+//		SFXComponentToAsset.Remove(FinishedComponent);
+//	}
+//	else
+//	{
+//		// ì˜ˆì™¸ SFXì˜ ê²½ìš° ì œê±°
+//		FinishedComponent->DestroyComponent();
+//	}
+//}
