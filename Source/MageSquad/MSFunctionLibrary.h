@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "GameplayTagContainer.h"
+#include "Types/MageSquadTypes.h"
 #include "MSFunctionLibrary.generated.h"
 
 /**
@@ -25,4 +25,14 @@ public:
 
 	// 액터의 특정 태그 보유 여부 반환 함수
 	static bool NativeDoesActorHaveTag(AActor* InActor, const FGameplayTag TagToCheck);
+
+	// 발사체 발사 함수
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static class AMSBaseProjectile* LaunchProjectile(
+		UObject* WorldContextObject,	// 월드 객체
+		TSubclassOf<UProjectileStaticData> ProjectileDataClass,	// 발사체 데이터 클래스
+		FTransform Transform,			// 위치 및 회전값
+		AActor* Owner,					// 발사체 소유자
+		APawn* Instigator				// 발사체를 발사한 객체
+	);
 };

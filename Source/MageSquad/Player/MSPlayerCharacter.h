@@ -5,10 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "InputActionValue.h"
-#include "GameplayTagContainer.h"
-#include "DataAssets/Player/DA_PlayerStartUpData.h"
 #include "Abilities/GameplayAbility.h"
+#include "InputActionValue.h"
+#include "Types/MageSquadTypes.h"
 #include "MSPlayerCharacter.generated.h"
 
 /**
@@ -29,7 +28,7 @@ class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySyste
 public:
 	AMSPlayerCharacter();
 
-	virtual void PostLoad() override;
+	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSecond) override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -134,13 +133,33 @@ private:
 	/*****************************************************
 	* Attack Section
 	*****************************************************/
-protected:
-	// 기본 공겨 어빌리티 클래스
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
-	//TSubclassOf<class UGameplayAbility> BasicAttackAbilityClass;
+public:
+	// 로컬에서 제어하는 폰에 자동 공격을 시작하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
+	void StartAutoAttack();
 
+	// 로컬에서 제어하는 폰에 자동 공격을 종료하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
+	void StopAutoAttack();
+
+protected:
+	// 공격 어빌리티
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
-	TSubclassOf<class AMSBaseProjectile> ProjectileClass;
+	TSubclassOf<UGameplayAbility> AutoAttackAbilityClass;
+
+	// 공격 시작 이벤트 태그
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag AttackStartedEventTag;
+
+	// 자동 공격 주기
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
+	float AutoAttackInterval = 0.6f;
+
+	// 자동 공격 타이머 핸들
+	FTimerHandle AutoAttackTimerHandle;
+
+	// 자동 공격 함수 (자동 공격 주기마다 호출)
+	void HandleAutoAttack();
 
 
 
@@ -148,30 +167,22 @@ protected:
 	* Player Data Section
 	*****************************************************/
 public:
-	// 플레이어 시작 데이터 Getter (복사 반환)
-	UFUNCTION(BlueprintCallable, Category = "Custom | GAS")
-	FStartAbilityData GetPlayerStartAbilityData() const { return PlayerStartAbilityData; }
+	// 플레이어 데이터 Getter
+	UFUNCTION(BlueprintCallable, Category = "Custom | Player")
+	FPlayerStartAbilityData GetPlayerData() const { return PlayerData; }
 
-	// 플레이어 시작 데이터 Setter
-	UFUNCTION(BlueprintCallable, Category = "Custom | GAS")
-	void SetPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData);
-
-protected:
-	// 플레이어 시작 데이터 OnRep 함수 (클라이언트 동기화)
-	UFUNCTION()
-	void OnRep_PlayerStartAbilityData();
-
-	// 플레이어 시작 데이터에서 추가 초기화를 하고 싶을 때 사용할 함수
-	virtual void InitFromPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData, bool bFromReplication = false);
+	// 플레이어 데이터 Setter
+	UFUNCTION(BlueprintCallable, Category = "Custom | Player")
+	void SetPlayerData(const FPlayerStartAbilityData& InPlayerData);
 
 protected:
 	// 플레이어 시작 데이터 에셋
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | GAS")
-	UDA_PlayerStartUpData* PlayerStartUpDataAsset;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Player")
+	TObjectPtr<class UDA_PlayerStartUpData> PlayerStartUpData;
 
-	// 네트워크를 통해 동기화되는 플레이어 시작 데이터
-	UPROPERTY(ReplicatedUsing = OnRep_PlayerStartAbilityData)
-	FStartAbilityData PlayerStartAbilityData;
+	// 플레이어 데이터
+	UPROPERTY(Replicated)
+	FPlayerStartAbilityData PlayerData;
 
 
 

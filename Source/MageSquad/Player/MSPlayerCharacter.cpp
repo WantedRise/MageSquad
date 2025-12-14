@@ -16,12 +16,9 @@
 
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
-#include "System/MSVFXSFXBudgetSystem.h"
-#include "System/MSProjectilePoolSystem.h"
-#include "Actors/Projectile/MSBaseProjectile.h"
-
-#include "AbilitySystem/GA/Player/MSGA_PlayerDefaultAttack.h"
+#include "DataAssets/Player/DA_PlayerStartUpData.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -29,9 +26,9 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	GetMesh()->bReceivesDecals = false;
-	
+
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
+
 	// Enemy 전용 콜리전으로 설정
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSPlayer"));
 
@@ -82,21 +79,20 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	Tags.AddUnique(TEXT("Player"));
 }
 
-void AMSPlayerCharacter::PostLoad()
+void AMSPlayerCharacter::PostInitializeComponents()
 {
-	Super::PostLoad();
+	Super::PostInitializeComponents();
 
-	// 에디터 / 런타임 로드 시, 기본 시작 데이터를 세팅
-	if (PlayerStartUpDataAsset)
+	// 기본 시작 데이터를 세팅
+	if (::IsValid(PlayerStartUpData))
 	{
-		SetPlayerStartAbilityData(PlayerStartUpDataAsset->PlayerStartAbilityData);
+		SetPlayerData(PlayerStartUpData->PlayerStartAbilityData);
 	}
 }
 
 void AMSPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -125,9 +121,12 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
-	// 시작 데이터 기반으로 어빌리티/이펙트 부여 (서버 전용)
+	// 시작 데이터 기반으로 어빌리티/이펙트 부여
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
+
+	// 서버 및 로컬에서 제어되는 클라이언트에서 자동 공격을 시작
+	StartAutoAttack();
 }
 
 void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -135,12 +134,14 @@ void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// 플레이어 시작 데이터 복제
-	DOREPLIFETIME(AMSPlayerCharacter, PlayerStartAbilityData);
+	DOREPLIFETIME(AMSPlayerCharacter, PlayerData);
 }
 
 void AMSPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+
+	// 클라이언트도 어빌리티 시스템 컴포넌트 초기화 및 기본 적용 이펙트 적용
 
 	// PlayerState 가져오기
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
@@ -156,8 +157,11 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
-	// 시작 데이터 기반으로 어빌리티/이펙트 부여는 서버 전용이므로 호출 안 함
-	// HUD 초기화 등은 가능
+	GivePlayerStartAbilities();
+	ApplyPlayerStartEffects();
+
+	// 서버 및 로컬에서 제어되는 클라이언트에서 자동 공격을 시작
+	StartAutoAttack();
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
@@ -257,17 +261,7 @@ void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
 
 void AMSPlayerCharacter::UseLeftSkill(const FInputActionValue& Value)
 {
-	//FActorSpawnParameters Params;
-	//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	//// 새 발사체 스폰
-	//AMSBaseProjectile* NewProjectile
-	//	= GetWorld()->SpawnActor<AMSBaseProjectile>(ProjectileClass, GetTransform(), Params);
-
-	//if (GEngine && NewProjectile)
-	//{
-	//	GEngine->AddOnScreenDebugMessage(0, 10.f, FColor::Blue, FString("Projectile Hit"));
-	//}
 }
 
 void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
@@ -275,21 +269,33 @@ void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
 
 }
 
-void AMSPlayerCharacter::SetPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData)
+void AMSPlayerCharacter::StartAutoAttack()
 {
-	PlayerStartAbilityData = InPlayerStartData;
-	InitFromPlayerStartAbilityData(PlayerStartAbilityData, false);
+	// 자동 공격 어빌리티가 없거나 로컬 폰이 아닌 경우 종료
+	if (!IsLocallyControlled()) return;
+
+	// 자동 공격 타이머 초기화 및 설정
+	GetWorldTimerManager().ClearTimer(AutoAttackTimerHandle);
+	GetWorldTimerManager().SetTimer(AutoAttackTimerHandle, this, &AMSPlayerCharacter::HandleAutoAttack, AutoAttackInterval, true, 0.f);
 }
 
-void AMSPlayerCharacter::OnRep_PlayerStartAbilityData()
+void AMSPlayerCharacter::StopAutoAttack()
 {
-	// 클라이언트에서 복제된 시작 데이터 반영
-	InitFromPlayerStartAbilityData(PlayerStartAbilityData, true);
+	// 자동 공격 타이머 초기화
+	GetWorldTimerManager().ClearTimer(AutoAttackTimerHandle);
 }
 
-void AMSPlayerCharacter::InitFromPlayerStartAbilityData(const FStartAbilityData& InPlayerStartData, bool bFromReplication)
+void AMSPlayerCharacter::HandleAutoAttack()
 {
-	// 파생 클래스에서 추가 초기화를 진행할 경우, 구현
+	FGameplayEventData Payload;
+	Payload.EventTag = AttackStartedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackStartedEventTag, Payload);
+}
+
+void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerData)
+{
+	PlayerData = InPlayerData;
 }
 
 UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
@@ -301,13 +307,10 @@ UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
 	return nullptr;
 }
 
-bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<class UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle)
+bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle)
 {
 	// 유효한 이펙트 클래스와 ASC가 필요한 서버 전용 헬퍼 함수
-	if (!Effect.Get() || !AbilitySystemComponent)
-	{
-		return false;
-	}
+	if (!Effect.Get() || !AbilitySystemComponent) return false;
 
 	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, /*Level*/ 1.0f, InEffectContextHandle);
 	if (SpecHandle.IsValid())
@@ -322,13 +325,10 @@ bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<class UGameplayEf
 void AMSPlayerCharacter::GivePlayerStartAbilities()
 {
 	// 서버에서만 어빌리티를 부여
-	if (!HasAuthority() || !AbilitySystemComponent)
-	{
-		return;
-	}
+	if (!HasAuthority() || !AbilitySystemComponent) return;
 
 	// 플레이어 시작 데이터의 어빌리티 배열을 순회하며 부여
-	for (TSubclassOf<UGameplayAbility> DefaultAbilityClass : PlayerStartAbilityData.Abilties)
+	for (TSubclassOf<UGameplayAbility> DefaultAbilityClass : PlayerData.Abilties)
 	{
 		if (*DefaultAbilityClass)
 		{
@@ -340,16 +340,13 @@ void AMSPlayerCharacter::GivePlayerStartAbilities()
 void AMSPlayerCharacter::ApplyPlayerStartEffects()
 {
 	// 서버에서만 GameplayEffect를 적용
-	if (!HasAuthority() || !AbilitySystemComponent)
-	{
-		return;
-	}
+	if (!HasAuthority() || !AbilitySystemComponent) return;
 
 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
 
 	// 플레이어 시작 데이터의 이펙트 배열을 순회하며 적용
-	for (TSubclassOf<UGameplayEffect> DefaultEffectClass : PlayerStartAbilityData.Effects)
+	for (TSubclassOf<UGameplayEffect> DefaultEffectClass : PlayerData.Effects)
 	{
 		if (*DefaultEffectClass)
 		{
