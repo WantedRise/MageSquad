@@ -186,6 +186,21 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 			false
 		);
 	}
+
+	// 서버에서 생명주기 타이머 관리
+	FTimerHandle LifeTimerHandle;
+	if (HasAuthority())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
+		GetWorld()->GetTimerManager().SetTimer(LifeTimerHandle,
+			FTimerDelegate::CreateLambda(
+				[this]()
+				{
+					Destroy();
+				}
+			), EffectiveData.LifeTime, false
+		);
+	}
 }
 
 void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
