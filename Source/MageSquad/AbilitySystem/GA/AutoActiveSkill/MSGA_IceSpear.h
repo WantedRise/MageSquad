@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/GA/AutoActiveSkill/MSGA_AutoActiveSkillBase.h"
+#include "MSFunctionLibrary.h"
 #include "MSGA_IceSpear.generated.h"
 
 /**
@@ -19,6 +20,8 @@ class MAGESQUAD_API UMSGA_IceSpear : public UMSGA_AutoActiveSkillBase
 	GENERATED_BODY()
 	
 public:
+	UMSGA_IceSpear();
+	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
@@ -45,4 +48,20 @@ protected:
 	// 관통 횟수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Penetration = 0;
+	
+	// 발사체 원본 데이터 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
+	
+	// ===== 연사용 상태 변수 =====
+	int32 FiredCount = 0;
+
+	FVector CachedOrigin;
+	FVector CachedDirection;
+	FTransform CachedSpawnTransform;
+	FProjectileRuntimeData CachedRuntimeData;
+	TWeakObjectPtr<AActor> CachedAvatar;
+	
+	UFUNCTION()
+	void FireNextProjectile();
 };
