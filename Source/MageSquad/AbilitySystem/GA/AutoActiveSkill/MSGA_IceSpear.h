@@ -7,7 +7,11 @@
 #include "MSGA_IceSpear.generated.h"
 
 /**
+*  작성자: 박세찬
+ * 작성일: 25/12/12
  * 
+ * 자동 발동되는 공통 스킬 중 하나
+ * 가장 가까운 적에게 투사체를 날리는 스킬
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_IceSpear : public UMSGA_AutoActiveSkillBase
@@ -24,7 +28,7 @@ public:
 protected:
 	// Ice Spear 스킬 ID는 1
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 SkillID = 1;
+	int32 CurrentSkillID = 1;
 	
 	// 피해량
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
