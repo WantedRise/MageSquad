@@ -64,4 +64,7 @@ protected:
 	
 	UFUNCTION()
 	void FireNextProjectile();
+	
+	UFUNCTION()
+	FVector FindClosestEnemyLocation(const UWorld* World, const AActor* Avatar) const;
 };

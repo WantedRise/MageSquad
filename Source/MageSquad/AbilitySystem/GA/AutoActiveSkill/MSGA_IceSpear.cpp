@@ -45,63 +45,20 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
 	// 기준점 위치 (플레이어 위치)
 	const FVector Origin = Avatar->GetActorLocation();
-
-	// 사거리
-	constexpr float SearchRadius = 1200.f;
+	FVector TargetLoc = FindClosestEnemyLocation(World, Avatar);
 	
-	// Pawn만 검색
-	FCollisionObjectQueryParams ObjParams;
-	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
-	
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(IceSpearFindTarget), false);
-	QueryParams.AddIgnoredActor(Avatar);
-	
-	TArray<FOverlapResult> Hits;
-	const bool bAnyHit = World->OverlapMultiByObjectType(
-		Hits,
-		Origin,
-		FQuat::Identity,
-		ObjParams,
-		FCollisionShape::MakeSphere(SearchRadius),
-		QueryParams
-	);
-	
-	AActor* BestTarget = nullptr;
-	float BestDistSq = TNumericLimits<float>::Max();
-	
-	if (bAnyHit)
+	// 근처에 적이 없으면 어빌리티 종료
+	if (TargetLoc.IsZero())
 	{
-		for (const FOverlapResult& H : Hits)
-		{
-			AActor* Candidate = H.GetActor();
-			if (!Candidate) continue;
-			
-			// 몬스터 "Enemy" 태그 검색
-			if (!Candidate->ActorHasTag(TEXT("Enemy")))
-				continue;
-
-			const float DistSq = FVector::DistSquared(Origin, Candidate->GetActorLocation());
-			if (DistSq < BestDistSq)
-			{
-				BestDistSq = DistSq;
-				BestTarget = Candidate;
-			}
-		}
-	}
-	
-	if (!BestTarget)
-	{
-		UE_LOG(LogTemp, Log, TEXT("[%s] No Enemy target in radius %.1f"), *GetName(), SearchRadius);
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
 	// ===== 발사 데이터 캐싱 =====
 	CachedOrigin = Origin;
-	CachedDirection = (BestTarget->GetActorLocation() - Origin);
+	CachedDirection = (TargetLoc - Origin);
 	CachedDirection.Z = 0;
 	CachedDirection = CachedDirection.GetSafeNormal();
 
@@ -118,7 +75,7 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	// 스킬 레벨 별 데이터 적용
 	CachedRuntimeData.Damage = SkillDamage;
-	
+	CachedRuntimeData.LifeTime = 3.0f;
 	// ===== 첫 발 발사 =====
 	FireNextProjectile();
 }
@@ -157,4 +114,62 @@ void UMSGA_IceSpear::FireNextProjectile()
 		WaitTask->OnFinish.AddDynamic(this, &UMSGA_IceSpear::FireNextProjectile);
 		WaitTask->ReadyForActivation();
 	}
+}
+
+FVector UMSGA_IceSpear::FindClosestEnemyLocation(const UWorld* World, const AActor* Avatar) const
+{
+	// 기준점 위치 (플레이어 위치)
+	const FVector Origin = Avatar->GetActorLocation();
+
+	// 사거리
+	constexpr float SearchRadius = 1200.f;
+	
+	// Pawn만 검색
+	FCollisionObjectQueryParams ObjParams;
+	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+	
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(IceSpearFindTarget), false);
+	QueryParams.AddIgnoredActor(Avatar);
+	
+	TArray<FOverlapResult> Hits;
+	const bool bAnyHit = World->OverlapMultiByObjectType(
+		Hits,
+		Origin,
+		FQuat::Identity,
+		ObjParams,
+		FCollisionShape::MakeSphere(SearchRadius),
+		QueryParams
+	);
+	
+	const AActor* BestTarget = nullptr;
+	float BestDistSq = TNumericLimits<float>::Max();
+	
+	if (bAnyHit)
+	{
+		for (const FOverlapResult& H : Hits)
+		{
+			AActor* Candidate = H.GetActor();
+			if (!Candidate) continue;
+			
+			// 몬스터 "Enemy" 태그 검색
+			if (!Candidate->ActorHasTag(TEXT("Enemy")))
+				continue;
+
+			const float DistSq = FVector::DistSquared(Origin, Candidate->GetActorLocation());
+			if (DistSq < BestDistSq)
+			{
+				BestDistSq = DistSq;
+				BestTarget = Candidate;
+			}
+		}
+	}
+	
+	if (!BestTarget)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] No Enemy target in radius %.1f"), *GetName(), SearchRadius);
+		return FVector::ZeroVector;
+	}
+	
+	
+	return BestTarget->GetActorLocation();
 }
