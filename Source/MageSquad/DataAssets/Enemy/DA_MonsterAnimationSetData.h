@@ -6,26 +6,30 @@
 #include "Engine/DataAsset.h"
 #include "DA_MonsterAnimationSetData.generated.h"
 
+class UMSEnemyAnimInstance;
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/11
- * ÀÏ¹İ ¸ó½ºÅÍ ¾Ö´Ï¸ŞÀÌ¼Ç Á¤º¸¸¦ ´ãÀ» µ¥ÀÌÅÍ ¿¡¼Â
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/11
+ * ëª¬ìŠ¤í„°ê°€ ê°€ì§€ëŠ” ì• ë‹ˆë©”ì´ì…˜ì„ ì •ì˜í•˜ëŠ” ë°ì´í„° ì—ì…‹
  */
 UCLASS(BlueprintType)
-class MAGESQUAD_API UDA_MSMonsterAnimationSet : public UDataAsset
+class MAGESQUAD_API UDA_EnemyAnimationSet : public UDataAsset
 {
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> IdleAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Animation Blueprint")
+	TSubclassOf<UMSEnemyAnimInstance> AnimationClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> IdleAnim;
     
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> WalkAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> WalkAnim;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> AttackAnim;
     
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> AttackAnim;
-    
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	TObjectPtr<UAnimSequence> DeadAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> DeadAnim;
 };

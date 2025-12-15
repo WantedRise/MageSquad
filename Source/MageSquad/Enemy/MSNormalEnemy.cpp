@@ -2,15 +2,14 @@
 
 
 #include "Enemy/MSNormalEnemy.h"
-
 #include "AIController/MSNormalAIController.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 AMSNormalEnemy::AMSNormalEnemy()
 {
-	// AI Controller Ό³Α¤
+	// AI Controller μ„Έν…
 	AIControllerClass = AMSNormalAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	
 	
 }
 
@@ -22,4 +21,9 @@ void AMSNormalEnemy::BeginPlay()
 void AMSNormalEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+}
+
+void AMSNormalEnemy::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
 }

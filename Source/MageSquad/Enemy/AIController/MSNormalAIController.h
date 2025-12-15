@@ -7,9 +7,9 @@
 #include "MSNormalAIController.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/11
- * ÀÏ¹İ ¸ó½ºÅÍµéÀÇ AIController
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/11
+ * ì¼ë°˜ ëª¬ìŠ¤í„° AI Controller
  */
 UCLASS()
 class MAGESQUAD_API AMSNormalAIController : public AMSBaseAIController

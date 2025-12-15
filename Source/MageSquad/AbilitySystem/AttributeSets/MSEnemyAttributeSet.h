@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
 #include "MSEnemyAttributeSet.generated.h"
 
@@ -16,4 +17,52 @@ class MAGESQUAD_API UMSEnemyAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 	
+public:
+	UMSEnemyAttributeSet();
+
+	UFUNCTION()
+	virtual void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_MoveSpeed(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_AttackDamage(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_AttackRange(const FGameplayAttributeData& OldValue);
+
+public:
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, CurrentHealth)
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, MaxHealth)
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, MoveSpeed)
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, AttackDamage)
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, AttackRange)
+	
+protected:
+	// 복제 함수
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// 속성 값 변경 콜백 함수
+	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+	
+private:
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_CurrentHealth, meta = (AllowPrivateAccess = "true")) 
+	FGameplayAttributeData CurrentHealth;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_MaxHealth, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData MaxHealth;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_MoveSpeed, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData MoveSpeed;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_AttackDamage, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData AttackDamage;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_AttackRange, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData AttackRange;
+		
 };

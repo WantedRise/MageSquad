@@ -5,30 +5,25 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
-#include "MSMonsterStaticData.generated.h"
+#include "MSEnemyStaticData.generated.h"
 
 /*
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/11
- * ¸ó½ºÅÍµéÀÌ °øÅëÀ¸·Î ÇÊ¿ä·Î ÇÏ´Â µ¥ÀÌÅÍ ¸ğÀ½
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/11
+ * ëª¬ìŠ¤í„°ë“¤ì˜ ë°ì´í„° ì •ë³´
  */
 
 USTRUCT(BlueprintType)
-struct FMSMonsterStaticData : public FTableRowBase
+struct FMSEnemyStaticData : public FTableRowBase
 {
 	GENERATED_BODY()
-    
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	// FName MonsterID;
-    
-	// ºñÁÖ¾ó
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
     
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSoftObjectPtr<UDA_MSMonsterAnimationSet> AnimationSet;
-    
-	// ±âº» ½ºÅÈ
+	TSoftObjectPtr<UDA_EnemyAnimationSet> AnimationSet;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float MaxHealth;
     
@@ -40,15 +35,13 @@ struct FMSMonsterStaticData : public FTableRowBase
     
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float AttackRange;
-    
-	// GAS °ü·Ã (Elite/Boss¿ë)
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
     
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<TSubclassOf<UGameplayEffect>> StartEffects;
-    
-	// Å¸ÀÔ ±¸ºĞ
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bIsRanged;
 };

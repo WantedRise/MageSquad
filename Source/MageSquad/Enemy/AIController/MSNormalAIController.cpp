@@ -2,9 +2,11 @@
 
 
 #include "Enemy/AIController/MSNormalAIController.h"
+#include "BehaviorTree/BehaviorTree.h"
 
 AMSNormalAIController::AMSNormalAIController()
 {
+	BehaviorTreeAsset = LoadObject<UBehaviorTree>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/BT_NormalEnemy.BT_NormalEnemy"));
 }
 
 void AMSNormalAIController::OnPossess(APawn* InPawn)

@@ -7,9 +7,9 @@
 #include "MSBaseAIController.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/10
- * ¸ó½ºÅÍµéÀÇ Base AI Controller Å¬·¡½º
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/10
+ * AIControllerì˜ Base í´ë˜ìŠ¤, ê³µí†µ ê¸°ëŠ¥ì„ ê°€ì§„ë‹¤. 
  */
 UCLASS()
 class MAGESQUAD_API AMSBaseAIController : public AAIController
