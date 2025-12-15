@@ -2,6 +2,7 @@
 
 
 #include "AbilitySystem/GA/Player/MSGA_PlayerDefaultAttack.h"
+#include "Player/MSPlayerController.h"
 
 #include "Types/MageSquadTypes.h"
 #include "MSFunctionLibrary.h"
@@ -42,9 +43,6 @@ void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle
 		return;
 	}
 
-	// 발사체를 소환할 트랜스폼
-	FTransform SpawnTransform;
-
 	// 발사체의 원본 데이터를 기반으로 런타임 데이터 생성
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 
@@ -52,37 +50,19 @@ void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle
 	const FVector SpawnLocation = Avatar->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 	FVector Direction = Avatar->GetActorForwardVector();
 
-	// 컨트롤러의 커서 위치 받아오기
-	APlayerController* PC = Cast<APlayerController>(ActorInfo->PlayerController.Get());
-	if (PC)
+	// 컨트롤러의 커서 방향으로 설정
+	if (ActorInfo->IsNetAuthority())
 	{
-		FHitResult Hit;
-
-		// 마우스 커서 위치 얻기
-		if (!PC->GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		if (AMSPlayerController* PC = Cast<AMSPlayerController>(ActorInfo->PlayerController.Get()))
 		{
-			// 마우스 커서 위치를 얻지 못했으면 캐릭터의 전방 방향으로 설정
-			Direction = Avatar->GetActorForwardVector();
+			// 발사체 방향을 커서 방향으로 설정
+			RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
 		}
-
-		// 마우스 커서 방향으로 설정
-		if (Hit.bBlockingHit)
-		{
-			Direction = (Hit.Location - SpawnLocation).GetSafeNormal();
-			if (Direction.IsNearlyZero())
-			{
-				Direction = Avatar->GetActorForwardVector();
-			}
-		}
-		Direction.Z = 0.f;
 	}
 
-	// 트랜스폼 설정
+	// 스폰 위치 설정
+	FTransform SpawnTransform = FTransform();
 	SpawnTransform.SetLocation(SpawnLocation);
-	SpawnTransform.SetRotation(FQuat::Identity);
-
-	// 발사체 방향을 커서 방향으로 설정
-	RuntimeData.Direction = Direction;
 
 	// 발사체 런타임 데이터를 통해 발사체 생성 및 발사
 	UMSFunctionLibrary::LaunchProjectile(this, ProjectileDataClass, RuntimeData, SpawnTransform, Avatar, Cast<APawn>(Avatar));
