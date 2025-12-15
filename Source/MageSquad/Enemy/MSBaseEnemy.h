@@ -14,7 +14,7 @@
  * 몬스터들의 공통 특성을 정의한다. 
  */
 
-struct FMSMonsterStaticData;
+struct FMSEnemyStaticData;
 
 UCLASS()
 class MAGESQUAD_API AMSBaseEnemy : public ACharacter, public IAbilitySystemInterface

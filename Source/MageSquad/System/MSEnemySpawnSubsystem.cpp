@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "System/MSMonsterSpawnSubsystem.h"
+#include "System/MSEnemySpawnSubsystem.h"
 #include "Enemy/MSBaseEnemy.h"
 #include "Enemy/MSNormalEnemy.h"
 #include "Enemy/MSEliteEnemy.h"
 #include "Enemy/MSBossEnemy.h"
-#include "DataStructs/MSMonsterStaticData.h"
+#include "DataStructs/MSEnemyStaticData.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "AbilitySystemComponent.h"
@@ -21,7 +21,7 @@
 // Subsystem Lifecycle
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
@@ -38,7 +38,7 @@ void UMSMonsterSpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
 
-void UMSMonsterSpawnSubsystem::Deinitialize()
+void UMSEnemySpawnSubsystem::Deinitialize()
 {
 	// 스폰 중지 및 타이머 정리
 	StopSpawning();
@@ -78,7 +78,7 @@ void UMSMonsterSpawnSubsystem::Deinitialize()
 // Initialization
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::LoadMonsterDataTable()
+void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
 	if (!MonsterStaticDataTable)
 	{
@@ -89,14 +89,14 @@ void UMSMonsterSpawnSubsystem::LoadMonsterDataTable()
 	TArray<FName> RowNames = MonsterStaticDataTable->GetRowNames();
 	for (const FName& RowName : RowNames)
 	{
-		FMSMonsterStaticData* RowData = MonsterStaticDataTable->FindRow<FMSMonsterStaticData>(RowName, TEXT(""));
+		FMSEnemyStaticData* RowData = MonsterStaticDataTable->FindRow<FMSEnemyStaticData>(RowName, TEXT(""));
 		if (!RowData)
 		{
 			continue;
 		}
 
 		// 캐시된 데이터 생성 (값 복사)
-		FMSCachedMonsterData& CachedData = CachedMonsterData.Add(RowName);
+		FMSCachedEnemyData& CachedData = CachedMonsterData.Add(RowName);
 		
 		// 에셋 동기 로딩 (초기화 단계에서만 수행)
 		if (!RowData->SkeletalMesh.IsNull())
@@ -127,7 +127,7 @@ void UMSMonsterSpawnSubsystem::LoadMonsterDataTable()
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Loaded %d monster types from DataTable"), CachedMonsterData.Num());
 }
 
-void UMSMonsterSpawnSubsystem::AssignMonsterToPool(const FName& RowName)
+void UMSEnemySpawnSubsystem::AssignMonsterToPool(const FName& RowName)
 {
 	FString RowString = RowName.ToString();
 
@@ -151,7 +151,7 @@ void UMSMonsterSpawnSubsystem::AssignMonsterToPool(const FName& RowName)
 	}
 }
 
-void UMSMonsterSpawnSubsystem::PrewarmPools()
+void UMSEnemySpawnSubsystem::PrewarmPools()
 {
 	// 풀 클래스 설정
 	NormalEnemyPool.EnemyClass = AMSNormalEnemy::StaticClass();
@@ -169,7 +169,7 @@ void UMSMonsterSpawnSubsystem::PrewarmPools()
 	PrewarmPool(BossEnemyPool);
 }
 
-void UMSMonsterSpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
+void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 {
 	UWorld* World = GetWorld();
 	if (!World || !Pool.EnemyClass)
@@ -205,7 +205,7 @@ void UMSMonsterSpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 // Spawn Control
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::StartSpawning()
+void UMSEnemySpawnSubsystem::StartSpawning()
 {
 	// 서버에서만 실행
 	if (!HasAuthority())
@@ -231,7 +231,7 @@ void UMSMonsterSpawnSubsystem::StartSpawning()
 	GetWorld()->GetTimerManager().SetTimer(
 		SpawnTimerHandle,
 		this,
-		&UMSMonsterSpawnSubsystem::SpawnMonsterTick,
+		&UMSEnemySpawnSubsystem::SpawnMonsterTick,
 		SpawnInterval,
 		true  // Loop
 	);
@@ -240,7 +240,7 @@ void UMSMonsterSpawnSubsystem::StartSpawning()
 		SpawnInterval, MaxActiveMonsters);
 }
 
-void UMSMonsterSpawnSubsystem::StopSpawning()
+void UMSEnemySpawnSubsystem::StopSpawning()
 {
 	if (!bIsSpawning)
 	{
@@ -258,7 +258,7 @@ void UMSMonsterSpawnSubsystem::StopSpawning()
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawning stopped"));
 }
 
-void UMSMonsterSpawnSubsystem::ClearAllMonsters()
+void UMSEnemySpawnSubsystem::ClearAllMonsters()
 {
 	// 모든 활성 Enemy를 수집
 	TArray<AMSBaseEnemy*> AllActiveEnemies;
@@ -294,7 +294,7 @@ void UMSMonsterSpawnSubsystem::ClearAllMonsters()
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Cleared all active monsters"));
 }
 
-AMSBaseEnemy* UMSMonsterSpawnSubsystem::SpawnMonsterByID(const FName& MonsterID, const FVector& Location)
+AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterByID(const FName& MonsterID, const FVector& Location)
 {
 	// 서버에서만 실행
 	if (!HasAuthority())
@@ -310,7 +310,7 @@ AMSBaseEnemy* UMSMonsterSpawnSubsystem::SpawnMonsterByID(const FName& MonsterID,
 // Spawn Logic
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::SpawnMonsterTick()
+void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 {
 	// 서버 권한 체크 (타이머가 클라이언트에서 실행될 수 없지만 안전장치)
 	if (!HasAuthority())
@@ -346,7 +346,7 @@ void UMSMonsterSpawnSubsystem::SpawnMonsterTick()
 	SpawnMonsterInternal(SelectedMonsterID, SpawnLocation);
 }
 
-AMSBaseEnemy* UMSMonsterSpawnSubsystem::SpawnMonsterInternal(const FName& MonsterID, const FVector& Location)
+AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterID, const FVector& Location)
 {
 	// 풀 찾기
 	FMSEnemyPool** PoolPtr = MonsterPoolMap.Find(MonsterID);
@@ -415,7 +415,7 @@ AMSBaseEnemy* UMSMonsterSpawnSubsystem::SpawnMonsterInternal(const FName& Monste
 	return Enemy;
 }
 
-bool UMSMonsterSpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
+bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 {
 	if (!NavSystem)
 	{
@@ -469,7 +469,7 @@ bool UMSMonsterSpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 // Enemy Initialization & Cleanup
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID)
+void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID)
 {
 	if (!Enemy)
 	{
@@ -477,7 +477,7 @@ void UMSMonsterSpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, cons
 	}
 
 	// 캐시된 데이터 가져오기
-	FMSCachedMonsterData* Data = CachedMonsterData.Find(MonsterID);
+	FMSCachedEnemyData* Data = CachedMonsterData.Find(MonsterID);
 	if (!Data)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[MonsterSpawn] Monster data not found: %s"), *MonsterID.ToString());
@@ -542,7 +542,7 @@ void UMSMonsterSpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, cons
 	}
 }
 
-void UMSMonsterSpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location)
+void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location)
 {
 	if (!Enemy)
 	{
@@ -570,7 +570,7 @@ void UMSMonsterSpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector&
 	}
 }
 
-void UMSMonsterSpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 {
 	if (!Enemy)
 	{
@@ -592,7 +592,7 @@ void UMSMonsterSpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	}
 }
 
-void UMSMonsterSpawnSubsystem::ResetEnemyGASState(AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::ResetEnemyGASState(AMSBaseEnemy* Enemy)
 {
 	if (!Enemy)
 	{
@@ -621,7 +621,7 @@ void UMSMonsterSpawnSubsystem::ResetEnemyGASState(AMSBaseEnemy* Enemy)
 // Death Event Handling
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 {
 	if (!Enemy)
 	{
@@ -638,10 +638,10 @@ void UMSMonsterSpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 	FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
 	
 	ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &UMSMonsterSpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
+		.AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
 }
 
-void UMSMonsterSpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 {
 	if (!Enemy)
 	{
@@ -659,7 +659,7 @@ void UMSMonsterSpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 	ASC->RegisterGameplayTagEvent(DeathTag).RemoveAll(this);
 }
 
-void UMSMonsterSpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
 	if (NewCount > 0)  // 태그 추가됨 = 사망
 	{
@@ -667,7 +667,7 @@ void UMSMonsterSpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, in
 	}
 }
 
-void UMSMonsterSpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
 {
 	if (!Enemy)
 	{
@@ -696,13 +696,13 @@ void UMSMonsterSpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
 	FTimerHandle ReturnTimer;
 	GetWorld()->GetTimerManager().SetTimer(
 		ReturnTimer,
-		FTimerDelegate::CreateUObject(this, &UMSMonsterSpawnSubsystem::ReturnEnemyToPoolInternal, Enemy, OwningPool),
+		FTimerDelegate::CreateUObject(this, &UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal, Enemy, OwningPool),
 		DeathAnimationDuration,
 		false
 	);
 }
 
-void UMSMonsterSpawnSubsystem::ReturnEnemyToPool(AMSBaseEnemy* Enemy)
+void UMSEnemySpawnSubsystem::ReturnEnemyToPool(AMSBaseEnemy* Enemy)
 {
 	if (!Enemy)
 	{
@@ -719,7 +719,7 @@ void UMSMonsterSpawnSubsystem::ReturnEnemyToPool(AMSBaseEnemy* Enemy)
 	ReturnEnemyToPoolInternal(Enemy, OwningPool);
 }
 
-void UMSMonsterSpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSEnemyPool* Pool)
+void UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSEnemyPool* Pool)
 {
 	if (!Enemy || !Pool)
 	{
@@ -746,7 +746,7 @@ void UMSMonsterSpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FM
 // Configuration Setters
 //~=============================================================================
 
-void UMSMonsterSpawnSubsystem::SetSpawnInterval(float NewInterval)
+void UMSEnemySpawnSubsystem::SetSpawnInterval(float NewInterval)
 {
 	SpawnInterval = FMath::Max(0.1f, NewInterval);
 
@@ -758,17 +758,17 @@ void UMSMonsterSpawnSubsystem::SetSpawnInterval(float NewInterval)
 	}
 }
 
-void UMSMonsterSpawnSubsystem::SetMaxActiveMonsters(int32 NewMax)
+void UMSEnemySpawnSubsystem::SetMaxActiveMonsters(int32 NewMax)
 {
 	MaxActiveMonsters = FMath::Max(1, NewMax);
 }
 
-void UMSMonsterSpawnSubsystem::SetSpawnRadius(float NewRadius)
+void UMSEnemySpawnSubsystem::SetSpawnRadius(float NewRadius)
 {
 	SpawnRadius = FMath::Max(500.0f, NewRadius);
 }
 
-void UMSMonsterSpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
+void UMSEnemySpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
 {
 	if (!NewDataTable)
 	{
@@ -816,13 +816,13 @@ void UMSMonsterSpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
 // Helper Functions
 //~=============================================================================
 
-FMSEnemyPool* UMSMonsterSpawnSubsystem::FindPoolForEnemy(AMSBaseEnemy* Enemy) const
+FMSEnemyPool* UMSEnemySpawnSubsystem::FindPoolForEnemy(AMSBaseEnemy* Enemy) const
 {
 	FMSEnemyPool* const* PoolPtr = EnemyToPoolMap.Find(Enemy);
 	return PoolPtr ? *PoolPtr : nullptr;
 }
 
-bool UMSMonsterSpawnSubsystem::HasAuthority() const
+bool UMSEnemySpawnSubsystem::HasAuthority() const
 {
 	UWorld* World = GetWorld();
 	if (!World)
@@ -839,7 +839,7 @@ bool UMSMonsterSpawnSubsystem::HasAuthority() const
 // Static Accessor
 //~=============================================================================
 
-UMSMonsterSpawnSubsystem* UMSMonsterSpawnSubsystem::Get(UObject* WorldContextObject)
+UMSEnemySpawnSubsystem* UMSEnemySpawnSubsystem::Get(UObject* WorldContextObject)
 {
 	if (!WorldContextObject)
 	{
@@ -852,5 +852,5 @@ UMSMonsterSpawnSubsystem* UMSMonsterSpawnSubsystem::Get(UObject* WorldContextObj
 		return nullptr;
 	}
 
-	return World->GetSubsystem<UMSMonsterSpawnSubsystem>();
+	return World->GetSubsystem<UMSEnemySpawnSubsystem>();
 }

@@ -13,7 +13,7 @@ class UMSEnemyAnimInstance;
  * 몬스터가 가지는 애니메이션을 정의하는 데이터 에셋
  */
 UCLASS(BlueprintType)
-class MAGESQUAD_API UDA_MonsterAnimationSet : public UDataAsset
+class MAGESQUAD_API UDA_EnemyAnimationSet : public UDataAsset
 {
 	GENERATED_BODY()
 	

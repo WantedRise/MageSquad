@@ -7,7 +7,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
-#include "MSMonsterSpawnSubsystem.generated.h"
+#include "MSEnemySpawnSubsystem.generated.h"
 
 /*
  * 작성자 : 임희섭
@@ -30,7 +30,7 @@
 // Forward declarations
 class AMSBaseEnemy;
 class UNavigationSystemV1;
-struct FMSMonsterStaticData;
+struct FMSEnemyStaticData;
 
 /**
  * 몬스터 풀 구조체
@@ -62,7 +62,7 @@ struct FMSEnemyPool
  * DataTable 포인터 대신 값 복사로 안전성 확보
  */
 USTRUCT()
-struct FMSCachedMonsterData
+struct FMSCachedEnemyData
 {
 	GENERATED_BODY()
 
@@ -71,7 +71,7 @@ struct FMSCachedMonsterData
 	TObjectPtr<USkeletalMesh> SkeletalMesh;
 
 	UPROPERTY()
-	TObjectPtr<class UDA_MonsterAnimationSet> AnimationSet;
+	TObjectPtr<class UDA_EnemyAnimationSet> AnimationSet;
 
 	// 스탯 정보
 	float MaxHealth = 100.0f;
@@ -89,7 +89,7 @@ struct FMSCachedMonsterData
  * 몬스터 스폰 서브시스템
  */
 UCLASS()
-class MAGESQUAD_API UMSMonsterSpawnSubsystem : public UWorldSubsystem
+class MAGESQUAD_API UMSEnemySpawnSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -155,7 +155,7 @@ public:
 	//~=============================================================================
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn", meta = (WorldContext = "WorldContextObject"))
-	static UMSMonsterSpawnSubsystem* Get(UObject* WorldContextObject);
+	static UMSEnemySpawnSubsystem* Get(UObject* WorldContextObject);
 
 	//~=============================================================================
 	// Enemy Pool Management (Public for external death handling)
@@ -252,7 +252,7 @@ private:
 
 	/** 몬스터별 캐시된 데이터 (에셋 사전 로드 포함) */
 	UPROPERTY()
-	TMap<FName, FMSCachedMonsterData> CachedMonsterData;
+	TMap<FName, FMSCachedEnemyData> CachedMonsterData;
 
 	//~=============================================================================
 	// Object Pools

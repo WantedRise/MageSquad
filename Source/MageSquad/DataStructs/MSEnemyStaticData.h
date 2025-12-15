@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
-#include "MSMonsterStaticData.generated.h"
+#include "MSEnemyStaticData.generated.h"
 
 /*
  * 작성자 : 임희섭
@@ -14,7 +14,7 @@
  */
 
 USTRUCT(BlueprintType)
-struct FMSMonsterStaticData : public FTableRowBase
+struct FMSEnemyStaticData : public FTableRowBase
 {
 	GENERATED_BODY()
 	
@@ -22,7 +22,7 @@ struct FMSMonsterStaticData : public FTableRowBase
 	TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
     
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSoftObjectPtr<UDA_MonsterAnimationSet> AnimationSet;
+	TSoftObjectPtr<UDA_EnemyAnimationSet> AnimationSet;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float MaxHealth;
