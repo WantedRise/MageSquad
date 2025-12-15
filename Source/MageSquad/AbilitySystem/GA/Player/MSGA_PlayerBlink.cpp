@@ -29,8 +29,8 @@ UMSGA_PlayerBlink::UMSGA_PlayerBlink()
 	// 에디터에서는 Niagara만 할당하면 되도록, 태그는 코드 기본값 제공 + 필요시 BP에서 Override 가능
 	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
 
-	Cue_BlinkStart = TagsMgr.RequestGameplayTag(FName("GameplayCue.Ability.Blink.Start"), false);
-	Cue_BlinkEnd = TagsMgr.RequestGameplayTag(FName("GameplayCue.Ability.Blink.End"), false);
+	Cue_BlinkStart = TagsMgr.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
+	Cue_BlinkEnd = TagsMgr.RequestGameplayTag(FName("GameplayCue.Player.Blink.End"), false);
 }
 
 void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
