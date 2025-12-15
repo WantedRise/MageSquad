@@ -106,6 +106,9 @@ protected:
 	// 카메라 줌 인/아웃 함수
 	void CameraZoom(const FInputActionValue& Value);
 
+	// 점멸 함수
+	void UseBlink(const FInputActionValue& Value);
+
 	// 좌클릭 공격 함수
 	void UseLeftSkill(const FInputActionValue& Value);
 
@@ -121,6 +124,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> CameraZoomAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> BlinkAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> LeftSkillAction;
@@ -143,14 +149,6 @@ public:
 	void StopAutoAttack();
 
 protected:
-	// 공격 어빌리티
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
-	TSubclassOf<UGameplayAbility> AutoAttackAbilityClass;
-
-	// 공격 시작 이벤트 태그
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
-	FGameplayTag AttackStartedEventTag;
-
 	// 자동 공격 주기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
 	float AutoAttackInterval = 0.6f;
@@ -160,6 +158,20 @@ protected:
 
 	// 자동 공격 함수 (자동 공격 주기마다 호출)
 	void HandleAutoAttack();
+
+
+
+	/*****************************************************
+	* Gameplay Tag Section
+	*****************************************************/
+protected:
+	// 기본 공격 이벤트 태그
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag AttackStartedEventTag;
+
+	// 점멸 이벤트 태그
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag BlinkEventTag;
 
 
 

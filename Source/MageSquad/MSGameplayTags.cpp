@@ -5,9 +5,14 @@ namespace MSGameplayTags
 {
 	/* Player Ability Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_DefaultAttack, "Player.Ability.DefaultAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Blink, "Player.Ability.Blink");
 
 	/* Player Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_DefaultAttack, "Player.Event.DefaultAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Player_Event_Blink, "Player.Event.Blink");
+
+	/* Player Cooldown Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Player_Cooldown_Blink, "Player.Cooldown.Blink");
 
 	/*Enemy State Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Chase, "Enemy.State.Chase");

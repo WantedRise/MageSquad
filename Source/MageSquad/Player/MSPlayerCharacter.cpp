@@ -201,6 +201,9 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		// 카메라 줌 인/아웃 입력 맵핑
 		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::CameraZoom);
 
+		// 카메라 줌 인/아웃 입력 맵핑
+		EnhancedInputComponent->BindAction(BlinkAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseBlink);
+
 		// 좌클릭 공격 입력 맵핑
 		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseLeftSkill);
 
@@ -259,6 +262,17 @@ void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
 	TargetArmLength = FMath::Clamp(TargetArmLength, MinCameraZoomLength, MaxCameraZoomLength);
 }
 
+void AMSPlayerCharacter::UseBlink(const FInputActionValue& Value)
+{
+	// 로컬 폰이 아닌 경우 종료
+	if (!IsLocallyControlled()) return;
+
+	FGameplayEventData Payload;
+	Payload.EventTag = BlinkEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, BlinkEventTag, Payload);
+}
+
 void AMSPlayerCharacter::UseLeftSkill(const FInputActionValue& Value)
 {
 
@@ -271,7 +285,7 @@ void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
 
 void AMSPlayerCharacter::StartAutoAttack()
 {
-	// 자동 공격 어빌리티가 없거나 로컬 폰이 아닌 경우 종료
+	// 로컬 폰이 아닌 경우 종료
 	if (!IsLocallyControlled()) return;
 
 	// 자동 공격 타이머 초기화 및 설정
