@@ -22,6 +22,9 @@ AMSBaseEnemy::AMSBaseEnemy()
 	
 	// Enemy 전용 콜리전으로 설정
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSEnemy"));
+	// GetMesh()->SetupAttachment(GetCapsuleComponent());
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -GetCapsuleComponent()->GetScaledCapsuleHalfHeight())); 
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f)); // 예시
 	
 	// GAS 컴포넌트
 	ASC = CreateDefaultSubobject<UMSEnemyAbilitySystemComponent>(TEXT("ASC"));
@@ -60,13 +63,37 @@ AMSBaseEnemy::AMSBaseEnemy()
 void AMSBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	ASC->InitAbilityActorInfo(this, this);
+	if (ASC && !ASC->AbilityActorInfo.IsValid())
+	{
+		ASC->InitAbilityActorInfo(this, this);
+	}
 }
 
 void AMSBaseEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+}
+
+void AMSBaseEnemy::PostInitializeComponents()
+{
+	UE_LOG(LogTemp, Error, TEXT("🟡 [%s] PostInitializeComponents START"), *GetName());
+    
+	Super::PostInitializeComponents();
+    
+	UE_LOG(LogTemp, Error, TEXT("🟡 [%s] PostInitializeComponents END, Valid: %d"), 
+		*GetName(), IsValid(this));
+    
+	// Mesh 확인
+	if (GetMesh())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("🟡 [%s] Has Mesh, SkeletalMesh: %s"), 
+			*GetName(), 
+			GetMesh()->GetSkeletalMeshAsset() ? *GetMesh()->GetSkeletalMeshAsset()->GetName() : TEXT("NULL"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("🔴 [%s] NO MESH COMPONENT!"), *GetName());
+	}
 }
 
 UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const

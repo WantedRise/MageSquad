@@ -22,3 +22,8 @@ void AMSNormalEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 }
+
+void AMSNormalEnemy::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}

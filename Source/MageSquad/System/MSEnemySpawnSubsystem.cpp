@@ -29,6 +29,12 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		return;
 	}
+	
+	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
+		return;
+	}
 
 	// NavSystem 참조 획득
 	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
@@ -195,14 +201,14 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		// 맵 밖으로 스폰 (비활성 상태)
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
-			FVector(0, 0, -10000.0f),
+			FVector(0, 0, 100.0f),
 			FRotator::ZeroRotator,
 			Params
 		);
 
 		if (Enemy)
 		{
-			DeactivateEnemy(Enemy);
+			//DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
 	}
@@ -417,7 +423,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	++TotalSpawnedCount;
 
 	// 사망 이벤트 바인딩
-	BindEnemyDeathEvent(Enemy);
+	//BindEnemyDeathEvent(Enemy);
 
 	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
 		*MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
@@ -470,6 +476,7 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 		if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(500.0f, 500.0f, 1000.0f)))
 		{
 			OutLocation = NavLoc.Location;
+			OutLocation.Z = 92.f;
 			return true;
 		}
 	}
@@ -499,8 +506,16 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 	// 1. 스켈레탈 메시 설정
 	if (Data->SkeletalMesh)
-	{
+	{		
+		if (Enemy->GetMesh()->IsRegistered())
+		{
+			Enemy->GetMesh()->UnregisterComponent();
+		}
+		
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
+
+		// ⭐[핵심3] 렌더링 상태 강제 업데이트 및 재등록
+		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
 	}
 
 	// 2. 애니메이션 설정
@@ -510,8 +525,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 	}
 
 	// 3. GAS 속성 초기화
-	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
-	if (ASC)
+	if (UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent())
 	{
 		const UMSEnemyAttributeSet* AttributeSet = Cast<UMSEnemyAttributeSet>(
 			ASC->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())
@@ -573,6 +587,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	UE_LOG(LogTemp, Warning, TEXT("[Activate] Location: %s"), *Location.ToString());
 	UE_LOG(LogTemp, Warning, TEXT("[Activate] IsHidden: %d"), Enemy->IsHidden());
 	UE_LOG(LogTemp, Warning, TEXT("[Activate] HasMesh: %d"), Enemy->GetMesh() != nullptr);
+	UE_LOG(LogTemp, Warning, TEXT("[Activate] HasSkeletalMesh: %d"), Enemy->GetMesh()->GetSkeletalMeshAsset() != nullptr);
 
 	// AI 컨트롤러 시작
 	if (AController* Controller = Enemy->GetController())
@@ -605,7 +620,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	Enemy->SetActorHiddenInGame(true);
 	Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
-	Enemy->SetActorLocation(FVector(0, 0, -10000.0f));
+	Enemy->SetActorLocation(FVector(0, 0, 100.0f));
 
 	// AI 정지
 	if (AController* Controller = Enemy->GetController())
@@ -659,11 +674,11 @@ void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 		return;
 	}
 
-	// "Enemy.State.Dead" 태그 변경 감지
-	FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
-	
-	ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
+	// // "Enemy.State.Dead" 태그 변경 감지
+	// FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
+	//
+	// ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
+	// 	.AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
 }
 
 void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)

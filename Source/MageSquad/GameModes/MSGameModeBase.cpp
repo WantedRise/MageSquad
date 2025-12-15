@@ -4,6 +4,8 @@
 #include "GameModes/MSGameModeBase.h"
 #include "System/MSProjectilePoolSystem.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
+#include "Enemy/MSNormalEnemy.h"
+#include "Player/MSPlayerCharacter.h"
 #include "System/MSEnemySpawnSubsystem.h"
 
 void AMSGameModeBase::BeginPlay()
@@ -12,8 +14,6 @@ void AMSGameModeBase::BeginPlay()
 
 	if (UMSProjectilePoolSystem* ProjectilePoolSystem = GetGameInstance()->GetSubsystem<UMSProjectilePoolSystem>())
 	{
-		// �߻�ü Ǯ�� �ý��� �ʱ�ȭ
-		// �⺻ �߻�ü Ŭ���� ���� + 200�� Ǯ��
 		ProjectilePoolSystem->Configure(ProjectileClass, 200);
 	}
 	
@@ -22,16 +22,14 @@ void AMSGameModeBase::BeginPlay()
 		return;
 	}
 
-	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(this))
+	if (UMSEnemySpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UMSEnemySpawnSubsystem>())
 	{
 		// 설정
 		SpawnSystem->SetSpawnInterval(2.0f);
-		SpawnSystem->SetMaxActiveMonsters(100);
-		SpawnSystem->SetSpawnRadius(3000.0f);
+		SpawnSystem->SetMaxActiveMonsters(10);
+		SpawnSystem->SetSpawnRadius(1500.0f);
         
 		// 스폰 시작
 		SpawnSystem->StartSpawning();
-		//SpawnSystem->SpawnMonsterByID("Normal_Ghoul", FVector(0.f, 0.f ,0.f));
 	}
-	
 }
