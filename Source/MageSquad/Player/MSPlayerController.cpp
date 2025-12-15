@@ -3,6 +3,11 @@
 
 #include "Player/MSPlayerController.h"
 
+FVector AMSPlayerController::GetServerCursor() const
+{
+	return ServerCursor;
+}
+
 FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) const
 {
 	const FVector Fwd = FVector(FallbackForward).GetSafeNormal();
@@ -56,7 +61,7 @@ void AMSPlayerController::UpdateCursor()
 		const bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, Hit) && Hit.bBlockingHit;
 
 		// 캐릭터의 위치
-		const FVector SpawnOrigin = P->GetActorLocation() + FVector(0, 0, 50);
+		const FVector SpawnOrigin = P->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 
 		// 커서 방향
 		FVector Dir = bHit ? (Hit.Location - SpawnOrigin) : P->GetActorForwardVector();
@@ -64,25 +69,31 @@ void AMSPlayerController::UpdateCursor()
 		// Z값 보정
 		Dir.Z = 50.f;
 		Dir = Dir.GetSafeNormal();
-		if (Dir.IsNearlyZero()) Dir = FVector(1, 0, 50.f);
+		if (Dir.IsNearlyZero()) Dir = FVector(1.f, 0.f, 0.f);
 
 		if (HasAuthority())
 		{
 			// 호스트(리슨)면 서버 캐시 직접 갱신
+			ServerCursor = FVector(Hit.ImpactPoint.X, Hit.ImpactPoint.Y, ServerCursor.Z);
 			ServerCursorDir = Dir;
 		}
 		else
 		{
 			// 원격 클라는 서버로 전달
-			ServerSetCursorDir(Dir);
+			ServerRPCSetCursorInfo(Hit.ImpactPoint, Dir);
 		}
 	}
 }
 
-void AMSPlayerController::ServerSetCursorDir_Implementation(const FVector_NetQuantizeNormal& InDir2D)
+void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_NetQuantizeNormal& InPos, const FVector_NetQuantizeNormal& InDir)
 {
+	// 커서 위치 저장
+	FVector Pos = FVector(InPos.X, InPos.Y, ServerCursor.Z);
+	if (Pos.IsNearlyZero()) Pos = FVector(1.f, 0.f, 0.f);
+	ServerCursor = Pos;
+
 	// 커서 방향 저장
-	FVector Dir = FVector(InDir2D.X, InDir2D.Y, InDir2D.Z);
-	if (Dir.IsNearlyZero()) Dir = FVector(1.f, 0.f, 50.f);
+	FVector Dir = FVector(InDir.X, InDir.Y, ServerCursorDir.Z);
+	if (Dir.IsNearlyZero()) Dir = FVector(1.f, 0.f, 0.f);
 	ServerCursorDir = Dir.GetSafeNormal();
 }

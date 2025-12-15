@@ -20,7 +20,10 @@ class MAGESQUAD_API AMSPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	// 서버에서 GA가 읽는 최신 커서 방향(2D)
+	// 서버에서 읽는 최신 커서 위치
+	FVector GetServerCursor() const;
+
+	// 서버에서 읽는 최신 커서 방향
 	FVector GetServerCursorDir(const FVector& FallbackForward) const;
 
 protected:
@@ -31,14 +34,19 @@ private:
 	// 마우스 커서 업데이트 함수
 	void UpdateCursor();
 
+	// 커서 정보 업데이트 RPC
 	UFUNCTION(Server, Unreliable)
-	void ServerSetCursorDir(const FVector_NetQuantizeNormal& InDir2D);
+	void ServerRPCSetCursorInfo(const FVector_NetQuantizeNormal& InPos, const FVector_NetQuantizeNormal& InDir);
 
 private:
 	// 마우스 커서 업데이트 타이머
 	FTimerHandle CursorUpdateTimer;
 
+	// 마우스 커서 위치
+	UPROPERTY()
+	FVector_NetQuantizeNormal ServerCursor = FVector(1.f, 0.f, 0.f);
+
 	// 마우스 커서 방향
 	UPROPERTY()
-	FVector_NetQuantizeNormal ServerCursorDir = FVector(1.f, 0.f, 50.f);
+	FVector_NetQuantizeNormal ServerCursorDir = FVector(1.f, 0.f, 0.f);
 };
