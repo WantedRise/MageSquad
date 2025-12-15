@@ -13,7 +13,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 {
 	// Tick 비사용 설정 (사용 시, 활성화)
 	// 데칼 영향 비활성화 (사용 시, 활성화)
-	PrimaryActorTick.bCanEverTick = false;
+	//PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	GetMesh()->bReceivesDecals = false;
 	
@@ -41,6 +41,8 @@ AMSBaseEnemy::AMSBaseEnemy()
 	MoveComp->AvoidanceConsiderationRadius = 500.0f;
 	MoveComp->AvoidanceWeight = 0.5f;
 	MoveComp->SetAvoidanceGroup(1);
+	MoveComp->SetGroupsToAvoidMask(1);        // 그룹 1의 다른 Enemy들을 회피
+	MoveComp->SetAvoidanceEnabled(true);      // 명시적 활성화
 	
 	// 기본 회전 설정
 	MoveComp->bOrientRotationToMovement = true;
@@ -76,24 +78,7 @@ void AMSBaseEnemy::PossessedBy(AController* NewController)
 
 void AMSBaseEnemy::PostInitializeComponents()
 {
-	UE_LOG(LogTemp, Error, TEXT("🟡 [%s] PostInitializeComponents START"), *GetName());
-    
 	Super::PostInitializeComponents();
-    
-	UE_LOG(LogTemp, Error, TEXT("🟡 [%s] PostInitializeComponents END, Valid: %d"), 
-		*GetName(), IsValid(this));
-    
-	// Mesh 확인
-	if (GetMesh())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🟡 [%s] Has Mesh, SkeletalMesh: %s"), 
-			*GetName(), 
-			GetMesh()->GetSkeletalMeshAsset() ? *GetMesh()->GetSkeletalMeshAsset()->GetName() : TEXT("NULL"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("🔴 [%s] NO MESH COMPONENT!"), *GetName());
-	}
 }
 
 UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const

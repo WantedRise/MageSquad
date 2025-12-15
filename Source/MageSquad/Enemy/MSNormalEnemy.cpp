@@ -10,7 +10,11 @@ AMSNormalEnemy::AMSNormalEnemy()
 	AIControllerClass = AMSNormalAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	
-	
+	static ConstructorHelpers::FClassFinder<AMSNormalAIController> NormalEnemyControllerRef(TEXT("/Game/Blueprints/Enemies/AI/BP_NormalAIContoller.BP_NormalAIContoller_C"));
+	if (NormalEnemyControllerRef.Succeeded())
+	{
+		AIControllerClass = NormalEnemyControllerRef.Class;
+	}
 }
 
 void AMSNormalEnemy::BeginPlay()
