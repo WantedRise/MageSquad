@@ -14,6 +14,8 @@
  * 몬스터들의 공통 특성을 정의한다. 
  */
 
+struct FMSMonsterStaticData;
+
 UCLASS()
 class MAGESQUAD_API AMSBaseEnemy : public ACharacter, public IAbilitySystemInterface
 {
@@ -27,7 +29,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void InitEnemyData(UDA_MonsterSpawnData* InEnemyData);
 	
 public:
 	// ~ Begin IAbilitySystemInterface Interface
@@ -44,6 +45,4 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<class UGameplayAbility>> StartAbilities;
 	
-	UPROPERTY()
-	TObjectPtr<UDA_MonsterSpawnData> EnemyData;
 };

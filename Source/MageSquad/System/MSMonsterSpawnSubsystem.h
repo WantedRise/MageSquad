@@ -3,54 +3,90 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffect.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/DataTable.h"
-#include "NavigationSystem.h"
 #include "GameplayTagContainer.h"
 #include "MSMonsterSpawnSubsystem.generated.h"
 
+/*
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/15
+ * 리팩토링 : 2025/12/15
+ * 
+ * 몬스터 스폰 관리 전용 서브시스템
+ * - 오브젝트 풀링 기반 효율적인 스폰 관리
+ * - 멀티플레이어 리슨 서버 방식 지원 (서버 권한 체크)
+ * - 메모리 안전성 강화 (델리게이트 관리, GAS 상태 초기화)
+ * - 에셋 사전 로딩으로 프레임 드롭 방지
+ * 
+ * 주요 기능:
+ * - 타입별 오브젝트 풀 (Normal/Elite/Boss)
+ * - 자동 스폰 시스템 (간격/최대 수 제어)
+ * - NavMesh 기반 스폰 위치 검증
+ * - GAS 기반 몬스터 초기화
+ */
+
 // Forward declarations
 class AMSBaseEnemy;
-class UDataTable;
+class UNavigationSystemV1;
 struct FMSMonsterStaticData;
 
 /**
  * 몬스터 풀 구조체
+ * 타입별로 Free/Active 상태 관리
  */
 USTRUCT()
 struct FMSEnemyPool
 {
 	GENERATED_BODY()
 
+	// 풀에서 사용할 Enemy 클래스
 	UPROPERTY()
 	TSubclassOf<AMSBaseEnemy> EnemyClass;
 
+	// 비활성 상태 (풀에서 대기 중)
 	UPROPERTY()
 	TArray<TObjectPtr<AMSBaseEnemy>> FreeEnemies;
 
+	// 활성 상태 (게임 월드에 스폰됨)
 	UPROPERTY()
 	TArray<TObjectPtr<AMSBaseEnemy>> ActiveEnemies;
 
+	// 초기 풀 크기
 	int32 InitialPoolSize = 10;
 };
 
 /**
- * 델리게이트 선언
+ * 몬스터별 캐시된 데이터
+ * DataTable 포인터 대신 값 복사로 안전성 확보
  */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMonsterSpawnedSignature,
-	AMSBaseEnemy*, SpawnedMonster, FName, MonsterID, int32, CurrentWave);
+USTRUCT()
+struct FMSCachedMonsterData
+{
+	GENERATED_BODY()
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMonsterDiedSignature,
-	AMSBaseEnemy*, DeadMonster, int32, TotalKillCount);
+	// 사전 로드된 에셋들
+	UPROPERTY()
+	TObjectPtr<USkeletalMesh> SkeletalMesh;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWaveChangedSignature,
-	int32, NewWave, float, DifficultyMultiplier);
+	UPROPERTY()
+	TObjectPtr<class UDA_MonsterAnimationSet> AnimationSet;
+
+	// 스탯 정보
+	float MaxHealth = 100.0f;
+	float MoveSpeed = 400.0f;
+	float AttackDamage = 10.0f;
+	float AttackRange = 200.0f;
+	bool bIsRanged = false;
+
+	// GAS 관련
+	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
+	TArray<TSubclassOf<UGameplayEffect>> StartEffects;
+};
 
 /**
- * 작성자 : 임희섭
- * 작성일 : 2025/12/12
- * 몬스터 스폰 관리 및 웨이브 시스템 담당
- * 연속 스폰, 오브젝트 풀링, 난이도 스케일링 지원
+ * 몬스터 스폰 서브시스템
  */
 UCLASS()
 class MAGESQUAD_API UMSMonsterSpawnSubsystem : public UWorldSubsystem
@@ -58,155 +94,242 @@ class MAGESQUAD_API UMSMonsterSpawnSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	// 서브시스템 라이프사이클
+	//~=============================================================================
+	// Subsystem Lifecycle
+	//~=============================================================================
+	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	// 스폰 제어
+	//~=============================================================================
+	// Spawn Control (Blueprint Callable)
+	//~=============================================================================
+	
+	/** 자동 스폰 시작 (서버에서만 동작) */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
 	void StartSpawning();
 
+	/** 자동 스폰 중지 */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
 	void StopSpawning();
 
+	/** 모든 활성 몬스터 제거 및 풀 초기화 */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
 	void ClearAllMonsters();
 
-	// 설정
+	/** 특정 타입의 몬스터 수동 스폰 (서버에서만 동작) */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
+	AMSBaseEnemy* SpawnMonsterByID(const FName& MonsterID, const FVector& Location);
+
+	//~=============================================================================
+	// Configuration Setters
+	//~=============================================================================
+	
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnInterval(float NewInterval);
 
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetMaxActiveMonsters(int32 NewMax);
 
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnRadius(float NewRadius);
 
-	// DataTable 설정
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetMonsterDataTable(UDataTable* NewDataTable);
 
-	// 난이도 조정
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
-	void SetDifficultyMultiplier(float NewMultiplier);
-
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
-	void ResetDifficulty();
-
-	// Getter
-	UFUNCTION(BlueprintPure, Category = "Monster Spawn")
+	//~=============================================================================
+	// Getters
+	//~=============================================================================
+	
+	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	int32 GetCurrentActiveCount() const { return CurrentActiveCount; }
 
-	UFUNCTION(BlueprintPure, Category = "Monster Spawn")
+	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	int32 GetTotalSpawnedCount() const { return TotalSpawnedCount; }
 
-	UFUNCTION(BlueprintPure, Category = "Monster Spawn")
-	int32 GetTotalKilledCount() const { return TotalKilledCount; }
-
-	UFUNCTION(BlueprintPure, Category = "Monster Spawn")
-	int32 GetCurrentWave() const { return CurrentWave; }
-
-	UFUNCTION(BlueprintPure, Category = "Monster Spawn")
-	float GetCurrentDifficultyMultiplier() const { return CurrentDifficultyMultiplier; }
-
-	UFUNCTION(BlueprintPure, Category = "Monster Spawn")
+	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	bool IsSpawning() const { return bIsSpawning; }
 
-	// 정적 접근자
+	//~=============================================================================
+	// Static Accessor
+	//~=============================================================================
+	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn", meta = (WorldContext = "WorldContextObject"))
-	static UMSMonsterSpawnSubsystem* GetMonsterSpawnSubsystem(UObject* WorldContextObject);
+	static UMSMonsterSpawnSubsystem* Get(UObject* WorldContextObject);
 
-	// 델리게이트
-	UPROPERTY(BlueprintAssignable, Category = "Monster Spawn Events")
-	FOnMonsterSpawnedSignature OnMonsterSpawned;
-
-	UPROPERTY(BlueprintAssignable, Category = "Monster Spawn Events")
-	FOnMonsterDiedSignature OnMonsterDied;
-
-	UPROPERTY(BlueprintAssignable, Category = "Monster Spawn Events")
-	FOnWaveChangedSignature OnWaveChanged;
+	//~=============================================================================
+	// Enemy Pool Management (Public for external death handling)
+	//~=============================================================================
+	
+	/** 외부에서 Enemy 사망 시 호출하여 풀로 반환 */
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Pool")
+	void ReturnEnemyToPool(AMSBaseEnemy* Enemy);
 
 private:
-	// 초기화
+	//~=============================================================================
+	// Initialization
+	//~=============================================================================
+	
+	/** DataTable에서 몬스터 데이터 로드 및 에셋 사전 로드 */
 	void LoadMonsterDataTable();
+	
+	/** 몬스터 ID를 분석하여 적절한 풀에 매핑 */
 	void AssignMonsterToPool(const FName& RowName);
+	
+	/** 모든 풀 사전 생성 */
 	void PrewarmPools();
+	
+	/** 특정 풀 사전 생성 */
 	void PrewarmPool(FMSEnemyPool& Pool);
 
-	// 스폰 로직
+	//~=============================================================================
+	// Spawn Logic
+	//~=============================================================================
+	
+	/** 타이머 콜백: 주기적으로 랜덤 몬스터 스폰 */
 	void SpawnMonsterTick();
-	AMSBaseEnemy* SpawnMonster(const FName& MonsterID);
+	
+	/** 내부 스폰 로직 (풀에서 가져오거나 새로 생성) */
+	AMSBaseEnemy* SpawnMonsterInternal(const FName& MonsterID, const FVector& Location);
+	
+	/** NavMesh 기반 랜덤 스폰 위치 검색 */
 	bool GetRandomSpawnLocation(FVector& OutLocation);
 
-	// 몬스터 초기화
-	void InitializeMonsterFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
+	//~=============================================================================
+	// Enemy Initialization & Cleanup
+	//~=============================================================================
+	
+	/** DataTable 데이터로 Enemy 초기화 (메시, 애니메이션, GAS) */
+	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
+	
+	/** Enemy 활성화 (위치 설정, AI 시작) */
 	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location);
+	
+	/** Enemy 비활성화 (숨김, 콜리전 끄기, AI 정지) */
 	void DeactivateEnemy(AMSBaseEnemy* Enemy);
+	
+	/** GAS 상태 완전 초기화 (태그, 이펙트, 어빌리티 제거) */
+	void ResetEnemyGASState(AMSBaseEnemy* Enemy);
 
-	// 풀 반환
+	//~=============================================================================
+	// Death Event Handling
+	//~=============================================================================
+	
+	/** Enemy의 사망 태그 이벤트 바인딩 */
 	void BindEnemyDeathEvent(AMSBaseEnemy* Enemy);
+	
+	/** Enemy의 사망 태그 이벤트 언바인딩 */
+	void UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy);
+	
+	/** 사망 태그 변경 콜백 */
+	UFUNCTION()
 	void OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy);
+	
+	/** 사망 처리 및 풀 반환 예약 */
 	void HandleEnemyDeath(AMSBaseEnemy* Enemy);
-	void ReturnEnemyToPool(AMSBaseEnemy* Enemy, FMSEnemyPool* Pool);
+	
+	/** 타이머 콜백: 사망 애니메이션 후 풀로 반환 */
+	void ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSEnemyPool* Pool);
 
-	// 난이도
-	void UpdateDifficultyWave();
+	//~=============================================================================
+	// Helper Functions
+	//~=============================================================================
+	
+	/** Enemy가 속한 풀 찾기 (O(1) 조회) */
+	FMSEnemyPool* FindPoolForEnemy(AMSBaseEnemy* Enemy) const;
+	
+	/** 서버 권한 체크 */
+	bool HasAuthority() const;
 
 private:
-	// DataTable 참조
+	//~=============================================================================
+	// DataTable & Cached Data
+	//~=============================================================================
+	
+	/** 몬스터 정적 데이터 테이블 */
 	UPROPERTY(EditDefaultsOnly, Category = "Monster Data")
 	TObjectPtr<UDataTable> MonsterStaticDataTable;
 
-	// 풀 관리
-	FMSEnemyPool NormalEnemyPool;
-	FMSEnemyPool EliteEnemyPool;
-	FMSEnemyPool BossEnemyPool;
-	TMap<FName, FMSEnemyPool*> MonsterPoolMap;
-	TMap<FName, FMSMonsterStaticData*> CachedMonsterData;
+	/** 몬스터별 캐시된 데이터 (에셋 사전 로드 포함) */
+	UPROPERTY()
+	TMap<FName, FMSCachedMonsterData> CachedMonsterData;
 
-	// 풀 크기 설정
+	//~=============================================================================
+	// Object Pools
+	//~=============================================================================
+	
+	UPROPERTY()
+	FMSEnemyPool NormalEnemyPool;
+
+	UPROPERTY()
+	FMSEnemyPool EliteEnemyPool;
+
+	UPROPERTY()
+	FMSEnemyPool BossEnemyPool;
+
+	/** MonsterID -> Pool 매핑 */
+	TMap<FName, FMSEnemyPool*> MonsterPoolMap;
+
+	/** Enemy -> Pool 역참조 (O(1) 풀 검색) */
+	TMap<TObjectPtr<AMSBaseEnemy>, FMSEnemyPool*> EnemyToPoolMap;
+
+	//~=============================================================================
+	// Pool Configuration
+	//~=============================================================================
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Pool Config")
-	int32 NormalEnemyPoolSize = 30;
+	int32 NormalEnemyPoolSize = 100;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Pool Config")
 	int32 EliteEnemyPoolSize = 10;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Pool Config")
-	int32 BossEnemyPoolSize = 3;
+	int32 BossEnemyPoolSize = 5;
 
-	// 스폰 설정
+	//~=============================================================================
+	// Spawn Configuration
+	//~=============================================================================
+	
+	/** 스폰 간격 (초) */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	float SpawnInterval = 3.0f;
 
+	/** 최대 동시 활성 몬스터 수 */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	int32 MaxActiveMonsters = 50;
 
+	/** 플레이어 주변 스폰 반경 */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	float SpawnRadius = 2000.0f;
 
+	/** 플레이어로부터 최소 스폰 거리 */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	float MinSpawnDistance = 800.0f;
 
-	// 난이도 스케일링
-	UPROPERTY(EditDefaultsOnly, Category = "Difficulty Scaling")
-	float DifficultyScalePerWave = 0.1f;
+	/** 사망 후 풀 반환 대기 시간 (사망 애니메이션 재생 시간) */
+	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
+	float DeathAnimationDuration = 2.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Difficulty Scaling")
-	float MaxDifficultyMultiplier = 3.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Difficulty Scaling")
-	int32 MonstersPerWave = 10;
-
-	// 런타임 상태
+	//~=============================================================================
+	// Runtime State
+	//~=============================================================================
+	
+	/** 스폰 타이머 핸들 */
 	FTimerHandle SpawnTimerHandle;
-	bool bIsSpawning = false;
-	int32 CurrentActiveCount = 0;
-	int32 TotalSpawnedCount = 0;
-	int32 TotalKilledCount = 0;
-	int32 CurrentWave = 1;
-	float CurrentDifficultyMultiplier = 1.0f;
 
-	// 네비게이션
+	/** 스폰 중 여부 */
+	bool bIsSpawning = false;
+
+	/** 현재 활성 몬스터 수 */
+	int32 CurrentActiveCount = 0;
+
+	/** 총 스폰된 몬스터 수 (누적) */
+	int32 TotalSpawnedCount = 0;
+
+	//~=============================================================================
+	// Navigation
+	//~=============================================================================
+	
 	UPROPERTY()
-	TObjectPtr<class UNavigationSystemV1> NavSystem;
+	TObjectPtr<UNavigationSystemV1> NavSystem;
 };

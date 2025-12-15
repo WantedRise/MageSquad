@@ -69,10 +69,6 @@ void AMSBaseEnemy::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 }
 
-void AMSBaseEnemy::InitEnemyData(UDA_MonsterSpawnData* InEnemyData)
-{
-}
-
 UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 {
 	if (ASC == nullptr)

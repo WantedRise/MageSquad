@@ -7,9 +7,9 @@
 #include "MSNormalEnemy.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/12
- * ÀÏ¹İ ¸ó½ºÅÍµé Å¬·¡½º, ±âº»ÀûÀÎ µ¿ÀÛ¸¸ °¡Áø´Ù. 
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/12
+ * ì¼ë°˜ ëª¬ìŠ¤í„° í´ë˜ìŠ¤
  */
 UCLASS()
 class MAGESQUAD_API AMSNormalEnemy : public AMSBaseEnemy
@@ -21,6 +21,5 @@ public:
 public:
 	virtual void BeginPlay() override;	
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void InitEnemyData(UDA_MonsterSpawnData* InEnemyData) override;
-	
+
 };

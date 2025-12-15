@@ -8,9 +8,9 @@
 
 class UMSEnemyAnimInstance;
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/11
- * ÀÏ¹Ý ¸ó½ºÅÍ ¾Ö´Ï¸ÞÀÌ¼Ç Á¤º¸¸¦ ´ãÀ» µ¥ÀÌÅÍ ¿¡¼Â
+ * ìž‘ì„±ìž : ìž„í¬ì„­
+ * ìž‘ì„±ì¼ : 2025/12/11
+ * ëª¬ìŠ¤í„°ê°€ ê°€ì§€ëŠ” ì• ë‹ˆë©”ì´ì…˜ì„ ì •ì˜í•˜ëŠ” ë°ì´í„° ì—ì…‹
  */
 UCLASS(BlueprintType)
 class MAGESQUAD_API UDA_MonsterAnimationSet : public UDataAsset
