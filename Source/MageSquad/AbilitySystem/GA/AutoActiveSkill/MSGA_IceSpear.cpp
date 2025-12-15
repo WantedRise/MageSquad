@@ -11,10 +11,13 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	SkillID = CurrentSkillID;
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	SkillDamage = SkillDataRow.SkillDamage;
+	CoolTime = SkillDataRow.CoolTime;
+	ProjectileNumber = SkillDataRow.ProjectileNumber;
+	Penetration = SkillDataRow.Penetration;
 	
 	UE_LOG(LogTemp, Log,
 			TEXT("SkillID : %d, Skill Level : %d, Skill Name : %s"), SkillDataRow.SkillID, SkillDataRow.SkillLevel, *SkillDataRow.SkillName);
-	
 	
 	// 가장 가까운 몬스터 찾기
 	UWorld* World = GetWorld();
@@ -59,7 +62,7 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			AActor* Candidate = H.GetActor();
 			if (!Candidate) continue;
 			
-			// 몬스터 Actor에 Tags 배열에 "Enemy"가 들어있어야 함
+			// 몬스터 "Enemy" 태그 검색
 			if (!Candidate->ActorHasTag(TEXT("Enemy")))
 				continue;
 
