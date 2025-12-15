@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystem/GA/AutoActiveSkill/MSGA_AutoActiveSkillBase.h"
 #include "MSFunctionLibrary.h"
+#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "MSGA_IceSpear.generated.h"
 
 /**
@@ -14,6 +15,7 @@
  * 자동 발동되는 공통 스킬 중 하나
  * 가장 가까운 적에게 투사체를 날리는 스킬
  */
+
 UCLASS()
 class MAGESQUAD_API UMSGA_IceSpear : public UMSGA_AutoActiveSkillBase
 {
@@ -64,6 +66,9 @@ protected:
 	
 	UFUNCTION()
 	void FireNextProjectile();
+	
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitDelay> FireDelayTask = nullptr;
 	
 	UFUNCTION()
 	FVector FindClosestEnemyLocation(const UWorld* World, const AActor* Avatar) const;

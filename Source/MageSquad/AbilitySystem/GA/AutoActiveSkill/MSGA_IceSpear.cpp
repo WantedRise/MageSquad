@@ -49,8 +49,8 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FVector Origin = Avatar->GetActorLocation();
 	FVector TargetLoc = FindClosestEnemyLocation(World, Avatar);
 	
-	// 근처에 적이 없으면 어빌리티 종료
-	if (TargetLoc.IsZero())
+	// 근처에 적이 없으거나 투사체 개수가 없으면 어빌리티 종료
+	if (TargetLoc.IsZero() || ProjectileNumber <= 0)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -82,18 +82,28 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 void UMSGA_IceSpear::FireNextProjectile()
 {
+	// 이미 예약된 Delay Task가 남아있으면(중복 방지) 정리
+	if (FireDelayTask)
+	{
+		FireDelayTask->EndTask();
+		FireDelayTask = nullptr;
+	}
+
+	// 끝 조건
 	if (FiredCount >= ProjectileNumber)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 		return;
 	}
 
+	// 안전 체크
 	if (!CachedAvatar.IsValid())
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
 
+	// 1발 발사
 	UMSFunctionLibrary::LaunchProjectile(
 		this,
 		ProjectileDataClass,
@@ -105,16 +115,23 @@ void UMSGA_IceSpear::FireNextProjectile()
 
 	FiredCount++;
 
-	// 다음 발이 남아 있으면 Delay
+	// 다음 발이 남아 있으면 Delay 예약
 	if (FiredCount < ProjectileNumber)
 	{
-		UAbilityTask_WaitDelay* WaitTask =
-			UAbilityTask_WaitDelay::WaitDelay(this, 0.1f);
-
-		WaitTask->OnFinish.AddDynamic(this, &UMSGA_IceSpear::FireNextProjectile);
-		WaitTask->ReadyForActivation();
+		FireDelayTask = UAbilityTask_WaitDelay::WaitDelay(this, 0.1f);
+		if (FireDelayTask)
+		{
+			FireDelayTask->OnFinish.AddDynamic(this, &UMSGA_IceSpear::FireNextProjectile);
+			FireDelayTask->ReadyForActivation();
+		}
+	}
+	else
+	{
+		// 마지막 발사까지 끝났으면 여기서 종료해도 OK
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	}
 }
+
 
 FVector UMSGA_IceSpear::FindClosestEnemyLocation(const UWorld* World, const AActor* Avatar) const
 {
