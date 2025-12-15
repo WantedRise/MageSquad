@@ -112,10 +112,13 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 	CachedRuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 	CachedRuntimeData.Direction = CachedDirection;
-
+	
 	CachedAvatar = Avatar;
 	FiredCount = 0;
-
+	
+	// 스킬 레벨 별 데이터 적용
+	CachedRuntimeData.Damage = SkillDamage;
+	
 	// ===== 첫 발 발사 =====
 	FireNextProjectile();
 }
