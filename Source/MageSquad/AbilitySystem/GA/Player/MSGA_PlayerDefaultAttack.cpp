@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/GA/Player/MSGA_PlayerDefaultAttack.h"
 
+#include "Types/MageSquadTypes.h"
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
 
@@ -11,9 +12,16 @@ UMSGA_PlayerDefaultAttack::UMSGA_PlayerDefaultAttack()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-	// 태그 설정
+	// 어빌리티 태그 설정
 	FGameplayTagContainer TagContainer;
-	//SetAssetTags()
+	TagContainer.AddTag(MSGameplayTags::Player_Ability_DefaultAttack);
+	SetAssetTags(TagContainer);
+
+	// 트리거 이벤트 태그 설정 (Gameplay Event로 활성화)
+	FAbilityTriggerData Trigger;
+	Trigger.TriggerTag = FGameplayTag(MSGameplayTags::Player_Event_DefaultAttack);
+	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+	AbilityTriggers.Add(Trigger);
 }
 
 void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -26,40 +34,58 @@ void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle
 		return;
 	}
 
-	// 로컬 플레이어에서만 로직 수행
-	// 커서 방향과 같은 로컬 입력/시점 정보를 필요로 하기 때문
-	if (!ActorInfo->IsLocallyControlled())
+	// 아바타 액터 가져오기
+	AActor* Avatar = GetAvatarActorFromActorInfo();
+	if (!Avatar)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
-	//if (AMSPlayerCharacter* Player = Cast<AMSPlayerCharacter>(ActorInfo->AvatarActor.Get()))
-	//{
-	//	APlayerController* PC = Cast<APlayerController>(ActorInfo->PlayerController.Get());
-	//	if (PC)
-	//	{
-	//		FHitResult Hit;
+	// 발사체를 소환할 트랜스폼
+	FTransform SpawnTransform;
 
-	//		// 커서 위치 가져오기
-	//		if (!PC->GetHitResultUnderCursor(ECC_Visibility, false, Hit))
-	//		{
-	//			EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-	//			return;
-	//		}
+	// 발사체의 원본 데이터를 기반으로 런타임 데이터 생성
+	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 
-	//		// 발사체 위치, 방향 구하기
-	//		FVector SpawnLocation = Player->GetActorLocation() + FVector(0.f, 0.f, 50.f);
-	//		FVector Direction = Hit.Location - SpawnLocation;
-	//		if (!Direction.Normalize())
-	//		{
-	//			Direction = Player->GetActorForwardVector();
-	//		}
+	// 발사체 스폰 위치 및 방향 계산
+	const FVector SpawnLocation = Avatar->GetActorLocation() + FVector(0.f, 0.f, 50.f);
+	FVector Direction = Avatar->GetActorForwardVector();
 
-	//		// 서버에 발사체 생성 요청
-	//		ServerRPCSpawnProjectile(SpawnLocation, Direction);
-	//	}
-	//}
+	// 컨트롤러의 커서 위치 받아오기
+	APlayerController* PC = Cast<APlayerController>(ActorInfo->PlayerController.Get());
+	if (PC)
+	{
+		FHitResult Hit;
+
+		// 마우스 커서 위치 얻기
+		if (!PC->GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		{
+			// 마우스 커서 위치를 얻지 못했으면 캐릭터의 전방 방향으로 설정
+			Direction = Avatar->GetActorForwardVector();
+		}
+
+		// 마우스 커서 방향으로 설정
+		if (Hit.bBlockingHit)
+		{
+			Direction = (Hit.Location - SpawnLocation).GetSafeNormal();
+			if (Direction.IsNearlyZero())
+			{
+				Direction = Avatar->GetActorForwardVector();
+			}
+		}
+		Direction.Z = 0.f;
+	}
+
+	// 트랜스폼 설정
+	SpawnTransform.SetLocation(SpawnLocation);
+	SpawnTransform.SetRotation(FQuat::Identity);
+
+	// 발사체 방향을 커서 방향으로 설정
+	RuntimeData.Direction = Direction;
+
+	// 발사체 런타임 데이터를 통해 발사체 생성 및 발사
+	UMSFunctionLibrary::LaunchProjectile(this, ProjectileDataClass, RuntimeData, SpawnTransform, Avatar, Cast<APawn>(Avatar));
 
 	// 능력 즉시 종료
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
