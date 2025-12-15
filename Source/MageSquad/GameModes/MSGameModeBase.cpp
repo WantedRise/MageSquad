@@ -4,6 +4,7 @@
 #include "GameModes/MSGameModeBase.h"
 #include "System/MSProjectilePoolSystem.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
+#include "System/MSEnemySpawnSubsystem.h"
 
 void AMSGameModeBase::BeginPlay()
 {
@@ -11,8 +12,24 @@ void AMSGameModeBase::BeginPlay()
 
 	if (UMSProjectilePoolSystem* ProjectilePoolSystem = GetGameInstance()->GetSubsystem<UMSProjectilePoolSystem>())
 	{
-		// ¹ß»çÃ¼ Ç®¸µ ½Ã½ºÅÛ ÃÊ±âÈ­
-		// ±âº» ¹ß»çÃ¼ Å¬·¡½º ÁöÁ¤ + 200°³ Ç®¸µ
+		// ï¿½ß»ï¿½Ã¼ Ç®ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
+		// ï¿½âº» ï¿½ß»ï¿½Ã¼ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ + 200ï¿½ï¿½ Ç®ï¿½ï¿½
 		ProjectilePoolSystem->Configure(ProjectileClass, 200);
+	}
+	
+	if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
+	{
+		return;
+	}
+
+	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(this))
+	{
+		// ì„¤ì •
+		SpawnSystem->SetSpawnInterval(2.0f);
+		SpawnSystem->SetMaxActiveMonsters(100);
+		SpawnSystem->SetSpawnRadius(3000.0f);
+        
+		// ìŠ¤í° ì‹œìž‘
+		SpawnSystem->StartSpawning();
 	}
 }

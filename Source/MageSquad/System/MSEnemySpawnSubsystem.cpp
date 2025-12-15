@@ -24,6 +24,11 @@
 void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	
+	if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
+	{
+		return;
+	}
 
 	// NavSystem 참조 획득
 	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
@@ -80,10 +85,15 @@ void UMSEnemySpawnSubsystem::Deinitialize()
 
 void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
+	// if (!MonsterStaticDataTable)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] MonsterStaticDataTable is not assigned!"));
+	// 	return;
+	// }
 	if (!MonsterStaticDataTable)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] MonsterStaticDataTable is not assigned!"));
-		return;
+		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr, 
+			TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
 	}
 
 	TArray<FName> RowNames = MonsterStaticDataTable->GetRowNames();

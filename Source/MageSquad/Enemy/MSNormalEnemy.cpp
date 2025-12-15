@@ -3,15 +3,13 @@
 
 #include "Enemy/MSNormalEnemy.h"
 #include "AIController/MSNormalAIController.h"
-#include "Animation/Enemy/MSEnemyAnimInstance.h"
-#include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
-#include "DataStructs/MSMonsterStaticData.h"
 
 AMSNormalEnemy::AMSNormalEnemy()
 {
 	// AI Controller 세팅
 	AIControllerClass = AMSNormalAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	
 	
 }
 

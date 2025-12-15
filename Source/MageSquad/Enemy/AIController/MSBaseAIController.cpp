@@ -22,10 +22,10 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 	
 	// 클라이언트에서는 AI 로직 실행 안함
-	// if (GetNetMode() == NM_Client)
-	// {
-	// 	return;
-	// }
+	if (GetNetMode() == NM_Client)
+	{
+		return;
+	}
 	
 	// RVO 설정 확인 (Pawn의 Movement Component)
 	if (ACharacter* OwnerCharacter = Cast<ACharacter>(InPawn))
@@ -45,17 +45,18 @@ void AMSBaseAIController::RunAI()
 {
 	// 블랙보드 컴포넌트 받아오기.
 	UBlackboardComponent* BB = Blackboard.Get();
-
-	// 블랙보드 사용 설정.
-	if (UseBlackboard(BlackBoardAsset, BB))
-	{
-		// Behavior Tree 실행
-		RunBehaviorTree(BehaviorTreeAsset);
-	}
 	
+	// BehaviorTree에 연결된 BlackboardAsset 사용
+	if (BehaviorTreeAsset && BehaviorTreeAsset->BlackboardAsset)
+	{
+		if (UseBlackboard(BehaviorTreeAsset->BlackboardAsset, BB))
+		{
+			RunBehaviorTree(BehaviorTreeAsset);
+		}
+	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s has no BlackboardComp assigned!"), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s: BehaviorTree or BlackboardAsset is null!"), *GetName());
 	}
 }
 
