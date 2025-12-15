@@ -32,4 +32,12 @@ protected:
 	// 스킬 레벨별 데이터를 읽기 위한 테이블
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")
 	UDataTable* SkillDataTable;
+	
+	// 데이터 테이블에서 읽은 데이터
+	UPROPERTY(EditDefaultsOnly, Category="SkillData")
+	FMSSkillDataRow SkillDataRow;
+	
+	// 스킬 ID
+	UPROPERTY(EditDefaultsOnly, Category="SkillData")
+	int32 SkillID;
 };

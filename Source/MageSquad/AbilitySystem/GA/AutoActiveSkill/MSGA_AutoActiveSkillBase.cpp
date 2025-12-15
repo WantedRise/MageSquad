@@ -30,4 +30,35 @@ void UMSGA_AutoActiveSkillBase::ActivateAbility(const FGameplayAbilitySpecHandle
 		}
 		SkillDataTable = LoadedTable;
 	}
+	
+	// 스킬 레벨 가져오기
+	const int32 AbilityLevel = GetAbilityLevel(Handle, ActorInfo);
+	
+	bool bFound = false;
+	for (const auto& Pair : SkillDataTable->GetRowMap())
+	{
+		const FMSSkillDataRow* Row =
+			reinterpret_cast<const FMSSkillDataRow*>(Pair.Value);
+
+		if (!Row)
+			continue;
+
+		if (Row->SkillID == SkillID &&
+			Row->SkillLevel == AbilityLevel)
+		{
+			SkillDataRow = *Row;
+			bFound = true;
+			break;
+		}
+	}
+	
+	if (!bFound)
+	{
+		UE_LOG(LogTemp, Error,
+			TEXT("[%s] SkillData not found (SkillID=%d, Level=%d)"),
+			*GetName(), SkillID, AbilityLevel);
+
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 }
