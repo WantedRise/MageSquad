@@ -22,10 +22,17 @@ class MAGESQUAD_API AMSLobbyPlayerController : public APlayerController
 public:
 	AMSLobbyPlayerController();
 
+public:
+	UFUNCTION(Server, Reliable)
+	void ServerRequestSetReady(bool bNewReady);
 protected:
 	void BeginPlay() override;
-	void OnPossess(class APawn* NewPawn) override;
-
-private:
-	FTimerHandle CameraTimerHandle;
+	void InitPlayerState() override;
+protected:
+	void CreateLobbyUI();
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<class UUserWidget> LobbyMainWidgetClass;
+	UPROPERTY()
+	class UMSLobbyMainWidget* LobbyMainWidget;
 };

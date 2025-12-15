@@ -15,7 +15,7 @@ AMSLobbyPlayerSlot::AMSLobbyPlayerSlot()
 	PlaySlotWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("PlaySlotWidgetComponent"));
 	PlaySlotWidgetComponent->SetDrawSize(FVector2D(100.0f, 100.0f));
 	PlaySlotWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialFinder(TEXT("/Game/Level/Materials/Loby/Widget3DPassThrough.Widget3DPassThrough"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialFinder(TEXT("/Game/Level/Materials/Lobby/Widget3DPassThrough.Widget3DPassThrough"));
 	if (MaterialFinder.Succeeded())
 	{
 		PlaySlotWidgetComponent->SetMaterial(0, MaterialFinder.Object);

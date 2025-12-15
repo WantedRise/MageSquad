@@ -19,6 +19,8 @@ public:
 	AMSLobbyGameMode();
 
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+public:
+	void HandlePlayerReadyStateChanged();
 
 };

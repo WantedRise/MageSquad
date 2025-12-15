@@ -21,6 +21,11 @@ public:
 	// Sets default values for this character's properties
 	AMSLobbyCharacter();
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
+	
+
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -33,20 +38,18 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+public:
+	void UpdateUserNickNameUI(const FString& InUserNickName);
+	void UpdateHostUI(bool bReady);
+	UFUNCTION()
+	void UpdateReadyStatusUI(bool bReady);
+
 protected:
-	UFUNCTION()
-	void OnRep_UserNickName();
-	UFUNCTION()
-	void OnRep_IsHostIconVisible();
+	void InitializeLobbyCharacterFromPlayerState();
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	class UWidgetComponent* LobbyPlayerEntryWidgetComponent;
 	UPROPERTY()
 	class UMSLobbyPlayerEntryWidget* LobbyPlayerEntryWidget;
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_UserNickName)
-	FString UserNickName;
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHostIconVisible)
-	uint8 bIsHostIconVisible : 1;
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHostIconVisible)
-	uint8 bIsReady : 1;
 };
