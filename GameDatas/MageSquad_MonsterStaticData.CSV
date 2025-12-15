@@ -1,8 +1,3 @@
 ID,SkeletalMesh,AnimationSet,MaxHealth,MoveSpeed,AttackDamage,AttackRange,StartAbilities,StartEffects,bIsRanged
-Normal_Ghoul,/Game/Aseets/UndeadPack/Ghoul/Mesh/SK_Ghoul.SK_Ghoul,/Game/Data/Enemy/DA/Normal/DA_GhoulAnimDataSet.DA_GhoulAnimDataSet,80,350,15,150,,,FALSE
-Normal_Lich,/Game/Aseets/UndeadPack/Lich/Mesh/SK_Lich_Full.SK_Lich_Full,/Game/Monsters/AnimSets/DA_Skeleton_Anim.DA_Skeleton_Anim,100,400,20,1000,,,TRUE
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+Normal_Ghoul,/Game/Aseets/UndeadPack/Ghoul/Mesh/SK_Ghoul.SK_Ghoul,/Game/Data/Enemy/DA/Normal/DA_GhoulAnimData.DA_GhoulAnimData,80,350,15,150,,,FALSE
+Normal_Lich,/Game/Aseets/UndeadPack/Lich/Mesh/SK_Lich_Full.SK_Lich_Full,/Game/Data/Enemy/DA/Normal/DA_LichAnimData.DA_LichAnimData,100,400,20,1000,,,TRUE

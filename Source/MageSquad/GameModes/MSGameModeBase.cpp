@@ -31,5 +31,7 @@ void AMSGameModeBase::BeginPlay()
         
 		// 스폰 시작
 		SpawnSystem->StartSpawning();
+		//SpawnSystem->SpawnMonsterByID("Normal_Ghoul", FVector(0.f, 0.f ,0.f));
 	}
+	
 }

@@ -421,7 +421,10 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 
 	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
 		*MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
-
+	
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
+		*MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
+	
 	return Enemy;
 }
 
@@ -564,6 +567,12 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->SetActorHiddenInGame(false);
 	Enemy->SetActorEnableCollision(true);
 	Enemy->SetActorTickEnabled(true);
+	
+	// ⭐ 디버깅용 체크
+	UE_LOG(LogTemp, Warning, TEXT("[Activate] Enemy: %s"), *Enemy->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("[Activate] Location: %s"), *Location.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("[Activate] IsHidden: %d"), Enemy->IsHidden());
+	UE_LOG(LogTemp, Warning, TEXT("[Activate] HasMesh: %d"), Enemy->GetMesh() != nullptr);
 
 	// AI 컨트롤러 시작
 	if (AController* Controller = Enemy->GetController())
@@ -577,6 +586,12 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	{
 		// 컨트롤러가 없으면 생성
 		Enemy->SpawnDefaultController();
+	}
+	
+	// ⭐ 에디터에서 시각적으로 확인용 (디버그 구체 그리기)
+	if (GEngine)
+	{
+		DrawDebugSphere(GetWorld(), Location, 100.0f, 12, FColor::Green, false, 5.0f);
 	}
 }
 
