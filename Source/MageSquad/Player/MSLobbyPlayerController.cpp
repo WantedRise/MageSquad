@@ -82,7 +82,6 @@ void AMSLobbyPlayerController::BeginPlay()
 	
 		CreateLobbyUI();
 	}
-	
 }
 
 void AMSLobbyPlayerController::CreateLobbyUI()
@@ -118,13 +117,20 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 				LobbyMainWidget->WBP_MSLobbyReady,
 				&UMSLobbyReadyWidget::OnReadyTimeChanged
 			);
+			GS->OnReadyTimeChanged.AddUObject(
+				LobbyMainWidget->WBP_MSLobbyReady,
+				&UMSLobbyReadyWidget::OnReadyTimeChanged
+			);
 		}
+
 		// 준비 상태 변경 시 UI 전환
 		// 로비에 최소 1명 이상이 준비 상태인지에 따라 Ready UI를 전환한다.
-		if (AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>())
+
+
+		/*if (AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>())
 		{
 			PS->OnLobbyReadyStateChanged.AddUObject(LobbyMainWidget->WBP_MSLobbyReady, &UMSLobbyReadyWidget::ApplyReadyStateUI);
-		}
+		}*/
 	}
 
 }

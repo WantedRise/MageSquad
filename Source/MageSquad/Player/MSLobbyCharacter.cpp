@@ -38,6 +38,11 @@ void AMSLobbyCharacter::BeginPlay()
 		LobbyPlayerEntryWidgetComponent->InitWidget();
 
 		LobbyPlayerEntryWidget = Cast<UMSLobbyPlayerEntryWidget>(LobbyPlayerEntryWidgetComponent->GetWidget());
+
+		if (AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>())
+		{
+			UpdateHostUI(PS->IsHost());
+		}
 	}
 }
 

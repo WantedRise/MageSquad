@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Types/LobbyReadyTypes.h"
 #include "MSLobbyGameState.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(
@@ -11,13 +12,12 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
     int32 /* RemainingSeconds */
 );
 
-UENUM(BlueprintType)
-enum class ELobbyReadyPhase : uint8
-{
-    NotReady        UMETA(DisplayName = "Not Ready"),
-    PartialReady    UMETA(DisplayName = "Partial Ready (60s)"),
-    AllReady        UMETA(DisplayName = "All Ready (3s)")
-};
+DECLARE_MULTICAST_DELEGATE_OneParam(
+    FOnLobbyReadyPhaseChanged,
+    ELobbyReadyPhase /* ELobbyReadyPhase */
+);
+
+
 
 /**
  * 
@@ -30,8 +30,16 @@ public:
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 public:
     FOnReadyTimeChanged OnReadyTimeChanged;
+    FOnLobbyReadyPhaseChanged OnLobbyReadyPhaseChanged;
 
+    void StopReadyCountdown();
     void StartReadyCountdown(int32 StartSeconds);
+    void SetLobbyReadyPhase(const ELobbyReadyPhase NewLobbyReadyPhase) {
+        LobbyReadyPhase = NewLobbyReadyPhase;
+    }
+    ELobbyReadyPhase GetLobbyReadyPhase() const { return LobbyReadyPhase; }
+    UFUNCTION()
+    void OnRep_LobbyReadyPhase();
 protected:
     UFUNCTION()
     void OnRep_RemainingTime();
@@ -41,7 +49,7 @@ protected:
     UPROPERTY(ReplicatedUsing = OnRep_RemainingTime)
     int32 RemainingReadyTime; // 남은 초
 
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_LobbyReadyPhase)
     ELobbyReadyPhase LobbyReadyPhase;
 
     FTimerHandle ReadyTimerHandle;

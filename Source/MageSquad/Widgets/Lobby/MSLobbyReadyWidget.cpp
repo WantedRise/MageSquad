@@ -6,6 +6,8 @@
 #include "Components/TextBlock.h"
 #include "Player/MSLobbyPlayerController.h"
 #include "MageSquad.h"
+#include "GameStates/MSLobbyGameState.h"
+
 void UMSLobbyReadyWidget::NativeConstruct()
 {
     Super::NativeConstruct();
@@ -14,6 +16,11 @@ void UMSLobbyReadyWidget::NativeConstruct()
         Button_Ready->OnClicked.AddDynamic(this, &UMSLobbyReadyWidget::OnReadyButtonClicked);
     }
 
+    if (AMSLobbyGameState* GS = GetWorld()->GetGameState<AMSLobbyGameState>())
+    {
+        GS->OnReadyTimeChanged.AddUObject(this,&UMSLobbyReadyWidget::OnReadyTimeChanged);
+        GS->OnLobbyReadyPhaseChanged.AddUObject(this, &UMSLobbyReadyWidget::ApplyReadyStateUI);
+    }
 }
 
 void UMSLobbyReadyWidget::OnReadyTimeChanged(int32 RemainingSeconds)
@@ -22,15 +29,15 @@ void UMSLobbyReadyWidget::OnReadyTimeChanged(int32 RemainingSeconds)
     {
         Text_Ready_Second->SetText(FText::AsNumber(RemainingSeconds));
     }
-   
 }
 
-void UMSLobbyReadyWidget::ApplyReadyStateUI(bool bIsAnyReady)
+void UMSLobbyReadyWidget::ApplyReadyStateUI(ELobbyReadyPhase NewLobbyReadyPhase)
 {
+    UE_LOG(LogMSNetwork, Warning, TEXT("%d"), (int32)NewLobbyReadyPhase);
     // 로비에 최소 1명 이상이 준비 상태인지에 따라 Ready UI를 전환한다.
     // bIsAnyReady == true  : 누군가 준비함 (PartialReady 상태)
     // bIsAnyReady == false : 아무도 준비하지 않음 (NotReady 상태)
-    if (bIsAnyReady)
+    if (NewLobbyReadyPhase!=ELobbyReadyPhase::NotReady)
     {
         // PartialReady 상태 UI
         // - 기본 Ready 텍스트 숨김

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Types/LobbyReadyTypes.h"
 #include "MSLobbyReadyWidget.generated.h"
 
 /**
@@ -19,7 +20,7 @@ public:
 	UFUNCTION()
 	void OnReadyTimeChanged(int32 RemainingSeconds);
 	UFUNCTION()
-	void ApplyReadyStateUI(bool bIsAnyReady);
+	void ApplyReadyStateUI(ELobbyReadyPhase NewLobbyReadyPhase);
 protected:
 	UFUNCTION()
 	void OnReadyButtonClicked();

@@ -3,6 +3,7 @@
 
 #include "GameStates/MSLobbyGameState.h"
 #include "Net/UnrealNetwork.h"
+#include <GameModes/MSLobbyGameMode.h>
 
 void AMSLobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -12,9 +13,19 @@ void AMSLobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 }
 
+void AMSLobbyGameState::StopReadyCountdown()
+{
+    GetWorld()->GetTimerManager().ClearTimer(ReadyTimerHandle);
+}
+
 void AMSLobbyGameState::StartReadyCountdown(int32 StartSeconds)
 {
     RemainingReadyTime = StartSeconds;
+
+    if (HasAuthority())
+    {
+        OnRep_RemainingTime();
+    }
 
     GetWorld()->GetTimerManager().SetTimer(
         ReadyTimerHandle,
@@ -27,7 +38,7 @@ void AMSLobbyGameState::StartReadyCountdown(int32 StartSeconds)
 
 void AMSLobbyGameState::TickReadyCountdown()
 {
-    if (RemainingReadyTime < 0)
+    if (RemainingReadyTime <= 0)
     {
         GetWorld()->GetTimerManager().ClearTimer(ReadyTimerHandle);
         OnReadyCountdownFinished();
@@ -35,13 +46,30 @@ void AMSLobbyGameState::TickReadyCountdown()
     }
 
     --RemainingReadyTime;
+
+    if (HasAuthority())
+    {
+        OnRep_RemainingTime();
+    }
 }
 
 void AMSLobbyGameState::OnReadyCountdownFinished()
 {
-    //인게임 레벨로 이동
-    FString MapURL = TEXT("GameLevel?listen");
-    GetWorld()->ServerTravel(MapURL, true);
+    if (HasAuthority())
+    {
+        if (AMSLobbyGameMode* GM = GetWorld()->GetAuthGameMode<AMSLobbyGameMode>())
+        {
+            GM->HandleReadyCountdownFinished();
+        }
+    }
+}
+
+void AMSLobbyGameState::OnRep_LobbyReadyPhase()
+{
+    if (OnLobbyReadyPhaseChanged.IsBound())
+    {
+        OnLobbyReadyPhaseChanged.Broadcast(LobbyReadyPhase);
+    }
 }
 
 void AMSLobbyGameState::OnRep_RemainingTime()

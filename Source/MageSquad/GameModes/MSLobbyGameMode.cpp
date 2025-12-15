@@ -12,7 +12,7 @@
 
 AMSLobbyGameMode::AMSLobbyGameMode()
 {
-
+    bUseSeamlessTravel = true;
 }
 
 AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
@@ -35,8 +35,24 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	return nullptr;
 }
 
+void AMSLobbyGameMode::HandleReadyCountdownFinished()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Lobby -> GameLevel ServerTravel"));
+
+    GetWorld()->ServerTravel(
+        TEXT("GameLevel?listen")
+    );
+}
+
 void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
 {
+    AMSLobbyGameState* LobbyGS = Cast<AMSLobbyGameState>(GameState);
+    if (nullptr == LobbyGS)
+    {
+        MS_LOG(LogMSNetwork, Warning, TEXT("%s"), TEXT("AMSLobbyGameState nullptr"));
+        return;
+    }
+
     int32 ReadyCount = 0;
     int32 TotalPlayers = 0;
 
@@ -53,30 +69,32 @@ void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
         }
     }
 
-    if (ReadyCount == 0)
-    {
-        return;
-    }
-    
-    AMSLobbyGameState* LobbyGS = Cast<AMSLobbyGameState>(GameState);
+    ELobbyReadyPhase NewPhase =
+        (ReadyCount == 0) ? ELobbyReadyPhase::NotReady :
+        (ReadyCount == TotalPlayers) ? ELobbyReadyPhase::AllReady :
+        ELobbyReadyPhase::PartialReady;
 
-    if (nullptr == LobbyGS)
+    // Phase 변경 시에만 처리
+    if (LobbyGS->GetLobbyReadyPhase() != NewPhase)
     {
-        MS_LOG(LogMSNetwork, Warning, TEXT("%s"), TEXT("AMSLobbyGameState nullptr"));
-        return;
-    }
+        LobbyGS->SetLobbyReadyPhase(NewPhase);
+        LobbyGS->OnRep_LobbyReadyPhase(); // 리슨서버 즉시 반영용
+        MS_LOG(LogMSNetwork, Warning, TEXT("%d"), (int32)NewPhase);
+        switch (NewPhase)
+        {
+        case ELobbyReadyPhase::NotReady:
+            LobbyGS->StopReadyCountdown();
+            break;
 
-    int32 StartCount = 0;
-    if (TotalPlayers == ReadyCount)
-    {
-        StartCount = 3;
-    }
-    else
-    {
-        StartCount = 60;
-    }
+        case ELobbyReadyPhase::PartialReady:
+            LobbyGS->StartReadyCountdown(60);
+            break;
 
-    LobbyGS->StartReadyCountdown(60);
+        case ELobbyReadyPhase::AllReady:
+            LobbyGS->StartReadyCountdown(3);
+            break;
+        }
+    }
 }
 
 

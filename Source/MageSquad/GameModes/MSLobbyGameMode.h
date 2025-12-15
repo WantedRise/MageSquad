@@ -20,6 +20,8 @@ public:
 
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
 
+	void HandleReadyCountdownFinished();
+
 public:
 	void HandlePlayerReadyStateChanged();
 
