@@ -11,7 +11,7 @@
  * 작성일: 25/12/15
  *
  * 플레이어의 기본 공격 어빌리티 (자동 공격)
- * 마우스 커서로 매직 미사일 발사
+ * 마우스 커서 방향으로 매직 미사일 발사
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_PlayerDefaultAttack : public UGameplayAbility

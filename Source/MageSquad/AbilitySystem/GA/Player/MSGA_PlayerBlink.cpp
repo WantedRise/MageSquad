@@ -1,0 +1,237 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "AbilitySystem/GA/Player/MSGA_PlayerBlink.h"
+#include "AbilitySystemComponent.h"
+#include "GameFramework/Character.h"
+#include "Player/MSPlayerController.h"
+#include "GameplayTagsManager.h"
+
+#include "MSGameplayTags.h"
+
+UMSGA_PlayerBlink::UMSGA_PlayerBlink()
+{
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+
+	// 어빌리티 태그 설정
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(MSGameplayTags::Player_Ability_Blink);
+	SetAssetTags(TagContainer);
+
+	// 트리거 이벤트 태그 설정 (Gameplay Event로 활성화)
+	FAbilityTriggerData Trigger;
+	Trigger.TriggerTag = FGameplayTag(MSGameplayTags::Player_Event_Blink);
+	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+	AbilityTriggers.Add(Trigger);
+
+	// 기본 GameplayCue 태그(프로젝트에서 DefaultGameplayTags.ini에 등록 필요)
+	// 에디터에서는 Niagara만 할당하면 되도록, 태그는 코드 기본값 제공 + 필요시 BP에서 Override 가능
+	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
+
+	Cue_BlinkStart = TagsMgr.RequestGameplayTag(FName("GameplayCue.Ability.Blink.Start"), false);
+	Cue_BlinkEnd = TagsMgr.RequestGameplayTag(FName("GameplayCue.Ability.Blink.End"), false);
+}
+
+void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	if (!ActorInfo || !ActorInfo->AvatarActor.IsValid())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	// 재사용 대기 시간 중이면 종료
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
+	if (!ASC || !Character)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	// 점멸 시도
+	const bool bSuccess = PerformBlink(Character, ASC);
+
+	EndAbility(Handle, ActorInfo, ActivationInfo, true, !bSuccess);
+}
+
+bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemComponent* ASC)
+{
+	// 점멸 시작 위치 / 점멸 도착 위치
+	const FVector StartLocation = Character->GetActorLocation();
+	const FVector DesiredLocation = ComputeDesiredLocation(Character);
+
+	// 시작 VFX 재생
+	ExecuteCue(ASC, Cue_BlinkStart, StartLocation);
+
+	FVector FinalLocation = DesiredLocation;
+
+	// 점멸 도착 위치로 점멸 시도
+	if (!ResolveFinalLocation(Character, StartLocation, DesiredLocation, FinalLocation))
+	{
+		// 이동 불가 시 false 반환
+		return false;
+	}
+
+	// 이동 방향 회전값
+	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
+
+	// TeleportTo를 통해 이동
+	// TeleportTo는 서버에서 실행하면 캐릭터 이동이 네트워크로 복제됨
+	const bool bTeleported = Character->TeleportTo(FinalLocation, FacingRot, false, false);
+	if (!bTeleported)
+	{
+		// 아주 드물게 Resolve에서 가능하다고 판단했는데 실패할 수 있음(경합 상황 등)
+		return false;
+	}
+
+	// 종료 VFX 재생
+	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation);
+	return true;
+}
+
+FVector UMSGA_PlayerBlink::ComputeDesiredLocation(const ACharacter* Character) const
+{
+	check(Character);
+
+	FVector CursorLocation;
+	FVector CursorDirection;
+
+	// 커서 방향 및 위치 구하기
+	if (GetCurrentActorInfo()->IsNetAuthority())
+	{
+		if (AMSPlayerController* PC = Cast<AMSPlayerController>(GetCurrentActorInfo()->PlayerController.Get()))
+		{
+			CursorLocation = PC->GetServerCursor();
+			CursorDirection = PC->GetServerCursorDir(Character->GetActorForwardVector());
+		}
+	}
+
+	// 점멸 최대 거리로 이동
+	float A = FVector::Dist(Character->GetActorLocation(), Character->GetActorLocation() + BlinkDistance);
+
+	// 커서 위치로 이동
+	float B = FVector::Dist(Character->GetActorLocation(), CursorLocation);
+
+	// 점멸 최대 거리와 커서 위치 중에서 더 가까운 위치로 이동
+	return Character->GetActorLocation() + CursorDirection * FMath::Min(A, B);;
+}
+
+bool UMSGA_PlayerBlink::ResolveFinalLocation(ACharacter* Character, const FVector& StartLocation, const FVector& DesiredLocation, FVector& OutFinalLocation) const
+{
+	if (!Character) return false;
+
+	// 이동 방향 회전값
+	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
+
+	// 목표 지점으로 이동 시도
+	if (CanTeleportTo(Character, DesiredLocation, FacingRot))
+	{
+		OutFinalLocation = DesiredLocation;
+		return true;
+	}
+
+	// 이동 불가면 근처로 이동 가능한 지점 탐색
+	return FindNearbyValidLocation(Character, StartLocation, DesiredLocation, OutFinalLocation);
+}
+
+bool UMSGA_PlayerBlink::FindNearbyValidLocation(ACharacter* Character, const FVector& StartLocation, const FVector& DesiredLocation, FVector& OutLocation) const
+{
+	if (!Character || !Character->GetWorld()) return false;
+
+	UWorld* World = Character->GetWorld();
+	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
+
+	// #1: 엔진 내장 기능을 통해 근처 텔레포트 위치 찾기
+	{
+		FVector Candidate = DesiredLocation;
+		if (World->FindTeleportSpot(Character, Candidate, FacingRot))
+		{
+			OutLocation = Candidate;
+			return true;
+		}
+	}
+
+	// #2: 원형 탐색: DesiredLocation 주변을 반경 증가시키며 샘플링
+	{
+		const int32 Steps = FMath::Max(4, FallbackAngleSteps);
+		const float MaxR = FMath::Max(0.f, FallbackMaxRadius);
+		const float StepR = FMath::Max(1.f, FallbackRingStep);
+
+		for (float R = StepR; R <= MaxR; R += StepR)
+		{
+			for (int32 i = 0; i < Steps; ++i)
+			{
+				const float Angle = (2.f * PI) * (static_cast<float>(i) / static_cast<float>(Steps));
+				const FVector Offset(FMath::Cos(Angle) * R, FMath::Sin(Angle) * R, 0.f);
+				const FVector Candidate = DesiredLocation + Offset;
+
+				if (CanTeleportTo(Character, Candidate, FacingRot))
+				{
+					OutLocation = Candidate;
+					return true;
+				}
+			}
+		}
+	}
+
+	// #3: 이진 탐색: 시작 위치에서 목표 위치까지의 선분에서 가장 멀리 가능한 위치 찾기
+	// - 목표 지점 자체는 불가이므로, 가능한 최대 t를 찾는 형태
+	{
+		float Low = 0.f;
+		float High = 1.f;
+		FVector Best = StartLocation;
+
+		for (int32 Iter = 0; Iter < 10; ++Iter) // 10회면 충분히 근사
+		{
+			const float Mid = (Low + High) * 0.5f;
+			const FVector Candidate = FMath::Lerp(StartLocation, DesiredLocation, Mid);
+
+			if (CanTeleportTo(Character, Candidate, FacingRot))
+			{
+				Best = Candidate;
+				Low = Mid;    // 더 멀리 시도
+			}
+			else
+			{
+				High = Mid;   // 덜 멀리
+			}
+		}
+
+		// Best가 Start와 거의 같으면 실패로 처리(원하는 정책에 따라 변경 가능)
+		if (!Best.Equals(StartLocation, 1.0f))
+		{
+			OutLocation = Best;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool UMSGA_PlayerBlink::CanTeleportTo(ACharacter* Character, const FVector& Location, const FRotator& Rot) const
+{
+	if (!Character) return false;
+
+	// bIsATest 옵션을 true로 하고 텔레포트 수행 (실제 이동 없이 체크한 수행)
+	return Character->TeleportTo(Location, Rot, true, false);
+}
+
+void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& Location) const
+{
+	if (!ASC || !CueTag.IsValid()) return;
+
+	// 큐 파라미터 설정 (재생할 위치 보내기 위함)
+	FGameplayCueParameters Params;
+	Params.Location = Location;
+
+	// Cue 실행
+	ASC->ExecuteGameplayCue(CueTag, Params);
+}
