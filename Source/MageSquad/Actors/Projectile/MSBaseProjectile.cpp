@@ -38,87 +38,67 @@ AMSBaseProjectile::AMSBaseProjectile()
 	Tags.AddUnique(TEXT("Projectile"));
 }
 
-const UProjectileStaticData* AMSBaseProjectile::GetProjectileStaticData() const
+void AMSBaseProjectile::InitProjectileRuntimeDataFromClass(TSubclassOf<UProjectileStaticData> InProjectileDataClass)
 {
-	if (IsValid(ProjectileDataClass))
+	// 발사체 원본 데이터 초기화
+	ProjectileDataClass = InProjectileDataClass;
+
+	const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
+	ProjectileRuntimeData.CopyFromStaticData(StaticData);
+	bRuntimeDataInitialized = true;
+}
+
+void AMSBaseProjectile::SetProjectileRuntimeData(const FProjectileRuntimeData& InRuntimeData)
+{
+	// 발사체 런타임 데이터 초기화
+	ProjectileRuntimeData = InRuntimeData;
+	bRuntimeDataInitialized = true;
+
+	// 이미 실행 중인 경우 즉시 적용 (서버 측 지연 생성때문에 늦게 나온 경우)
+	if (HasActorBegunPlay())
 	{
-		// 클래스의 CDO 반환
-		// 클래스의 기본 객체를 반환하므로, 여러 개의 발사체가 같은 데이터 객체를 공유
-		// 즉, 메모리에 새로운 객체를 생성하지 않고, 미리 존재하는 기본 객체를 사용
-		return GetDefault<UProjectileStaticData>(ProjectileDataClass);
+		ApplyProjectileRuntimeData(false);
 	}
-	return nullptr;
 }
 
 void AMSBaseProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 발사체 데이터 가져오기
-	const UProjectileStaticData* ProjectileData = GetProjectileStaticData();
-
-	if (ProjectileData && ProjectileMovementComponent)
+	// 런타임 데이터의 초기화가 되지 않은 경우
+	// 발사체 원본 데이터를 복제하여 발사체 재정의 데이터를 초기화
+	if (HasAuthority() && !bRuntimeDataInitialized)
 	{
-		// 발사체 메쉬 설정
-		if (ProjectileData->StaticMesh)
-		{
-			ProjectileMesh->SetStaticMesh(ProjectileData->StaticMesh);
-			SetRootComponent(ProjectileMesh);
-		}
-
-		// 발사체의 초기 속도를 월드 좌표계 기준으로 적용
-		ProjectileMovementComponent->bInitialVelocityInLocalSpace = false;
-
-		// 발사체의 초기 속도와 최대 속도를 설정
-		ProjectileMovementComponent->InitialSpeed = ProjectileData->InitialSpeed;
-		ProjectileMovementComponent->MaxSpeed = ProjectileData->MaxSpeed;
-
-		// 발사체의 방향이 이동하는 속도 벡터를 따라가도록 설정
-		// 발사체가 이동 방향에 맞춰 자동으로 회전
-		ProjectileMovementComponent->bRotationFollowsVelocity = true;
-
-		// 충돌 시 튕기지 않도록 설정, 반발 계수를 0으로 설정하여 완전히 충돌 후 정지
-		ProjectileMovementComponent->bShouldBounce = false;
-		ProjectileMovementComponent->Bounciness = 0.f;
-
-		// 발사체의 중력 영향력을 설정
-		ProjectileMovementComponent->ProjectileGravityScale = ProjectileData->GravityMultiplayer;
-
-		// 발사체의 초기 속도를 설정
-		// 발사체가 생성될 때 바라보는 방향으로 초기 속도만큼의 속도를 적용
-		ProjectileMovementComponent->Velocity = ProjectileData->InitialSpeed * GetActorForwardVector();
-
-		// 부착 나이아가라 재생
-		UNiagaraFunctionLibrary::SpawnSystemAttached(ProjectileData->OnAttachVFX, GetRootComponent(), NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, false);
-
-		//FTimerHandle LifeTimeTimer;
-		//// 서버에서 생명주기 타이머 관리
-		//if (HasAuthority())
-		//{
-		//	GetWorld()->GetTimerManager().SetTimer(LifeTimeTimer,
-		//		FTimerDelegate::CreateLambda(
-		//			[this]()
-		//			{
-		//				Destroy();
-		//			}
-		//		), ProjectileData, false
-		//	);
-		//}
+		InitProjectileRuntimeDataFromClass(ProjectileDataClass);
 	}
+
+	// 런타임 데이터 적용
+	ApplyProjectileRuntimeData(true);
 }
 
 void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// 발사체 데이터 가져오기
-	const UProjectileStaticData* ProjectileData = GetProjectileStaticData();
+	// 런타임 데이터 가져오기
+	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
 
-	if (ProjectileData)
+	// 런타임 데이터가 초기화되지 않았으면, 원본 데이터를 가져와 런타임 데이터로 초기화
+	if (!bRuntimeDataInitialized)
+	{
+		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
+		EffectiveData.CopyFromStaticData(StaticData);
+	}
+
+	if (EffectiveData.OnHitVFX)
+	{
+		// 폭발 나이아가라 재생
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectiveData.OnHitVFX, GetActorLocation());
+	}
+
+	if (EffectiveData.OnHitSFX)
 	{
 		// 폭발 사운드 재생
-		UGameplayStatics::PlaySoundAtLocation(this, ProjectileData->OnHitSFX, GetActorLocation(), 1.f);
+		UGameplayStatics::PlaySoundAtLocation(this, EffectiveData.OnHitSFX, GetActorLocation(), 1.f);
 
-		// 폭발 나이아가라 재생
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ProjectileData->OnHitVFX, GetActorLocation());
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -129,18 +109,87 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMSBaseProjectile, ProjectileDataClass);
+	DOREPLIFETIME(AMSBaseProjectile, bRuntimeDataInitialized);
+	DOREPLIFETIME(AMSBaseProjectile, ProjectileRuntimeData);
 }
 
 void AMSBaseProjectile::OnProjectileStop(const FHitResult& ImpactResult)
 {
-	// 발사체 데이터 가져오기
-	const UProjectileStaticData* ProjectileData = GetProjectileStaticData();
+	// 런타임 데이터 가져오기
+	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
 
-	if (ProjectileData)
+	// 런타임 데이터가 초기화되지 않았으면, 원본 데이터를 가져와 런타임 데이터로 초기화
+	if (!bRuntimeDataInitialized)
 	{
-		// 대미지 로직
+		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
+		EffectiveData.CopyFromStaticData(StaticData);
 	}
+
+	// 대미지 로직
+	// EffectiveData.BaseDamage / Radius / Effects
 
 	// 발사체 파괴 (EndPlay 호출)
 	Destroy();
+}
+
+void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
+{
+	if (!ProjectileMovementComponent) return;
+
+	// 런타임 데이터 가져오기
+	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
+
+	// 런타임 데이터가 초기화되지 않았으면, 원본 데이터를 가져와 런타임 데이터로 초기화
+	if (!bRuntimeDataInitialized)
+	{
+		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
+		EffectiveData.CopyFromStaticData(StaticData);
+	}
+
+	// 스태틱 메시 초기화
+	if (ProjectileMesh && EffectiveData.StaticMesh)
+	{
+		ProjectileMesh->SetStaticMesh(EffectiveData.StaticMesh);
+		SetRootComponent(ProjectileMesh);
+	}
+
+	// 발사체 크기(범위) 초기화
+	SetActorScale3D(FVector(EffectiveData.Radius));
+
+	// 발사체 무브먼트 설정
+	ProjectileMovementComponent->bInitialVelocityInLocalSpace = false;
+	ProjectileMovementComponent->InitialSpeed = EffectiveData.InitialSpeed;
+	ProjectileMovementComponent->MaxSpeed = EffectiveData.MaxSpeed;
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->bShouldBounce = false;
+	ProjectileMovementComponent->Bounciness = 0.f;
+	ProjectileMovementComponent->ProjectileGravityScale = EffectiveData.GravityMultiplayer;
+
+	// 발사체 방향 설정
+	FVector Dir = EffectiveData.Direction.GetSafeNormal();
+	if (Dir.IsNearlyZero())
+	{
+		Dir = GetActorForwardVector();
+	}
+	ProjectileMovementComponent->Velocity = EffectiveData.InitialSpeed * Dir;
+
+	// 부착 VFX 부착(한 번만)
+	if (bSpawnAttachVFX && EffectiveData.OnAttachVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			EffectiveData.OnAttachVFX,
+			GetRootComponent(),
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset,
+			false
+		);
+	}
+}
+
+void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
+{
+	// 런타임 데이터 리플리케이션 시, VFX만 제외하고 런타임 데이터 적용
+	ApplyProjectileRuntimeData(false);
 }
