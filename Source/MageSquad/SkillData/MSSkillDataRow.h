@@ -16,13 +16,21 @@ struct FMSSkillDataRow : public FTableRowBase
 
 public:
 
-    // SkillID
+    // Skill Type (자동 발동 액티브 : 1, 좌클릭 발동 액티브 : 2, 우클릭 발동 액티브 : 3)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 SkillType = 1;
+
+    // Skill ID
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 SkillID = 0;
 
-    // SkillName
+    // Skill Name
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString SkillName;
+
+    // Skill Event Tag
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FGameplayTag SkillEventTag;
 
     // Skill level (1~10)
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
