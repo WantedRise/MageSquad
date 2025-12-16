@@ -12,7 +12,7 @@
  *
  * 플레이어 컨트롤러 클래스
  * HUD 생성 및 유지 관리
- * 네 명의 플레이어를 모두 추척하고 속성 업데이트를 UI의 해당 슬롯에 바인딩
+ * 각 컨트롤러의 커서 위치를 서버에게 알림
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerController : public APlayerController
@@ -36,7 +36,7 @@ private:
 
 	// 커서 정보 업데이트 RPC
 	UFUNCTION(Server, Unreliable)
-	void ServerRPCSetCursorInfo(const FVector_NetQuantizeNormal& InPos, const FVector_NetQuantizeNormal& InDir);
+	void ServerRPCSetCursorInfo(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir);
 
 private:
 	// 마우스 커서 업데이트 타이머
@@ -44,9 +44,9 @@ private:
 
 	// 마우스 커서 위치
 	UPROPERTY()
-	FVector_NetQuantizeNormal ServerCursor = FVector(1.f, 0.f, 0.f);
+	FVector_NetQuantize ServerCursor = FVector(0.f, 0.f, 0.f);
 
 	// 마우스 커서 방향
 	UPROPERTY()
-	FVector_NetQuantizeNormal ServerCursorDir = FVector(1.f, 0.f, 0.f);
+	FVector_NetQuantize ServerCursorDir = FVector(1.f, 0.f, 0.f);
 };
