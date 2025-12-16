@@ -3,10 +3,12 @@
 
 #include "Enemy/AIController/MSNormalAIController.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardData.h"
 
 AMSNormalAIController::AMSNormalAIController()
 {
 	BehaviorTreeAsset = LoadObject<UBehaviorTree>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/BT_NormalEnemy.BT_NormalEnemy"));
+	BlackBoardAsset = LoadObject<UBlackboardData>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/BB_NormalEnemy.BB_NormalEnemy"));
 }
 
 void AMSNormalAIController::OnPossess(APawn* InPawn)

@@ -16,6 +16,7 @@
 #include "Enemy/AIController/MSBaseAIController.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 //~=============================================================================
 // Subsystem Lifecycle
@@ -24,12 +25,12 @@
 void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	
+
 	if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
 	{
 		return;
 	}
-	
+
 	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
@@ -45,15 +46,15 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// 풀 사전 생성
 	PrewarmPools();
 
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"), 
-		HasAuthority() ? TEXT("YES") : TEXT("NO"));
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
+	       HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
 
 void UMSEnemySpawnSubsystem::Deinitialize()
 {
 	// 스폰 중지 및 타이머 정리
 	StopSpawning();
-	
+
 	// 모든 활성 몬스터 제거
 	ClearAllMonsters();
 
@@ -98,8 +99,8 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 	// }
 	if (!MonsterStaticDataTable)
 	{
-		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr, 
-			TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
+		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
+		                                                TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
 	}
 
 	TArray<FName> RowNames = MonsterStaticDataTable->GetRowNames();
@@ -113,13 +114,13 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 
 		// 캐시된 데이터 생성 (값 복사)
 		FMSCachedEnemyData& CachedData = CachedMonsterData.Add(RowName);
-		
+
 		// 에셋 동기 로딩 (초기화 단계에서만 수행)
 		if (!RowData->SkeletalMesh.IsNull())
 		{
 			CachedData.SkeletalMesh = RowData->SkeletalMesh.LoadSynchronous();
 		}
-		
+
 		if (!RowData->AnimationSet.IsNull())
 		{
 			CachedData.AnimationSet = RowData->AnimationSet.LoadSynchronous();
@@ -196,9 +197,11 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 	for (int32 i = 0; i < Pool.InitialPoolSize; ++i)
 	{
 		FActorSpawnParameters Params;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
+		//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 		// 맵 밖으로 스폰 (비활성 상태)
+		
+		
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
 			FVector(0, 0, 100.0f),
@@ -208,13 +211,13 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 
 		if (Enemy)
 		{
-			//DeactivateEnemy(Enemy);
+			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Prewarmed pool: %s (%d enemies)"),
-		*Pool.EnemyClass->GetName(), Pool.InitialPoolSize);
+	       *Pool.EnemyClass->GetName(), Pool.InitialPoolSize);
 }
 
 //~=============================================================================
@@ -249,11 +252,11 @@ void UMSEnemySpawnSubsystem::StartSpawning()
 		this,
 		&UMSEnemySpawnSubsystem::SpawnMonsterTick,
 		SpawnInterval,
-		true  // Loop
+		true // Loop
 	);
 
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawning started - Interval: %.2fs, Max: %d"),
-		SpawnInterval, MaxActiveMonsters);
+	       SpawnInterval, MaxActiveMonsters);
 }
 
 void UMSEnemySpawnSubsystem::StopSpawning()
@@ -289,10 +292,10 @@ void UMSEnemySpawnSubsystem::ClearAllMonsters()
 		{
 			// 델리게이트 언바인딩
 			UnbindEnemyDeathEvent(Enemy);
-			
+
 			// 타이머 정리 (풀 반환 타이머가 있을 수 있음)
 			GetWorld()->GetTimerManager().ClearAllTimersForObject(Enemy);
-			
+
 			Enemy->Destroy();
 		}
 	}
@@ -364,6 +367,11 @@ void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 
 AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterID, const FVector& Location)
 {
+	if (!HasAuthority())
+	{
+		return nullptr;
+	}
+
 	// 풀 찾기
 	FMSEnemyPool** PoolPtr = MonsterPoolMap.Find(MonsterID);
 	if (!PoolPtr || !*PoolPtr)
@@ -379,6 +387,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	while (Pool->FreeEnemies.Num() > 0)
 	{
 		AMSBaseEnemy* Candidate = Pool->FreeEnemies.Pop();
+
 		if (IsValid(Candidate))
 		{
 			Enemy = Candidate;
@@ -406,7 +415,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 		}
 
 		UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Pool exhausted, created new enemy (Type: %s)"),
-			*MonsterID.ToString());
+		       *MonsterID.ToString());
 	}
 
 	// DataTable 데이터로 초기화
@@ -418,19 +427,19 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	// Active 풀에 추가
 	Pool->ActiveEnemies.Add(Enemy);
 	EnemyToPoolMap.Add(Enemy, Pool);
-	
+
 	++CurrentActiveCount;
 	++TotalSpawnedCount;
 
 	// 사망 이벤트 바인딩
-	//BindEnemyDeathEvent(Enemy);
+	BindEnemyDeathEvent(Enemy);
 
 	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
-		*MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
-	
+	       *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
+
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
-		*MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
-	
+	       *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
+
 	return Enemy;
 }
 
@@ -506,15 +515,15 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 	// 1. 스켈레탈 메시 설정
 	if (Data->SkeletalMesh)
-	{		
+	{
 		if (Enemy->GetMesh()->IsRegistered())
 		{
 			Enemy->GetMesh()->UnregisterComponent();
 		}
-		
+
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
 
-		// ⭐[핵심3] 렌더링 상태 강제 업데이트 및 재등록
+		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
 	}
 
@@ -558,7 +567,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 			{
 				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 				EffectContext.AddSourceObject(Enemy);
-				
+
 				FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EffectClass, 1, EffectContext);
 				if (SpecHandle.IsValid())
 				{
@@ -569,7 +578,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 	}
 }
 
-void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location)
+void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location) const
 {
 	if (!Enemy)
 	{
@@ -579,15 +588,26 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->SetActorLocation(Location);
 	Enemy->SetActorRotation(FRotator::ZeroRotator);
 	Enemy->SetActorHiddenInGame(false);
-	Enemy->SetActorEnableCollision(true);
-	Enemy->SetActorTickEnabled(true);
+	//Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
 	
-	// ⭐ 디버깅용 체크
-	UE_LOG(LogTemp, Warning, TEXT("[Activate] Enemy: %s"), *Enemy->GetName());
-	UE_LOG(LogTemp, Warning, TEXT("[Activate] Location: %s"), *Location.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("[Activate] IsHidden: %d"), Enemy->IsHidden());
-	UE_LOG(LogTemp, Warning, TEXT("[Activate] HasMesh: %d"), Enemy->GetMesh() != nullptr);
-	UE_LOG(LogTemp, Warning, TEXT("[Activate] HasSkeletalMesh: %d"), Enemy->GetMesh()->GetSkeletalMeshAsset() != nullptr);
+	// ✅ RVO 재활성화 (핵심!)
+	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
+	{
+		// Velocity 초기화
+		MovementComp->Velocity = FVector::ZeroVector;
+		MovementComp->UpdateComponentVelocity();
+		
+		// RVO 재등록 (UID가 0이면 새로 할당됨)
+		MovementComp->SetAvoidanceEnabled(false);
+		MovementComp->SetAvoidanceEnabled(true);
+		
+		// RVO 파라미터 재설정 (혹시 모를 초기화 대비)
+		MovementComp->bUseRVOAvoidance = true;
+		MovementComp->AvoidanceConsiderationRadius = 500.0f;
+		MovementComp->AvoidanceWeight = 0.5f;
+		MovementComp->SetAvoidanceGroup(1);
+		MovementComp->SetGroupsToAvoidMask(1);
+	}
 
 	// AI 컨트롤러 시작
 	if (AController* Controller = Enemy->GetController())
@@ -601,12 +621,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	{
 		// 컨트롤러가 없으면 생성
 		Enemy->SpawnDefaultController();
-	}
-	
-	// ⭐ 에디터에서 시각적으로 확인용 (디버그 구체 그리기)
-	if (GEngine)
-	{
-		DrawDebugSphere(GetWorld(), Location, 100.0f, 12, FColor::Green, false, 5.0f);
+		UE_LOG(LogTemp, Error, TEXT("Spawn Default Controller"));
 	}
 }
 
@@ -618,9 +633,17 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	}
 
 	Enemy->SetActorHiddenInGame(true);
-	Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
-	Enemy->SetActorLocation(FVector(0, 0, 100.0f));
+	
+	// ✅ Movement 정리
+	UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement();
+	if (MovementComp)
+	{
+		MovementComp->StopMovementImmediately();
+		MovementComp->Velocity = FVector::ZeroVector;
+		// RVO 비활성화 (다음 활성화 시 재등록됨)
+		MovementComp->SetAvoidanceEnabled(false);
+	}
 
 	// AI 정지
 	if (AController* Controller = Enemy->GetController())
@@ -675,10 +698,10 @@ void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 	}
 
 	// // "Enemy.State.Dead" 태그 변경 감지
-	// FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
-	//
-	// ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
-	// 	.AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
+	FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
+	
+	ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
 }
 
 void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
@@ -701,7 +724,7 @@ void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
-	if (NewCount > 0)  // 태그 추가됨 = 사망
+	if (NewCount > 0) // 태그 추가됨 = 사망
 	{
 		HandleEnemyDeath(Enemy);
 	}
@@ -779,7 +802,7 @@ void UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSE
 	Pool->FreeEnemies.Add(Enemy);
 
 	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Enemy returned to pool (Free: %d, Active: %d)"),
-		Pool->FreeEnemies.Num(), Pool->ActiveEnemies.Num());
+	       Pool->FreeEnemies.Num(), Pool->ActiveEnemies.Num());
 }
 
 //~=============================================================================
