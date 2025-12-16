@@ -1,16 +1,16 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MSGA_AutoActiveSkillBase.h"
+#include "MSGA_SkillBase.h"
 
-UMSGA_AutoActiveSkillBase::UMSGA_AutoActiveSkillBase()
+UMSGA_SkillBase::UMSGA_SkillBase()
 {
 	// Ability 인스턴싱/네트워크 정책
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 }
 
-void UMSGA_AutoActiveSkillBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+void UMSGA_SkillBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {

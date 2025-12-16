@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "SkillData/MSSkillDataRow.h"
-#include "MSGA_AutoActiveSkillBase.generated.h"
+#include "MSGA_SkillBase.generated.h"
 
 /**
  * 작성자: 박세찬
@@ -15,12 +15,12 @@
  * 데이터테이블을 불러오는 기능을 가짐
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_AutoActiveSkillBase : public UGameplayAbility
+class MAGESQUAD_API UMSGA_SkillBase : public UGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_AutoActiveSkillBase();
+	UMSGA_SkillBase();
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,

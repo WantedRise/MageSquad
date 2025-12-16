@@ -27,7 +27,12 @@ namespace MSGameplayTags
 
 	/* Skill Ability Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Ability_IceSpear);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Ability_Explosion);
 
 	/* Skill Event Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Event_IceSpear);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Event_Explosion);
+	
+	/* GameplayCue Tags */
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_Explosion);
 }

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/GA/AutoActiveSkill/MSGA_IceSpear.h"
+#include "MSGA_IceSpear.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "MSGameplayTags.h"

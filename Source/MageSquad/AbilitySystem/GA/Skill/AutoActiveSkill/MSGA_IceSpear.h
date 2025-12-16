@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/GA/AutoActiveSkill/MSGA_AutoActiveSkillBase.h"
+#include "AbilitySystem/GA/Skill/MSGA_SkillBase.h"
 #include "MSFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "MSGA_IceSpear.generated.h"
@@ -17,7 +17,7 @@
  */
 
 UCLASS()
-class MAGESQUAD_API UMSGA_IceSpear : public UMSGA_AutoActiveSkillBase
+class MAGESQUAD_API UMSGA_IceSpear : public UMSGA_SkillBase
 {
 	GENERATED_BODY()
 	
