@@ -6,22 +6,37 @@
 #include "Actors/MSLobbyPlayerSlot.h"
 #include "System/MSSteamManagerSubsystem.h"
 #include "GameFramework/GameState.h"
+#include <Player/MSLobbyPlayerState.h>
+#include "MageSquad.h"
+#include "GameStates/MSLobbyGameState.h"
 
 AMSLobbyGameMode::AMSLobbyGameMode()
 {
-
+    bUseSeamlessTravel = true;
 }
+void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
 
+    if (AMSLobbyPlayerState* PS = NewPlayer->GetPlayerState<AMSLobbyPlayerState>())
+    {
+        if (GameState->PlayerArray.Num() == 1)
+        {
+            //호스트 표시
+            PS->SetHost(true);
+        }
+    }
+}
 AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
     UWorld* World = GetWorld();
     if (World)
     {
+        //플레이어 슬롯을 스폰 위치로 지정
         for (AMSLobbyPlayerSlot* PlayerSlot : TActorRange<AMSLobbyPlayerSlot>(World))
         {
             if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
             {
-                UE_LOG(LogTemp, Warning, TEXT("ChoosePlayerStart : %s"), *PlayerSlot->GetName());
                 PlayerSlot->SetController(Player);
                 PlayerSlot->HiddenInviteWidgetComponent();
                 
@@ -32,8 +47,63 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	return nullptr;
 }
 
-void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
+void AMSLobbyGameMode::HandleReadyCountdownFinished()
 {
-
-    Super::PostLogin(NewPlayer);
+    UE_LOG(LogTemp, Warning, TEXT("Lobby -> GameLevel ServerTravel"));
+    GetWorld()->ServerTravel(TEXT("GameLevel?listen"));
 }
+
+void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
+{
+    AMSLobbyGameState* LobbyGS = Cast<AMSLobbyGameState>(GameState);
+    if (nullptr == LobbyGS)
+    {
+        MS_LOG(LogMSNetwork, Warning, TEXT("%s"), TEXT("AMSLobbyGameState nullptr"));
+        return;
+    }
+
+    int32 ReadyCount = 0;
+    int32 TotalPlayers = 0;
+
+    //모든 PlayerState를 조회하여 준비상태인지 확인
+    for (APlayerState* PS : GameState->PlayerArray)
+    {
+        if (AMSLobbyPlayerState* LobbyPS = Cast<AMSLobbyPlayerState>(PS))
+        {
+            ++TotalPlayers;
+            if (LobbyPS->IsReady())
+            {
+                ++ReadyCount;
+            }
+        }
+    }
+
+    ELobbyReadyPhase NewPhase =
+        (ReadyCount == 0) ? ELobbyReadyPhase::NotReady :
+        (ReadyCount == TotalPlayers) ? ELobbyReadyPhase::AllReady :
+        ELobbyReadyPhase::PartialReady;
+
+    // Phase 변경 시에만 처리
+    if (LobbyGS->GetLobbyReadyPhase() != NewPhase)
+    {
+        LobbyGS->SetLobbyReadyPhase(NewPhase);
+        LobbyGS->OnRep_LobbyReadyPhase(); // 리슨서버 즉시 반영용
+        MS_LOG(LogMSNetwork, Warning, TEXT("%d"), (int32)NewPhase);
+        switch (NewPhase)
+        {
+        case ELobbyReadyPhase::NotReady:
+            LobbyGS->StopReadyCountdown();
+            break;
+
+        case ELobbyReadyPhase::PartialReady:
+            LobbyGS->StartReadyCountdown(60);
+            break;
+
+        case ELobbyReadyPhase::AllReady:
+            LobbyGS->StartReadyCountdown(3);
+            break;
+        }
+    }
+}
+
+
