@@ -11,7 +11,7 @@
 
 UMSGA_PlayerBlink::UMSGA_PlayerBlink()
 {
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
 	// 어빌리티 태그 설정
@@ -25,24 +25,16 @@ UMSGA_PlayerBlink::UMSGA_PlayerBlink()
 	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(Trigger);
 
-	// 기본 GameplayCue 태그(프로젝트에서 DefaultGameplayTags.ini에 등록 필요)
-	// 에디터에서는 Niagara만 할당하면 되도록, 태그는 코드 기본값 제공 + 필요시 BP에서 Override 가능
+	// GameplayCue 태그 설정
 	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
-
 	Cue_BlinkStart = TagsMgr.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
 	Cue_BlinkEnd = TagsMgr.RequestGameplayTag(FName("GameplayCue.Player.Blink.End"), false);
 }
 
 void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	if (!ActorInfo || !ActorInfo->AvatarActor.IsValid())
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
-	}
-
-	// 재사용 대기 시간 중이면 종료
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	// 어빌리티를 활성화해도 되는지 검사
+	if (!CheckAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -62,8 +54,24 @@ void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, !bSuccess);
 }
 
+bool UMSGA_PlayerBlink::CheckAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	// 액터 유효성 검사
+	if (!ActorInfo || !ActorInfo->AvatarActor.IsValid()) return false;
+
+	// 서버에서만 로직 수행
+	if (!ActorInfo->IsNetAuthority()) return false;
+
+	// 코스트 및 쿨타임 검사
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) return false;
+
+	return true;
+}
+
 bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemComponent* ASC)
 {
+	check(Character);
+
 	// 점멸 시작 위치 / 점멸 도착 위치
 	const FVector StartLocation = Character->GetActorLocation();
 	const FVector DesiredLocation = ComputeDesiredLocation(Character);
@@ -88,7 +96,6 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 	const bool bTeleported = Character->TeleportTo(FinalLocation, FacingRot, false, false);
 	if (!bTeleported)
 	{
-		// 아주 드물게 Resolve에서 가능하다고 판단했는데 실패할 수 있음(경합 상황 등)
 		return false;
 	}
 
@@ -228,9 +235,21 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 {
 	if (!ASC || !CueTag.IsValid()) return;
 
-	// 큐 파라미터 설정 (재생할 위치 보내기 위함)
+	// 서버에서만 Cue 실행
+	if (!ASC->GetOwner() || !ASC->GetOwner()->HasAuthority()) return;
+
+	// FLinearColor를 넘기기 위해 이펙트 컨텍스트 핸들 생성
+	//FGameplayEffectContextHandle CtxHandle = ASC->MakeEffectContext();
+	//FMSGameplayEffectContext* Ctx = static_cast<FMSGameplayEffectContext*>(CtxHandle.Get());
+	//if (Ctx)
+	//{
+	//	Ctx->CueColor = BlinkColor;
+	//}
+
+	// 큐 파라미터 설정 (재생할 위치, 파라미터들을 보내기 위함)
 	FGameplayCueParameters Params;
 	Params.Location = Location;
+	//Params.EffectContext = CtxHandle;
 
 	// Cue 실행
 	ASC->ExecuteGameplayCue(CueTag, Params);

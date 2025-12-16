@@ -10,7 +10,15 @@ FVector AMSPlayerController::GetServerCursor() const
 
 FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) const
 {
-	const FVector Fwd = FVector(FallbackForward).GetSafeNormal();
+	// 화면 밖 등으로 커서 방향이 유효하지 않을 때는 캐릭터 전방으로 발사
+	FVector Fwd = FVector(FallbackForward);
+	Fwd.Z = 0.f;
+	Fwd = Fwd.GetSafeNormal();
+	if (Fwd.IsNearlyZero())
+	{
+		Fwd = FVector(1.f, 0.f, 0.f);
+	}
+
 	const FVector Cursor = FVector(ServerCursorDir).GetSafeNormal();
 
 	return Cursor.IsNearlyZero() ? Fwd : Cursor;
@@ -63,37 +71,48 @@ void AMSPlayerController::UpdateCursor()
 		// 캐릭터의 위치
 		const FVector SpawnOrigin = P->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 
-		// 커서 방향
-		FVector Dir = bHit ? (Hit.Location - SpawnOrigin) : P->GetActorForwardVector();
+		// 캐릭터 전방(수평) - 커서가 화면을 벗어나면 이 방향으로 발사
+		FVector Forward2D = P->GetActorForwardVector();
+		Forward2D.Z = 0.f;
+		Forward2D = Forward2D.GetSafeNormal();
+		if (Forward2D.IsNearlyZero()) Forward2D = FVector(1.f, 0.f, 0.f);
 
-		// Z값 보정
-		Dir.Z = 50.f;
+		// 커서 월드 위치
+		// - Hit 성공: 충돌 지점
+		// - Hit 실패(커서가 뷰포트를 벗어남 등): 전방으로 충분히 먼 지점(가상 커서)
+		const FVector CursorWorldPos = bHit ? Hit.ImpactPoint : (SpawnOrigin + Forward2D * 10000.f);
+
+		// 커서 방향 (수평 고정)
+		FVector Dir = (CursorWorldPos - SpawnOrigin);
+		Dir.Z = 0.f;
 		Dir = Dir.GetSafeNormal();
-		if (Dir.IsNearlyZero()) Dir = FVector(1.f, 0.f, 0.f);
+		if (Dir.IsNearlyZero()) Dir = Forward2D;
 
 		if (HasAuthority())
 		{
 			// 호스트(리슨)면 서버 캐시 직접 갱신
-			ServerCursor = FVector(Hit.ImpactPoint.X, Hit.ImpactPoint.Y, ServerCursor.Z);
+			ServerCursor = CursorWorldPos;
 			ServerCursorDir = Dir;
 		}
 		else
 		{
 			// 원격 클라는 서버로 전달
-			ServerRPCSetCursorInfo(Hit.ImpactPoint, Dir);
+			ServerRPCSetCursorInfo(CursorWorldPos, Dir);
 		}
 	}
 }
 
-void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_NetQuantizeNormal& InPos, const FVector_NetQuantizeNormal& InDir)
+void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir)
 {
-	// 커서 위치 저장
-	FVector Pos = FVector(InPos.X, InPos.Y, ServerCursor.Z);
-	if (Pos.IsNearlyZero()) Pos = FVector(1.f, 0.f, 0.f);
-	ServerCursor = Pos;
+	ServerCursor = FVector(InPos);
 
-	// 커서 방향 저장
-	FVector Dir = FVector(InDir.X, InDir.Y, ServerCursorDir.Z);
-	if (Dir.IsNearlyZero()) Dir = FVector(1.f, 0.f, 0.f);
-	ServerCursorDir = Dir.GetSafeNormal();
+	// 커서 방향 저장 (수평 고정)
+	FVector Dir = FVector(InDir);
+	Dir.Z = 0.f;
+	Dir = Dir.GetSafeNormal();
+	if (Dir.IsNearlyZero())
+	{
+		Dir = FVector(1.f, 0.f, 0.f);
+	}
+	ServerCursorDir = Dir;
 }

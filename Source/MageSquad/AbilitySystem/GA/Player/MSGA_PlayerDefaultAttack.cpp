@@ -10,7 +10,7 @@
 
 UMSGA_PlayerDefaultAttack::UMSGA_PlayerDefaultAttack()
 {
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
 	// 어빌리티 태그 설정
@@ -29,7 +29,8 @@ void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (!ActorInfo || !ActorInfo->AvatarActor.IsValid())
+	// 어빌리티를 활성화해도 되는지 검사
+	if (!CheckAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -51,13 +52,10 @@ void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle
 	FVector Direction = Avatar->GetActorForwardVector();
 
 	// 컨트롤러의 커서 방향으로 설정
-	if (ActorInfo->IsNetAuthority())
+	if (AMSPlayerController* PC = Cast<AMSPlayerController>(ActorInfo->PlayerController.Get()))
 	{
-		if (AMSPlayerController* PC = Cast<AMSPlayerController>(ActorInfo->PlayerController.Get()))
-		{
-			// 발사체 방향을 커서 방향으로 설정
-			RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
-		}
+		// 발사체 방향을 커서 방향으로 설정
+		RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
 	}
 
 	// 스폰 위치 설정
@@ -69,4 +67,18 @@ void UMSGA_PlayerDefaultAttack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	// 능력 즉시 종료
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+}
+
+bool UMSGA_PlayerDefaultAttack::CheckAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	// 액터 유효성 검사
+	if (!ActorInfo || !ActorInfo->AvatarActor.IsValid()) return false;
+
+	// 서버에서만 로직 수행
+	if (!ActorInfo->IsNetAuthority()) return false;
+
+	// 코스트 및 쿨타임 검사
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) return false;
+
+	return true;
 }

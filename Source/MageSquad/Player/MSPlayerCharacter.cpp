@@ -25,8 +25,8 @@
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	GetMesh()->bReceivesDecals = false;
 
+	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Enemy 전용 콜리전으로 설정
@@ -56,7 +56,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	SpringArm->SocketOffset = FVector(0.f, 0.f, -100.f);
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->CameraLagSpeed = 4.f;
-	SpringArm->TargetArmLength = 2000.f;
+	SpringArm->TargetArmLength = TargetArmLength;
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = false;
 	SpringArm->bInheritRoll = true;
@@ -99,6 +99,12 @@ void AMSPlayerCharacter::Tick(float DeltaSecond)
 {
 	Super::Tick(DeltaSecond);
 
+	// 로컬에서 제어되는 폰만 수행 (서버 연동 필요 없음)
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
 	// 카메라 줌 인/아웃 보간 수행
 	UpdateCameraZoom(DeltaSecond);
 }
@@ -121,20 +127,23 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
-	// 시작 데이터 기반으로 어빌리티/이펙트 부여
+	// 시작 어빌리티/이펙트 부여 (서버 전용)
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
 
-	// 서버 및 로컬에서 제어되는 클라이언트에서 자동 공격을 시작
-	StartAutoAttack();
+	// 서버 자동 공격 시작
+	if (HasAuthority() && bAutoAttackEnabledOnSpawn)
+	{
+		SetAutoAttackEnabledInternal(true);
+	}
 }
 
 void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// 플레이어 시작 데이터 복제
 	DOREPLIFETIME(AMSPlayerCharacter, PlayerData);
+	DOREPLIFETIME(AMSPlayerCharacter, bAutoAttackEnabled);
 }
 
 void AMSPlayerCharacter::OnRep_PlayerState()
@@ -159,21 +168,15 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
-
-	// 서버 및 로컬에서 제어되는 클라이언트에서 자동 공격을 시작
-	StartAutoAttack();
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
 {
 	if (!SpringArm) return;
 
-	const float CurrentLength = SpringArm->TargetArmLength;
-
 	// 목표 줌 길이까지 부드럽게 보간
-	const float NewLength =
-		FMath::FInterpTo(CurrentLength, TargetArmLength, DeltaTime, CameraZoomInterpSpeed);
-
+	const float CurrentLength = SpringArm->TargetArmLength;
+	const float NewLength = FMath::FInterpTo(CurrentLength, TargetArmLength, DeltaTime, CameraZoomInterpSpeed);
 	SpringArm->TargetArmLength = NewLength;
 }
 
@@ -186,7 +189,10 @@ void AMSPlayerCharacter::PawnClientRestart()
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->ClearAllMappings();
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			if (DefaultMappingContext)
+			{
+				Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			}
 		}
 	}
 }
@@ -267,10 +273,8 @@ void AMSPlayerCharacter::UseBlink(const FInputActionValue& Value)
 	// 로컬 폰이 아닌 경우 종료
 	if (!IsLocallyControlled()) return;
 
-	FGameplayEventData Payload;
-	Payload.EventTag = BlinkEventTag;
-
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, BlinkEventTag, Payload);
+	// 트리거 함수 호출
+	TriggerAbilityEvent(BlinkEventTag);
 }
 
 void AMSPlayerCharacter::UseLeftSkill(const FInputActionValue& Value)
@@ -285,26 +289,109 @@ void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
 
 void AMSPlayerCharacter::StartAutoAttack()
 {
-	// 로컬 폰이 아닌 경우 종료
-	if (!IsLocallyControlled()) return;
-
-	// 자동 공격 타이머 초기화 및 설정
-	GetWorldTimerManager().ClearTimer(AutoAttackTimerHandle);
-	GetWorldTimerManager().SetTimer(AutoAttackTimerHandle, this, &AMSPlayerCharacter::HandleAutoAttack, AutoAttackInterval, true, 0.f);
+	if (HasAuthority())
+	{
+		SetAutoAttackEnabledInternal(true);
+	}
+	else if (IsLocallyControlled())
+	{
+		ServerRPCSetAutoAttackEnabled(true);
+	}
 }
 
 void AMSPlayerCharacter::StopAutoAttack()
 {
-	// 자동 공격 타이머 초기화
-	GetWorldTimerManager().ClearTimer(AutoAttackTimerHandle);
+	if (HasAuthority())
+	{
+		SetAutoAttackEnabledInternal(false);
+	}
+	else if (IsLocallyControlled())
+	{
+		ServerRPCSetAutoAttackEnabled(false);
+	}
 }
 
-void AMSPlayerCharacter::HandleAutoAttack()
+void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 {
+	// 서버가 아니면 종료
+	if (!HasAuthority()) return;
+
+	// 같은 설정일 경우 무시
+	if (bAutoAttackEnabled == bEnabled) return;
+
+	bAutoAttackEnabled = bEnabled;
+
+	GetWorldTimerManager().ClearTimer(AutoAttackTimerHandle);
+
+	if (bAutoAttackEnabled)
+	{
+		// 서버에서 기본 공격을 수행
+		GetWorldTimerManager().SetTimer(
+			AutoAttackTimerHandle,
+			this,
+			&AMSPlayerCharacter::HandleAutoAttack_Server,
+			AutoAttackInterval,
+			true,
+			0.5f
+		);
+	}
+}
+
+void AMSPlayerCharacter::HandleAutoAttack_Server()
+{
+	// 서버가 아니거나, 자동 공격이 비활성화 상태라면 종료
+	if (!HasAuthority() || !bAutoAttackEnabled) return;
+
+	// 이벤트 태그가 유효하지 않으면 종료
+	if (!AttackStartedEventTag.IsValid()) return;
+
+	// 이벤트 태그 전달
 	FGameplayEventData Payload;
 	Payload.EventTag = AttackStartedEventTag;
-
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackStartedEventTag, Payload);
+}
+
+void AMSPlayerCharacter::ServerRPCSetAutoAttackEnabled_Implementation(bool bEnabled)
+{
+	SetAutoAttackEnabledInternal(bEnabled);
+}
+
+void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)
+{
+	// 유효성 검사
+	if (!IsAllowedAbilityEventTag(EventTag)) return;
+
+	// 서버 로직
+	if (HasAuthority())
+	{
+		// 이벤트 태그 전달
+		FGameplayEventData Payload;
+		Payload.EventTag = EventTag;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
+	}
+	// 클라이언트 로직
+	else
+	{
+		// 서버에게 트리거 요청
+		ServerRPCTriggerAbilityEvent(EventTag);
+	}
+}
+
+void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTag EventTag)
+{
+	// 유효성 검사
+	if (!IsAllowedAbilityEventTag(EventTag)) return;
+
+	// 이벤트 태그 전달
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
+}
+
+bool AMSPlayerCharacter::IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const
+{
+	// 로컬 플레이어가 이 이벤트 태그를 가지고 있는지 검사 (이후 추가)
+	return EventTag.IsValid() && (EventTag == BlinkEventTag || EventTag == AttackStartedEventTag);
 }
 
 void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerData)
@@ -314,11 +401,7 @@ void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerDa
 
 UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
 {
-	if (AbilitySystemComponent)
-	{
-		return AbilitySystemComponent;
-	}
-	return nullptr;
+	return AbilitySystemComponent;
 }
 
 bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle)

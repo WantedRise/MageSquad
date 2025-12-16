@@ -24,6 +24,10 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
+	// 어빌리티를 활성화해도 되는지 확인하는 헬퍼 함수
+	bool CheckAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData);
+
+protected:
 	// 발사체 원본 데이터 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;

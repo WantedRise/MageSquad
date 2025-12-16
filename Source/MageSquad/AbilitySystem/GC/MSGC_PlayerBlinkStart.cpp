@@ -4,7 +4,10 @@
 #include "AbilitySystem/GC/MSGC_PlayerBlinkStart.h"
 
 #include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+
+#include "Types/MageSquadTypes.h"
 
 UMSGC_PlayerBlinkStart::UMSGC_PlayerBlinkStart()
 {
@@ -17,14 +20,20 @@ bool UMSGC_PlayerBlinkStart::OnExecute_Implementation(AActor* MyTarget, const FG
 	// 스폰 위치/회전값 구하기
 	const FVector SpawnLocation = ResolveSpawnLocation(MyTarget, Parameters);
 	const FRotator SpawnRotation = ResolveSpawnRotation(MyTarget);
+	const FLinearColor Color = ResolveLinearColor(Parameters);
 
 	// 나이아가라 스폰
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+	UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 		MyTarget->GetWorld(),
 		StartNiagara,
 		SpawnLocation,
 		SpawnRotation
 	);
+
+	if (Niagara)
+	{
+		//Niagara->SetColorParameter(TEXT("Blink_Color"), Color);
+	}
 
 	return true;
 }
@@ -42,4 +51,14 @@ FVector UMSGC_PlayerBlinkStart::ResolveSpawnLocation(AActor* MyTarget, const FGa
 FRotator UMSGC_PlayerBlinkStart::ResolveSpawnRotation(AActor* MyTarget) const
 {
 	return MyTarget ? MyTarget->GetActorRotation() : FRotator::ZeroRotator;
+}
+
+FLinearColor UMSGC_PlayerBlinkStart::ResolveLinearColor(const FGameplayCueParameters& Parameters) const
+{
+	if (const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get()))
+	{
+		return Context->CueColor;
+	}
+
+	return FLinearColor();
 }

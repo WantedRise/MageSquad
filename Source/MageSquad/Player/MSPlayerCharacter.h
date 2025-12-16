@@ -15,10 +15,9 @@
  * 작성일: 25/12/08
  *
  * 플레이어 캐릭터 클래스
- * - 기본 이동 및 기본 공격 자동 발사
+ * - 기본 이동 및 스킬 자동 발사
  * - 이동 스킬(점멸)
  * - 경험치 / 스킬 슬롯 시스템
- * - GAS를 통한 어빌리티 및 능력치(스탯) 관리 (PlayerState에서 관리)
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySystemInterface
@@ -100,19 +99,13 @@ protected:
 	virtual void PawnClientRestart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// 이동 함수
+	// 이동, 카메라 줌 인/아웃 함수
 	void Move(const FInputActionValue& Value);
-
-	// 카메라 줌 인/아웃 함수
 	void CameraZoom(const FInputActionValue& Value);
 
-	// 점멸 함수
+	// 스킬 입력 함수
 	void UseBlink(const FInputActionValue& Value);
-
-	// 좌클릭 공격 함수
 	void UseLeftSkill(const FInputActionValue& Value);
-
-	// 우클릭 공격 함수
 	void UseRightSkill(const FInputActionValue& Value);
 
 private:
@@ -140,29 +133,63 @@ private:
 	* Attack Section
 	*****************************************************/
 public:
-	// 로컬에서 제어하는 폰에 자동 공격을 시작하는 함수
+	// 자동 공격 시작 함수
 	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
 	void StartAutoAttack();
 
-	// 로컬에서 제어하는 폰에 자동 공격을 종료하는 함수
+	// 자동 공격 멈춤 함수
 	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
 	void StopAutoAttack();
+
+private:
+	// 자동 공격 호출 요청 함수
+	void SetAutoAttackEnabledInternal(bool bEnabled);
+
+	// 자동 공격 호출 함수 (서버 전용)
+	void HandleAutoAttack_Server();
+
+	// 서버에게 자동 공격 호출 요청 ServerRPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPCSetAutoAttackEnabled(bool bEnabled);
 
 protected:
 	// 자동 공격 주기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
 	float AutoAttackInterval = 0.6f;
 
-	// 자동 공격 타이머 핸들
-	FTimerHandle AutoAttackTimerHandle;
+	// 이 값이 true이면, 서버는 폰이 빙의되는 즉시 자동 공격을 활성화 함
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
+	bool bAutoAttackEnabledOnSpawn = true;
 
-	// 자동 공격 함수 (자동 공격 주기마다 호출)
-	void HandleAutoAttack();
+private:
+	// 자동 공격 상태
+	// 서버 상태. 클라이언트가 필요에 따라 UI를 반영할 수 있도록 복제
+	UPROPERTY(Replicated)
+	bool bAutoAttackEnabled = false;
+
+	// 자동 공격 타이머
+	FTimerHandle AutoAttackTimerHandle;
 
 
 
 	/*****************************************************
-	* Gameplay Tag Section
+	* Gameplay Event Trigger Section
+	*****************************************************/
+private:
+	// 어빌리티 트리거 함수
+	void TriggerAbilityEvent(const FGameplayTag& EventTag);
+
+	// 서버에게 게임플레이 이벤트를 요청하는 ServerRPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPCTriggerAbilityEvent(FGameplayTag EventTag);
+
+	// 유효성 검사 함수 (태그 유효 여부)
+	bool IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const;
+
+
+
+	/*****************************************************
+	* Gameplay Event Tag Section
 	*****************************************************/
 protected:
 	// 기본 공격 이벤트 태그
@@ -172,6 +199,10 @@ protected:
 	// 점멸 이벤트 태그
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag BlinkEventTag;
+
+	// 패시브 스킬1 이벤트 태그
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag Passive_Skill_01_EventTag;
 
 
 
@@ -217,11 +248,9 @@ private:
 	// 실제 인스턴스는 PlayerState가 소유하며, 캐릭터는 포인터만 참조
 	// PossessedBy/OnRep_PlayerState에서 할당된다.
 
-	// PlayerState의 ASC를 참조
 	UPROPERTY(Transient)
 	TObjectPtr<class UMSPlayerAbilitySystemComponent> AbilitySystemComponent;
 
-	// PlayerState의 AttributeSet을 참조
 	UPROPERTY(Transient)
 	TObjectPtr< class UMSPlayerAttributeSet> AttributeSet;
 };
