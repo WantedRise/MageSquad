@@ -200,6 +200,8 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 		// 맵 밖으로 스폰 (비활성 상태)
+		
+		
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
 			FVector(0, 0, 100.0f),
@@ -521,7 +523,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
 
-		// ⭐[핵심3] 렌더링 상태 강제 업데이트 및 재등록
+		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
 	}
 
@@ -586,42 +588,25 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->SetActorLocation(Location);
 	Enemy->SetActorRotation(FRotator::ZeroRotator);
 	Enemy->SetActorHiddenInGame(false);
-	// ★핵심: Tick 재활성화 (RVO 동작의 필수 조건)
-	Enemy->SetActorTickEnabled(true);
-
-	if (UCharacterMovementComponent* MoveComp = Enemy->GetCharacterMovement())
+	//Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
+	
+	// ✅ RVO 재활성화 (핵심!)
+	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
-		// 1. 먼저 완전히 비활성화
-		MoveComp->SetAvoidanceEnabled(false);
-
-		// 2. 위치가 변경되었음을 RVO 시스템에 알림
-		MoveComp->RequestDirectMove(FVector::ZeroVector, false);
-
-		// 3. RVO 재활성화 (새로운 UID 자동 할당)
-		MoveComp->bUseRVOAvoidance = true;
-		MoveComp->SetAvoidanceEnabled(true);  // 새로운 UID 생성
-
-		// 위치 업데이트를 RVO 시스템에 알림
-		MoveComp->UpdateComponentVelocity();  // ← 이게 중요!
-
-		// RVO 재활성화 (새 위치에서 등록)
-		MoveComp->bUseRVOAvoidance = true;
-		MoveComp->SetAvoidanceEnabled(true);
-
-		MoveComp->SetAvoidanceGroup(1);
-		MoveComp->SetGroupsToAvoidMask(1);
-		MoveComp->SetGroupsToIgnoreMask(0);
-		MoveComp->SetComponentTickEnabled(true);
-
-		UE_LOG(LogTemp, Warning, TEXT("[ActivateEnemy] RVO UID reset for: %s"), *Enemy->GetName());
-			
-		// ⭐ 디버깅용 체크
-		UE_LOG(LogTemp, Warning, TEXT("[RVO Check] Enemy: %s"), *Enemy->GetName());
-		UE_LOG(LogTemp, Warning, TEXT("[RVO Check] bUseRVOAvoidance: %d"), MoveComp->bUseRVOAvoidance);
-		UE_LOG(LogTemp, Warning, TEXT("[RVO Check] ActorTick: %d"), Enemy->IsActorTickEnabled());
-		UE_LOG(LogTemp, Warning, TEXT("[RVO Check] ComponentTick: %d"), MoveComp->IsComponentTickEnabled());
-		UE_LOG(LogTemp, Warning, TEXT("[RVO Check] AvoidanceGroup: %d"), MoveComp->GetAvoidanceGroupMask());
-		UE_LOG(LogTemp, Warning, TEXT("[RVO Check] GroupsToAvoid: %d"), MoveComp->GetGroupsToAvoidMask());
+		// Velocity 초기화
+		MovementComp->Velocity = FVector::ZeroVector;
+		MovementComp->UpdateComponentVelocity();
+		
+		// RVO 재등록 (UID가 0이면 새로 할당됨)
+		MovementComp->SetAvoidanceEnabled(false);
+		MovementComp->SetAvoidanceEnabled(true);
+		
+		// RVO 파라미터 재설정 (혹시 모를 초기화 대비)
+		MovementComp->bUseRVOAvoidance = true;
+		MovementComp->AvoidanceConsiderationRadius = 500.0f;
+		MovementComp->AvoidanceWeight = 0.5f;
+		MovementComp->SetAvoidanceGroup(1);
+		MovementComp->SetGroupsToAvoidMask(1);
 	}
 
 	// AI 컨트롤러 시작
@@ -648,15 +633,17 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	}
 
 	Enemy->SetActorHiddenInGame(true);
-
-	if (UCharacterMovementComponent* MoveComp = Enemy->GetCharacterMovement())
-	{
-		MoveComp->SetAvoidanceEnabled(false);
-		MoveComp->bUseRVOAvoidance = false;
-	}	
-	
 	Enemy->SetActorTickEnabled(false);
-	Enemy->SetActorLocation(FVector(0, 0, 100.0f));
+	
+	// ✅ Movement 정리
+	UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement();
+	if (MovementComp)
+	{
+		MovementComp->StopMovementImmediately();
+		MovementComp->Velocity = FVector::ZeroVector;
+		// RVO 비활성화 (다음 활성화 시 재등록됨)
+		MovementComp->SetAvoidanceEnabled(false);
+	}
 
 	// AI 정지
 	if (AController* Controller = Enemy->GetController())
