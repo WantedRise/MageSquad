@@ -18,6 +18,7 @@ class MAGESQUAD_API UMSLobbyPlayerSlotWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 public:
+	UFUNCTION()
 	void ShowFriendList();
 		
 public:
