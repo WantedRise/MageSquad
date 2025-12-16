@@ -198,6 +198,15 @@ private:
 	/** NavMesh 기반 랜덤 스폰 위치 검색 */
 	bool GetRandomSpawnLocation(FVector& OutLocation);
 
+	/** 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
+	bool IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location);
+	
+	/** 멀티 고려 - 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
+	bool IsLocationVisibleToAnyPlayer(const FVector& Location);
+	
+	/** 화면 가장자리의 랜덤한 지점 반환 (화면 밖)*/
+	FVector2D GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY, float Margin);
+
 	//~=============================================================================
 	// Enemy Initialization & Cleanup
 	//~=============================================================================

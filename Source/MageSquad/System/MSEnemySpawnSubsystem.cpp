@@ -481,38 +481,138 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No player pawn found"));
 		return false;
 	}
+	
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PC)
+	{
+		return false;
+	}
+	
+	// 카메라 정보
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+	
+	// 뷰포트 크기
+	int32 ViewportSizeX, ViewportSizeY;
+	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
 
-	const FVector PlayerLocation = PlayerPawn->GetActorLocation();
-	const int32 MaxAttempts = 10;
-
+	constexpr int32 MaxAttempts = 30; // 위치 찾는 시도 횟수
+	constexpr float OffScreenMargin = 1000.f; // 화면 밖 여유 거리
+	
 	for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
 	{
-		// 랜덤 각도
-		const float RandomAngle = FMath::FRandRange(0.0f, 360.0f);
-		const float RandomDistance = FMath::FRandRange(MinSpawnDistance, SpawnRadius);
-
-		// 원형 분포
-		const FVector Offset = FVector(
-			FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * RandomDistance,
-			FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * RandomDistance,
-			0.0f
-		);
-
-		const FVector CandidateLocation = PlayerLocation + Offset;
-
-		// NavMesh 검증
-		FNavLocation NavLoc;
-		if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(500.0f, 500.0f, 1000.0f)))
+		// 화면 가장자리 4방향 중 랜덤 선택
+		FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
+		
+		// 스크린 좌표를 월드 좌표로 역변환
+		FVector WorldLocation, WorldDirection;
+		if (PC->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
 		{
-			OutLocation = NavLoc.Location;
-			OutLocation.Z = 92.f;
-			return true;
+			// 카메라에서 일정 거리만큼 떨어진 지점 계산
+			const float SpawnDistance = FMath::FRandRange(4000.0f, 5000.0f);
+			FVector CandidateLocation = WorldLocation + WorldDirection * SpawnDistance;
+
+			// 플레이어 높이 기준으로 조정
+			CandidateLocation.Z = PlayerPawn->GetActorLocation().Z;
+
+			// NavMesh 검증
+			FNavLocation NavLoc;
+			if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
+			{
+				OutLocation = NavLoc.Location;
+				OutLocation.Z = 92.f;
+				return true;
+			}
 		}
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
 	return false;
 }
+
+bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location)
+{
+	if (!PC)
+	{
+		return false;
+	}
+
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	// 스크린 좌표 변환
+	FVector2D ScreenPosition;
+	if (PC->ProjectWorldLocationToScreen(Location, ScreenPosition, false))
+	{
+		// 뷰포트 크기 획득
+		int32 ViewportSizeX, ViewportSizeY;
+		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+
+		// 화면 경계에 마진 추가 (선택적 - 완전히 화면 밖을 원할 경우)
+		constexpr float Margin = 100.0f; // 픽셀 단위
+        
+		// 화면 내부에 있는지 체크
+		if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
+			ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
+		{
+			return true; // 화면에 보임
+		}
+	}
+
+	return false; // 화면 밖
+}
+
+bool UMSEnemySpawnSubsystem::IsLocationVisibleToAnyPlayer(const FVector& Location)
+{
+	// 모든 플레이어 컨트롤러 체크
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PC = It->Get();
+		if (PC && IsLocationVisibleToPlayer(PC, Location))
+		{
+			return true; // 한 명이라도 보고 있으면 true
+		}
+	}
+    
+	return false; // 모든 플레이어 시야 밖
+}
+
+FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY,
+	float Margin)
+{
+	// 4개 가장자리 중 하나 선택: 0=상단, 1=하단, 2=좌측, 3=우측
+	int32 Edge = FMath::RandRange(0, 3);
+    
+	FVector2D ScreenPoint;
+    
+	switch (Edge)
+	{
+	case 0: // 상단
+		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
+		ScreenPoint.Y = -Margin;
+		break;
+        
+	case 1: // 하단
+		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
+		ScreenPoint.Y = ViewportSizeY + Margin;
+		break;
+        
+	case 2: // 좌측
+		ScreenPoint.X = -Margin;
+		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
+		break;
+        
+	case 3: // 우측
+		ScreenPoint.X = ViewportSizeX + Margin;
+		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
+		break;
+	}
+    
+	return ScreenPoint;
+}
+
 
 //~=============================================================================
 // Enemy Initialization & Cleanup
