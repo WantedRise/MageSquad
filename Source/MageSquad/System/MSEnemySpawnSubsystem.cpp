@@ -9,6 +9,7 @@
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "MageSquad.h"
 #include "NavigationSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -36,6 +37,11 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
 		return;
 	}
+
+	// if (!HasAuthority())
+	// {
+	// 	return;
+	// }
 
 	// NavSystem 참조 획득
 	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
@@ -198,10 +204,9 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 	{
 		FActorSpawnParameters Params;
 		//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		Params.SpawnCollisionHandlingOverride =
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 		// 맵 밖으로 스폰 (비활성 상태)
-		
-		
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
 			FVector(0, 0, 100.0f),
@@ -210,9 +215,22 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		);
 
 		if (Enemy)
-		{
+		{   
+			// ✅ 풀링 모드 설정 (AI Controller 생성 방지)
+			if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
+			{
+				NormalEnemy->SetPoolingMode(true);
+			}
+			
+			Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
 			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
+			
+			// UE_LOG(LogTemp, Log, TEXT("Pooled: %s | LocalRole: %d | RemoteRole: %d"),
+			// 	*Enemy->GetName(),
+			// 	(int32)Enemy->GetLocalRole(),
+			// 	(int32)Enemy->GetRemoteRole()
+			// );
 		}
 	}
 
@@ -418,12 +436,15 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 		       *MonsterID.ToString());
 	}
 
-	// DataTable 데이터로 초기화
-	InitializeEnemyFromData(Enemy, MonsterID);
-
 	// 활성화
 	ActivateEnemy(Enemy, Location);
+	
+	// 몬스터 ID 설정
+	Enemy->SetMonsterID(MonsterID);
 
+	// DataTable 데이터로 초기화
+	InitializeEnemyFromData(Enemy, MonsterID);
+	
 	// Active 풀에 추가
 	Pool->ActiveEnemies.Add(Enemy);
 	EnemyToPoolMap.Add(Enemy, Pool);
@@ -433,10 +454,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 
 	// 사망 이벤트 바인딩
 	BindEnemyDeathEvent(Enemy);
-
-	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
-	       *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
-
+	
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
 	       *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
 
@@ -513,7 +531,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		return;
 	}
 
-	// 1. 스켈레탈 메시 설정
+	// 스켈레탈 메시 설정
 	if (Data->SkeletalMesh)
 	{
 		if (Enemy->GetMesh()->IsRegistered())
@@ -527,51 +545,55 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
 	}
 
-	// 2. 애니메이션 설정
+	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
 		Enemy->GetMesh()->SetAnimInstanceClass(Data->AnimationSet->AnimationClass);
 	}
 
-	// 3. GAS 속성 초기화
-	if (UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent())
+	// GAS 속성 초기화
+	// ✅ 서버에서만 GAS 초기화
+	if (HasAuthority())
 	{
-		const UMSEnemyAttributeSet* AttributeSet = Cast<UMSEnemyAttributeSet>(
-			ASC->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())
-		);
-
-		if (AttributeSet)
+		if (UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent())
 		{
-			ASC->SetNumericAttributeBase(AttributeSet->GetMaxHealthAttribute(), Data->MaxHealth);
-			ASC->SetNumericAttributeBase(AttributeSet->GetCurrentHealthAttribute(), Data->MaxHealth);
-			ASC->SetNumericAttributeBase(AttributeSet->GetMoveSpeedAttribute(), Data->MoveSpeed);
-			ASC->SetNumericAttributeBase(AttributeSet->GetAttackDamageAttribute(), Data->AttackDamage);
-			ASC->SetNumericAttributeBase(AttributeSet->GetAttackRangeAttribute(), Data->AttackRange);
-		}
+			const UMSEnemyAttributeSet* AttributeSet = Cast<UMSEnemyAttributeSet>(
+				ASC->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())
+			);
 
-		// 4. 어빌리티 부여
-		ASC->ClearAllAbilities();
-		for (const TSubclassOf<UGameplayAbility>& AbilityClass : Data->StartAbilities)
-		{
-			if (AbilityClass)
+			if (AttributeSet)
 			{
-				FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, Enemy);
-				ASC->GiveAbility(Spec);
+				ASC->SetNumericAttributeBase(AttributeSet->GetMaxHealthAttribute(), Data->MaxHealth);
+				ASC->SetNumericAttributeBase(AttributeSet->GetCurrentHealthAttribute(), Data->MaxHealth);
+				ASC->SetNumericAttributeBase(AttributeSet->GetMoveSpeedAttribute(), Data->MoveSpeed);
+				ASC->SetNumericAttributeBase(AttributeSet->GetAttackDamageAttribute(), Data->AttackDamage);
+				ASC->SetNumericAttributeBase(AttributeSet->GetAttackRangeAttribute(), Data->AttackRange);
 			}
-		}
 
-		// 5. GameplayEffect 적용
-		for (const TSubclassOf<UGameplayEffect>& EffectClass : Data->StartEffects)
-		{
-			if (EffectClass)
+			// 어빌리티 부여
+			ASC->ClearAllAbilities();
+			for (const TSubclassOf<UGameplayAbility>& AbilityClass : Data->StartAbilities)
 			{
-				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-				EffectContext.AddSourceObject(Enemy);
-
-				FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EffectClass, 1, EffectContext);
-				if (SpecHandle.IsValid())
+				if (AbilityClass)
 				{
-					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+					FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, Enemy);
+					ASC->GiveAbility(Spec);
+				}
+			}
+
+			// GameplayEffect 적용
+			for (const TSubclassOf<UGameplayEffect>& EffectClass : Data->StartEffects)
+			{
+				if (EffectClass)
+				{
+					FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+					EffectContext.AddSourceObject(Enemy);
+
+					FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EffectClass, 1, EffectContext);
+					if (SpecHandle.IsValid())
+					{
+						ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+					}
 				}
 			}
 		}
@@ -584,23 +606,58 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	{
 		return;
 	}
+	
+	// ✅ 풀링 모드 해제
+	if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
+	{
+		NormalEnemy->SetPoolingMode(false);
+	}
 
+	// Enemy->SetActorLocation(Location);
+	// Enemy->SetActorRotation(FRotator::ZeroRotator);
+	// Enemy->SetActorHiddenInGame(false);
+	// //Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
+    
+	// ✅ 2. 네트워크 상태 활성화
+	Enemy->SetNetDormancy(DORM_Awake);
+	Enemy->FlushNetDormancy();
+	Enemy->SetReplicateMovement(true);
+    
+	// ✅ 3. 위치 설정
 	Enemy->SetActorLocation(Location);
 	Enemy->SetActorRotation(FRotator::ZeroRotator);
+    
+	// ✅ 4. 가시성/충돌 활성화
 	Enemy->SetActorHiddenInGame(false);
-	//Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
+	Enemy->SetActorEnableCollision(true);
 	
+	// ✅ AI Controller 생성 (수동)
+	if (!Enemy->GetController())
+	{
+		Enemy->SpawnDefaultController();
+	}
+    
+	// ✅ 5. 네트워크 업데이트 강제
+	Enemy->ForceNetUpdate();
+	
+	// ✅ 디버그 로그
+	UE_LOG(LogTemp, Error, TEXT("★★★ ActivateEnemy: %s | bReplicates: %d | Dormancy: %d ★★★"),
+		*Enemy->GetName(),
+		Enemy->GetIsReplicated(),
+		(int32)Enemy->NetDormancy
+	);
+
 	// ✅ RVO 재활성화 (핵심!)
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
 		// Velocity 초기화
 		MovementComp->Velocity = FVector::ZeroVector;
 		MovementComp->UpdateComponentVelocity();
-		
+
 		// RVO 재등록 (UID가 0이면 새로 할당됨)
 		MovementComp->SetAvoidanceEnabled(false);
 		MovementComp->SetAvoidanceEnabled(true);
-		
+
 		// RVO 파라미터 재설정 (혹시 모를 초기화 대비)
 		MovementComp->bUseRVOAvoidance = true;
 		MovementComp->AvoidanceConsiderationRadius = 500.0f;
@@ -632,7 +689,9 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		return;
 	}
 
+	// ✅ 1. Hidden 처리
 	Enemy->SetActorHiddenInGame(true);
+	Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
 	
 	// ✅ Movement 정리
@@ -644,7 +703,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		// RVO 비활성화 (다음 활성화 시 재등록됨)
 		MovementComp->SetAvoidanceEnabled(false);
 	}
-
+	
 	// AI 정지
 	if (AController* Controller = Enemy->GetController())
 	{
@@ -653,6 +712,19 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 			AIController->StopAI();
 		}
 	}
+	
+	// ✅ 4. GAS 초기화
+	ResetEnemyGASState(Enemy);
+    
+	// ✅ 5. 리플리케이션 끄기 (클라이언트에서 사라짐)
+	// Enemy->SetReplicates(false);
+	
+	// ✅ 6. 위치는 그대로 두거나 원점으로
+	// Enemy->SetActorLocation(FVector(0, 0, 100.0f));  // 선택사항
+    
+	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
+	// 	Enemy->GetIsReplicated()
+	// );
 }
 
 void UMSEnemySpawnSubsystem::ResetEnemyGASState(AMSBaseEnemy* Enemy)
@@ -699,9 +771,9 @@ void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 	// // "Enemy.State.Dead" 태그 변경 감지
 	FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
-	
+
 	ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
+	   .AddUObject(this, &UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged, Enemy);
 }
 
 void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)

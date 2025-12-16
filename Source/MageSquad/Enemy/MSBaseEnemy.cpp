@@ -7,6 +7,8 @@
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "System/MSEnemySpawnSubsystem.h"
 
 // Sets default values
 AMSBaseEnemy::AMSBaseEnemy()
@@ -69,6 +71,20 @@ void AMSBaseEnemy::BeginPlay()
 	{
 		ASC->InitAbilityActorInfo(this, this);
 	}
+	
+	// // ✅ 이 로그 주석 해제!
+	// UE_LOG(LogTemp, Error, TEXT("★★★ [%s] Enemy BeginPlay: %s at %s | Mesh: %s ★★★"),
+	// 	HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+	// 	*GetName(),
+	// 	*GetActorLocation().ToString(),
+	// 	GetMesh()->GetSkeletalMeshAsset() ? *GetMesh()->GetSkeletalMeshAsset()->GetName() : TEXT("NULL")
+	// );
+	//
+	// UE_LOG(LogTemp, Error, TEXT("bReplicates: %d | LocalRole: %d | RemoteRole: %d"),
+	// GetIsReplicated(),
+	// (int32)GetLocalRole(),
+	// (int32)GetRemoteRole()
+	// );
 }
 
 void AMSBaseEnemy::PossessedBy(AController* NewController)
@@ -81,6 +97,14 @@ void AMSBaseEnemy::PostInitializeComponents()
 	Super::PostInitializeComponents();
 }
 
+void AMSBaseEnemy::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	//  MonsterID를 모든 클라이언트에 Replicate
+	DOREPLIFETIME(AMSBaseEnemy, CurrentMonsterID);
+}
+
 UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 {
 	if (ASC == nullptr)
@@ -90,4 +114,23 @@ UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 	}
 	
 	return ASC;
+}
+
+void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
+{
+	CurrentMonsterID = NewMonsterID;
+	// UE_LOG(LogTemp, Warning, TEXT("Call SetMonsterID: %s"), *CurrentMonsterID.ToString());
+}
+
+void AMSBaseEnemy::OnRep_MonsterID()
+{    // ✅ 클라이언트에서 MonsterID 변경 시 자동 호출됨!
+	// UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: %s"), *CurrentMonsterID.ToString());
+    
+	// Subsystem에서 캐시된 데이터 가져오기
+	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(this))
+	{
+		// ✅ 클라이언트에서도 InitializeEnemyFromData 호출
+		SpawnSystem->InitializeEnemyFromData(this, CurrentMonsterID);
+		SpawnSystem->ActivateEnemy(this, FVector(0.f, 0.f, 0.f));
+	}
 }

@@ -198,13 +198,12 @@ private:
 	//~=============================================================================
 	// Enemy Initialization & Cleanup
 	//~=============================================================================
-	
+public:
 	/** DataTable 데이터로 Enemy 초기화 (메시, 애니메이션, GAS) */
 	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
-	
 	/** Enemy 활성화 (위치 설정, AI 시작) */
 	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location) const;
-	
+private:
 	/** Enemy 비활성화 (숨김, 콜리전 끄기, AI 정지) */
 	void DeactivateEnemy(AMSBaseEnemy* Enemy);
 	
