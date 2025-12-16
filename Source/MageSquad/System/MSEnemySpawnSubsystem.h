@@ -133,6 +133,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnRadius(float NewRadius);
+	
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
+	void SetSpawnCountPerTick(int InSpawnCountPerTick);
 
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetMonsterDataTable(UDataTable* NewDataTable);
@@ -308,6 +311,10 @@ private:
 	/** 사망 후 풀 반환 대기 시간 (사망 애니메이션 재생 시간) */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	float DeathAnimationDuration = 2.0f;
+	
+	/* 스폰마다 몇 마리씩 스폰할 건지 정하는 변수*/
+	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
+	int SpawnCountPerTick = 1;
 
 	//~=============================================================================
 	// Runtime State

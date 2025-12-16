@@ -360,27 +360,29 @@ void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 	{
 		return;
 	}
-
-	// 랜덤 몬스터 타입 선택
-	TArray<FName> AllMonsterTypes;
-	CachedMonsterData.GetKeys(AllMonsterTypes);
-
-	if (AllMonsterTypes.Num() == 0)
+	for (int i = 0; i < SpawnCountPerTick; ++i)
 	{
-		return;
+		// 랜덤 몬스터 타입 선택
+		TArray<FName> AllMonsterTypes;
+		CachedMonsterData.GetKeys(AllMonsterTypes);
+
+		if (AllMonsterTypes.Num() == 0)
+		{
+			return;
+		}
+
+		const FName SelectedMonsterID = AllMonsterTypes[FMath::RandRange(0, AllMonsterTypes.Num() - 1)];
+
+		// 랜덤 위치 검색
+		FVector SpawnLocation;
+		if (!GetRandomSpawnLocation(SpawnLocation))
+		{
+			return;
+		}
+
+		// 스폰
+		SpawnMonsterInternal(SelectedMonsterID, SpawnLocation);
 	}
-
-	const FName SelectedMonsterID = AllMonsterTypes[FMath::RandRange(0, AllMonsterTypes.Num() - 1)];
-
-	// 랜덤 위치 검색
-	FVector SpawnLocation;
-	if (!GetRandomSpawnLocation(SpawnLocation))
-	{
-		return;
-	}
-
-	// 스폰
-	SpawnMonsterInternal(SelectedMonsterID, SpawnLocation);
 }
 
 AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterID, const FVector& Location)
@@ -607,7 +609,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 		return;
 	}
 	
-	// ✅ 풀링 모드 해제
+	// 풀링 모드 해제
 	if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
 	{
 		NormalEnemy->SetPoolingMode(false);
@@ -618,26 +620,26 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// Enemy->SetActorHiddenInGame(false);
 	// //Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
     
-	// ✅ 2. 네트워크 상태 활성화
+	// 네트워크 상태 활성화
 	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->FlushNetDormancy();
 	Enemy->SetReplicateMovement(true);
     
-	// ✅ 3. 위치 설정
+	// 위치 설정
 	Enemy->SetActorLocation(Location);
 	Enemy->SetActorRotation(FRotator::ZeroRotator);
     
-	// ✅ 4. 가시성/충돌 활성화
+	//  가시성/충돌 활성화
 	Enemy->SetActorHiddenInGame(false);
 	Enemy->SetActorEnableCollision(true);
 	
-	// ✅ AI Controller 생성 (수동)
+	//  AI Controller 생성 (수동)
 	if (!Enemy->GetController())
 	{
 		Enemy->SpawnDefaultController();
 	}
     
-	// ✅ 5. 네트워크 업데이트 강제
+	// 네트워크 업데이트 강제
 	Enemy->ForceNetUpdate();
 	
 	// ✅ 디버그 로그
@@ -647,7 +649,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// 	(int32)Enemy->NetDormancy
 	// );
 
-	// ✅ RVO 재활성화 (핵심!)
+	//  RVO 재활성화
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
 		// Velocity 초기화
@@ -901,6 +903,11 @@ void UMSEnemySpawnSubsystem::SetMaxActiveMonsters(int32 NewMax)
 void UMSEnemySpawnSubsystem::SetSpawnRadius(float NewRadius)
 {
 	SpawnRadius = FMath::Max(500.0f, NewRadius);
+}
+
+void UMSEnemySpawnSubsystem::SetSpawnCountPerTick(int InSpawnCountPerTick)
+{
+	SpawnCountPerTick = FMath::Max(1, InSpawnCountPerTick);
 }
 
 void UMSEnemySpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
