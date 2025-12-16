@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "GameplayTagContainer.h"
 #include "MSSkillDataRow.generated.h"
 /**
  * 작성자: 박세찬
