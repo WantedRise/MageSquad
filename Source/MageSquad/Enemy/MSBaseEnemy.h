@@ -31,10 +31,19 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void PostInitializeComponents() override;
 	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 public:
 	// ~ Begin IAbilitySystemInterface Interface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// ~ End IAbilitySystemInterface Interface
+	
+public:
+	void SetMonsterID(const FName& NewMonsterID);
+	
+protected:
+	UFUNCTION()
+	void OnRep_MonsterID();
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
@@ -45,5 +54,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<class UGameplayAbility>> StartAbilities;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_MonsterID)
+	FName CurrentMonsterID;
 	
 };

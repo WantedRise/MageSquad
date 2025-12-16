@@ -28,15 +28,15 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 	}
 	
 	// RVO 설정 확인 (Pawn의 Movement Component)
-	if (ACharacter* OwnerCharacter = Cast<ACharacter>(InPawn))
-	{
-		UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
-		if (MoveComp && !MoveComp->bUseRVOAvoidance)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"),   
-				   *InPawn->GetName());
-		}
-	}
+	// if (ACharacter* OwnerCharacter = Cast<ACharacter>(InPawn))
+	// {
+	// 	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
+	// 	if (MoveComp && !MoveComp->bUseRVOAvoidance)
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"),   
+	// 			   *InPawn->GetName());
+	// 	}
+	// }
 	
 	RunAI();
 }
