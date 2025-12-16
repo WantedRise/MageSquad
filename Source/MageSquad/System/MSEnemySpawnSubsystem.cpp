@@ -641,11 +641,11 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->ForceNetUpdate();
 	
 	// ✅ 디버그 로그
-	UE_LOG(LogTemp, Error, TEXT("★★★ ActivateEnemy: %s | bReplicates: %d | Dormancy: %d ★★★"),
-		*Enemy->GetName(),
-		Enemy->GetIsReplicated(),
-		(int32)Enemy->NetDormancy
-	);
+	// UE_LOG(LogTemp, Error, TEXT("★★★ ActivateEnemy: %s | bReplicates: %d | Dormancy: %d ★★★"),
+	// 	*Enemy->GetName(),
+	// 	Enemy->GetIsReplicated(),
+	// 	(int32)Enemy->NetDormancy
+	// );
 
 	// ✅ RVO 재활성화 (핵심!)
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
