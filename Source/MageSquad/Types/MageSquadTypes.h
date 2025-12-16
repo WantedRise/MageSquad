@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "GameplayEffectTypes.h"
 #include "MageSquadTypes.generated.h"
 
 /**
@@ -199,4 +200,45 @@ public:
 	// 피격 SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	USoundBase* OnHitSFX = nullptr;
+};
+
+
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/15
+ *
+ * 나이아가라에 FLinearColor를 넘겨주기 위한 게임플레이 이펙트 콘텍스트
+ */
+USTRUCT(BlueprintType)
+struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FLinearColor CueColor = FLinearColor::White;
+
+	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
+
+	// 복제/직렬화 지원
+	virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
+	{
+		bOutSuccess = true;
+
+		// 부모 직렬화
+		if (!FGameplayEffectContext::NetSerialize(Ar, Map, bOutSuccess))
+		{
+			bOutSuccess = false;
+			return false;
+		}
+
+		Ar << CueColor;
+		return true;
+	}
+};
+
+template<>
+struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTraitsBase2<FMSGameplayEffectContext>
+{
+	enum { WithNetSerializer = true, WithCopy = true };
 };

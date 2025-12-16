@@ -29,6 +29,9 @@ protected:
 	// 스폰 회전값 구하기 함수
 	FRotator ResolveSpawnRotation(AActor* MyTarget) const;
 
+	// 색상 파라미터 구하기 함수
+	FLinearColor ResolveLinearColor(const FGameplayCueParameters& Parameters) const;
+
 protected:
 	// 도착 지점에 스폰할 나이아가라
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")

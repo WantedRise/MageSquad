@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Types/MageSquadTypes.h"
 #include "MSGA_PlayerBlink.generated.h"
 
 /**
@@ -25,6 +26,9 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
+	// 어빌리티를 활성화해도 되는지 확인하는 헬퍼 함수
+	bool CheckAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData);
+
 	// 점멸 수행 함수
 	bool PerformBlink(ACharacter* Character, UAbilitySystemComponent* ASC);
 
@@ -65,6 +69,10 @@ protected:
 	// 링에서의 각도 샘플 수(클수록 촘촘하지만 비용 증가)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	int32 FallbackAngleSteps = 16;
+
+	// VFX 색상
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
+	FLinearColor BlinkColor;
 
 	// 시작 위치 VFX (Gameplay Cue)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
