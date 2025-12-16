@@ -1,9 +1,10 @@
-// LobbyReadyTypes.h
+﻿// LobbyReadyTypes.h
 #pragma once
 
 #include "CoreMinimal.h"
 #include "LobbyReadyTypes.generated.h"
 
+//로비 준비 단계
 UENUM(BlueprintType)
 enum class ELobbyReadyPhase : uint8
 {

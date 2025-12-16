@@ -16,14 +16,15 @@ void UMSLobbyReadyWidget::NativeConstruct()
         Button_Ready->OnClicked.AddDynamic(this, &UMSLobbyReadyWidget::OnReadyButtonClicked);
     }
 
+    // GameState의 RemainingReadySeconds 변경 → UI 카운트다운 반영
     if (AMSLobbyGameState* GS = GetWorld()->GetGameState<AMSLobbyGameState>())
     {
-        GS->OnReadyTimeChanged.AddUObject(this,&UMSLobbyReadyWidget::OnReadyTimeChanged);
+        GS->OnReadyTimeChanged.AddUObject(this,&UMSLobbyReadyWidget::ApplyReadyTimeText);
         GS->OnLobbyReadyPhaseChanged.AddUObject(this, &UMSLobbyReadyWidget::ApplyReadyStateUI);
     }
 }
 
-void UMSLobbyReadyWidget::OnReadyTimeChanged(int32 RemainingSeconds)
+void UMSLobbyReadyWidget::ApplyReadyTimeText(int32 RemainingSeconds)
 {
     if (Text_Ready_Second)
     {

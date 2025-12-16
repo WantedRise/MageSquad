@@ -6,10 +6,10 @@
 #include "GameFramework/Pawn.h"
 #include "MageSquad.h"
 #include "MSLobbyPlayerState.h"
-#include <System/MSSteamManagerSubsystem.h>
+#include "System/MSSteamManagerSubsystem.h"
 #include "Widgets/Lobby/MSLobbyMainWidget.h"
 #include "Widgets/Lobby/MSLobbyReadyWidget.h"
-#include <GameStates/MSLobbyGameState.h>
+#include "GameStates/MSLobbyGameState.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -46,12 +46,6 @@ void AMSLobbyPlayerController::InitPlayerState()
 	{
 		PS->SetUserNickName(PS->GetPlayerName());
 	}
-
-	if (IsLocalController())
-	{
-		// 이 플레이어가 호스트(방장)
-		PS->SetHost(true);
-	}
 }
 
 void AMSLobbyPlayerController::ServerRequestSetReady_Implementation(bool bNewReady)
@@ -78,7 +72,6 @@ void AMSLobbyPlayerController::BeginPlay()
 			//LobbyCamera 액터로 시점 전환
 			SetViewTargetWithBlend(FoundActors[0]);
 		}
-
 	
 		CreateLobbyUI();
 	}
@@ -99,38 +92,9 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 		LobbyMainWidget->AddToViewport();
 
 		// 입력 모드 UI
-		FInputModeUIOnly InputMode;
-		InputMode.SetWidgetToFocus(LobbyMainWidget->TakeWidget());
-		SetInputMode(InputMode);
+		//FInputModeUIOnly InputMode;
+		//InputMode.SetWidgetToFocus(LobbyMainWidget->TakeWidget());
+		//SetInputMode(InputMode);
 		bShowMouseCursor = true;
-
-		/* 로컬 플레이어 전용 로비 Ready UI 바인딩
-			- 시간 카운트다운은 GameState에서 관리 (전역 상태)
-			- 준비 여부는 PlayerState에서 관리 (개별 상태)
-			- UI는 변경 이벤트만 수신한다.
-		*/
-		// 준비 시간(초) 변경 시 UI 갱신
-		// GameState의 RemainingReadySeconds 변경 → UI 카운트다운 반영
-		if (AMSLobbyGameState* GS = GetWorld()->GetGameState<AMSLobbyGameState>())
-		{
-			GS->OnReadyTimeChanged.AddUObject(
-				LobbyMainWidget->WBP_MSLobbyReady,
-				&UMSLobbyReadyWidget::OnReadyTimeChanged
-			);
-			GS->OnReadyTimeChanged.AddUObject(
-				LobbyMainWidget->WBP_MSLobbyReady,
-				&UMSLobbyReadyWidget::OnReadyTimeChanged
-			);
-		}
-
-		// 준비 상태 변경 시 UI 전환
-		// 로비에 최소 1명 이상이 준비 상태인지에 따라 Ready UI를 전환한다.
-
-
-		/*if (AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>())
-		{
-			PS->OnLobbyReadyStateChanged.AddUObject(LobbyMainWidget->WBP_MSLobbyReady, &UMSLobbyReadyWidget::ApplyReadyStateUI);
-		}*/
 	}
-
 }

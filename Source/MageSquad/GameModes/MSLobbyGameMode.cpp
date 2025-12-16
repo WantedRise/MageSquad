@@ -14,17 +14,29 @@ AMSLobbyGameMode::AMSLobbyGameMode()
 {
     bUseSeamlessTravel = true;
 }
+void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
 
+    if (AMSLobbyPlayerState* PS = NewPlayer->GetPlayerState<AMSLobbyPlayerState>())
+    {
+        if (GameState->PlayerArray.Num() == 1)
+        {
+            //호스트 표시
+            PS->SetHost(true);
+        }
+    }
+}
 AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
     UWorld* World = GetWorld();
     if (World)
     {
+        //플레이어 슬롯을 스폰 위치로 지정
         for (AMSLobbyPlayerSlot* PlayerSlot : TActorRange<AMSLobbyPlayerSlot>(World))
         {
             if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
             {
-                UE_LOG(LogTemp, Warning, TEXT("ChoosePlayerStart : %s"), *PlayerSlot->GetName());
                 PlayerSlot->SetController(Player);
                 PlayerSlot->HiddenInviteWidgetComponent();
                 
@@ -38,10 +50,7 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 void AMSLobbyGameMode::HandleReadyCountdownFinished()
 {
     UE_LOG(LogTemp, Warning, TEXT("Lobby -> GameLevel ServerTravel"));
-
-    GetWorld()->ServerTravel(
-        TEXT("GameLevel?listen")
-    );
+    GetWorld()->ServerTravel(TEXT("GameLevel?listen"));
 }
 
 void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
@@ -56,7 +65,7 @@ void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
     int32 ReadyCount = 0;
     int32 TotalPlayers = 0;
 
-    //모든 PlayerState를 조회하여 레디상태인지 확인
+    //모든 PlayerState를 조회하여 준비상태인지 확인
     for (APlayerState* PS : GameState->PlayerArray)
     {
         if (AMSLobbyPlayerState* LobbyPS = Cast<AMSLobbyPlayerState>(PS))

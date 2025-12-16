@@ -43,6 +43,10 @@ void AMSLobbyPlayerSlot::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (!HasAuthority())
+	{
+		PlaySlotWidgetComponent->SetVisibility(false);
+	}
 }
 
 

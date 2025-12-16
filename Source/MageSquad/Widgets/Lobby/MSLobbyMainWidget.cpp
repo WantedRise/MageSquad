@@ -3,3 +3,9 @@
 
 #include "Widgets/Lobby/MSLobbyMainWidget.h"
 
+UMSLobbyMainWidget::UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
+
+    SetIsFocusable(true);
+}

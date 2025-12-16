@@ -8,9 +8,13 @@
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLobbyReadyStateChanged,bool);
 
-/**
- * 
- */
+/*
+* 작성자: 이상준
+* 작성일: 2025-12-16
+* 로비 단계에서 플레이어의 준비 상태, 호스트 여부, 닉네임을 서버 기준으로 동기화하기 위한 PlayerState.
+*
+* UI 갱신은 Character(로비 캐릭터)에서 처리, PlayerState는 상태만 담당한다.
+*/
 UCLASS()
 class MAGESQUAD_API AMSLobbyPlayerState : public APlayerState
 {
@@ -24,6 +28,7 @@ public:
 public:
 	FORCEINLINE bool IsReady() const { return bIsReady; }
 	FORCEINLINE bool IsHost() const { return bIsHost; }
+	//로비에 표시될 플레이어 닉네임
 	FORCEINLINE const FString& GetUserNickName() const { return UserNickName; }
 	
 	//서버에서만 지정 가능
@@ -31,6 +36,7 @@ public:
 	void SetHost(bool bNewHost);
 	void SetUserNickName(const FString& NewNickName);
 
+	//준비 상태 변경 시 캐릭터/UI에 알리기 위한 델리게이트
 	FOnLobbyReadyStateChanged OnLobbyReadyStateChanged;
 protected:
 
@@ -43,10 +49,13 @@ protected:
 	UFUNCTION()
 	void OnRep_IsReady();
 protected:
+	// 로비 UI에 표시될 플레이어 닉네임 (서버에서 설정, 클라이언트 동기화)
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_UserNickName)
 	FString UserNickName;
+	// 로비 방장 여부 (서버 권한)
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsHost)
 	uint8 bIsHost : 1;
+	// 로비 준비 상태 (Ready / Not Ready)
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_IsReady)
 	uint8 bIsReady : 1;
 };

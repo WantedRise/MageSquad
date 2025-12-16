@@ -7,7 +7,6 @@
 #include "System/MSSteamManagerSubsystem.h"
 #include "GameFramework/PlayerController.h" 
 #include "GameFramework/PlayerState.h"
-#include "Net/UnrealNetwork.h"
 #include "MageSquad.h"
 #include "MSLobbyPlayerState.h"
 // Sets default values
@@ -46,18 +45,6 @@ void AMSLobbyCharacter::BeginPlay()
 	}
 }
 
-void AMSLobbyCharacter::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-}
-
-void AMSLobbyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-}
-
 void AMSLobbyCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -94,13 +81,6 @@ void AMSLobbyCharacter::Tick(float DeltaTime)
 
 }
 
-// Called to bind functionality to input
-void AMSLobbyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-
 void AMSLobbyCharacter::UpdateUserNickNameUI(const FString& InUserNickName)
 {
 	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSLobbyCharacter UpdateUserNickNameUI"));
@@ -122,7 +102,7 @@ void AMSLobbyCharacter::UpdateHostUI(bool bReady)
 
 void AMSLobbyCharacter::UpdateReadyStatusUI(bool bReady)
 {
-	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("TEST"));
+	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Check"));
 
 	if (LobbyPlayerEntryWidget)
 	{

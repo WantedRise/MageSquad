@@ -31,7 +31,7 @@ void AMSLobbyPlayerState::OnRep_PlayerName()
 
 
 }
-
+// 준비 상태 설정 변경 시 GameMode에 알려 전체 준비 상태를 재계산한다.
 void AMSLobbyPlayerState::SetReady(bool bNewReady)
 {
 	if (!HasAuthority())

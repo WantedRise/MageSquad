@@ -10,9 +10,12 @@
 
 /*
 * 작성자: 이상준
-* 작성일: 25/12/07
-* 로비에서의 플레이어 컨트롤러
-* 카메라 시점 제어
+* 작성일: 2025-12-16
+* 로비 단계에서 LobbyMainWidget 생성을 담당하는 PlayerController.
+*
+* - 로컬 플레이어의 Ready 입력을 처리하여 서버에 전달
+* - LobbyMainWidget(Ready 버튼, 카운트다운 등) 생성 및 관리
+* - 로비 전용 카메라로 시점 전환 처리
 */
 UCLASS()
 class MAGESQUAD_API AMSLobbyPlayerController : public APlayerController
@@ -23,12 +26,18 @@ public:
 	AMSLobbyPlayerController();
 
 public:
+	
+	//로컬 플레이어의 준비 상태 변경 요청을 서버에 전달한다.
+	//실제 Ready 상태 변경 및 판단은 서버(GameMode/PlayerState)에서 처리된다.
 	UFUNCTION(Server, Reliable)
 	void ServerRequestSetReady(bool bNewReady);
 protected:
+	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;
+	//PlayerState 초기화 완료 시 닉네임 설정
 	void InitPlayerState() override;
 protected:
+	//로비 메인 UI 위젯을 생성하고 화면에 표시
 	void CreateLobbyUI();
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
