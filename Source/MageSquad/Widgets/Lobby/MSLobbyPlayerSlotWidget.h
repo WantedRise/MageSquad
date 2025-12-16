@@ -8,23 +8,19 @@
 
 /*
 * 작성자: 이상준
-* 작성일: 25/12/08
-* 로비에서 초대 표시하는 위젯 클래스
+* 작성일: 25/12/16
+* 로비 플레이어 슬롯에 부착되어 초대 버튼을 통해 Steam 친구 초대 화면을 표시하는 역할
 */
 UCLASS()
 class MAGESQUAD_API UMSLobbyPlayerSlotWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	void NativeConstruct() override;
-
-	UFUNCTION()
+	virtual void NativeConstruct() override;
+public:
 	void ShowFriendList();
-	void SetTextNickName(FString InNickName);
 		
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Button_Invite;
-
-	class UTextBlock* Text_NickName;
 };
