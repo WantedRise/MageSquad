@@ -1,7 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DataAssetManager.h"
+#if WITH_EDITOR 
 #include "LevelEditor.h"
+#endif
 #include "../SlateWidgets/DataAssetManagerWidget.h"
 
 #define LOCTEXT_NAMESPACE "FDataAssetManagerModule"
@@ -10,6 +12,7 @@ void FDataAssetManagerModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	
+#if WITH_EDITOR
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
 	MenuExtender = MakeShareable(new FExtender);
@@ -26,6 +29,7 @@ void FDataAssetManagerModule::StartupModule()
 			.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
+#endif // WITH_EDITOR
 }
 
 void FDataAssetManagerModule::ShutdownModule()
@@ -36,17 +40,21 @@ void FDataAssetManagerModule::ShutdownModule()
 
 void FDataAssetManagerModule::CreateMenu(FMenuBarBuilder& MenuBarBuilder)
 {
+#if WITH_EDITOR
 	MenuBarBuilder.AddPullDownMenu(
 	FText::FromString("DataAssetManager"),
 	FText::FromString("Open DataAsset Manager"),
 	FNewMenuDelegate::CreateRaw(this, &FDataAssetManagerModule::OpenWindow),
 	"Data"
 	);
+#endif // WITH_EDITOR
 }
 
 void FDataAssetManagerModule::OpenWindow(FMenuBuilder& MenuBarBuilder)
 {	
+#if WITH_EDITOR
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("DataAssetManager"));
+#endif // WITH_EDITOR
 }
 
 TSharedRef<SDockTab> FDataAssetManagerModule::OnSpawnDataAssetManagerTab(const FSpawnTabArgs& SpawnTabArgs)
