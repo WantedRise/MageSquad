@@ -38,7 +38,7 @@ public class DataAssetManager : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd",  // 에디터 관련 기본
+				//"UnrealEd",  // 에디터 관련 기본
 				"LevelEditor",
 				"EditorSubsystem",
 				"AssetRegistry",
@@ -54,5 +54,16 @@ public class DataAssetManager : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-	}
+
+        // UnrealEd 모듈을 에디터 빌드에서만 사용하도록 조건 추가
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "UnrealEd", // 에디터 빌드에만 포함
+                }
+            );
+        }
+    }
 }
