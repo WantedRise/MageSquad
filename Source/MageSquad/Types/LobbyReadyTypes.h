@@ -1,4 +1,4 @@
-﻿// LobbyReadyTypes.h
+﻿
 #pragma once
 
 #include "CoreMinimal.h"

@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion": 3,
 	"EngineAssociation": "5.6",
 	"Category": "",
@@ -12,7 +12,8 @@
 				"Engine",
 				"GameplayAbilities",
 				"AIModule",
-				"UMG"
+				"UMG",
+				"CoreUObject"
 			]
 		}
 	],

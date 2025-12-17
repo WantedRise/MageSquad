@@ -4,6 +4,7 @@
 #include "GameStates/MSLobbyGameState.h"
 #include "Net/UnrealNetwork.h"
 #include <GameModes/MSLobbyGameMode.h>
+#include "System/MSLevelManagerSubsystem.h"
 
 void AMSLobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -61,6 +62,15 @@ void AMSLobbyGameState::OnReadyCountdownFinished()
         {
             GM->HandleReadyCountdownFinished();
         }
+    }
+}
+
+void AMSLobbyGameState::Multicast_ShowLoadingScreen_Implementation()
+{
+    UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
+    if (LevelManager)
+    {
+        LevelManager->ShowLoadingWidget();
     }
 }
 

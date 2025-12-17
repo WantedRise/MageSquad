@@ -9,6 +9,8 @@
 #include <Player/MSLobbyPlayerState.h>
 #include "MageSquad.h"
 #include "GameStates/MSLobbyGameState.h"
+#include <System/MSLevelManagerSubsystem.h>
+#include "Player/MSLobbyPlayerController.h"
 
 AMSLobbyGameMode::AMSLobbyGameMode()
 {
@@ -17,7 +19,7 @@ AMSLobbyGameMode::AMSLobbyGameMode()
 void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
-
+    MS_LOG(LogMSNetwork, Log,TEXT("%s"), TEXT("TEST"));
     if (AMSLobbyPlayerState* PS = NewPlayer->GetPlayerState<AMSLobbyPlayerState>())
     {
         if (GameState->PlayerArray.Num() == 1)
@@ -50,8 +52,20 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 void AMSLobbyGameMode::HandleReadyCountdownFinished()
 {
     UE_LOG(LogTemp, Warning, TEXT("Lobby -> GameLevel ServerTravel"));
-    GetWorld()->ServerTravel(TEXT("GameLevel?listen"));
+    //호스트 로딩창 띄우기
+    if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+    {
+        LevelManager->ShowLoadingWidget();
+    }
+
+    //클라이언트들에게 로딩창 띄우라고 명령
+    if (AMSLobbyGameState* LobbyGS = Cast<AMSLobbyGameState>(GameState))
+    {
+        LobbyGS->Multicast_ShowLoadingScreen();
+    }
+    GetWorld()->ServerTravel(TEXT("LSJTestGame?listen"));
 }
+
 
 void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
 {

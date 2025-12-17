@@ -14,4 +14,7 @@ class MAGESQUAD_API AMSGameState : public AGameState
 {
 	GENERATED_BODY()
 	
+protected:
+	//UPROPERTY(Replicated)
+	float GameElapsedTime;
 };

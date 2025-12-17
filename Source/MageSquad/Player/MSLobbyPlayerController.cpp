@@ -17,36 +17,6 @@ AMSLobbyPlayerController::AMSLobbyPlayerController()
 	bAutoManageActiveCameraTarget = false;
 }
 
-void AMSLobbyPlayerController::InitPlayerState()
-{
-	Super::InitPlayerState();
-
-	AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>();
-
-	if (nullptr == PS)
-	{
-		MS_LOG(LogMSNetwork, Error, TEXT("%s"), TEXT("nullptr == AMSLobbyPlayerState"));
-		return;
-	}
-
-	UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
-
-	if (nullptr == SteamManager)
-	{
-		MS_LOG(LogMSNetwork, Error, TEXT("%s"), TEXT("nullptr == UMSSteamManagerSubsystem"));
-		return;
-	}
-
-	//스팀에 연결되지 않으면 Player로 지정
-	if (!SteamManager->IsSteamConnected())
-	{
-		PS->SetUserNickName(TEXT("Player"));
-	}
-	else
-	{
-		PS->SetUserNickName(PS->GetPlayerName());
-	}
-}
 
 void AMSLobbyPlayerController::ServerRequestSetReady_Implementation(bool bNewReady)
 {
