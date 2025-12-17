@@ -19,6 +19,10 @@ class MAGESQUAD_API AMSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+
+	/*****************************************************
+	* Mouse Curosr Section
+	*****************************************************/
 public:
 	// 서버에서 읽는 최신 커서 위치
 	FVector GetServerCursor() const;
