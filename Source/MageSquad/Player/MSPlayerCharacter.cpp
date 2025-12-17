@@ -4,6 +4,9 @@
 #include "Player/MSPlayerCharacter.h"
 #include "Player/MSPlayerState.h"
 
+#include "Components/Player/MSHUDDataComponent.h"
+#include "Engine/Texture2D.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 
@@ -75,6 +78,8 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
 	StaffMesh->bReceivesDecals = false;
 
+	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
+
 	// 액터 태그 설정
 	Tags.AddUnique(TEXT("Player"));
 }
@@ -130,6 +135,14 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 	// 시작 어빌리티/이펙트 부여 (서버 전용)
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
+
+	// HUD 리플리케이션 (서버 -> 모든 클라이언트)
+	if (HasAuthority() && HUDDataComponent && AbilitySystemComponent)
+	{
+		// 어빌리티 시스템, 플레이어 아이콘 동기화
+		HUDDataComponent->BindToASC_Server(AbilitySystemComponent);
+		HUDDataComponent->SetPortraitIcon_Server(PortraitIcon);
+	}
 
 	// 서버 자동 공격 시작
 	if (HasAuthority() && bAutoAttackEnabledOnSpawn)

@@ -252,5 +252,19 @@ private:
 	TObjectPtr<class UMSPlayerAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(Transient)
-	TObjectPtr< class UMSPlayerAttributeSet> AttributeSet;
+	TObjectPtr<class UMSPlayerAttributeSet> AttributeSet;
+
+
+
+	/*****************************************************
+	* UI / HUD Section
+	*****************************************************/
+protected:
+	// 팀원 UI에 표시할 플레이어 아이콘 (서버가 HUDDataComponent로 복제)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
+	TObjectPtr<UTexture2D> PortraitIcon = nullptr;
+
+	// 서버가 최소 HUD 공개 데이터를 복제하는 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | UI")
+	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent;
 };

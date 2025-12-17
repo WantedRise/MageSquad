@@ -242,3 +242,38 @@ struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTra
 {
 	enum { WithNetSerializer = true, WithCopy = true };
 };
+
+
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/16
+ *
+ * 팀 멤버 정보 데이터
+ * 플레이어 HUD의 팀 멤버에 들어갈 데이터 목록
+ */
+USTRUCT(BlueprintType)
+struct FMSHUDTeamMemberData
+{
+	GENERATED_BODY()
+
+public:
+	// 현재 체력
+	UPROPERTY(BlueprintReadOnly)
+	float Health = 0.f;
+
+	// 최대 체력
+	UPROPERTY(BlueprintReadOnly)
+	float MaxHealth = 0.f;
+
+	// 현재 남은 체력 비율
+	UPROPERTY(BlueprintReadOnly)
+	float HealthPct = 0.f;
+
+	// 플레이어 이름
+	UPROPERTY(BlueprintReadOnly)
+	FText DisplayName;
+
+	// 플레이어 아이콘
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UTexture2D> PortraitIcon = nullptr;
+};
