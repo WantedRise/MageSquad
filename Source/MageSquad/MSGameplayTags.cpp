@@ -13,7 +13,11 @@ namespace MSGameplayTags
 
 	/* Player Cooldown Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Player_Cooldown_Blink, "Player.Cooldown.Blink");
-
+	
+	/*Enemy Ability Tags*/
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_NormalAttack, "Enemy.Ability.NormalAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dead, "Enemy.Ability.Dead");
+	
 	/*Enemy State Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Chase, "Enemy.State.Chase");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Attack, "Enemy.State.Attack");

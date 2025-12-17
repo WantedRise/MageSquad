@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "GameFramework/Character.h"
 #include "MSBaseEnemy.generated.h"
 
@@ -40,6 +41,11 @@ public:
 	
 public:
 	void SetMonsterID(const FName& NewMonsterID);
+	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
+	
+public:
+	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AnimData->AttackAnim;}
+	FORCEINLINE UAnimMontage* GetDeadMontage() const {return AnimData->DeadAnim;}
 	
 protected:
 	UFUNCTION()
@@ -57,5 +63,8 @@ protected:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_MonsterID)
 	FName CurrentMonsterID;
+	
+	UPROPERTY();
+	TObjectPtr<class UDA_EnemyAnimationSet> AnimData;
 	
 };
