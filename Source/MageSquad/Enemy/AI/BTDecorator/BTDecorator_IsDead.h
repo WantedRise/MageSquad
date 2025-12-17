@@ -7,9 +7,9 @@
 #include "BTDecorator_IsDead.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/11
- * ¸ó½ºÅÍ°¡ Á×¾ú´ÂÁö ÆÇ´ÜÇÕ´Ï´Ù. 
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/12
+ * ëª¬ìŠ¤í„°ê°€ ì£½ì—ˆëŠ”ì§€ ì²´í¬í•˜ëŠ” Decorator
  */
 UCLASS()
 class MAGESQUAD_API UBTDecorator_IsDead : public UBTDecorator
@@ -20,11 +20,11 @@ public:
 	UBTDecorator_IsDead();
 
 protected:
-	// µ¥ÄÚ·¹ÀÌÅÍÀÇ ÇÙ½É Á¶°Ç ·ÎÁ÷À» ±¸Çö
+	// Decorator ë¦¬í„´ ê°’ì„ ì²´í¬í•˜ëŠ” í•¨ìˆ˜
 	virtual bool CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const override;
 	
 protected:
-	// ¿¡µğÅÍ¿¡¼­ ¼³Á¤ÇÒ Blackboard Key
+	// Blackboard Key
 	UPROPERTY(EditAnywhere, Category = Blackboard)
 	FBlackboardKeySelector IsDeadKey;
 	
