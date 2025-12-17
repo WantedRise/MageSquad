@@ -10,3 +10,7 @@ RowName,SkillType,SkillID,SkillName,SkillEventTag,SkillLevel,SkillDescription,Sk
 9,1,1,IceSpear,Skill.Event.IceSpear,8,투사체가 적을 2번 관통합니다,45,3,5,1,0,0
 10,1,1,IceSpear,Skill.Event.IceSpear,9,데미지가 100% 증가합니다,45,3,5,2,0,0
 11,1,1,IceSpear,Skill.Event.IceSpear,10,--,90,3,5,2,0,0
+12,3,21,Explosion,Skill.Event.Explosion,0,지정한 곳에 폭발을 일으킵니다,0,0,0,0,0,0
+13,3,21,Explosion,Skill.Event.Explosion,1,데미지가 100% 증가합니다,90,15,0,0,0,1
+14,3,21,Explosion,Skill.Event.Explosion,2,데미지가 100% 증가하고 범위가 50% 증가합니다,180,15,0,0,0,1
+15,3,21,Explosion,Skill.Event.Explosion,3,--,360,15,0,0,0,1.5

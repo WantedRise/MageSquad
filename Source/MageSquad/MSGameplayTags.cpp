@@ -26,7 +26,12 @@ namespace MSGameplayTags
 
 	/* Skill Ability Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_IceSpear, "Skill.Ability.IceSpear");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Explosion, "Skill.Ability.Explosion");
 
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
+	
+	/* GameplayCue Tags */
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_Explosion,"GameplayCue.Skill.Explosion");
 }
