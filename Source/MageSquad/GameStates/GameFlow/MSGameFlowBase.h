@@ -37,4 +37,5 @@ protected:
 	EGameFlowState GameFlowState = EGameFlowState::None;
 	UPROPERTY()
 	class AMSGameState* OwnerGameState = nullptr;
+
 };
