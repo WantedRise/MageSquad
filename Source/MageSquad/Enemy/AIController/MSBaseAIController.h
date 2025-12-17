@@ -27,6 +27,7 @@ public:
 public:
 	FORCEINLINE FName GetTargetActorKey() const { return TargetActorKey; }
 	FORCEINLINE FName GetTargetLocationKey() const { return TargetLocationKey; }
+	FORCEINLINE FName GetTargetDistanceKey() const { return TargetDistanceKey; }
 	FORCEINLINE FName GetCanAttackKey() const { return CanAttackKey; }
 	FORCEINLINE FName GetIsDeadKey() const { return IsDeadKey; }	
 
@@ -45,8 +46,13 @@ protected:
 	FName TargetLocationKey = "TargetLocation";
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI|BlackboardKeys")
+	FName TargetDistanceKey = "TargetDistance";
+	
+	UPROPERTY(EditDefaultsOnly, Category = "AI|BlackboardKeys")
 	FName CanAttackKey = "CanAttack";
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI|BlackboardKeys")
 	FName IsDeadKey = "IsDead";
+
+	
 };

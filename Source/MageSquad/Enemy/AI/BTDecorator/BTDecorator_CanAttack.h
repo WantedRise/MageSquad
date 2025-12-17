@@ -22,9 +22,16 @@ public:
 protected:
 	// Decorator 리턴 값을 체크하는 함수
 	virtual bool CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const override;
+	
 
 protected:
 	// Blackboard Key
-	UPROPERTY(EditAnywhere, Category = Blackboard)
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector CanAttackKey;
+	
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
+	FBlackboardKeySelector TargetActorKey;
+	
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
+	FBlackboardKeySelector TargetDistanceKey;
 };

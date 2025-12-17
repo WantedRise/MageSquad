@@ -3,28 +3,67 @@
 
 #include "Enemy/AI/BTDecorator/BTDecorator_CanAttack.h"
 
+#include "AbilitySystemComponent.h"
+#include "AIController.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Enemy/MSBaseEnemy.h"
 
 UBTDecorator_CanAttack::UBTDecorator_CanAttack()
 {
 	NodeName = TEXT("Check Can Attack");
 	
-	// Blackboard Key Selector°¡ Bool Å¸ÀÔ Å°¸¸ ¼±ÅÃÇÒ ¼ö ÀÖµµ·Ï ÇÊÅÍ¸¦ Ãß°¡
-	CanAttackKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBTDecorator_CanAttack, CanAttackKey));
+	// Blackboard Key Selectorê°€ Bool íƒ€ì… í‚¤ë§Œ ì„ íƒí•  ìˆ˜ ìˆë„ë¡ í•„í„°ë¥¼ ì¶”ê°€
+	//CanAttackKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBTDecorator_CanAttack, CanAttackKey));
+	
+	TargetActorKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UBTDecorator_CanAttack, TargetActorKey), AActor::StaticClass());
+	TargetDistanceKey.AddFloatFilter(this, GET_MEMBER_NAME_CHECKED(UBTDecorator_CanAttack, TargetDistanceKey));
+	
+	FlowAbortMode = EBTFlowAbortMode::Both;
 }
 
 bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const
 {
+	Super::CalculateRawConditionValue(OwnerComp, NodeMemory);
+	
 	const UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
-		return false; // Blackboard°¡ ¾øÀ¸¸é Á¶°Ç ½ÇÆĞ
+		return false;
 	}
 
-	// Blackboard KeyÀÇ ÀÌ¸§À» °¡Á®¿Í ±× °ªÀ» Bool·Î ÀĞÀ½
-	const FName KeyName = CanAttackKey.SelectedKeyName;
+	// Target Actor ê°€ì ¸ì˜¤ê¸°
+	AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName));
+	if (!TargetActor)
+	{
+		return false;
+	}
+
+	// Owner Pawn ê°€ì ¸ì˜¤ê¸°
+	AMSBaseEnemy* OwnerAI = Cast<AMSBaseEnemy>(OwnerComp.GetAIOwner()->GetPawn());
+	if (!OwnerAI)
+	{
+		return false;
+	}
+
+	// AttributeSetì—ì„œ Range ê°€ì ¸ì˜¤ê¸°
+	const UMSEnemyAttributeSet* AttributeSet = Cast<const UMSEnemyAttributeSet>(OwnerAI->GetAbilitySystemComponent()->GetAttributeSet(
+		UMSEnemyAttributeSet::StaticClass()));
+    
+	if (!AttributeSet)
+	{
+		return false;
+	}
 	
-	bool bCanAttack = BlackboardComp->GetValueAsBool(KeyName);
-	
-	return bCanAttack;
+	float AttackRange = AttributeSet->GetAttackRange();
+	UE_LOG(LogTemp, Log, TEXT("AttackRange : %f"), AttackRange);
+    
+	// ê±°ë¦¬ ì²´í¬ (ì œê³± ê±°ë¦¬ë¡œ ë¹„êµí•˜ì—¬ Sqrt ì—°ì‚° íšŒí”¼)
+	//float DistanceSquared = FVector::DistSquared(OwnerAI->GetActorLocation(), TargetActor->GetActorLocation());
+	float Distance = OwnerComp.GetBlackboardComponent()->GetValueAsFloat(TargetDistanceKey.SelectedKeyName);
+	//float AttackRange = AttackRange;
+
+	return Distance <= AttackRange;
 }
+
+

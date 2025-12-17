@@ -650,7 +650,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
-		Enemy->GetMesh()->SetAnimInstanceClass(Data->AnimationSet->AnimationClass);
+		Enemy->SetAnimData(Data->AnimationSet);
 	}
 
 	// GAS 속성 초기화

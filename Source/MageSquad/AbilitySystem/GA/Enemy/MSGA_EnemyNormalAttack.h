@@ -3,22 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
-#include "MSGA_EnemyBaseAbility.generated.h"
+#include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
+#include "MSGA_EnemyNormalAttack.generated.h"
 
 /**
  * 작성자 : 임희섭
  * 작성일 : 2025/12/17
- * Enemy들이 가질 Ability의 base 클래스
+ * Enemy들이 가질 기본 공격을 할 때 발동될 어빌리티
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_EnemyBaseAbility : public UGameplayAbility
+class MAGESQUAD_API UMSGA_EnemyNormalAttack : public UMSGA_EnemyBaseAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_EnemyBaseAbility();
-	
+	UMSGA_EnemyNormalAttack();
+
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, 
@@ -38,11 +38,4 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo, 
 		bool bReplicateEndAbility, 
 		bool bWasCancelled) override;
-	
-protected:
-	UPROPERTY()
-	TObjectPtr<class AMSBaseEnemy> Owner;
-	
-	
-	
 };
