@@ -7,7 +7,7 @@
 #include "Enemy/MSNormalEnemy.h"
 #include "Player/MSPlayerCharacter.h"
 #include "System/MSEnemySpawnSubsystem.h"
-#include "GameStates/GameFlow/MSGameFlowBase.h"
+#include "GameFlow/MSGameFlowBase.h"
 
 void AMSGameMode::BeginPlay()
 {

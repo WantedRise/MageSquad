@@ -7,9 +7,9 @@
 UENUM(BlueprintType)
 enum class EGameFlowState : uint8
 {
-    None,
-    Playing,
-    Questing,
-    Boss,
-    Finished
+	None     UMETA(DisplayName = "None"),
+	Playing  UMETA(DisplayName = "Playing"),
+	Mission  UMETA(DisplayName = "Mission"),
+	Boss     UMETA(DisplayName = "Boss"),
+	Finished UMETA(DisplayName = "Finished"),
 };

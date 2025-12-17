@@ -3,7 +3,7 @@
 
 #include "GameStates/MSGameState.h"
 #include "GameModes/MSGameMode.h"
-#include "GameStates/GameFlow/MSGameFlowBase.h"
+#include "GameFlow/MSGameFlowBase.h"
 #include "MageSquad.h"
 void AMSGameState::BeginPlay()
 {
@@ -26,3 +26,13 @@ void AMSGameState::BeginPlay()
         }
     }
 }
+
+void AMSGameState::RequestSpawnFinalBoss()
+{
+}
+
+bool AMSGameState::IsFinalBossDefeated() const
+{
+    return false;
+}
+

@@ -24,17 +24,20 @@ class MAGESQUAD_API UMSGameFlowBase : public UObject
 	GENERATED_BODY()
 	
 public:
-	virtual void Initialize(class AMSGameState* OwnerGS);
+	virtual void Initialize(class AMSGameState* InOwnerGameState);
 	virtual void TickFlow(float DeltaSeconds);
 
-	EGameFlowState GetGameFlowState() const { return GameFlowState; }
+	EGameFlowState GetGameFlowState() const { return CurrentState; }
 protected:
+
 	//상태 전환용 내부 함수
 	void SetState(EGameFlowState NewState);
-
+	virtual void OnEnterState(EGameFlowState NewState);
+	virtual void OnExitState(EGameFlowState PreState);
+	class AMSGameState* GetOwnerGameState() const { return OwnerGameState; }
 protected:
-	UPROPERTY()
-	EGameFlowState GameFlowState = EGameFlowState::None;
+	UPROPERTY(VisibleAnywhere, Category = "GameFlow")
+	EGameFlowState CurrentState = EGameFlowState::None;
 	UPROPERTY()
 	class AMSGameState* OwnerGameState = nullptr;
 
