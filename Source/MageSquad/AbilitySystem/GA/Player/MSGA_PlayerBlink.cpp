@@ -40,6 +40,7 @@ void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
+	// ASC 및 Owner Character 가져오기
 	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
 	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (!ASC || !Character)
@@ -76,12 +77,12 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 	const FVector StartLocation = Character->GetActorLocation();
 	const FVector DesiredLocation = ComputeDesiredLocation(Character);
 
-	// 시작 VFX 재생
+	// 시작 VFX 재생 (GameplayCue)
 	ExecuteCue(ASC, Cue_BlinkStart, StartLocation);
 
 	FVector FinalLocation = DesiredLocation;
 
-	// 점멸 도착 위치로 점멸 시도
+	// 점멸 가능한 위치 찾기
 	if (!ResolveFinalLocation(Character, StartLocation, DesiredLocation, FinalLocation))
 	{
 		// 이동 불가 시 false 반환
@@ -99,8 +100,8 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 		return false;
 	}
 
-	// 종료 VFX 재생
-	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation);
+	// 종료 VFX 재생 (GameplayCue)
+	ExecuteCue(ASC, Cue_BlinkEnd, Character->GetActorLocation());
 	return true;
 }
 
