@@ -6,6 +6,7 @@
 #include "AbilitySystem/GA/Skill/MSGA_SkillBase.h"
 #include "MSFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
 #include "MSGA_IceSpear.generated.h"
 
 /**

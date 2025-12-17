@@ -21,6 +21,9 @@
   * Abilities : 플레이어가 소유하게 될 UGameplayAbility 클래스 목록
   * Effects   : 시작 시 한 번 적용되는 UGameplayEffect 클래스 목록
   */
+
+
+
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FPlayerStartAbilityData
 {
@@ -44,6 +47,9 @@ public:
  * 발사체의 원본 데이터
  * 각 발사체마다 생성
  */
+
+class UMSProjectileBehaviorBase;
+
 UCLASS(BlueprintType, Blueprintable)
 class MAGESQUAD_API UProjectileStaticData : public UObject
 {
@@ -86,6 +92,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile", meta = (EditCondition = "bIsAutoAttack"))
 	float AutoAttackInterval = 1.f;
 
+	// 관통 횟수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	int32 PenetrationCount = 0;
+
 	// 발사체 메쉬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	UStaticMesh* StaticMesh;
@@ -105,6 +115,10 @@ public:
 	// 피격 SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	USoundBase* OnHitSFX = nullptr;
+
+	// Behavior 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
 };
 
 
@@ -137,11 +151,13 @@ public:
 		LifeTime = StaticData->LifeTime;
 		bIsAutoAttack = StaticData->bIsAutoAttack;
 		AutoAttackInterval = StaticData->AutoAttackInterval;
+		PenetrationCount = StaticData->PenetrationCount;
 		StaticMesh = StaticData->StaticMesh;
 		Effects = StaticData->Effects;
 		OnAttachVFX = StaticData->OnAttachVFX;
 		OnHitVFX = StaticData->OnHitVFX;
 		OnHitSFX = StaticData->OnHitSFX;
+		BehaviorClass = StaticData->BehaviorClass;
 	}
 
 public:
@@ -181,6 +197,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile", meta = (EditCondition = "bIsAutoAttack"))
 	float AutoAttackInterval = 1.f;
 
+	// 관통 횟수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	int32 PenetrationCount = 0;
+
 	// 발사체 메쉬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	UStaticMesh* StaticMesh;
@@ -200,6 +220,10 @@ public:
 	// 피격 SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	USoundBase* OnHitSFX = nullptr;
+
+	// Behavior 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
 };
 
 

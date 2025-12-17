@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actors/Projectile/MSBaseProjectile.h"
@@ -9,22 +9,43 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
+#include "Components/SphereComponent.h"
+#include "Components/SceneComponent.h"
+
 #include "Net/UnrealNetwork.h"
 
 #include "MSFunctionLibrary.h"
 
+// Behavior
+#include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
+#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+
 AMSBaseProjectile::AMSBaseProjectile()
 {
-	// Tick ºñÈ°¼ºÈ­
+	// Tick ë¹„í™œì„±í™”
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
 
-	// ¸®ÇÃ¸®ÄÉÀÌ¼Ç È°¼ºÈ­
+	// ë¦¬í”Œë¦¬ì¼€ì´ì…˜ í™œì„±í™”
 	bReplicates = true;
 	SetReplicateMovement(true);
 
+	// overlap íŒì •ìš© sphere
+	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
+	SetRootComponent(CollisionSphere.Get());
+	
+	// sphere ì½œë¦¬ì „ ì„¤ì •
+	CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionSphere->SetCollisionObjectType(ECC_GameTraceChannel2);     // MSProjectile
+	CollisionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CollisionSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Overlap); // MSEnemy
+	CollisionSphere->SetGenerateOverlapEvents(true);
+
+	CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AMSBaseProjectile::OnHitOverlap);
+	
+	// ì‹œê°ìš© MeshëŠ” Sphereì— ë¶€ì°©
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
-	ProjectileMesh->SetupAttachment(GetRootComponent());
+	ProjectileMesh->SetupAttachment(CollisionSphere.Get());
 	ProjectileMesh->SetIsReplicated(true);
 	ProjectileMesh->SetCollisionProfileName(TEXT("MSProjectile"));
 	ProjectileMesh->bReceivesDecals = false;
@@ -34,13 +55,13 @@ AMSBaseProjectile::AMSBaseProjectile()
 	ProjectileMovementComponent->Velocity = FVector::ZeroVector;
 	ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AMSBaseProjectile::OnProjectileStop);
 
-	// ¾×ÅÍ ÅÂ±× ¼³Á¤
+	// ì•¡í„° íƒœê·¸ ì„¤ì •
 	Tags.AddUnique(TEXT("Projectile"));
 }
 
 void AMSBaseProjectile::InitProjectileRuntimeDataFromClass(TSubclassOf<UProjectileStaticData> InProjectileDataClass)
 {
-	// ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ ÃÊ±âÈ­
+	// ë°œì‚¬ì²´ ì›ë³¸ ë°ì´í„° ì´ˆê¸°í™”
 	ProjectileDataClass = InProjectileDataClass;
 
 	const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
@@ -50,11 +71,11 @@ void AMSBaseProjectile::InitProjectileRuntimeDataFromClass(TSubclassOf<UProjecti
 
 void AMSBaseProjectile::SetProjectileRuntimeData(const FProjectileRuntimeData& InRuntimeData)
 {
-	// ¹ß»çÃ¼ ·±Å¸ÀÓ µ¥ÀÌÅÍ ÃÊ±âÈ­
+	// ë°œì‚¬ì²´ ëŸ°íƒ€ì„ ë°ì´í„° ì´ˆê¸°í™”
 	ProjectileRuntimeData = InRuntimeData;
 	bRuntimeDataInitialized = true;
 
-	// ÀÌ¹Ì ½ÇÇà ÁßÀÎ °æ¿ì Áï½Ã Àû¿ë (¼­¹ö Ãø Áö¿¬ »ı¼º¶§¹®¿¡ ´Ê°Ô ³ª¿Â °æ¿ì)
+	// ì´ë¯¸ ì‹¤í–‰ ì¤‘ì¸ ê²½ìš° ì¦‰ì‹œ ì ìš© (ì„œë²„ ì¸¡ ì§€ì—° ìƒì„±ë•Œë¬¸ì— ëŠ¦ê²Œ ë‚˜ì˜¨ ê²½ìš°)
 	if (HasActorBegunPlay())
 	{
 		ApplyProjectileRuntimeData(false);
@@ -65,23 +86,35 @@ void AMSBaseProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍÀÇ ÃÊ±âÈ­°¡ µÇÁö ¾ÊÀº °æ¿ì
-	// ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ¸¦ º¹Á¦ÇÏ¿© ¹ß»çÃ¼ ÀçÁ¤ÀÇ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­
+	// ëŸ°íƒ€ì„ ë°ì´í„°ì˜ ì´ˆê¸°í™”ê°€ ë˜ì§€ ì•Šì€ ê²½ìš°
+	// ë°œì‚¬ì²´ ì›ë³¸ ë°ì´í„°ë¥¼ ë³µì œí•˜ì—¬ ë°œì‚¬ì²´ ì¬ì •ì˜ ë°ì´í„°ë¥¼ ì´ˆê¸°í™”
 	if (HasAuthority() && !bRuntimeDataInitialized)
 	{
 		InitProjectileRuntimeDataFromClass(ProjectileDataClass);
 	}
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ Àû¿ë
+	// ëŸ°íƒ€ì„ ë°ì´í„° ì ìš©
 	ApplyProjectileRuntimeData(true);
+	
+	// ì„œë²„ì—ì„œë§Œ Behavior ì¤€ë¹„
+	if (HasAuthority())
+	{
+		InitializeBehavior();
+	}
 }
 
 void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ °¡Á®¿À±â
+	// ìˆ˜ëª… íƒ€ì´ë¨¸ ì •ë¦¬(ì¤‘ë³µ/ëˆ„ìˆ˜ ë°©ì§€)
+	if (HasAuthority())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
+	}
+	
+	// ëŸ°íƒ€ì„ ë°ì´í„° ê°€ì ¸ì˜¤ê¸°
 	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ°¡ ÃÊ±âÈ­µÇÁö ¾Ê¾ÒÀ¸¸é, ¿øº» µ¥ÀÌÅÍ¸¦ °¡Á®¿Í ·±Å¸ÀÓ µ¥ÀÌÅÍ·Î ÃÊ±âÈ­
+	// ëŸ°íƒ€ì„ ë°ì´í„°ê°€ ì´ˆê¸°í™”ë˜ì§€ ì•Šì•˜ìœ¼ë©´, ì›ë³¸ ë°ì´í„°ë¥¼ ê°€ì ¸ì™€ ëŸ°íƒ€ì„ ë°ì´í„°ë¡œ ì´ˆê¸°í™”
 	if (!bRuntimeDataInitialized)
 	{
 		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
@@ -90,13 +123,13 @@ void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (EffectiveData.OnHitVFX)
 	{
-		// Æø¹ß ³ªÀÌ¾Æ°¡¶ó Àç»ı
+		// í­ë°œ ë‚˜ì´ì•„ê°€ë¼ ì¬ìƒ
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectiveData.OnHitVFX, GetActorLocation());
 	}
 
 	if (EffectiveData.OnHitSFX)
 	{
-		// Æø¹ß »ç¿îµå Àç»ı
+		// í­ë°œ ì‚¬ìš´ë“œ ì¬ìƒ
 		UGameplayStatics::PlaySoundAtLocation(this, EffectiveData.OnHitSFX, GetActorLocation(), 1.f);
 
 	}
@@ -113,22 +146,61 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AMSBaseProjectile, ProjectileRuntimeData);
 }
 
-void AMSBaseProjectile::OnProjectileStop(const FHitResult& ImpactResult)
+void AMSBaseProjectile::InitializeBehavior()
 {
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ °¡Á®¿À±â
-	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
+	if (Behavior) return;
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ°¡ ÃÊ±âÈ­µÇÁö ¾Ê¾ÒÀ¸¸é, ¿øº» µ¥ÀÌÅÍ¸¦ °¡Á®¿Í ·±Å¸ÀÓ µ¥ÀÌÅÍ·Î ÃÊ±âÈ­
-	if (!bRuntimeDataInitialized)
+	TSubclassOf<UMSProjectileBehaviorBase> ClassToUse = ProjectileRuntimeData.BehaviorClass;
+	if (!ClassToUse)
 	{
-		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
-		EffectiveData.CopyFromStaticData(StaticData);
+		ClassToUse = UMSProjectileBehavior_Normal::StaticClass(); // fallback
 	}
 
-	// ´ë¹ÌÁö ·ÎÁ÷
-	// EffectiveData.BaseDamage / Radius / Effects
+	Behavior = NewObject<UMSProjectileBehaviorBase>(this, ClassToUse);
 
-	// ¹ß»çÃ¼ ÆÄ±« (EndPlay È£Ãâ)
+	if (Behavior)
+	{
+		Behavior->Initialize(this, ProjectileRuntimeData);
+		Behavior->OnBegin();
+	}
+}
+
+void AMSBaseProjectile::OnHitOverlap(
+	UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult
+)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (!Behavior)
+	{
+		InitializeBehavior();
+		if (!Behavior) return;
+	}
+
+	// Enemy ì±„ë„ë¡œ ì´ë¯¸ ê±°ë¥¸ ìƒíƒœì§€ë§Œ, ì•ˆì „í•˜ê²Œ nullptrë§Œ ë°©ì§€
+	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+
+	Behavior->OnTargetEnter(OtherActor, SweepResult);
+}
+
+void AMSBaseProjectile::OnProjectileStop(const FHitResult& ImpactResult)
+{
+	if (HasAuthority() && Behavior)
+	{
+		Behavior->OnEnd();
+	}
+	// ë°œì‚¬ì²´ íŒŒê´´ (EndPlay í˜¸ì¶œ)
 	Destroy();
 }
 
@@ -136,27 +208,32 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 {
 	if (!ProjectileMovementComponent) return;
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ °¡Á®¿À±â
+	// ëŸ°íƒ€ì„ ë°ì´í„° ê°€ì ¸ì˜¤ê¸°
 	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ°¡ ÃÊ±âÈ­µÇÁö ¾Ê¾ÒÀ¸¸é, ¿øº» µ¥ÀÌÅÍ¸¦ °¡Á®¿Í ·±Å¸ÀÓ µ¥ÀÌÅÍ·Î ÃÊ±âÈ­
+	// ëŸ°íƒ€ì„ ë°ì´í„°ê°€ ì´ˆê¸°í™”ë˜ì§€ ì•Šì•˜ìœ¼ë©´, ì›ë³¸ ë°ì´í„°ë¥¼ ê°€ì ¸ì™€ ëŸ°íƒ€ì„ ë°ì´í„°ë¡œ ì´ˆê¸°í™”
 	if (!bRuntimeDataInitialized)
 	{
 		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
 		EffectiveData.CopyFromStaticData(StaticData);
 	}
 
-	// ½ºÅÂÆ½ ¸Ş½Ã ÃÊ±âÈ­
+	// ìŠ¤íƒœí‹± ë©”ì‹œ ì´ˆê¸°í™”
 	if (ProjectileMesh && EffectiveData.StaticMesh)
 	{
 		ProjectileMesh->SetStaticMesh(EffectiveData.StaticMesh);
-		SetRootComponent(ProjectileMesh);
 	}
 
-	// ¹ß»çÃ¼ Å©±â(¹üÀ§) ÃÊ±âÈ­
-	SetActorScale3D(FVector(EffectiveData.Radius));
-
-	// ¹ß»çÃ¼ ¹«ºê¸ÕÆ® ¼³Á¤
+	// ë²”ìœ„ëŠ” CollisionSphere ë°˜ê²½ìœ¼ë¡œ ë§ì¶”ê¸°
+	if (CollisionSphere)
+	{
+		CollisionSphere->SetSphereRadius(EffectiveData.Radius);
+	}
+	
+	// ë©”ì‹œ í¬ê¸° ì„¤ì •
+	ProjectileMesh->SetWorldScale3D(FVector(EffectiveData.Radius));
+		
+	// ë°œì‚¬ì²´ ë¬´ë¸Œë¨¼íŠ¸ ì„¤ì •
 	ProjectileMovementComponent->bInitialVelocityInLocalSpace = false;
 	ProjectileMovementComponent->InitialSpeed = EffectiveData.InitialSpeed;
 	ProjectileMovementComponent->MaxSpeed = EffectiveData.MaxSpeed;
@@ -165,7 +242,7 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 	ProjectileMovementComponent->Bounciness = 0.f;
 	ProjectileMovementComponent->ProjectileGravityScale = EffectiveData.GravityMultiplayer;
 
-	// ¹ß»çÃ¼ ¹æÇâ ¼³Á¤
+	// ë°œì‚¬ì²´ ë°©í–¥ ì„¤ì •
 	FVector Dir = EffectiveData.Direction.GetSafeNormal();
 	if (Dir.IsNearlyZero())
 	{
@@ -173,7 +250,7 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 	}
 	ProjectileMovementComponent->Velocity = EffectiveData.InitialSpeed * Dir;
 
-	// ºÎÂø VFX ºÎÂø(ÇÑ ¹ø¸¸)
+	// ë¶€ì°© VFX ë¶€ì°©(í•œ ë²ˆë§Œ)
 	if (bSpawnAttachVFX && EffectiveData.OnAttachVFX)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
@@ -187,24 +264,24 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 		);
 	}
 
-	// ¼­¹ö¿¡¼­ »ı¸íÁÖ±â Å¸ÀÌ¸Ó °ü¸®
-	FTimerHandle LifeTimerHandle;
+	// ì„œë²„ì—ì„œ ìƒëª…ì£¼ê¸° íƒ€ì´ë¨¸ ê´€ë¦¬
 	if (HasAuthority())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(LifeTimerHandle,
-			FTimerDelegate::CreateLambda(
-				[this]()
-				{
-					Destroy();
-				}
-			), EffectiveData.LifeTime, false
+		GetWorld()->GetTimerManager().SetTimer(
+			LifeTimerHandle,
+			FTimerDelegate::CreateLambda([this]()
+			{
+				Destroy();
+			}),
+			EffectiveData.LifeTime,
+			false
 		);
 	}
 }
 
 void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
 {
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ ¸®ÇÃ¸®ÄÉÀÌ¼Ç ½Ã, VFX¸¸ Á¦¿ÜÇÏ°í ·±Å¸ÀÓ µ¥ÀÌÅÍ Àû¿ë
+	// ëŸ°íƒ€ì„ ë°ì´í„° ë¦¬í”Œë¦¬ì¼€ì´ì…˜ ì‹œ, VFXë§Œ ì œì™¸í•˜ê³  ëŸ°íƒ€ì„ ë°ì´í„° ì ìš©
 	ApplyProjectileRuntimeData(false);
 }

@@ -1,17 +1,23 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Types/MageSquadTypes.h"
+#include "Components/SphereComponent.h"
 #include "MSBaseProjectile.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
  */
+
+class UStaticMeshComponent;
+class UProjectileMovementComponent;
+class UMSProjectileBehaviorBase;
+
 UCLASS()
 class MAGESQUAD_API AMSBaseProjectile : public AActor
 {
@@ -20,13 +26,13 @@ class MAGESQUAD_API AMSBaseProjectile : public AActor
 public:
 	AMSBaseProjectile();
 
-	// ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ¸¦ º¹Á¦ÇÏ¿© ¹ß»çÃ¼ ÀçÁ¤ÀÇ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­ÇÏ´Â ÇÔ¼ö
+	// ì›ë³¸ StaticDataë¡œë¶€í„° RuntimeData ì´ˆê¸°í™”
 	void InitProjectileRuntimeDataFromClass(TSubclassOf<UProjectileStaticData> InProjectileDataClass);
 
-	// ¹ß»çÃ¼ ·±Å¸ÀÓ µ¥ÀÌÅÍ Getter
+	// ëŸ°íƒ€ì„ ë°ì´í„° Getter
 	const FProjectileRuntimeData& GetProjectileRuntimeData() const { return ProjectileRuntimeData; }
 
-	// ¹ß»çÃ¼ ·±Å¸ÀÓ µ¥ÀÌÅÍ Setter
+	// ëŸ°íƒ€ì„ ë°ì´í„° Setter (GAê°€ ë§Œë“  RuntimeData ì£¼ì…)
 	void SetProjectileRuntimeData(const FProjectileRuntimeData& InRuntimeData);
 
 protected:
@@ -35,37 +41,62 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// ¹ß»çÃ¼°¡ Á¤ÁöÇßÀ» °æ¿ì Äİ¹é ÇÔ¼ö
+	// ë²½/ë°”ë‹¥ ë“± Blockìœ¼ë¡œ ë©ˆì·„ì„ ë•Œ
 	UFUNCTION()
 	void OnProjectileStop(const FHitResult& ImpactResult);
 
+	// ì ê³¼ ì¶©ëŒ ì‹œ
+	UFUNCTION()
+	void OnHitOverlap(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
+
 private:
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ Àû¿ë ÇÔ¼ö
+	// ëŸ°íƒ€ì„ ë°ì´í„° ì ìš©(ë©”ì‹œ/ìŠ¤ì¼€ì¼/ë¬´ë¸Œë¨¼íŠ¸/VFX/ìˆ˜ëª… íƒ€ì´ë¨¸)
 	void ApplyProjectileRuntimeData(bool bSpawnAttachVFX);
 
-	// ¹ß»çÃ¼ ·±Å¸ÀÓ µ¥ÀÌÅÍ ³×Æ®¿öÅ© º¹Á¦ ÇÔ¼ö
+	// ëŸ°íƒ€ì„ ë°ì´í„° ë³µì œ ì‹œ(í´ë¼) ì ìš©
 	UFUNCTION()
 	void OnRep_ProjectileRuntimeData();
 
+	// ì„œë²„ì—ì„œ Behavior ìƒì„±/ì´ˆê¸°í™”
+	void InitializeBehavior();
+
 public:
-	// ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ
+	// ë°œì‚¬ì²´ ì›ë³¸ ë°ì´í„°(StaticData í´ë˜ìŠ¤)
 	UPROPERTY(Replicated)
 	TSubclassOf<UProjectileStaticData> ProjectileDataClass;
 
-	// ¹ß»çÃ¼ ÀçÁ¤ÀÇ µ¥ÀÌÅÍ
+	// ë°œì‚¬ì²´ ëŸ°íƒ€ì„ ë°ì´í„°(ìŠ¤í° ì‹œ GAê°€ ìˆ˜ì •í•œ ìµœì¢…ê°’)
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileRuntimeData)
 	FProjectileRuntimeData ProjectileRuntimeData;
 
 private:
-	// ¹ß»çÃ¼ ¸Ş½¬
+	// íˆíŠ¸ íŒì •ìš© ì½œë¦¬ì „(ì  Overlap ì „ìš©)
 	UPROPERTY()
-	TObjectPtr<class UStaticMeshComponent> ProjectileMesh = nullptr;
+	TObjectPtr<USphereComponent> CollisionSphere = nullptr;
 
-	// ¹ß»çÃ¼ ¹«ºê¸ÕÆ® ÄÄÆ÷³ÍÆ®
+	// ì‹œê°/ë¸”ë¡œí‚¹ìš© ë©”ì‹œ
 	UPROPERTY()
-	TObjectPtr<class UProjectileMovementComponent> ProjectileMovementComponent = nullptr;
+	TObjectPtr<UStaticMeshComponent> ProjectileMesh = nullptr;
 
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍÀÇ ÃÊ±âÈ­ ¿©ºÎ(¿øº» µ¥ÀÌÅÍ¿¡¼­ º¹Á¦µÈ ·±Å¸ÀÓ µ¥ÀÌÅÍ°¡ ÀÖ´ÂÁö)
+	// ì´ë™ ì²˜ë¦¬
+	UPROPERTY()
+	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent = nullptr;
+
+	// í–‰ë™(íˆ¬ì‚¬ì²´/ì¥íŒ/ì§€ì†) ê°ì²´
+	UPROPERTY(Transient)
+	TObjectPtr<UMSProjectileBehaviorBase> Behavior = nullptr;
+
+	// ì›ë³¸ì—ì„œ RuntimeDataë¥¼ ë³µì œí–ˆëŠ”ì§€
 	UPROPERTY(Replicated)
 	bool bRuntimeDataInitialized = false;
+
+	// ìˆ˜ëª… íƒ€ì´ë¨¸(ë¡œì»¬ ë³€ìˆ˜ë¡œ ë‘ë©´ ì¤‘ë³µ ë²„ê·¸ ìƒê¹€)
+	FTimerHandle LifeTimerHandle;
 };

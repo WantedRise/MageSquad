@@ -7,6 +7,7 @@
 #include "MSGameplayTags.h"
 #include "MSFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
 
 UMSGA_IceSpear::UMSGA_IceSpear()
 {
@@ -76,6 +77,8 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	// 스킬 레벨 별 데이터 적용
 	CachedRuntimeData.Damage = SkillDamage;
 	CachedRuntimeData.LifeTime = 3.0f;
+	CachedRuntimeData.PenetrationCount = Penetration;
+	CachedRuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
 	// ===== 첫 발 발사 =====
 	FireNextProjectile();
 }
@@ -135,19 +138,21 @@ void UMSGA_IceSpear::FireNextProjectile()
 
 FVector UMSGA_IceSpear::FindClosestEnemyLocation(const UWorld* World, const AActor* Avatar) const
 {
-	// 기준점 위치 (플레이어 위치)
-	const FVector Origin = Avatar->GetActorLocation();
+	if (!World || !Avatar)
+	{
+		return FVector::ZeroVector;
+	}
 
-	// 사거리
-	constexpr float SearchRadius = 1200.f;
-	
-	// Pawn만 검색
+	const FVector Origin = Avatar->GetActorLocation();
+	constexpr float SearchRadius = 1500.f;
+
+	// MSEnemy가 ECC_GameTraceChannel3
 	FCollisionObjectQueryParams ObjParams;
-	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
-	
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(IceSpearFindTarget), false);
+	ObjParams.AddObjectTypesToQuery(ECC_GameTraceChannel3); // MSEnemy
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(IceSpearFindTarget), /*bTraceComplex=*/false);
 	QueryParams.AddIgnoredActor(Avatar);
-	
+
 	TArray<FOverlapResult> Hits;
 	const bool bAnyHit = World->OverlapMultiByObjectType(
 		Hits,
@@ -157,20 +162,16 @@ FVector UMSGA_IceSpear::FindClosestEnemyLocation(const UWorld* World, const AAct
 		FCollisionShape::MakeSphere(SearchRadius),
 		QueryParams
 	);
-	
+
 	const AActor* BestTarget = nullptr;
 	float BestDistSq = TNumericLimits<float>::Max();
-	
+
 	if (bAnyHit)
 	{
 		for (const FOverlapResult& H : Hits)
 		{
 			AActor* Candidate = H.GetActor();
 			if (!Candidate) continue;
-			
-			// 몬스터 "Enemy" 태그 검색
-			if (!Candidate->ActorHasTag(TEXT("Enemy")))
-				continue;
 
 			const float DistSq = FVector::DistSquared(Origin, Candidate->GetActorLocation());
 			if (DistSq < BestDistSq)
@@ -180,13 +181,13 @@ FVector UMSGA_IceSpear::FindClosestEnemyLocation(const UWorld* World, const AAct
 			}
 		}
 	}
-	
+
 	if (!BestTarget)
 	{
 		UE_LOG(LogTemp, Log, TEXT("[%s] No Enemy target in radius %.1f"), *GetName(), SearchRadius);
 		return FVector::ZeroVector;
 	}
-	
-	
+
 	return BestTarget->GetActorLocation();
 }
+
