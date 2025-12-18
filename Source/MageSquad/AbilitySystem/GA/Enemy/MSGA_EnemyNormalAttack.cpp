@@ -33,8 +33,8 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 	if (UAnimMontage* AttackMontage = Owner->GetAttackMontage())
 	{
 		UAbilityTask_PlayMontageAndWait* EnemyAttackTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("NormalAttack"), AttackMontage);
-		// EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		// EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
+		EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
+		EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		EnemyAttackTask->ReadyForActivation();
 	}
 }
@@ -51,4 +51,18 @@ void UMSGA_EnemyNormalAttack::EndAbility(const FGameplayAbilitySpecHandle Handle
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UMSGA_EnemyNormalAttack::OnCompleteCallback()
+{
+	bool bReplicatedEndAbility = true;
+	bool bWasCancelled = false;
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UMSGA_EnemyNormalAttack::OnInterruptedCallback()
+{
+	bool bReplicatedEndAbility = true;
+	bool bWasCancelled = true;
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
