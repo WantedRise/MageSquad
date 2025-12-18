@@ -29,4 +29,16 @@ namespace MSGameplayTags
 
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
+
+
+
+	/* TEST Tags */
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_HpIncrease, "TEST.Ability.HpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_HpDecrease, "TEST.Ability.HpDecrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_MaxHpIncrease, "TEST.Ability.MaxHpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_MaxHpDecrease, "TEST.Ability.MaxHpDecrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_HpIncrease, "TEST.Event.HpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_HpDecrease, "TEST.Event.HpDecrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_MaxHpIncrease, "TEST.Event.MaxHpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_MaxHpDecrease, "TEST.Event.MaxHpDecrease");
 }
