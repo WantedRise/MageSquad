@@ -4,7 +4,7 @@
 #include "GameFlow/MSGameFlowPvE.h"
 #include "GameStates/MSGameState.h"
 #include "MageSquad.h"
-
+#include "Components/MSGameProgressComponent.h"
 
 void UMSGameFlowPvE::Initialize(AMSGameState* InOwnerGameState)
 {
@@ -19,10 +19,52 @@ void UMSGameFlowPvE::Initialize(AMSGameState* InOwnerGameState)
 	//
 }
 
-
 void UMSGameFlowPvE::TickFlow(float DeltaSeconds)
 {
 
+}
+
+void UMSGameFlowPvE::OnEnterState(EGameFlowState NewState)
+{
+	switch (NewState)
+	{
+	case EGameFlowState::None:
+		break;
+	case EGameFlowState::Playing:
+		GameProgress->StartProgress();
+		break;
+	case EGameFlowState::Mission:
+		break;
+	case EGameFlowState::Boss:
+		break;
+	case EGameFlowState::Finished:
+		break;
+	default:
+		break;
+	}
+}
+
+void UMSGameFlowPvE::OnExitState(EGameFlowState OldState)
+{
+	switch (OldState)
+	{
+	case EGameFlowState::None:
+		break;
+	case EGameFlowState::Playing:
+		break;
+	case EGameFlowState::Mission:
+		break;
+	case EGameFlowState::Boss:
+		break;
+	case EGameFlowState::Finished:
+		break;
+	default:
+		break;
+	}
+}
+void UMSGameFlowPvE::Start()
+{
+	SetState(EGameFlowState::Playing);
 }
 
 void UMSGameFlowPvE::RegisterTimeEvent(EGameFlowState EventType,float TriggerTime)
@@ -77,22 +119,5 @@ void UMSGameFlowPvE::TriggerRandomMission()
 {
 	int32 MissionId = SelectRandomMissionId();
 	//OwnerGameState->GetMissionComponent()->StartMission(MissionId);
-}
-
-
-void UMSGameFlowPvE::EnterNone()
-{
-}
-
-void UMSGameFlowPvE::EnterPlaying()
-{
-}
-
-void UMSGameFlowPvE::EnterQuesting()
-{
-}
-
-void UMSGameFlowPvE::EnterBoss()
-{
 }
 

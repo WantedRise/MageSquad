@@ -34,6 +34,7 @@ public:
 	//초대받은 세션에 입장 시도
 	void TryInvitedJoinSession();
 	bool IsSteamConnected();
+	int32 GetMaxPlayer();
 protected:
 
 	void OnEndSessionComplete(FName SessionName, bool bWasSuccessful);

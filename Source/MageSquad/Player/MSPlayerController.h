@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,12 +7,12 @@
 #include "MSPlayerController.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/08
  *
- * ÇÃ·¹ÀÌ¾î ÄÁÆ®·Ñ·¯ Å¬·¡½º
- * ·ÎÄÃ HUD »ı¼º/Ç¥½Ã (³×Æ®¿öÅ© µ¿±âÈ­´Â HUD À§Á¬ ³»ºÎ¿¡¼­ Ã³¸®)
- * °¢ ÄÁÆ®·Ñ·¯ÀÇ Ä¿¼­ À§Ä¡¸¦ ¼­¹ö¿¡°Ô ¾Ë¸²
+ * í”Œë ˆì´ì–´ ì»¨íŠ¸ë¡¤ëŸ¬ í´ë˜ìŠ¤
+ * ë¡œì»¬ HUD ìƒì„±/í‘œì‹œ (ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ëŠ” HUD ìœ„ì ¯ ë‚´ë¶€ì—ì„œ ì²˜ë¦¬)
+ * ê° ì»¨íŠ¸ë¡¤ëŸ¬ì˜ ì»¤ì„œ ìœ„ì¹˜ë¥¼ ì„œë²„ì—ê²Œ ì•Œë¦¼
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerController : public APlayerController
@@ -31,19 +31,19 @@ protected:
 	* HUD Section
 	*****************************************************/
 public:
-	// HUD À§Á¬ Å¬·¡½º
+	// HUD ìœ„ì ¯ í´ë˜ìŠ¤
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
 	TSubclassOf<class UMSPlayerHUDWidget> HUDWidgetClass;
 
 protected:
-	// HUD »ı¼º ÇÔ¼ö. (·ÎÄÃ¿¡¼­¸¸ HUD¸¦ »ı¼º/Ç¥½Ã)
+	// HUD ìƒì„± í•¨ìˆ˜. (ë¡œì»¬ì—ì„œë§Œ HUDë¥¼ ìƒì„±/í‘œì‹œ)
 	void EnsureHUDCreated();
 
-	// PawnÀÌ ÁØºñµÈ ½ÃÁ¡¿¡ HUD ¹ÙÀÎµù(Àç½Ãµµ Æ÷ÇÔ) ¿äÃ»
+	// Pawnì´ ì¤€ë¹„ëœ ì‹œì ì— HUD ë°”ì¸ë”©(ì¬ì‹œë„ í¬í•¨) ìš”ì²­
 	void NotifyHUDReinitialize();
 
 protected:
-	// HUD À§Á¬ ÀÎ½ºÅÏ½º
+	// HUD ìœ„ì ¯ ì¸ìŠ¤í„´ìŠ¤
 	UPROPERTY(Transient)
 	TObjectPtr<class UMSPlayerHUDWidget> HUDWidgetInstance;
 
@@ -53,29 +53,31 @@ protected:
 	* Mouse Curosr Section
 	*****************************************************/
 public:
-	// ¼­¹ö¿¡¼­ ÀĞ´Â ÃÖ½Å Ä¿¼­ À§Ä¡
+	// ì„œë²„ì—ì„œ ì½ëŠ” ìµœì‹  ì»¤ì„œ ìœ„ì¹˜
 	FVector GetServerCursor() const;
 
-	// ¼­¹ö¿¡¼­ ÀĞ´Â ÃÖ½Å Ä¿¼­ ¹æÇâ
+	// ì„œë²„ì—ì„œ ì½ëŠ” ìµœì‹  ì»¤ì„œ ë°©í–¥
 	FVector GetServerCursorDir(const FVector& FallbackForward) const;
 
 private:
-	// ¸¶¿ì½º Ä¿¼­ ¾÷µ¥ÀÌÆ® ÇÔ¼ö
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ì—…ë°ì´íŠ¸ í•¨ìˆ˜
 	void UpdateCursor();
 
-	// Ä¿¼­ Á¤º¸ ¾÷µ¥ÀÌÆ® RPC
+	// ì»¤ì„œ ì •ë³´ ì—…ë°ì´íŠ¸ RPC
 	UFUNCTION(Server, Unreliable)
 	void ServerRPCSetCursorInfo(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir);
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPCReportReady();
 private:
-	// ¸¶¿ì½º Ä¿¼­ ¾÷µ¥ÀÌÆ® Å¸ÀÌ¸Ó
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ì—…ë°ì´íŠ¸ íƒ€ì´ë¨¸
 	FTimerHandle CursorUpdateTimer;
 
-	// ¸¶¿ì½º Ä¿¼­ À§Ä¡
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ìœ„ì¹˜
 	UPROPERTY()
 	FVector_NetQuantize ServerCursor = FVector(0.f, 0.f, 0.f);
 
-	// ¸¶¿ì½º Ä¿¼­ ¹æÇâ
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ë°©í–¥
 	UPROPERTY()
 	FVector_NetQuantize ServerCursorDir = FVector(1.f, 0.f, 0.f);
 };

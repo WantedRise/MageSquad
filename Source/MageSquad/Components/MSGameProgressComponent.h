@@ -6,10 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "MSGameProgressComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(
-    FOnGameTimeReached,
-    float /* ElapsedSeconds */
-);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameTimeReached,float /* ElapsedSeconds */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnProgressChanged, float /*Normalized*/);
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MAGESQUAD_API UMSGameProgressComponent : public UActorComponent
@@ -25,25 +24,28 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-    void InitProgress();
+    void Initialize(float InTotalGameTime);
     void StartProgress();
     void StopProgress();
 
-    float GetProgressRatio() const;
+    float GetNormalizedProgress() const;
 
     // 특정 시간 도달 이벤트
     FOnGameTimeReached OnGameTimeReached;
-
+    // 타이머, 위젯에 알림
+    FOnProgressChanged OnProgressChanged;
 protected:
     void TickProgress();
 
 private:
-    float GameStartTime = 0.f;
+    
     bool bRunning = false;
 
     // 다음 체크할 이벤트 시간
     TArray<float> TimeCheckpoints;
     int32 NextCheckpointIndex = 0;
+
+    float TotalGameTime = 600.f;
 
     FTimerHandle ProgressTimerHandle;
     UPROPERTY()
