@@ -29,6 +29,8 @@ class MAGESQUAD_API UMSPlayerAttributeSet : public UAttributeSet
 public:
 	UMSPlayerAttributeSet();
 
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+
 	/*
 	* 현재 체력
 	* 캐릭터가 받는 피해에 따라 감소
@@ -200,4 +202,7 @@ private:
 	
 	// 플레이어 기본 획득 반경 (게임 시작 시 한 번 캐싱)
 	float DefaultPickupRadius = 0.f;
+
+	// 이전 최대 체력 캐시
+	float CachedOldMaxHealth = 0.f;
 };
