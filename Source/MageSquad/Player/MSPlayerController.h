@@ -11,13 +11,42 @@
  * 작성일: 25/12/08
  *
  * 플레이어 컨트롤러 클래스
- * HUD 생성 및 유지 관리
+ * 로컬 HUD 생성/표시 (네트워크 동기화는 HUD 위젯 내부에서 처리)
  * 각 컨트롤러의 커서 위치를 서버에게 알림
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnRep_Pawn() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+
+
+	/*****************************************************
+	* HUD Section
+	*****************************************************/
+public:
+	// HUD 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
+	TSubclassOf<class UMSPlayerHUDWidget> HUDWidgetClass;
+
+protected:
+	// HUD 생성 함수. (로컬에서만 HUD를 생성/표시)
+	void EnsureHUDCreated();
+
+	// Pawn이 준비된 시점에 HUD 바인딩(재시도 포함) 요청
+	void NotifyHUDReinitialize();
+
+protected:
+	// HUD 위젯 인스턴스
+	UPROPERTY(Transient)
+	TObjectPtr<class UMSPlayerHUDWidget> HUDWidgetInstance;
+
 
 
 	/*****************************************************
@@ -29,10 +58,6 @@ public:
 
 	// 서버에서 읽는 최신 커서 방향
 	FVector GetServerCursorDir(const FVector& FallbackForward) const;
-
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	// 마우스 커서 업데이트 함수
