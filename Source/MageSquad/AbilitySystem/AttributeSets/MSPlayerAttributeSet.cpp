@@ -36,6 +36,17 @@ UMSPlayerAttributeSet::UMSPlayerAttributeSet()
 	InitLuck(0.f);
 }
 
+void UMSPlayerAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	// 최대 체력 변경 시, 캐시 저장
+	if (Attribute == GetMaxHealthAttribute())
+	{
+		CachedOldMaxHealth = GetMaxHealth();
+	}
+}
+
 void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
@@ -49,11 +60,25 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	// 최대 체력 갱신
 	else if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
 	{
-		SetMaxHealth(GetMaxHealth());
+		const float NewMaxHealth = GetMaxHealth();
 
-		// 늘어난 체력만큼 회복
-		const int32 AddedMaxHealth = GetMaxHealth() - GetHealth();
-		SetHealth(FMath::Clamp(GetHealth() + AddedMaxHealth, UE_KINDA_SMALL_NUMBER, GetMaxHealth()));
+		// 최대 체력 변경량
+		const float DeltaMaxHealth = NewMaxHealth - CachedOldMaxHealth;
+
+		// 최대 체력이 오른 경우
+		if (DeltaMaxHealth > 0.f)
+		{
+			// 최대 체력 증가분만큼 현재 체력 설정
+			SetHealth(GetHealth() + DeltaMaxHealth);
+		}
+		// 최대 체력이 감소한 경우
+		else
+		{
+			// 최대 체력 감소분만큼 현재 체력 설정
+			SetHealth(FMath::Min(GetHealth(), NewMaxHealth));
+		}
+
+		SetHealth(FMath::Clamp(GetHealth(), 0.f, NewMaxHealth));
 	}
 	// 이동 속도 보정 갱신
 	else if (Data.EvaluatedData.Attribute == GetMoveSpeedModAttribute())

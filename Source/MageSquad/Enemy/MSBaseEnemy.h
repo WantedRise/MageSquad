@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/MSHitReactableInterface.h"
 #include "MSBaseEnemy.generated.h"
 
 /*
@@ -17,7 +19,7 @@
 struct FMSEnemyStaticData;
 
 UCLASS()
-class MAGESQUAD_API AMSBaseEnemy : public ACharacter, public IAbilitySystemInterface
+class MAGESQUAD_API AMSBaseEnemy : public ACharacter, public IAbilitySystemInterface, public IMSHitReactableInterface
 {
 	GENERATED_BODY()
 
@@ -38,8 +40,17 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// ~ End IAbilitySystemInterface Interface
 	
+	// ~ Begin IMSHitReactableInterface Interface
+	virtual void OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator) override;
+	// ~ End IMSHitReactableInterface Interface
+	
 public:
 	void SetMonsterID(const FName& NewMonsterID);
+	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
+	
+public:
+	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AnimData->AttackAnim;}
+	FORCEINLINE UAnimMontage* GetDeadMontage() const {return AnimData->DeadAnim;}
 	
 protected:
 	UFUNCTION()
@@ -57,5 +68,8 @@ protected:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_MonsterID)
 	FName CurrentMonsterID;
+	
+	UPROPERTY();
+	TObjectPtr<class UDA_EnemyAnimationSet> AnimData;
 	
 };

@@ -13,7 +13,11 @@ namespace MSGameplayTags
 
 	/* Player Cooldown Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Player_Cooldown_Blink, "Player.Cooldown.Blink");
-
+	
+	/*Enemy Ability Tags*/
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_NormalAttack, "Enemy.Ability.NormalAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dead, "Enemy.Ability.Dead");
+	
 	/*Enemy State Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Chase, "Enemy.State.Chase");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Attack, "Enemy.State.Attack");
@@ -30,6 +34,18 @@ namespace MSGameplayTags
 
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
+
+
+
+	/* TEST Tags */
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_HpIncrease, "TEST.Ability.HpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_HpDecrease, "TEST.Ability.HpDecrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_MaxHpIncrease, "TEST.Ability.MaxHpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Ability_MaxHpDecrease, "TEST.Ability.MaxHpDecrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_HpIncrease, "TEST.Event.HpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_HpDecrease, "TEST.Event.HpDecrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_MaxHpIncrease, "TEST.Event.MaxHpIncrease");
+	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_MaxHpDecrease, "TEST.Event.MaxHpDecrease");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 	
 	/* GameplayCue Tags */

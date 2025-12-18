@@ -7,9 +7,9 @@
 #include "BTDecorator_CanAttack.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ : ÀÓÈñ¼·
- * ÀÛ¼ºÀÏ : 2025/12/11
- * ¸ó½ºÅÍ°¡ °ø°İ °¡´ÉÇÑÁö ÆÇº°ÇÕ´Ï´Ù. 
+ * ì‘ì„±ì : ì„í¬ì„­
+ * ì‘ì„±ì¼ : 2025/12/12
+ * íƒ€ê²Ÿì´ Attack ê°€ëŠ¥í•œ ë²”ìœ„ ì•ˆì— ë“¤ì–´ì™”ëŠ”ì§€ í™•ì¸í•˜ëŠ” Decorator
  */
 UCLASS()
 class MAGESQUAD_API UBTDecorator_CanAttack : public UBTDecorator
@@ -20,11 +20,18 @@ public:
 	UBTDecorator_CanAttack();
 	
 protected:
-	// µ¥ÄÚ·¹ÀÌÅÍÀÇ ÇÙ½É Á¶°Ç ·ÎÁ÷À» ±¸Çö
+	// Decorator ë¦¬í„´ ê°’ì„ ì²´í¬í•˜ëŠ” í•¨ìˆ˜
 	virtual bool CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const override;
+	
 
 protected:
-	// ¿¡µğÅÍ¿¡¼­ ¼³Á¤ÇÒ Blackboard Key
-	UPROPERTY(EditAnywhere, Category = Blackboard)
+	// Blackboard Key
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector CanAttackKey;
+	
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
+	FBlackboardKeySelector TargetActorKey;
+	
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
+	FBlackboardKeySelector TargetDistanceKey;
 };

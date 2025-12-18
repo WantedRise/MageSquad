@@ -38,11 +38,11 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	// 현재/최대 체력 바인딩 콜백 함수
+	// AttributeSet의 현재/최대 체력 변경 시 콜백 함수 (로컬, 팀 모두)
 	void HandleHealthChanged(const FOnAttributeChangeData& Data);
 	void HandleMaxHealthChanged(const FOnAttributeChangeData& Data);
 
-	// 무언가 데이터가 변경된 이벤트를 받는 콜백 함수
+	// 데이터 변경 브로드캐스트 함수
 	void BroadcastChanged();
 
 	UFUNCTION()
@@ -54,19 +54,19 @@ public:
 
 protected:
 	// 플레이어 이름
-	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUDData", ReplicatedUsing = OnRep_Data)
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_Data)
 	FText RepDisplayName;
 
 	// 플레이어 아이콘
-	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUDData", ReplicatedUsing = OnRep_Data)
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_Data)
 	TObjectPtr<UTexture2D> RepPortraitIcon = nullptr;
 
 	// 현재 체력
-	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUDData", ReplicatedUsing = OnRep_Data)
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_Data)
 	float RepHealth = 0.f;
 
 	// 최대 체력
-	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUDData", ReplicatedUsing = OnRep_Data)
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_Data)
 	float RepMaxHealth = 0.f;
 
 	// ASC

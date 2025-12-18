@@ -108,6 +108,13 @@ protected:
 	void UseLeftSkill(const FInputActionValue& Value);
 	void UseRightSkill(const FInputActionValue& Value);
 
+
+	// TEST: HP 증가/감소 함수
+	void TEST_HpIncrease(const FInputActionValue& Value);
+	void TEST_HpDecrease(const FInputActionValue& Value);
+	void TEST_MaxHpIncrease(const FInputActionValue& Value);
+	void TEST_MaxHpDecrease(const FInputActionValue& Value);
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
@@ -126,6 +133,17 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> RightSkillAction;
+
+
+	// TEST: HP 증가/감소 입력 액션
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> TEST_HpIncreaseAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> TEST_HpDecreaseAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> TEST_MaxHpIncreaseAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> TEST_MaxHpDecreaseAction;
 
 
 
@@ -205,6 +223,17 @@ protected:
 	FGameplayTag Passive_Skill_01_EventTag;
 
 
+	// TEST: HP 증가/감소 이벤트 태그
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag TEST_HpIncreaseEventTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag TEST_HpDecreaseEventTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag TEST_MaxHpIncreaseEventTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
+	FGameplayTag TEST_MaxHpDecreaseEventTag;
+
+
 
 	/*****************************************************
 	* Player Data Section
@@ -260,11 +289,15 @@ private:
 	* UI / HUD Section
 	*****************************************************/
 protected:
-	// 팀원 UI에 표시할 플레이어 아이콘 (서버가 HUDDataComponent로 복제)
+	// HUD 공개 데이터 초기화 함수 (서버 전용)
+	void InitPublicHUDData_Server();
+
+protected:
+	// 플레이어 아이콘 (팀원에게만 표시)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
 	TObjectPtr<UTexture2D> PortraitIcon = nullptr;
 
-	// 서버가 최소 HUD 공개 데이터를 복제하는 컴포넌트
+	// 서버에서 받는 최소 HUD 공개 데이터 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | UI")
-	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent;
+	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent = nullptr;
 };

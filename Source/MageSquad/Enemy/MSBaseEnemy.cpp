@@ -5,7 +5,9 @@
 
 #include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
+#include "Animation/Enemy/MSEnemyAnimInstance.h"
 #include "Components/CapsuleComponent.h"
+#include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "System/MSEnemySpawnSubsystem.h"
@@ -116,20 +118,31 @@ UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 	return ASC;
 }
 
+void AMSBaseEnemy::OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator)
+{
+	// @Todo : 몬스터 HitFlash 구현
+}
+
 void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
 {
 	CurrentMonsterID = NewMonsterID;
 	// UE_LOG(LogTemp, Warning, TEXT("Call SetMonsterID: %s"), *CurrentMonsterID.ToString());
 }
 
+void AMSBaseEnemy::SetAnimData(UDA_EnemyAnimationSet* NewAnimData)
+{
+	AnimData = NewAnimData;	
+	GetMesh()->SetAnimInstanceClass(AnimData->AnimationClass);
+}
+
 void AMSBaseEnemy::OnRep_MonsterID()
-{    // ✅ 클라이언트에서 MonsterID 변경 시 자동 호출됨!
+{    // 클라이언트에서 MonsterID 변경 시 자동 호출됨!
 	// UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: %s"), *CurrentMonsterID.ToString());
     
 	// Subsystem에서 캐시된 데이터 가져오기
 	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(this))
 	{
-		// ✅ 클라이언트에서도 InitializeEnemyFromData 호출
+		//  클라이언트에서도 InitializeEnemyFromData 호출
 		SpawnSystem->InitializeEnemyFromData(this, CurrentMonsterID);
 		SpawnSystem->ActivateEnemy(this, FVector(0.f, 0.f, 0.f));
 	}

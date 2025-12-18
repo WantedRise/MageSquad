@@ -118,6 +118,9 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	// 서버에서만 수행
+	if (!HasAuthority()) return;
+
 	// PlayerState 가져오기
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
@@ -136,19 +139,20 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
 
-	// HUD 리플리케이션 (서버 -> 모든 클라이언트)
-	if (HasAuthority() && HUDDataComponent && AbilitySystemComponent)
+	// HUD 데이터 컴포넌트에 어빌리티 시스템 바인딩
+	if (HUDDataComponent && AbilitySystemComponent)
 	{
-		// 어빌리티 시스템, 플레이어 아이콘 동기화
 		HUDDataComponent->BindToASC_Server(AbilitySystemComponent);
-		HUDDataComponent->SetPortraitIcon_Server(PortraitIcon);
 	}
 
 	// 서버 자동 공격 시작
-	if (HasAuthority() && bAutoAttackEnabledOnSpawn)
+	if (bAutoAttackEnabledOnSpawn)
 	{
 		SetAutoAttackEnabledInternal(true);
 	}
+
+	// HUD 공개 데이터 초기화
+	InitPublicHUDData_Server();
 }
 
 void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -179,8 +183,8 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
-	GivePlayerStartAbilities();
-	ApplyPlayerStartEffects();
+	//GivePlayerStartAbilities();
+	//ApplyPlayerStartEffects();
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
@@ -224,10 +228,17 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(BlinkAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseBlink);
 
 		// 좌클릭 공격 입력 맵핑
-		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseLeftSkill);
+		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::UseLeftSkill);
 
 		// 우클릭 공격 입력 맵핑
-		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseRightSkill);
+		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::UseRightSkill);
+
+
+		// TEST: HP 증가/감소 입력 맵핑
+		EnhancedInputComponent->BindAction(TEST_HpIncreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_HpIncrease);
+		EnhancedInputComponent->BindAction(TEST_HpDecreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_HpDecrease);
+		EnhancedInputComponent->BindAction(TEST_MaxHpIncreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_MaxHpIncrease);
+		EnhancedInputComponent->BindAction(TEST_MaxHpDecreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_MaxHpDecrease);
 	}
 }
 
@@ -404,7 +415,7 @@ void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTa
 bool AMSPlayerCharacter::IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const
 {
 	// 로컬 플레이어가 이 이벤트 태그를 가지고 있는지 검사 (이후 추가)
-	return EventTag.IsValid() && (EventTag == BlinkEventTag || EventTag == AttackStartedEventTag);
+	return EventTag.IsValid() /*&& (EventTag == BlinkEventTag || EventTag == AttackStartedEventTag)*/;
 }
 
 void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerData)
@@ -414,7 +425,11 @@ void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerDa
 
 UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
 {
-	return AbilitySystemComponent;
+	if (AbilitySystemComponent)
+	{
+		return AbilitySystemComponent;
+	}
+	return nullptr;
 }
 
 bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle)
@@ -463,4 +478,46 @@ void AMSPlayerCharacter::ApplyPlayerStartEffects()
 			ApplyGameplayEffectToSelf(DefaultEffectClass, EffectContext);
 		}
 	}
+}
+
+void AMSPlayerCharacter::InitPublicHUDData_Server()
+{
+	if (!HasAuthority() || !HUDDataComponent) return;
+
+	// 플레이어 이름 및 아이콘 초기화
+	if (APlayerState* PS = GetPlayerState())
+	{
+		HUDDataComponent->SetDisplayName_Server(FText::FromString(PS->GetPlayerName()));
+	}
+	HUDDataComponent->SetPortraitIcon_Server(PortraitIcon);
+}
+
+
+
+
+
+
+
+void AMSPlayerCharacter::TEST_HpIncrease(const FInputActionValue& Value)
+{
+	if (!IsLocallyControlled()) return;
+	TriggerAbilityEvent(TEST_HpIncreaseEventTag);
+}
+
+void AMSPlayerCharacter::TEST_HpDecrease(const FInputActionValue& Value)
+{
+	if (!IsLocallyControlled()) return;
+	TriggerAbilityEvent(TEST_HpDecreaseEventTag);
+}
+
+void AMSPlayerCharacter::TEST_MaxHpIncrease(const FInputActionValue& Value)
+{
+	if (!IsLocallyControlled()) return;
+	TriggerAbilityEvent(TEST_MaxHpIncreaseEventTag);
+}
+
+void AMSPlayerCharacter::TEST_MaxHpDecrease(const FInputActionValue& Value)
+{
+	if (!IsLocallyControlled()) return;
+	TriggerAbilityEvent(TEST_MaxHpDecreaseEventTag);
 }

@@ -288,14 +288,11 @@ private:
 	// Pool Configuration
 	//~=============================================================================
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Pool Config")
-	int32 NormalEnemyPoolSize = 100;
+	const int32 NormalEnemyPoolSize = 100;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Pool Config")
-	int32 EliteEnemyPoolSize = 10;
+	const int32 EliteEnemyPoolSize = 5;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Pool Config")
-	int32 BossEnemyPoolSize = 5;
+	const int32 BossEnemyPoolSize = 1;
 
 	//~=============================================================================
 	// Spawn Configuration

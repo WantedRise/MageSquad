@@ -3,6 +3,117 @@
 
 #include "Player/MSPlayerController.h"
 
+#include "Widgets/HUD/MSPlayerHUDWidget.h"
+#include "System/MSLevelManagerSubsystem.h"
+
+void AMSPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 입력 모드 설정
+	FInputModeGameAndUI InputMode;
+	SetInputMode(InputMode);
+
+	bShowMouseCursor = true;
+
+	if (IsLocalController())
+	{
+		// 커서 트레이스 타이머 설정
+		GetWorldTimerManager().SetTimer(
+			CursorUpdateTimer,
+			this,
+			&AMSPlayerController::UpdateCursor,
+			0.05f,
+			true
+		);
+
+		// HUD 생성/표시
+		EnsureHUDCreated();
+
+		// BeginPlay 시점에 Pawn/ASC 준비가 끝난 경우도 있으므로 1회 재초기화 시도
+		NotifyHUDReinitialize();
+
+		// 맵 로딩을 위한 딜레이, 로딩창을 2초뒤 제거
+		if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+		{
+			FTimerHandle MatchEntryDelayTimer;
+			GetWorldTimerManager().SetTimer(
+				MatchEntryDelayTimer,
+				Subsystem,
+				&UMSLevelManagerSubsystem::HideLoadingWidget,
+				2.0f,
+				false
+			);
+		}
+	}
+}
+
+void AMSPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	// 서버/호스트에서 Pawn이 즉시 결정되는 경우가 많으므로 Possess 시점에도 HUD 재초기화
+	if (IsLocalController())
+	{
+		EnsureHUDCreated();
+		NotifyHUDReinitialize();
+	}
+}
+
+void AMSPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+
+	// OnRep_Pawn에서도 HUD 재초기화
+	// 클라이언트는 Pawn이 복제로 늦게 들어오는 경우가 많아서 HUD 재초기화를 통해 초기화 타이밍 문제를 안정화
+	if (IsLocalController())
+	{
+		EnsureHUDCreated();
+		NotifyHUDReinitialize();
+	}
+}
+
+void AMSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 커서 트레이스 타이머 초기화
+	if (CursorUpdateTimer.IsValid())
+	{
+		GetWorldTimerManager().ClearTimer(CursorUpdateTimer);
+	}
+
+	// HUD 위젯 제거
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AMSPlayerController::EnsureHUDCreated()
+{
+	if (!IsLocalController() || HUDWidgetInstance || !HUDWidgetClass) return;
+
+	// HUD 위젯 생성 및 그리기
+	HUDWidgetInstance = CreateWidget<UMSPlayerHUDWidget>(this, HUDWidgetClass);
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->AddToViewport();
+	}
+}
+
+void AMSPlayerController::NotifyHUDReinitialize()
+{
+	if (!IsLocalController()) return;
+
+	if (HUDWidgetInstance)
+	{
+		// 위젯 내부에서 Pawn/ASC 준비 여부를 체크하고, 준비가 안 됐으면 타이머로 재시도
+		HUDWidgetInstance->RequestReinitialize();
+	}
+}
+
 FVector AMSPlayerController::GetServerCursor() const
 {
 	return ServerCursor;
@@ -22,38 +133,6 @@ FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) 
 	const FVector Cursor = FVector(ServerCursorDir).GetSafeNormal();
 
 	return Cursor.IsNearlyZero() ? Fwd : Cursor;
-}
-
-void AMSPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// 입력 모드 설정
-	FInputModeGameAndUI InputMode;
-	SetInputMode(InputMode);
-
-	bShowMouseCursor = true;
-
-	// 커서 트레이스 타이머 설정
-	if (IsLocalController())
-	{
-		GetWorldTimerManager().SetTimer(
-			CursorUpdateTimer,
-			this,
-			&AMSPlayerController::UpdateCursor,
-			0.05f,
-			true
-		);
-	}
-}
-
-void AMSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	if (CursorUpdateTimer.IsValid())
-	{
-		GetWorldTimerManager().ClearTimer(CursorUpdateTimer);
-	}
-	Super::EndPlay(EndPlayReason);
 }
 
 void AMSPlayerController::UpdateCursor()

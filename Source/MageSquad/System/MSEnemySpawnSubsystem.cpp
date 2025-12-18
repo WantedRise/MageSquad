@@ -98,11 +98,6 @@ void UMSEnemySpawnSubsystem::Deinitialize()
 
 void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
-	// if (!MonsterStaticDataTable)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] MonsterStaticDataTable is not assigned!"));
-	// 	return;
-	// }
 	if (!MonsterStaticDataTable)
 	{
 		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
@@ -216,7 +211,7 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 
 		if (Enemy)
 		{   
-			// ✅ 풀링 모드 설정 (AI Controller 생성 방지)
+			//  풀링 모드 설정 (AI Controller 생성 방지)
 			if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
 			{
 				NormalEnemy->SetPoolingMode(true);
@@ -225,12 +220,6 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 			Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
 			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
-			
-			// UE_LOG(LogTemp, Log, TEXT("Pooled: %s | LocalRole: %d | RemoteRole: %d"),
-			// 	*Enemy->GetName(),
-			// 	(int32)Enemy->GetLocalRole(),
-			// 	(int32)Enemy->GetRemoteRole()
-			// );
 		}
 	}
 
@@ -650,11 +639,11 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
-		Enemy->GetMesh()->SetAnimInstanceClass(Data->AnimationSet->AnimationClass);
+		Enemy->SetAnimData(Data->AnimationSet);
 	}
 
 	// GAS 속성 초기화
-	// ✅ 서버에서만 GAS 초기화
+	// 서버에서만 GAS 초기화
 	if (HasAuthority())
 	{
 		if (UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent())
