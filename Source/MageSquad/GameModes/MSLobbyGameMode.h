@@ -22,13 +22,14 @@ class MAGESQUAD_API AMSLobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 public:
 	AMSLobbyGameMode();
-	//AMSLobbyPlayerState에 호스트 여부 전달
+	//AMSLobbyPlayerState에 호스트 여부와 플레이어 닉네임 지정
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	//로비에서 각 플레이어의 시작 위치를 결정
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
+public:
 	//준비 카운트다운 완료 시 인게임 레벨로 전환
 	void HandleReadyCountdownFinished();
-public:
 	//플레이어 준비 상태 변경 시 호출되어 전체 준비 상태를 재계산
 	void HandlePlayerReadyStateChanged();
+
 };

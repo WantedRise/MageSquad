@@ -56,6 +56,9 @@ public:
     }
     //현재 로비 준비 단계 반환
     ELobbyReadyPhase GetLobbyReadyPhase() const { return LobbyReadyPhase; }
+    //클라이언트에 로딩창 띄우기
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_ShowLoadingScreen();
     //OnLobbyReadyPhaseChanged Broadcast
     UFUNCTION()
     void OnRep_LobbyReadyPhase();

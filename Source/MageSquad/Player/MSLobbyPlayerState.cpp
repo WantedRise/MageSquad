@@ -72,7 +72,6 @@ void AMSLobbyPlayerState::SetUserNickName(const FString& NewNickName)
 	if (UserNickName.Compare(NewNickName)!=0)
 	{
 		UserNickName = NewNickName;
-		OnRep_UserNickName();
 	}
 }
 
@@ -84,11 +83,13 @@ AMSLobbyCharacter* AMSLobbyPlayerState::GetLobbyCharacter() const
 void AMSLobbyPlayerState::OnRep_UserNickName()
 {
 	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSLobbyPlayerState OnRep_UserNickName"));
+
 }
 
 void AMSLobbyPlayerState::OnRep_IsHost()
 {
 	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSLobbyPlayerState OnRep_IsHost"));
+
 }
 
 void AMSLobbyPlayerState::OnRep_IsReady()

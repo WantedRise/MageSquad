@@ -34,8 +34,7 @@ public:
 protected:
 	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;
-	//PlayerState 초기화 완료 시 닉네임 설정
-	void InitPlayerState() override;
+
 protected:
 	//로비 메인 UI 위젯을 생성하고 화면에 표시
 	void CreateLobbyUI();

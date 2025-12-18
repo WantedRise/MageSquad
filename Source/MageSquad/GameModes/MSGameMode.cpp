@@ -7,6 +7,7 @@
 #include "Enemy/MSNormalEnemy.h"
 #include "Player/MSPlayerCharacter.h"
 #include "System/MSEnemySpawnSubsystem.h"
+#include "GameFlow/MSGameFlowBase.h"
 
 void AMSGameMode::BeginPlay()
 {
@@ -28,5 +29,10 @@ void AMSGameMode::BeginPlay()
 		// 스폰 시작
 		SpawnSystem->StartSpawning();
 	}
+}
+
+TSubclassOf<UMSGameFlowBase> AMSGameMode::GetGameFlowClass() const
+{
+	return GameFlowClass;
 }
 

@@ -19,7 +19,7 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 
 	LobbyPlayerEntryWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("LobbyPlayerEntryWidgetComponent"));
 	LobbyPlayerEntryWidgetComponent->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialFinder(TEXT("/Game/Level/Materials/Loby/Widget3DPassThrough.Widget3DPassThrough"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialFinder(TEXT("/Game/Level/Materials/Lobby/Widget3DPassThrough.Widget3DPassThrough"));
 	if (MaterialFinder.Succeeded())
 	{
 		LobbyPlayerEntryWidgetComponent->SetMaterial(0, MaterialFinder.Object);
@@ -41,6 +41,7 @@ void AMSLobbyCharacter::BeginPlay()
 		if (AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>())
 		{
 			UpdateHostUI(PS->IsHost());
+			UpdateUserNickNameUI(PS->GetUserNickName());
 		}
 	}
 }
@@ -48,6 +49,28 @@ void AMSLobbyCharacter::BeginPlay()
 void AMSLobbyCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSLobbyCharacter::PossessedBy"));
+
+	if (AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>())
+	{
+		UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
+
+		if (nullptr == SteamManager)
+		{
+			MS_LOG(LogMSNetwork, Error, TEXT("%s"), TEXT("nullptr == UMSSteamManagerSubsystem"));
+			return;
+		}
+
+		//스팀에 연결되지 않으면 Player로 지정
+		if (!SteamManager->IsSteamConnected())
+		{
+			PS->SetUserNickName(TEXT("Player"));
+		}
+		else
+		{
+			PS->SetUserNickName(PS->GetPlayerName());
+		}
+	}
 
 	InitializeLobbyCharacterFromPlayerState();
 }
