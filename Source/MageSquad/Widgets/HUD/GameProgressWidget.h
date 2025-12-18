@@ -15,7 +15,7 @@ class MAGESQUAD_API UGameProgressWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	virtual void NativeConstruct() override;
-
+	void OnProgressUpdated(float Normalized);
 public:
 	UPROPERTY(meta=(BindWidget))
 	class UProgressEventMarkerWidget* WBP_ProgressIcon_Start;

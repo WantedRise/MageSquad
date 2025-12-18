@@ -1,7 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSPlayerController.h"
+#include "GameStates/MSGameState.h"
+#include "MSPlayerState.h"
+#include <GameModes/MSGameMode.h>
 
 #include "Widgets/HUD/MSPlayerHUDWidget.h"
 #include "System/MSLevelManagerSubsystem.h"
@@ -10,7 +13,7 @@ void AMSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// �Է� ��� ����
+	// 입력 모드 설정
 	FInputModeGameAndUI InputMode;
 	SetInputMode(InputMode);
 
@@ -18,7 +21,7 @@ void AMSPlayerController::BeginPlay()
 
 	if (IsLocalController())
 	{
-		// Ŀ�� Ʈ���̽� Ÿ�̸� ����
+		// 커서 트레이스 타이머 설정
 		GetWorldTimerManager().SetTimer(
 			CursorUpdateTimer,
 			this,
@@ -27,24 +30,24 @@ void AMSPlayerController::BeginPlay()
 			true
 		);
 
-		// HUD ����/ǥ��
+		// HUD 생성/표시
 		EnsureHUDCreated();
 
-		// BeginPlay ������ Pawn/ASC �غ� ���� ��쵵 �����Ƿ� 1ȸ ���ʱ�ȭ �õ�
+		// BeginPlay 시점에 Pawn/ASC 준비가 끝난 경우도 있으므로 1회 재초기화 시도
 		NotifyHUDReinitialize();
 
-		// �� �ε��� ���� ������, �ε�â�� 2�ʵ� ����
-		// if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
-		// {
-		// 	FTimerHandle MatchEntryDelayTimer;
-		// 	GetWorldTimerManager().SetTimer(
-		// 		MatchEntryDelayTimer,
-		// 		Subsystem,
-		// 		&UMSLevelManagerSubsystem::HideLoadingWidget,
-		// 		2.0f,
-		// 		false
-		// 	);
-		// }
+		// 맵 로딩을 위한 딜레이, 로딩창을 2초뒤 제거
+		if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+		{
+			FTimerHandle MatchEntryDelayTimer;
+			GetWorldTimerManager().SetTimer(
+				MatchEntryDelayTimer,
+				Subsystem,
+				&UMSLevelManagerSubsystem::HideLoadingWidget,
+				2.0f,
+				false
+			);
+		}
 	}
 }
 
@@ -52,7 +55,7 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// ����/ȣ��Ʈ���� Pawn�� ��� �����Ǵ� ��찡 �����Ƿ� Possess �������� HUD ���ʱ�ȭ
+	// 서버/호스트에서 Pawn이 즉시 결정되는 경우가 많으므로 Possess 시점에도 HUD 재초기화
 	if (IsLocalController())
 	{
 		EnsureHUDCreated();
@@ -64,8 +67,8 @@ void AMSPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
 
-	// OnRep_Pawn������ HUD ���ʱ�ȭ
-	// Ŭ���̾�Ʈ�� Pawn�� ������ �ʰ� ������ ��찡 ���Ƽ� HUD ���ʱ�ȭ�� ���� �ʱ�ȭ Ÿ�̹� ������ ����ȭ
+	// OnRep_Pawn에서도 HUD 재초기화
+	// 클라이언트는 Pawn이 복제로 늦게 들어오는 경우가 많아서 HUD 재초기화를 통해 초기화 타이밍 문제를 안정화
 	if (IsLocalController())
 	{
 		EnsureHUDCreated();
@@ -75,13 +78,13 @@ void AMSPlayerController::OnRep_Pawn()
 
 void AMSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Ŀ�� Ʈ���̽� Ÿ�̸� �ʱ�ȭ
+	// 커서 트레이스 타이머 초기화
 	if (CursorUpdateTimer.IsValid())
 	{
 		GetWorldTimerManager().ClearTimer(CursorUpdateTimer);
 	}
 
-	// HUD ���� ����
+	// HUD 위젯 제거
 	if (HUDWidgetInstance)
 	{
 		HUDWidgetInstance->RemoveFromParent();
@@ -95,7 +98,7 @@ void AMSPlayerController::EnsureHUDCreated()
 {
 	if (!IsLocalController() || HUDWidgetInstance || !HUDWidgetClass) return;
 
-	// HUD ���� ���� �� �׸���
+	// HUD 위젯 생성 및 그리기
 	HUDWidgetInstance = CreateWidget<UMSPlayerHUDWidget>(this, HUDWidgetClass);
 	if (HUDWidgetInstance)
 	{
@@ -109,7 +112,7 @@ void AMSPlayerController::NotifyHUDReinitialize()
 
 	if (HUDWidgetInstance)
 	{
-		// ���� ���ο��� Pawn/ASC �غ� ���θ� üũ�ϰ�, �غ� �� ������ Ÿ�̸ӷ� ��õ�
+		// 위젯 내부에서 Pawn/ASC 준비 여부를 체크하고, 준비가 안 됐으면 타이머로 재시도
 		HUDWidgetInstance->RequestReinitialize();
 	}
 }
@@ -121,7 +124,7 @@ FVector AMSPlayerController::GetServerCursor() const
 
 FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) const
 {
-	// ȭ�� �� ������ Ŀ�� ������ ��ȿ���� ���� ���� ĳ���� �������� �߻�
+	// 화면 밖 등으로 커서 방향이 유효하지 않을 때는 캐릭터 전방으로 발사
 	FVector Fwd = FVector(FallbackForward);
 	Fwd.Z = 0.f;
 	Fwd = Fwd.GetSafeNormal();
@@ -137,31 +140,31 @@ FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) 
 
 void AMSPlayerController::UpdateCursor()
 {
-	// Ŀ�� Ʈ���̽�
+	// 커서 트레이스
 	if (IsLocalController())
 	{
 		APawn* P = GetPawn();
 		if (!P) return;
 
-		// ���콺 Ŀ�� Ʈ���̽�
+		// 마우스 커서 트레이싱
 		FHitResult Hit;
 		const bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, Hit) && Hit.bBlockingHit;
 
-		// ĳ������ ��ġ
+		// 캐릭터의 위치
 		const FVector SpawnOrigin = P->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 
-		// ĳ���� ����(����) - Ŀ���� ȭ���� ����� �� �������� �߻�
+		// 캐릭터 전방(수평) - 커서가 화면을 벗어나면 이 방향으로 발사
 		FVector Forward2D = P->GetActorForwardVector();
 		Forward2D.Z = 0.f;
 		Forward2D = Forward2D.GetSafeNormal();
 		if (Forward2D.IsNearlyZero()) Forward2D = FVector(1.f, 0.f, 0.f);
 
-		// Ŀ�� ���� ��ġ
-		// - Hit ����: �浹 ����
-		// - Hit ����(Ŀ���� ����Ʈ�� ��� ��): �������� ����� �� ����(���� Ŀ��)
+		// 커서 월드 위치
+		// - Hit 성공: 충돌 지점
+		// - Hit 실패(커서가 뷰포트를 벗어남 등): 전방으로 충분히 먼 지점(가상 커서)
 		const FVector CursorWorldPos = bHit ? Hit.ImpactPoint : (SpawnOrigin + Forward2D * 10000.f);
 
-		// Ŀ�� ���� (���� ����)
+		// 커서 방향 (수평 고정)
 		FVector Dir = (CursorWorldPos - SpawnOrigin);
 		Dir.Z = 0.f;
 		Dir = Dir.GetSafeNormal();
@@ -169,13 +172,13 @@ void AMSPlayerController::UpdateCursor()
 
 		if (HasAuthority())
 		{
-			// ȣ��Ʈ(����)�� ���� ĳ�� ���� ����
+			// 호스트(리슨)면 서버 캐시 직접 갱신
 			ServerCursor = CursorWorldPos;
 			ServerCursorDir = Dir;
 		}
 		else
 		{
-			// ���� Ŭ��� ������ ����
+			// 원격 클라는 서버로 전달
 			ServerRPCSetCursorInfo(CursorWorldPos, Dir);
 		}
 	}
@@ -185,7 +188,7 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 {
 	ServerCursor = FVector(InPos);
 
-	// Ŀ�� ���� ���� (���� ����)
+	// 커서 방향 저장 (수평 고정)
 	FVector Dir = FVector(InDir);
 	Dir.Z = 0.f;
 	Dir = Dir.GetSafeNormal();
@@ -194,4 +197,17 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 		Dir = FVector(1.f, 0.f, 0.f);
 	}
 	ServerCursorDir = Dir;
+}
+
+void AMSPlayerController::ServerRPCReportReady_Implementation()
+{
+	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
+	{
+		PS->SetUIReady(true);
+	}
+
+	if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
+	{
+		GM->TryStartGame();
+	}
 }

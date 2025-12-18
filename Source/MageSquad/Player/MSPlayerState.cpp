@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSPlayerState.h"
@@ -8,16 +8,33 @@
 
 AMSPlayerState::AMSPlayerState()
 {
-	// PlayerStateÀÇ ±âº» º¹Á¦ Áö¿¬ÀÌ ³·À¸¹Ç·Î, ³×Æ®¿öÅ© ¾÷µ¥ÀÌÆ® ºóµµ¸¦ ´Ã¸²
+	// PlayerStateì˜ ê¸°ë³¸ ë³µì œ ì§€ì—°ì´ ë‚®ìœ¼ë¯€ë¡œ, ë„¤íŠ¸ì›Œí¬ ì—…ë°ì´íŠ¸ ë¹ˆë„ë¥¼ ëŠ˜ë¦¼
 	SetNetUpdateFrequency(60.f);
 
 	AbilitySystemComponent = CreateDefaultSubobject<UMSPlayerAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 
-	// Minimal ¸ğµå´Â Å¬¶óÀÌ¾ğÆ®¿¡´Â ÇÊ¿äÇÑ Á¤º¸¸¸ º¹Á¦ÇÏ¿© ³×Æ®¿öÅ© ºÎÇÏ¸¦ ÁÙÀÓ
+	// Minimal ëª¨ë“œëŠ” í´ë¼ì´ì–¸íŠ¸ì—ëŠ” í•„ìš”í•œ ì •ë³´ë§Œ ë³µì œí•˜ì—¬ ë„¤íŠ¸ì›Œí¬ ë¶€í•˜ë¥¼ ì¤„ì„
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	AttributeSet = CreateDefaultSubobject<UMSPlayerAttributeSet>(TEXT("AttributeSet"));
+
+	bUIReady = false;
+}
+void AMSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMSPlayerState, bUIReady);
+}
+
+void AMSPlayerState::SetUIReady(bool bReady)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+	bUIReady = bReady;
 }
 
 UAbilitySystemComponent* AMSPlayerState::GetAbilitySystemComponent() const

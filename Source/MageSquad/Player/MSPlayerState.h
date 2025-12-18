@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -8,11 +8,11 @@
 #include "MSPlayerState.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/08
  *
- * ÇÃ·¹ÀÌ¾îÀÇ ASC, AttributeSetÀ» °ü¸®ÇÏ´Â PlayerState
- * ÆùÀÇ »ç¸Á ¹× ¸®½ºÆù ÈÄ¿¡µµ À¯ÁöµÇ¸ç ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ º¹Á¦µÈ´Ù.
+ * í”Œë ˆì´ì–´ì˜ ASC, AttributeSetì„ ê´€ë¦¬í•˜ëŠ” PlayerState
+ * í°ì˜ ì‚¬ë§ ë° ë¦¬ìŠ¤í° í›„ì—ë„ ìœ ì§€ë˜ë©° ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë³µì œëœë‹¤.
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerState : public APlayerState, public IAbilitySystemInterface
@@ -21,19 +21,29 @@ class MAGESQUAD_API AMSPlayerState : public APlayerState, public IAbilitySystemI
 
 public:
 	AMSPlayerState();
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-	// PlayerState°¡ ¼ÒÀ¯ÇÑ ASC¸¦ ¹İÈ¯ÇÏ´Â ÇÔ¼ö
+	// ëª¨ë“  í”Œë ˆì´ì–´ì˜ UI ì²´í¬
+	void SetUIReady(bool bReady);
+
+	bool IsUIReady() { return bUIReady; }
+
+	// PlayerStateê°€ ì†Œìœ í•œ ASCë¥¼ ë°˜í™˜í•˜ëŠ” í•¨ìˆ˜
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	// PlayerState°¡ ¼ÒÀ¯ÇÑ AttributeSetÀ» ¹İÈ¯ÇÏ´Â ÇÔ¼ö
+	// PlayerStateê°€ ì†Œìœ í•œ AttributeSetì„ ë°˜í™˜í•˜ëŠ” í•¨ìˆ˜
 	class UMSPlayerAttributeSet* GetAttributeSet() const;
 
 protected:
-	// ÇÃ·¹ÀÌ¾îÀÇ ASC
+	// í”Œë ˆì´ì–´ì˜ ASC
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UMSPlayerAbilitySystemComponent> AbilitySystemComponent;
 
-	// ÇÃ·¹ÀÌ¾îÀÇ ´É·ÂÄ¡(½ºÅÈ)
+	// í”Œë ˆì´ì–´ì˜ ëŠ¥ë ¥ì¹˜(ìŠ¤íƒ¯)
 	UPROPERTY(Transient)
 	TObjectPtr< class UMSPlayerAttributeSet> AttributeSet;
+private:
+	//ê²Œì„ ì‹œì‘ ì²´í¬ë¥¼ ìœ„í•´
+	UPROPERTY(Replicated)
+	uint8 bUIReady : 1;
 };
