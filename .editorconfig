@@ -1,5 +1,7 @@
 [*.{cpp,h}]
 
+charset = utf-8               # 한글 깨짐 처리
+
 # Naming convention rules (note: currently need to be ordered from more to less specific)
 
 cpp_naming_rule.aactor_prefixed.symbols                    = aactor_class

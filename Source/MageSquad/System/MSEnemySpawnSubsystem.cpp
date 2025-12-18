@@ -731,7 +731,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// 네트워크 업데이트 강제
 	Enemy->ForceNetUpdate();
 	
-	// ✅ 디버그 로그
+	// 디버그 로그
 	// UE_LOG(LogTemp, Error, TEXT("★★★ ActivateEnemy: %s | bReplicates: %d | Dormancy: %d ★★★"),
 	// 	*Enemy->GetName(),
 	// 	Enemy->GetIsReplicated(),
@@ -785,9 +785,8 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
 	
-	// ✅ Movement 정리
-	UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement();
-	if (MovementComp)
+	// Movement 정리
+	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
 		MovementComp->StopMovementImmediately();
 		MovementComp->Velocity = FVector::ZeroVector;
