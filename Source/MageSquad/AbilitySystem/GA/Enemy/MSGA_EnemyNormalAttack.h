@@ -40,6 +40,8 @@ public:
 		bool bWasCancelled) override;
 	
 private:
+	UFUNCTION()
 	void OnCompleteCallback();
+	UFUNCTION()
 	void OnInterruptedCallback();
 };
