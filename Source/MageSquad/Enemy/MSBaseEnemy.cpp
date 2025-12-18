@@ -36,6 +36,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 	ASC = CreateDefaultSubobject<UMSEnemyAbilitySystemComponent>(TEXT("ASC"));
 	ASC->SetIsReplicated(true);  // GAS는 리플리케이트
 	AttributeSet = CreateDefaultSubobject<UMSEnemyAttributeSet>(TEXT("AttributeSet"));
+	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 	
 	// Character는 리플리케이트
 	bReplicates = true;

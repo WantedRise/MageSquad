@@ -6,8 +6,10 @@
 #include "MSPlayerState.h"
 #include <GameModes/MSGameMode.h>
 
+#include "MSPlayerCharacter.h"
 #include "Widgets/HUD/MSPlayerHUDWidget.h"
 #include "System/MSLevelManagerSubsystem.h"
+#include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
 
 void AMSPlayerController::BeginPlay()
 {
@@ -47,6 +49,18 @@ void AMSPlayerController::BeginPlay()
 				2.0f,
 				false
 			);
+		}
+		
+		// ViewModel 생성
+		if (!PlayerViewModel)
+		{
+			PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
+		}
+    
+		// ASC로 초기화 - 이것만 호출하면 끝!
+		if (UAbilitySystemComponent* ASC = Cast<AMSPlayerCharacter>(GetPawn())->GetAbilitySystemComponent())
+		{
+			PlayerViewModel->InitializeWithASC(ASC);
 		}
 	}
 }

@@ -80,4 +80,7 @@ private:
 	// 마우스 커서 방향
 	UPROPERTY()
 	FVector_NetQuantize ServerCursorDir = FVector(1.f, 0.f, 0.f);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UMSMVVM_PlayerViewModel> PlayerViewModel;
 };
