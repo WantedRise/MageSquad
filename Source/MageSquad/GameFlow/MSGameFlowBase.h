@@ -26,8 +26,8 @@ class MAGESQUAD_API UMSGameFlowBase : public UObject
 public:
 	virtual void Initialize(class AMSGameState* InOwnerGameState);
 	virtual void TickFlow(float DeltaSeconds);
-
-	EGameFlowState GetGameFlowState() const { return CurrentState; }
+	virtual void Start();
+	EGameFlowState GetCurrentState() const { return CurrentState; }
 protected:
 	// ProgressComponent 이벤트 수신
 	virtual void OnGameTimeReached(float ElapsedSeconds);
@@ -35,11 +35,13 @@ protected:
 	void SetState(EGameFlowState NewState);
 	virtual void OnEnterState(EGameFlowState NewState);
 	virtual void OnExitState(EGameFlowState PreState);
+
 	class AMSGameState* GetOwnerGameState() const { return OwnerGameState; }
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "GameFlow")
 	EGameFlowState CurrentState = EGameFlowState::None;
 	UPROPERTY()
 	class AMSGameState* OwnerGameState = nullptr;
-
+	UPROPERTY()
+	class UMSGameProgressComponent* GameProgress = nullptr;
 };

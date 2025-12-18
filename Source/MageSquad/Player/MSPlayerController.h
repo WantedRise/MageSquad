@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,12 +7,12 @@
 #include "MSPlayerController.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/08
  *
- * ÇÃ·¹ÀÌ¾î ÄÁÆ®·Ñ·¯ Å¬·¡½º
- * HUD »ı¼º ¹× À¯Áö °ü¸®
- * °¢ ÄÁÆ®·Ñ·¯ÀÇ Ä¿¼­ À§Ä¡¸¦ ¼­¹ö¿¡°Ô ¾Ë¸²
+ * í”Œë ˆì´ì–´ ì»¨íŠ¸ë¡¤ëŸ¬ í´ë˜ìŠ¤
+ * HUD ìƒì„± ë° ìœ ì§€ ê´€ë¦¬
+ * ê° ì»¨íŠ¸ë¡¤ëŸ¬ì˜ ì»¤ì„œ ìœ„ì¹˜ë¥¼ ì„œë²„ì—ê²Œ ì•Œë¦¼
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerController : public APlayerController
@@ -20,10 +20,10 @@ class MAGESQUAD_API AMSPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	// ¼­¹ö¿¡¼­ ÀĞ´Â ÃÖ½Å Ä¿¼­ À§Ä¡
+	// ì„œë²„ì—ì„œ ì½ëŠ” ìµœì‹  ì»¤ì„œ ìœ„ì¹˜
 	FVector GetServerCursor() const;
 
-	// ¼­¹ö¿¡¼­ ÀĞ´Â ÃÖ½Å Ä¿¼­ ¹æÇâ
+	// ì„œë²„ì—ì„œ ì½ëŠ” ìµœì‹  ì»¤ì„œ ë°©í–¥
 	FVector GetServerCursorDir(const FVector& FallbackForward) const;
 
 protected:
@@ -31,22 +31,24 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	// ¸¶¿ì½º Ä¿¼­ ¾÷µ¥ÀÌÆ® ÇÔ¼ö
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ì—…ë°ì´íŠ¸ í•¨ìˆ˜
 	void UpdateCursor();
 
-	// Ä¿¼­ Á¤º¸ ¾÷µ¥ÀÌÆ® RPC
+	// ì»¤ì„œ ì •ë³´ ì—…ë°ì´íŠ¸ RPC
 	UFUNCTION(Server, Unreliable)
 	void ServerRPCSetCursorInfo(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir);
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPCReportReady();
 private:
-	// ¸¶¿ì½º Ä¿¼­ ¾÷µ¥ÀÌÆ® Å¸ÀÌ¸Ó
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ì—…ë°ì´íŠ¸ íƒ€ì´ë¨¸
 	FTimerHandle CursorUpdateTimer;
 
-	// ¸¶¿ì½º Ä¿¼­ À§Ä¡
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ìœ„ì¹˜
 	UPROPERTY()
 	FVector_NetQuantize ServerCursor = FVector(0.f, 0.f, 0.f);
 
-	// ¸¶¿ì½º Ä¿¼­ ¹æÇâ
+	// ë§ˆìš°ìŠ¤ ì»¤ì„œ ë°©í–¥
 	UPROPERTY()
 	FVector_NetQuantize ServerCursorDir = FVector(1.f, 0.f, 0.f);
 };

@@ -3,6 +3,9 @@
 
 #include "Player/MSPlayerController.h"
 #include <System/MSLevelManagerSubsystem.h>
+#include "GameStates/MSGameState.h"
+#include "MSPlayerState.h"
+#include <GameModes/MSGameMode.h>
 
 FVector AMSPlayerController::GetServerCursor() const
 {
@@ -128,4 +131,17 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 		Dir = FVector(1.f, 0.f, 0.f);
 	}
 	ServerCursorDir = Dir;
+}
+
+void AMSPlayerController::ServerRPCReportReady_Implementation()
+{
+	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
+	{
+		PS->SetUIReady(true);
+	}
+
+	if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
+	{
+		GM->TryStartGame();
+	}
 }

@@ -6,18 +6,21 @@
 #include "MageSquad.h"
 #include "Components/MSGameProgressComponent.h"
 
+void UMSGameFlowBase::Start()
+{
+    
+}
+
 void UMSGameFlowBase::Initialize(AMSGameState* InOwnerGameState)
 {
     OwnerGameState = InOwnerGameState;
-
-    if (UMSGameProgressComponent* Progress = OwnerGameState->FindComponentByClass<UMSGameProgressComponent>())
+    GameProgress = OwnerGameState->FindComponentByClass<UMSGameProgressComponent>();
+    if (GameProgress)
     {
-        Progress->OnGameTimeReached.AddUObject(
+        GameProgress->OnGameTimeReached.AddUObject(
             this,
             &UMSGameFlowBase::OnGameTimeReached
         );
-
-        //Progress->StartProgress();
     }
 
     CurrentState = EGameFlowState::None;

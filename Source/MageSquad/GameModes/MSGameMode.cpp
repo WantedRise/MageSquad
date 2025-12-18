@@ -8,6 +8,9 @@
 #include "Player/MSPlayerCharacter.h"
 #include "System/MSEnemySpawnSubsystem.h"
 #include "GameFlow/MSGameFlowBase.h"
+#include "GameStates/MSGameState.h"
+#include "System/MSSteamManagerSubsystem.h"
+#include <Player/MSPlayerState.h>
 
 void AMSGameMode::BeginPlay()
 {
@@ -30,8 +33,28 @@ void AMSGameMode::BeginPlay()
 	}
 }
 
+
 TSubclassOf<UMSGameFlowBase> AMSGameMode::GetGameFlowClass() const
 {
 	return GameFlowClass;
 }
+
+void AMSGameMode::TryStartGame()
+{
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		AMSPlayerState* MSPS = Cast<AMSPlayerState>(PS);
+		if (!MSPS || !MSPS->IsUIReady())
+		{
+			return;
+		}
+	}
+
+	// 전원 준비 완료
+	if (AMSGameState* GS = GetGameState<AMSGameState>())
+	{
+		GS->StartGame();
+	}
+}
+
 
