@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSPlayerController.h"
@@ -60,6 +60,7 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 	{
 		EnsureHUDCreated();
 		NotifyHUDReinitialize();
+		ServerRPCReportReady();
 	}
 }
 
@@ -73,6 +74,7 @@ void AMSPlayerController::OnRep_Pawn()
 	{
 		EnsureHUDCreated();
 		NotifyHUDReinitialize();
+		ServerRPCReportReady();
 	}
 }
 
@@ -201,13 +203,16 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 
 void AMSPlayerController::ServerRPCReportReady_Implementation()
 {
+	UE_LOG(LogTemp, Error, TEXT("ServerRPCReportReady_Implementation"));
 	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
 	{
+		UE_LOG(LogTemp, Error, TEXT("ServerRPCReportReady_Implementation AMSPlayerState"));
 		PS->SetUIReady(true);
 	}
 
 	if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
 	{
+		UE_LOG(LogTemp, Error, TEXT("ServerRPCReportReady_Implementation AMSGameMode"));
 		GM->TryStartGame();
 	}
 }

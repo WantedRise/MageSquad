@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GameFlow/MSGameFlowBase.h"
@@ -17,10 +17,8 @@ void UMSGameFlowBase::Initialize(AMSGameState* InOwnerGameState)
     GameProgress = OwnerGameState->FindComponentByClass<UMSGameProgressComponent>();
     if (GameProgress)
     {
-        GameProgress->OnGameTimeReached.AddUObject(
-            this,
-            &UMSGameFlowBase::OnGameTimeReached
-        );
+        //GameProgress->OnGameTimeReached.AddUObject(this,&UMSGameFlowBase::OnGameTimeReached);
+        GameProgress->Initialize(10.f);
     }
 
     CurrentState = EGameFlowState::None;

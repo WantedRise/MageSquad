@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,9 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "MSGameProgressComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameTimeReached,float /* ElapsedSeconds */);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnProgressChanged, float /*Normalized*/);
-
+DECLARE_MULTICAST_DELEGATE(FOnGameTimeReached);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MAGESQUAD_API UMSGameProgressComponent : public UActorComponent
@@ -32,8 +30,7 @@ public:
 
     // 특정 시간 도달 이벤트
     FOnGameTimeReached OnGameTimeReached;
-    // 타이머, 위젯에 알림
-    FOnProgressChanged OnProgressChanged;
+
 protected:
     void TickProgress();
 
@@ -45,8 +42,9 @@ private:
     TArray<float> TimeCheckpoints;
     int32 NextCheckpointIndex = 0;
 
-    float TotalGameTime = 600.f;
-
+    
+    float ElapsedGameTime;
+    float TotalGameTime;
     FTimerHandle ProgressTimerHandle;
     UPROPERTY()
     class AMSGameState* OwnerGameState = nullptr;
