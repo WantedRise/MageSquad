@@ -35,4 +35,10 @@ namespace MSGameplayTags
 	
 	/* GameplayCue Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_Explosion);
+	
+	/* Hit Result Tags */
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hit_Critical);
+
+	/* Damage Tags */
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Damage);
 }

@@ -79,6 +79,7 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	CachedRuntimeData.LifeTime = 3.0f;
 	CachedRuntimeData.PenetrationCount = Penetration;
 	CachedRuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	CachedRuntimeData.DamageEffect = DamageEffect;
 	// ===== 첫 발 발사 =====
 	FireNextProjectile();
 }

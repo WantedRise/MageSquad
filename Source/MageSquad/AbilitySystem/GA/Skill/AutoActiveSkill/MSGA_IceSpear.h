@@ -56,6 +56,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 	
+	// 데미지 전달 GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<UGameplayEffect> DamageEffect;
+	
 	// ===== 연사용 상태 변수 =====
 	int32 FiredCount = 0;
 

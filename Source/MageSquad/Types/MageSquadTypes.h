@@ -60,6 +60,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Damage = 0;
 
+	// 치명타 확률
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float CriticalChance = 0.5f;
+
+	// 데미지 적용 GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TSubclassOf<UGameplayEffect> DamageEffect;
+
 	// 발사체 크기(피해 범위)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Radius = 1.f;
@@ -142,6 +150,8 @@ public:
 		if (!StaticData) return;
 
 		Damage = StaticData->Damage;
+		CriticalChance = StaticData->CriticalChance;
+		DamageEffect = StaticData->DamageEffect;
 		Radius = StaticData->Radius;
 		Direction = StaticData->Direction;
 		InitialSpeed = StaticData->InitialSpeed;
@@ -164,6 +174,14 @@ public:
 	// 발사체 대미지
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Damage = 0;
+
+	// 치명타 확률
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float CriticalChance = 0.5f;
+
+	// 데미지 적용 GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TSubclassOf<UGameplayEffect> DamageEffect;
 
 	// 발사체 크기(피해 범위)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")

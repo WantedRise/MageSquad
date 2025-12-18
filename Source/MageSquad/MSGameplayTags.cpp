@@ -34,4 +34,10 @@ namespace MSGameplayTags
 	
 	/* GameplayCue Tags */
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_Explosion,"GameplayCue.Skill.Explosion");
+	
+	/* Hit Result Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Hit_Critical, "Hit.Critical");
+	
+	/* Data Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Data_Damage, "Data.Damage");
 }

@@ -1,6 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+
+#include "AbilitySystemComponent.h"
+#include "AbilitysystemGlobals.h"
+#include "GameplayEffect.h"
+#include "MSGameplayTags.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "GameFramework/Actor.h"
 
@@ -30,6 +35,50 @@ void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
 
 	HandleHitTarget(Target, HitResult);
 
+	// 데미지 / 치명타 계산
+	float FinalDamage = RuntimeData.Damage;
+	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
+
+	if (bIsCritical)
+	{
+		FinalDamage *= 2;
+	}
+
+	// GE 가져오기
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+
+	if (!TargetASC || !RuntimeData.DamageEffect)
+	{
+		return;
+	}
+	
+	// GameplayEffectSpec 생성
+	FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
+	Context.AddSourceObject(GetOwnerActor());
+	Context.AddHitResult(HitResult);
+	
+	FGameplayEffectSpecHandle SpecHandle =
+		TargetASC->MakeOutgoingSpec(RuntimeData.DamageEffect, 1.f, Context);
+
+	if (!SpecHandle.IsValid())
+	{
+		return;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(
+		MSGameplayTags::Data_Damage,
+		FinalDamage
+	);
+	
+	if (bIsCritical)
+	{
+		SpecHandle.Data->AddDynamicAssetTag(MSGameplayTags::Hit_Critical);
+	}
+	
+	// GameplayEffect 적용
+	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor)
 	{
