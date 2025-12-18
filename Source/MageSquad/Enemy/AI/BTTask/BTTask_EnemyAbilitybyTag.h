@@ -4,17 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/AI/BTTask/BTTask_EnemyBase.h"
-#include "BTTask_NormalAttack.generated.h"
+#include "BTTask_EnemyAbilitybyTag.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MAGESQUAD_API UBTTask_NormalAttack : public UBTTask_EnemyBase
+class MAGESQUAD_API UBTTask_EnemyAbilitybyTag : public UBTTask_EnemyBase
 {
 	GENERATED_BODY()
+	
 public:
-	UBTTask_NormalAttack();
+	UBTTask_EnemyAbilitybyTag();
 	
 public:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

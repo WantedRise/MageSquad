@@ -1,17 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Enemy/AI/BTTask/BTTask_NormalAttack.h"
-
+#include "Enemy/AI/BTTask/BTTask_EnemyAbilitybyTag.h"
 #include "AbilitySystemComponent.h"
 #include "Enemy/MSBaseEnemy.h"
 
-UBTTask_NormalAttack::UBTTask_NormalAttack()
+UBTTask_EnemyAbilitybyTag::UBTTask_EnemyAbilitybyTag()
 {
-	NodeName = TEXT("Normal Attack");
 }
 
-EBTNodeResult::Type UBTTask_NormalAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_EnemyAbilitybyTag::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type result = Super::ExecuteTask(OwnerComp, NodeMemory);
 	
