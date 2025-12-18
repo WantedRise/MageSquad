@@ -9,7 +9,7 @@
 UMSGC_HitFlash::UMSGC_HitFlash()
 {
 	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
-	GameplayCueTag =TagsMgr.RequestGameplayTag(
+	GameplayCueTag = TagsMgr.RequestGameplayTag(
 		FName("GameplayCue.HitFlash")
 	);
 }
