@@ -5,10 +5,19 @@
 
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 
+#include "Components/Player/MSHUDDataComponent.h"
+
+#include "Widgets/HUD/MSTeamMemberWidget.h"
+
+#include "Kismet/GameplayStatics.h"
+
+#include "Player/MSPlayerCharacter.h"
 #include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
 
@@ -25,6 +34,7 @@ void UMSPlayerHUDWidget::NativeDestruct()
 	// 바인딩된 델리게이트/타이머 정리
 	ClearRebindTimer();
 	UnbindLocalHealth();
+	ClearTeamPollTimer();
 
 	Super::NativeDestruct();
 }
@@ -41,7 +51,12 @@ void UMSPlayerHUDWidget::InitializeHUD()
 	// 바인딩 시도
 	if (TryBindLocalHealth())
 	{
+		// 바인딩 재시도 타이머 종료
 		ClearRebindTimer();
+
+		// 팀 데이터 갱신 시작
+		StartTeamPoll();
+
 		return;
 	}
 
@@ -114,6 +129,24 @@ bool UMSPlayerHUDWidget::TryBindLocalHealth()
 	return true;
 }
 
+void UMSPlayerHUDWidget::StartTeamPoll()
+{
+	if (bTeamPolling) return;
+	bTeamPolling = true;
+
+	// 공유 데이터 갱신 시작
+	GetWorld()->GetTimerManager().SetTimer(
+		TeamPollTimer,
+		this,
+		&UMSPlayerHUDWidget::PollTeamMembers,
+		TeamPollInterval,
+		true
+	);
+
+	// 즉시 1회 갱신
+	PollTeamMembers();
+}
+
 void UMSPlayerHUDWidget::UnbindLocalHealth()
 {
 	bBoundLocalASC = false;
@@ -145,6 +178,16 @@ void UMSPlayerHUDWidget::ClearRebindTimer()
 	}
 	RebindTimer.Invalidate();
 	RebindAttemptCount = 0;
+}
+
+void UMSPlayerHUDWidget::ClearTeamPollTimer()
+{
+	// 공유 데이터 갱신 타이머 초기화
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TeamPollTimer);
+	}
+	TeamPollTimer.Invalidate();
 }
 
 void UMSPlayerHUDWidget::RefreshLocalHealthUI(const float Health, const float MaxHealth)
@@ -182,11 +225,89 @@ void UMSPlayerHUDWidget::OnLocalMaxHealthChanged(const FOnAttributeChangeData& D
 	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
 }
 
+void UMSPlayerHUDWidget::PollTeamMembers()
+{
+	if (!TeamMemberWidgetClass) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 첫 번째 플레이어(자신) 컨트롤러와 그 소유자 가져오기
+	APlayerController* PC = World->GetFirstPlayerController();
+	APawn* LocalPawn = PC ? PC->GetPawn() : nullptr;
+
+	// 월드에있는 모든 플레이어 캐릭터를 찾아 저장
+	TArray<AActor*> Found;
+	UGameplayStatics::GetAllActorsOfClass(World, AMSPlayerCharacter::StaticClass(), Found);
+
+	// 이번 프레임에 존재하는 멤버 집합
+	TSet<TWeakObjectPtr<AActor>> Alive;
+
+	for (AActor* Actor : Found)
+	{
+		// 자신 제외
+		if (!Actor || Actor == LocalPawn) continue;
+
+		// 팀 멤버에 추가
+		Alive.Add(Actor);
+
+		// 플레이어 캐릭터 클래스로 캐스팅
+		AMSPlayerCharacter* Member = Cast<AMSPlayerCharacter>(Actor);
+		if (!Member) continue;
+
+		// 해당 캐릭터의 HUD 공유 데이터를 가져옴
+		UMSHUDDataComponent* HUDData = Member->FindComponentByClass<UMSHUDDataComponent>();
+		if (!HUDData) continue;
+
+		// 팀 멤버 위젯 생성
+		EnsureTeamMemberWidget(Actor, HUDData);
+	}
+
+	// 사라진 멤버의 위젯 정리
+	for (auto It = TeamMembers.CreateIterator(); It; ++It)
+	{
+		if (!Alive.Contains(It.Key()))
+		{
+			if (UMSTeamMemberWidget* Widget = It.Value())
+			{
+				Widget->RemoveFromParent();
+			}
+			It.RemoveCurrent();
+		}
+	}
+}
+
+void UMSPlayerHUDWidget::EnsureTeamMemberWidget(AActor* MemberActor, UMSHUDDataComponent* HUDData)
+{
+	if (!MemberActor || !HUDData) return;
+
+	// 이전 프레임에 있던 멤버라면 위젯 재사용
+	UMSTeamMemberWidget* Widget = nullptr;
+	if (TObjectPtr<UMSTeamMemberWidget>* Found = TeamMembers.Find(MemberActor))
+	{
+		Widget = Found->Get();
+	}
+
+	// 새 멤버라면 위젯 새로 생성
+	if (!Widget)
+	{
+		Widget = CreateWidget<UMSTeamMemberWidget>(GetWorld(), TeamMemberWidgetClass);
+		if (!Widget) return;
+
+		// 생성된 위젯을 VerticalBox에 추가
+		TeamMembers.Add(MemberActor, Widget);
+		TeamMembersBoxWidget->AddChild(Widget);
+	}
+
+	// 위젯 데이터 갱신
+	Widget->UpdateFromHUDData(HUDData);
+}
+
 void UMSPlayerHUDWidget::ScheduleRebind()
 {
 	if (RebindTimer.IsValid()) return;
 
-	// 바인딘 재시도 타이머 설정
+	// 바인딩 재시도 타이머 설정
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
@@ -211,6 +332,10 @@ void UMSPlayerHUDWidget::TickRebind()
 	// 바인딩 재시도
 	if (TryBindLocalHealth())
 	{
+		// 바인딩 재시도 타이머 종료
 		ClearRebindTimer();
+
+		// 팀 데이터 갱신 시작
+		StartTeamPoll();
 	}
 }
