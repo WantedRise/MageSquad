@@ -9,7 +9,7 @@ UBTDecorator_IsDead::UBTDecorator_IsDead()
 {
 	NodeName = TEXT("Check Is Dead");
 	
-	// Blackboard Key Selector°¡ Bool Å¸ÀÔ Å°¸¸ ¼±ÅÃÇÒ ¼ö ÀÖµµ·Ï ÇÊÅÍ¸¦ Ãß°¡
+	// Blackboard Key Selectorê°€ Bool íƒ€ìž… í‚¤ë§Œ ì„ íƒí•  ìˆ˜ ìžˆë„ë¡ í•„í„°ë¥¼ ì¶”ê°€
 	IsDeadKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBTDecorator_IsDead, IsDeadKey));
 }
 
@@ -20,12 +20,10 @@ bool UBTDecorator_IsDead::CalculateRawConditionValue(UBehaviorTreeComponent& Own
 	const UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
-		return false; // Blackboard°¡ ¾øÀ¸¸é Á¶°Ç ½ÇÆÐ
+		return false; 
 	}
 
-	// Blackboard KeyÀÇ ÀÌ¸§À» °¡Á®¿Í ±× °ªÀ» Bool·Î ÀÐÀ½
 	const FName KeyName = IsDeadKey.SelectedKeyName;
-	
 	bool bIsDead = BlackboardComp->GetValueAsBool(KeyName);
 	
 	return bIsDead;
