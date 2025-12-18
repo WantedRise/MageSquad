@@ -487,9 +487,9 @@ void AMSPlayerCharacter::InitPublicHUDData_Server()
 	// 플레이어 이름 및 아이콘 초기화
 	if (APlayerState* PS = GetPlayerState())
 	{
-		HUDDataComponent->SetDisplayName_Server(FText::FromString(PS->GetPlayerName()));
+		HUDDataComponent->BindDisplayName_Server(FText::FromString(PS->GetPlayerName()));
 	}
-	HUDDataComponent->SetPortraitIcon_Server(PortraitIcon);
+	HUDDataComponent->BindPortraitIcon_Server(PortraitIcon);
 }
 
 
