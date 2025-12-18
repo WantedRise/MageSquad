@@ -118,6 +118,11 @@ UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 	return ASC;
 }
 
+void AMSBaseEnemy::OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator)
+{
+	// @Todo : 몬스터 HitFlash 구현
+}
+
 void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
 {
 	CurrentMonsterID = NewMonsterID;

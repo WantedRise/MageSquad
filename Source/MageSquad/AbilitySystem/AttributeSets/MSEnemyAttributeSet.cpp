@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
+#include "Interfaces/MSHitReactableInterface.h"
 
 UMSEnemyAttributeSet::UMSEnemyAttributeSet()
 {
@@ -53,6 +54,16 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 	// Clamp Health to [0, MaxHealth]
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
-		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.0f, GetMaxHealth()));
+		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
+		
+		if (GetCurrentHealth() <= 0.f)
+		{
+			
+		}
+	}
+	
+	if(IMSHitReactableInterface* HitActor =  Cast<IMSHitReactableInterface>(GetOwningActor()))
+	{
+		// HitActor->OnHitByAttack();
 	}
 }

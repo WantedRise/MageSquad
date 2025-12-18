@@ -7,7 +7,9 @@
 #include "BTTask_EnemyAbilitybyTag.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/18
+ * Enemy들의 Ability를 시작하는 Task
  */
 UCLASS()
 class MAGESQUAD_API UBTTask_EnemyAbilitybyTag : public UBTTask_EnemyBase
