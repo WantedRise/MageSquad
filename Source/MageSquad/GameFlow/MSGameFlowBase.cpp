@@ -4,9 +4,22 @@
 #include "GameFlow/MSGameFlowBase.h"
 #include "GameStates/MSGameState.h"
 #include "MageSquad.h"
+#include "Components/MSGameProgressComponent.h"
+
 void UMSGameFlowBase::Initialize(AMSGameState* InOwnerGameState)
 {
     OwnerGameState = InOwnerGameState;
+
+    if (UMSGameProgressComponent* Progress = OwnerGameState->FindComponentByClass<UMSGameProgressComponent>())
+    {
+        Progress->OnGameTimeReached.AddUObject(
+            this,
+            &UMSGameFlowBase::OnGameTimeReached
+        );
+
+        //Progress->StartProgress();
+    }
+
     CurrentState = EGameFlowState::None;
 }
 
@@ -20,6 +33,10 @@ void UMSGameFlowBase::OnEnterState(EGameFlowState NewState)
 }
 
 void UMSGameFlowBase::OnExitState(EGameFlowState OldState)
+{
+
+}
+void UMSGameFlowBase::OnGameTimeReached(float ElapsedSeconds)
 {
 
 }

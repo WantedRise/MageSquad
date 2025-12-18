@@ -13,6 +13,10 @@ void UMSGameFlowPvE::Initialize(AMSGameState* InOwnerGameState)
 	
 	bIsBossDefeated = false;
 	SetState(EGameFlowState::None);
+
+	//이벤트 등록
+
+	//
 }
 
 

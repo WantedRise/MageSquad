@@ -33,15 +33,15 @@ private:
 	void EnterBoss();
 
 private:
-	// PvE 튜닝 값(나중에 DataAsset로 빼도 됨)
+	//PvE 튜닝 값(나중에 DataAsset로 빼도 됨)
 	UPROPERTY(EditDefaultsOnly, Category = "GameFlow|PvE")
 	float TimeToEnterQuesting = 30.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GameFlow|PvE")
 	float TimeToSpawnBoss = 300.f;
-	// 내부 플래그(최소)
+	//보스 처치 여부
 	uint8 bIsBossDefeated = false;
-
+	//이벤트를 관리하기 위해
 	UPROPERTY()
 	TArray<FTimerHandle> ScheduledEventHandles;
 };

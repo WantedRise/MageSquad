@@ -29,7 +29,8 @@ public:
 
 	EGameFlowState GetGameFlowState() const { return CurrentState; }
 protected:
-
+	// ProgressComponent 이벤트 수신
+	virtual void OnGameTimeReached(float ElapsedSeconds);
 	//상태 전환용 내부 함수
 	void SetState(EGameFlowState NewState);
 	virtual void OnEnterState(EGameFlowState NewState);

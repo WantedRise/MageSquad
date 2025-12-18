@@ -26,7 +26,11 @@ public:
 	class UMSGameFlowBase* GetGameFlow() const { return GameFlow; }
 protected:
 	//UPROPERTY(Replicated)
+	//float GameStartTime;
+
+	//UPROPERTY(Replicated)
 	float GameElapsedTime;
+
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "GameFlow")
 	class UMSGameFlowBase* GameFlow;
