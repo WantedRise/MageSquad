@@ -1,7 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSPlayerController.h"
+#include "GameStates/MSGameState.h"
+#include "MSPlayerState.h"
+#include <GameModes/MSGameMode.h>
 
 #include "Widgets/HUD/MSPlayerHUDWidget.h"
 #include "System/MSLevelManagerSubsystem.h"
@@ -10,7 +13,7 @@ void AMSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ÀÔ·Â ¸ğµå ¼³Á¤
+	// ì…ë ¥ ëª¨ë“œ ì„¤ì •
 	FInputModeGameAndUI InputMode;
 	SetInputMode(InputMode);
 
@@ -18,7 +21,7 @@ void AMSPlayerController::BeginPlay()
 
 	if (IsLocalController())
 	{
-		// Ä¿¼­ Æ®·¹ÀÌ½º Å¸ÀÌ¸Ó ¼³Á¤
+		// ì»¤ì„œ íŠ¸ë ˆì´ìŠ¤ íƒ€ì´ë¨¸ ì„¤ì •
 		GetWorldTimerManager().SetTimer(
 			CursorUpdateTimer,
 			this,
@@ -27,13 +30,13 @@ void AMSPlayerController::BeginPlay()
 			true
 		);
 
-		// HUD »ı¼º/Ç¥½Ã
+		// HUD ìƒì„±/í‘œì‹œ
 		EnsureHUDCreated();
 
-		// BeginPlay ½ÃÁ¡¿¡ Pawn/ASC ÁØºñ°¡ ³¡³­ °æ¿ìµµ ÀÖÀ¸¹Ç·Î 1È¸ ÀçÃÊ±âÈ­ ½Ãµµ
+		// BeginPlay ì‹œì ì— Pawn/ASC ì¤€ë¹„ê°€ ëë‚œ ê²½ìš°ë„ ìˆìœ¼ë¯€ë¡œ 1íšŒ ì¬ì´ˆê¸°í™” ì‹œë„
 		NotifyHUDReinitialize();
 
-		// ¸Ê ·ÎµùÀ» À§ÇÑ µô·¹ÀÌ, ·ÎµùÃ¢À» 2ÃÊµÚ Á¦°Å
+		// ë§µ ë¡œë”©ì„ ìœ„í•œ ë”œë ˆì´, ë¡œë”©ì°½ì„ 2ì´ˆë’¤ ì œê±°
 		if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
 		{
 			FTimerHandle MatchEntryDelayTimer;
@@ -52,7 +55,7 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// ¼­¹ö/È£½ºÆ®¿¡¼­ PawnÀÌ Áï½Ã °áÁ¤µÇ´Â °æ¿ì°¡ ¸¹À¸¹Ç·Î Possess ½ÃÁ¡¿¡µµ HUD ÀçÃÊ±âÈ­
+	// ì„œë²„/í˜¸ìŠ¤íŠ¸ì—ì„œ Pawnì´ ì¦‰ì‹œ ê²°ì •ë˜ëŠ” ê²½ìš°ê°€ ë§ìœ¼ë¯€ë¡œ Possess ì‹œì ì—ë„ HUD ì¬ì´ˆê¸°í™”
 	if (IsLocalController())
 	{
 		EnsureHUDCreated();
@@ -64,8 +67,8 @@ void AMSPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
 
-	// OnRep_Pawn¿¡¼­µµ HUD ÀçÃÊ±âÈ­
-	// Å¬¶óÀÌ¾ğÆ®´Â PawnÀÌ º¹Á¦·Î ´Ê°Ô µé¾î¿À´Â °æ¿ì°¡ ¸¹¾Æ¼­ HUD ÀçÃÊ±âÈ­¸¦ ÅëÇØ ÃÊ±âÈ­ Å¸ÀÌ¹Ö ¹®Á¦¸¦ ¾ÈÁ¤È­
+	// OnRep_Pawnì—ì„œë„ HUD ì¬ì´ˆê¸°í™”
+	// í´ë¼ì´ì–¸íŠ¸ëŠ” Pawnì´ ë³µì œë¡œ ëŠ¦ê²Œ ë“¤ì–´ì˜¤ëŠ” ê²½ìš°ê°€ ë§ì•„ì„œ HUD ì¬ì´ˆê¸°í™”ë¥¼ í†µí•´ ì´ˆê¸°í™” íƒ€ì´ë° ë¬¸ì œë¥¼ ì•ˆì •í™”
 	if (IsLocalController())
 	{
 		EnsureHUDCreated();
@@ -75,13 +78,13 @@ void AMSPlayerController::OnRep_Pawn()
 
 void AMSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Ä¿¼­ Æ®·¹ÀÌ½º Å¸ÀÌ¸Ó ÃÊ±âÈ­
+	// ì»¤ì„œ íŠ¸ë ˆì´ìŠ¤ íƒ€ì´ë¨¸ ì´ˆê¸°í™”
 	if (CursorUpdateTimer.IsValid())
 	{
 		GetWorldTimerManager().ClearTimer(CursorUpdateTimer);
 	}
 
-	// HUD À§Á¬ Á¦°Å
+	// HUD ìœ„ì ¯ ì œê±°
 	if (HUDWidgetInstance)
 	{
 		HUDWidgetInstance->RemoveFromParent();
@@ -95,7 +98,7 @@ void AMSPlayerController::EnsureHUDCreated()
 {
 	if (!IsLocalController() || HUDWidgetInstance || !HUDWidgetClass) return;
 
-	// HUD À§Á¬ »ı¼º ¹× ±×¸®±â
+	// HUD ìœ„ì ¯ ìƒì„± ë° ê·¸ë¦¬ê¸°
 	HUDWidgetInstance = CreateWidget<UMSPlayerHUDWidget>(this, HUDWidgetClass);
 	if (HUDWidgetInstance)
 	{
@@ -109,7 +112,7 @@ void AMSPlayerController::NotifyHUDReinitialize()
 
 	if (HUDWidgetInstance)
 	{
-		// À§Á¬ ³»ºÎ¿¡¼­ Pawn/ASC ÁØºñ ¿©ºÎ¸¦ Ã¼Å©ÇÏ°í, ÁØºñ°¡ ¾È µÆÀ¸¸é Å¸ÀÌ¸Ó·Î Àç½Ãµµ
+		// ìœ„ì ¯ ë‚´ë¶€ì—ì„œ Pawn/ASC ì¤€ë¹„ ì—¬ë¶€ë¥¼ ì²´í¬í•˜ê³ , ì¤€ë¹„ê°€ ì•ˆ ëìœ¼ë©´ íƒ€ì´ë¨¸ë¡œ ì¬ì‹œë„
 		HUDWidgetInstance->RequestReinitialize();
 	}
 }
@@ -121,7 +124,7 @@ FVector AMSPlayerController::GetServerCursor() const
 
 FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) const
 {
-	// È­¸é ¹Û µîÀ¸·Î Ä¿¼­ ¹æÇâÀÌ À¯È¿ÇÏÁö ¾ÊÀ» ¶§´Â Ä³¸¯ÅÍ Àü¹æÀ¸·Î ¹ß»ç
+	// í™”ë©´ ë°– ë“±ìœ¼ë¡œ ì»¤ì„œ ë°©í–¥ì´ ìœ íš¨í•˜ì§€ ì•Šì„ ë•ŒëŠ” ìºë¦­í„° ì „ë°©ìœ¼ë¡œ ë°œì‚¬
 	FVector Fwd = FVector(FallbackForward);
 	Fwd.Z = 0.f;
 	Fwd = Fwd.GetSafeNormal();
@@ -137,31 +140,31 @@ FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) 
 
 void AMSPlayerController::UpdateCursor()
 {
-	// Ä¿¼­ Æ®·¹ÀÌ½º
+	// ì»¤ì„œ íŠ¸ë ˆì´ìŠ¤
 	if (IsLocalController())
 	{
 		APawn* P = GetPawn();
 		if (!P) return;
 
-		// ¸¶¿ì½º Ä¿¼­ Æ®·¹ÀÌ½Ì
+		// ë§ˆìš°ìŠ¤ ì»¤ì„œ íŠ¸ë ˆì´ì‹±
 		FHitResult Hit;
 		const bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, Hit) && Hit.bBlockingHit;
 
-		// Ä³¸¯ÅÍÀÇ À§Ä¡
+		// ìºë¦­í„°ì˜ ìœ„ì¹˜
 		const FVector SpawnOrigin = P->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 
-		// Ä³¸¯ÅÍ Àü¹æ(¼öÆò) - Ä¿¼­°¡ È­¸éÀ» ¹ş¾î³ª¸é ÀÌ ¹æÇâÀ¸·Î ¹ß»ç
+		// ìºë¦­í„° ì „ë°©(ìˆ˜í‰) - ì»¤ì„œê°€ í™”ë©´ì„ ë²—ì–´ë‚˜ë©´ ì´ ë°©í–¥ìœ¼ë¡œ ë°œì‚¬
 		FVector Forward2D = P->GetActorForwardVector();
 		Forward2D.Z = 0.f;
 		Forward2D = Forward2D.GetSafeNormal();
 		if (Forward2D.IsNearlyZero()) Forward2D = FVector(1.f, 0.f, 0.f);
 
-		// Ä¿¼­ ¿ùµå À§Ä¡
-		// - Hit ¼º°ø: Ãæµ¹ ÁöÁ¡
-		// - Hit ½ÇÆĞ(Ä¿¼­°¡ ºäÆ÷Æ®¸¦ ¹ş¾î³² µî): Àü¹æÀ¸·Î ÃæºĞÈ÷ ¸Õ ÁöÁ¡(°¡»ó Ä¿¼­)
+		// ì»¤ì„œ ì›”ë“œ ìœ„ì¹˜
+		// - Hit ì„±ê³µ: ì¶©ëŒ ì§€ì 
+		// - Hit ì‹¤íŒ¨(ì»¤ì„œê°€ ë·°í¬íŠ¸ë¥¼ ë²—ì–´ë‚¨ ë“±): ì „ë°©ìœ¼ë¡œ ì¶©ë¶„íˆ ë¨¼ ì§€ì (ê°€ìƒ ì»¤ì„œ)
 		const FVector CursorWorldPos = bHit ? Hit.ImpactPoint : (SpawnOrigin + Forward2D * 10000.f);
 
-		// Ä¿¼­ ¹æÇâ (¼öÆò °íÁ¤)
+		// ì»¤ì„œ ë°©í–¥ (ìˆ˜í‰ ê³ ì •)
 		FVector Dir = (CursorWorldPos - SpawnOrigin);
 		Dir.Z = 0.f;
 		Dir = Dir.GetSafeNormal();
@@ -169,13 +172,13 @@ void AMSPlayerController::UpdateCursor()
 
 		if (HasAuthority())
 		{
-			// È£½ºÆ®(¸®½¼)¸é ¼­¹ö Ä³½Ã Á÷Á¢ °»½Å
+			// í˜¸ìŠ¤íŠ¸(ë¦¬ìŠ¨)ë©´ ì„œë²„ ìºì‹œ ì§ì ‘ ê°±ì‹ 
 			ServerCursor = CursorWorldPos;
 			ServerCursorDir = Dir;
 		}
 		else
 		{
-			// ¿ø°İ Å¬¶ó´Â ¼­¹ö·Î Àü´Ş
+			// ì›ê²© í´ë¼ëŠ” ì„œë²„ë¡œ ì „ë‹¬
 			ServerRPCSetCursorInfo(CursorWorldPos, Dir);
 		}
 	}
@@ -185,7 +188,7 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 {
 	ServerCursor = FVector(InPos);
 
-	// Ä¿¼­ ¹æÇâ ÀúÀå (¼öÆò °íÁ¤)
+	// ì»¤ì„œ ë°©í–¥ ì €ì¥ (ìˆ˜í‰ ê³ ì •)
 	FVector Dir = FVector(InDir);
 	Dir.Z = 0.f;
 	Dir = Dir.GetSafeNormal();
@@ -194,4 +197,17 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 		Dir = FVector(1.f, 0.f, 0.f);
 	}
 	ServerCursorDir = Dir;
+}
+
+void AMSPlayerController::ServerRPCReportReady_Implementation()
+{
+	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
+	{
+		PS->SetUIReady(true);
+	}
+
+	if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
+	{
+		GM->TryStartGame();
+	}
 }

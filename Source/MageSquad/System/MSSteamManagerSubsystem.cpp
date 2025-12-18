@@ -277,3 +277,22 @@ bool UMSSteamManagerSubsystem::IsSteamConnected()
 
 	return false; // 스팀 서브시스템이 없거나 로그인되지 않음
 }
+
+int32 UMSSteamManagerSubsystem::GetMaxPlayer()
+{
+	if (!IsSteamConnected())
+	{
+		return 1;
+	}
+	
+    if (SessionInterface.IsValid())
+    {
+        FNamedOnlineSession* CurrentSession = SessionInterface->GetNamedSession(NAME_GameSession);
+        if (CurrentSession)
+        {
+            // 세션 설정에 저장된 최대 인원수 반환
+            return CurrentSession->SessionSettings.NumPublicConnections;
+        }
+    }
+	return 1;
+}

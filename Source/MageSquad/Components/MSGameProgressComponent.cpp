@@ -22,13 +22,13 @@ void UMSGameProgressComponent::BeginPlay()
     OwnerGameState = GetOwner<AMSGameState>();
 }
 //이벤트 시간, 이벤트 텍스쳐 전달
-void UMSGameProgressComponent::InitProgress()
+void UMSGameProgressComponent::Initialize(float InTotalGameTime)
 {
+    TotalGameTime = InTotalGameTime;
 }
 
 void UMSGameProgressComponent::StartProgress()
 {
-    GameStartTime = GetWorld()->GetTimeSeconds();
     bRunning = true;
 
     // 예시: 1, 4, 7, 10분 이벤트
@@ -46,23 +46,26 @@ void UMSGameProgressComponent::StartProgress()
 
 void UMSGameProgressComponent::StopProgress()
 {
+    GetWorld()->GetTimerManager().ClearTimer(ProgressTimerHandle);
 }
 
-float UMSGameProgressComponent::GetProgressRatio() const
+float UMSGameProgressComponent::GetNormalizedProgress() const
 {
-    return 0.0f;
+    if (!OwnerGameState)
+    {
+        return 0.f;
+    }
+
+    return FMath::Clamp(
+        OwnerGameState->GetElapsedGameTime() / TotalGameTime,
+        0.f,
+        1.f
+    );
 }
 
 void UMSGameProgressComponent::TickProgress()
 {
     if (!bRunning || NextCheckpointIndex >= TimeCheckpoints.Num())
         return;
-
-    const float Elapsed = OwnerGameState->GetGameElapsedTime();
-
-    if (Elapsed >= TimeCheckpoints[NextCheckpointIndex])
-    {
-        OnGameTimeReached.Broadcast(Elapsed);
-        NextCheckpointIndex++;
-    }
+    OwnerGameState->AddElapsedGameTime(1.f);
 }
