@@ -21,9 +21,9 @@ void AMSGameModeBase::BeginPlay()
 	{
 		// 설정
 		SpawnSystem->SetSpawnInterval(2.0f);
-		SpawnSystem->SetMaxActiveMonsters(100);
+		SpawnSystem->SetMaxActiveMonsters(10);
 		SpawnSystem->SetSpawnRadius(1500.0f);
-		SpawnSystem->SetSpawnCountPerTick(10);
+		SpawnSystem->SetSpawnCountPerTick(5);
         
 		// 스폰 시작
 		SpawnSystem->StartSpawning();
