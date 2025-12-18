@@ -39,7 +39,7 @@ namespace MSGameplayTags
 	
 	/* GameplayCue Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_Explosion);
-
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_HitFlash);
 
 
 	/* TEST Tags */

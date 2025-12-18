@@ -61,9 +61,4 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			
 		}
 	}
-	
-	if(IMSHitReactableInterface* HitActor =  Cast<IMSHitReactableInterface>(GetOwningActor()))
-	{
-		// HitActor->OnHitByAttack();
-	}
 }

@@ -6,7 +6,6 @@
 #include "AbilitySystemInterface.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "GameFramework/Character.h"
-#include "Interfaces/MSHitReactableInterface.h"
 #include "MSBaseEnemy.generated.h"
 
 /*
@@ -19,7 +18,7 @@
 struct FMSEnemyStaticData;
 
 UCLASS()
-class MAGESQUAD_API AMSBaseEnemy : public ACharacter, public IAbilitySystemInterface, public IMSHitReactableInterface
+class MAGESQUAD_API AMSBaseEnemy : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -41,7 +40,7 @@ public:
 	// ~ End IAbilitySystemInterface Interface
 	
 	// ~ Begin IMSHitReactableInterface Interface
-	virtual void OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator) override;
+	//virtual void OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator) override;
 	// ~ End IMSHitReactableInterface Interface
 	
 public:

@@ -50,4 +50,5 @@ namespace MSGameplayTags
 	
 	/* GameplayCue Tags */
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_Explosion,"GameplayCue.Skill.Explosion");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_HitFlash,"GameplayCue.HitFlash");
 }

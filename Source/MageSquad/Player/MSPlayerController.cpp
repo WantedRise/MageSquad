@@ -10,7 +10,7 @@ void AMSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ÀÔ·Â ¸ðµå ¼³Á¤
+	// ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	FInputModeGameAndUI InputMode;
 	SetInputMode(InputMode);
 
@@ -18,7 +18,7 @@ void AMSPlayerController::BeginPlay()
 
 	if (IsLocalController())
 	{
-		// Ä¿¼­ Æ®·¹ÀÌ½º Å¸ÀÌ¸Ó ¼³Á¤
+		// Ä¿ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½Ì½ï¿½ Å¸ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 		GetWorldTimerManager().SetTimer(
 			CursorUpdateTimer,
 			this,
@@ -27,24 +27,24 @@ void AMSPlayerController::BeginPlay()
 			true
 		);
 
-		// HUD »ý¼º/Ç¥½Ã
+		// HUD ï¿½ï¿½ï¿½ï¿½/Ç¥ï¿½ï¿½
 		EnsureHUDCreated();
 
-		// BeginPlay ½ÃÁ¡¿¡ Pawn/ASC ÁØºñ°¡ ³¡³­ °æ¿ìµµ ÀÖÀ¸¹Ç·Î 1È¸ ÀçÃÊ±âÈ­ ½Ãµµ
+		// BeginPlay ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Pawn/ASC ï¿½Øºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ìµµ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ 1È¸ ï¿½ï¿½ï¿½Ê±ï¿½È­ ï¿½Ãµï¿½
 		NotifyHUDReinitialize();
 
-		// ¸Ê ·ÎµùÀ» À§ÇÑ µô·¹ÀÌ, ·ÎµùÃ¢À» 2ÃÊµÚ Á¦°Å
-		if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
-		{
-			FTimerHandle MatchEntryDelayTimer;
-			GetWorldTimerManager().SetTimer(
-				MatchEntryDelayTimer,
-				Subsystem,
-				&UMSLevelManagerSubsystem::HideLoadingWidget,
-				2.0f,
-				false
-			);
-		}
+		// ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½Îµï¿½Ã¢ï¿½ï¿½ 2ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½
+		// if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+		// {
+		// 	FTimerHandle MatchEntryDelayTimer;
+		// 	GetWorldTimerManager().SetTimer(
+		// 		MatchEntryDelayTimer,
+		// 		Subsystem,
+		// 		&UMSLevelManagerSubsystem::HideLoadingWidget,
+		// 		2.0f,
+		// 		false
+		// 	);
+		// }
 	}
 }
 
@@ -52,7 +52,7 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// ¼­¹ö/È£½ºÆ®¿¡¼­ PawnÀÌ Áï½Ã °áÁ¤µÇ´Â °æ¿ì°¡ ¸¹À¸¹Ç·Î Possess ½ÃÁ¡¿¡µµ HUD ÀçÃÊ±âÈ­
+	// ï¿½ï¿½ï¿½ï¿½/È£ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ Pawnï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ì°¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ Possess ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ HUD ï¿½ï¿½ï¿½Ê±ï¿½È­
 	if (IsLocalController())
 	{
 		EnsureHUDCreated();
@@ -64,8 +64,8 @@ void AMSPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
 
-	// OnRep_Pawn¿¡¼­µµ HUD ÀçÃÊ±âÈ­
-	// Å¬¶óÀÌ¾ðÆ®´Â PawnÀÌ º¹Á¦·Î ´Ê°Ô µé¾î¿À´Â °æ¿ì°¡ ¸¹¾Æ¼­ HUD ÀçÃÊ±âÈ­¸¦ ÅëÇØ ÃÊ±âÈ­ Å¸ÀÌ¹Ö ¹®Á¦¸¦ ¾ÈÁ¤È­
+	// OnRep_Pawnï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ HUD ï¿½ï¿½ï¿½Ê±ï¿½È­
+	// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ Pawnï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì°¡ ï¿½ï¿½ï¿½Æ¼ï¿½ HUD ï¿½ï¿½ï¿½Ê±ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ Å¸ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­
 	if (IsLocalController())
 	{
 		EnsureHUDCreated();
@@ -75,13 +75,13 @@ void AMSPlayerController::OnRep_Pawn()
 
 void AMSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Ä¿¼­ Æ®·¹ÀÌ½º Å¸ÀÌ¸Ó ÃÊ±âÈ­
+	// Ä¿ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½Ì½ï¿½ Å¸ï¿½Ì¸ï¿½ ï¿½Ê±ï¿½È­
 	if (CursorUpdateTimer.IsValid())
 	{
 		GetWorldTimerManager().ClearTimer(CursorUpdateTimer);
 	}
 
-	// HUD À§Á¬ Á¦°Å
+	// HUD ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (HUDWidgetInstance)
 	{
 		HUDWidgetInstance->RemoveFromParent();
@@ -95,7 +95,7 @@ void AMSPlayerController::EnsureHUDCreated()
 {
 	if (!IsLocalController() || HUDWidgetInstance || !HUDWidgetClass) return;
 
-	// HUD À§Á¬ »ý¼º ¹× ±×¸®±â
+	// HUD ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
 	HUDWidgetInstance = CreateWidget<UMSPlayerHUDWidget>(this, HUDWidgetClass);
 	if (HUDWidgetInstance)
 	{
@@ -109,7 +109,7 @@ void AMSPlayerController::NotifyHUDReinitialize()
 
 	if (HUDWidgetInstance)
 	{
-		// À§Á¬ ³»ºÎ¿¡¼­ Pawn/ASC ÁØºñ ¿©ºÎ¸¦ Ã¼Å©ÇÏ°í, ÁØºñ°¡ ¾È µÆÀ¸¸é Å¸ÀÌ¸Ó·Î Àç½Ãµµ
+		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ Pawn/ASC ï¿½Øºï¿½ ï¿½ï¿½ï¿½Î¸ï¿½ Ã¼Å©ï¿½Ï°ï¿½, ï¿½Øºï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ì¸Ó·ï¿½ ï¿½ï¿½Ãµï¿½
 		HUDWidgetInstance->RequestReinitialize();
 	}
 }
@@ -121,7 +121,7 @@ FVector AMSPlayerController::GetServerCursor() const
 
 FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) const
 {
-	// È­¸é ¹Û µîÀ¸·Î Ä¿¼­ ¹æÇâÀÌ À¯È¿ÇÏÁö ¾ÊÀ» ¶§´Â Ä³¸¯ÅÍ Àü¹æÀ¸·Î ¹ß»ç
+	// È­ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½
 	FVector Fwd = FVector(FallbackForward);
 	Fwd.Z = 0.f;
 	Fwd = Fwd.GetSafeNormal();
@@ -137,31 +137,31 @@ FVector AMSPlayerController::GetServerCursorDir(const FVector& FallbackForward) 
 
 void AMSPlayerController::UpdateCursor()
 {
-	// Ä¿¼­ Æ®·¹ÀÌ½º
+	// Ä¿ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½Ì½ï¿½
 	if (IsLocalController())
 	{
 		APawn* P = GetPawn();
 		if (!P) return;
 
-		// ¸¶¿ì½º Ä¿¼­ Æ®·¹ÀÌ½Ì
+		// ï¿½ï¿½ï¿½ì½º Ä¿ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½Ì½ï¿½
 		FHitResult Hit;
 		const bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, Hit) && Hit.bBlockingHit;
 
-		// Ä³¸¯ÅÍÀÇ À§Ä¡
+		// Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
 		const FVector SpawnOrigin = P->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 
-		// Ä³¸¯ÅÍ Àü¹æ(¼öÆò) - Ä¿¼­°¡ È­¸éÀ» ¹þ¾î³ª¸é ÀÌ ¹æÇâÀ¸·Î ¹ß»ç
+		// Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½) - Ä¿ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½î³ªï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½
 		FVector Forward2D = P->GetActorForwardVector();
 		Forward2D.Z = 0.f;
 		Forward2D = Forward2D.GetSafeNormal();
 		if (Forward2D.IsNearlyZero()) Forward2D = FVector(1.f, 0.f, 0.f);
 
-		// Ä¿¼­ ¿ùµå À§Ä¡
-		// - Hit ¼º°ø: Ãæµ¹ ÁöÁ¡
-		// - Hit ½ÇÆÐ(Ä¿¼­°¡ ºäÆ÷Æ®¸¦ ¹þ¾î³² µî): Àü¹æÀ¸·Î ÃæºÐÈ÷ ¸Õ ÁöÁ¡(°¡»ó Ä¿¼­)
+		// Ä¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+		// - Hit ï¿½ï¿½ï¿½ï¿½: ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½
+		// - Hit ï¿½ï¿½ï¿½ï¿½(Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½î³² ï¿½ï¿½): ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ Ä¿ï¿½ï¿½)
 		const FVector CursorWorldPos = bHit ? Hit.ImpactPoint : (SpawnOrigin + Forward2D * 10000.f);
 
-		// Ä¿¼­ ¹æÇâ (¼öÆò °íÁ¤)
+		// Ä¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 		FVector Dir = (CursorWorldPos - SpawnOrigin);
 		Dir.Z = 0.f;
 		Dir = Dir.GetSafeNormal();
@@ -169,13 +169,13 @@ void AMSPlayerController::UpdateCursor()
 
 		if (HasAuthority())
 		{
-			// È£½ºÆ®(¸®½¼)¸é ¼­¹ö Ä³½Ã Á÷Á¢ °»½Å
+			// È£ï¿½ï¿½Æ®(ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			ServerCursor = CursorWorldPos;
 			ServerCursorDir = Dir;
 		}
 		else
 		{
-			// ¿ø°Ý Å¬¶ó´Â ¼­¹ö·Î Àü´Þ
+			// ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			ServerRPCSetCursorInfo(CursorWorldPos, Dir);
 		}
 	}
@@ -185,7 +185,7 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 {
 	ServerCursor = FVector(InPos);
 
-	// Ä¿¼­ ¹æÇâ ÀúÀå (¼öÆò °íÁ¤)
+	// Ä¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	FVector Dir = FVector(InDir);
 	Dir.Z = 0.f;
 	Dir = Dir.GetSafeNormal();
