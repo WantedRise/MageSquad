@@ -5,6 +5,9 @@
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Enemy/MSBaseEnemy.h"
+#include "Enemy/AIController/MSBaseAIController.h"
 #include "Interfaces/MSHitReactableInterface.h"
 
 UMSEnemyAttributeSet::UMSEnemyAttributeSet()
@@ -58,12 +61,13 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 		
 		if (GetCurrentHealth() <= 0.f)
 		{
-			
+			if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))
+			{
+				if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerEnemy->GetController()))
+				{
+					AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
+				}
+			}
 		}
-	}
-	
-	if(IMSHitReactableInterface* HitActor =  Cast<IMSHitReactableInterface>(GetOwningActor()))
-	{
-		// HitActor->OnHitByAttack();
 	}
 }

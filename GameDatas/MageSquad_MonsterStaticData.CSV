@@ -1,5 +1,5 @@
-ID,SkeletalMesh,AnimationSet,MaxHealth,MoveSpeed,AttackDamage,AttackRange,StartAbilities,StartEffects,bIsRanged
-Normal_Ghoul,/Game/Aseets/UndeadPack/Ghoul/Mesh/SK_Ghoul.SK_Ghoul,/Game/Data/Enemy/DA/Normal/DA_GhoulAnimData.DA_GhoulAnimData,80,350,15,150,"(/Game/Blueprints/GA/Enemy/BPGA_EnemyNormalAttack.BPGA_EnemyNormalAttack_C,/Game/Blueprints/GA/Enemy/BPGA_EnemyDead.BPGA_EnemyDead_C )",,FALSE
+﻿ID,SkeletalMesh,AnimationSet,MaxHealth,MoveSpeed,AttackDamage,AttackRange,StartAbilities,StartEffects,bIsRanged
+Normal_Ghoul,/Game/Aseets/UndeadPack/Ghoul/Mesh/SK_Ghoul_Full.SK_Ghoul_Full,/Game/Data/Enemy/DA/Normal/DA_GhoulAnimData.DA_GhoulAnimData,80,350,15,150,"(/Game/Blueprints/GA/Enemy/BPGA_EnemyNormalAttack.BPGA_EnemyNormalAttack_C,/Game/Blueprints/GA/Enemy/BPGA_EnemyDead.BPGA_EnemyDead_C )",,FALSE
 Normal_Lich,/Game/Aseets/UndeadPack/Lich/Mesh/SK_Lich_Full.SK_Lich_Full,/Game/Data/Enemy/DA/Normal/DA_LichAnimData.DA_LichAnimData,100,400,20,1000,"(/Game/Blueprints/GA/Enemy/BPGA_EnemyNormalAttack.BPGA_EnemyNormalAttack_C,/Game/Blueprints/GA/Enemy/BPGA_EnemyDead.BPGA_EnemyDead_C )",,TRUE
 ,,,,,,,,,
 ,,,,,,,,,

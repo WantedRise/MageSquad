@@ -6,29 +6,30 @@
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Interfaces/MSHitReactableInterface.h"
 
 #include "Net/UnrealNetwork.h"
 
 UMSPlayerAttributeSet::UMSPlayerAttributeSet()
 {
-	// ±âº» ¼Ó¼º °ª ¼³Á¤. UIÀÇ ±âÁØ°ú ¸ÂÃß±â À§ÇØ ÃÊ±â°ªÀ» ÁöÁ¤
+	// ï¿½âº» ï¿½Ó¼ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. UIï¿½ï¿½ ï¿½ï¿½ï¿½Ø°ï¿½ ï¿½ï¿½ï¿½ß±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±â°ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	// Ã¼·Â °è¿­
+	// Ã¼ï¿½ï¿½ ï¿½è¿­
 	InitMaxHealth(100.0f);
 	InitHealth(100.f);
 	InitHealthRegen(0.f);
 
-	// ¹æ¾î/È¸ÇÇ °è¿­
+	// ï¿½ï¿½ï¿½/È¸ï¿½ï¿½ ï¿½è¿­
 	InitDefense(0.f);
 	InitDodgeRate(0.f);
 
-	// °ø°Ý/ÀÌµ¿ °è¿­
+	// ï¿½ï¿½ï¿½ï¿½/ï¿½Ìµï¿½ ï¿½è¿­
 	InitMoveSpeedMod(0.f);
 	InitDamageMod(0.f);
 	InitSpellSizeMod(0.f);
 	InitCooldownReduction(0.f);
 
-	// Ä¡¸íÅ¸ ¹× ±âÅ¸ °è¿­
+	// Ä¡ï¿½ï¿½Å¸ ï¿½ï¿½ ï¿½ï¿½Å¸ ï¿½è¿­
 	InitCritChance(0.1f); // 10%
 	InitCritDamage(1.5f); // 150%
 	InitPickupRangeMod(0.f);
@@ -40,7 +41,7 @@ void UMSPlayerAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
-	// ÃÖ´ë Ã¼·Â º¯°æ ½Ã, Ä³½Ã ÀúÀå
+	// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (Attribute == GetMaxHealthAttribute())
 	{
 		CachedOldMaxHealth = GetMaxHealth();
@@ -51,95 +52,95 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	// ÇöÀç Ã¼·Â °»½Å (ÃÖ´ë Ã¼·Â±îÁö Clamp)
+	// ï¿½ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Ö´ï¿½ Ã¼ï¿½Â±ï¿½ï¿½ï¿½ Clamp)
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), UE_KINDA_SMALL_NUMBER, GetMaxHealth()));
 	}
 
-	// ÃÖ´ë Ã¼·Â °»½Å
+	// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
 	{
 		const float NewMaxHealth = GetMaxHealth();
 
-		// ÃÖ´ë Ã¼·Â º¯°æ·®
+		// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½æ·®
 		const float DeltaMaxHealth = NewMaxHealth - CachedOldMaxHealth;
 
-		// ÃÖ´ë Ã¼·ÂÀÌ ¿À¸¥ °æ¿ì
+		// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 		if (DeltaMaxHealth > 0.f)
 		{
-			// ÃÖ´ë Ã¼·Â Áõ°¡ºÐ¸¸Å­ ÇöÀç Ã¼·Â ¼³Á¤
+			// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ð¸ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			SetHealth(GetHealth() + DeltaMaxHealth);
 		}
-		// ÃÖ´ë Ã¼·ÂÀÌ °¨¼ÒÇÑ °æ¿ì
+		// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 		else
 		{
-			// ÃÖ´ë Ã¼·Â °¨¼ÒºÐ¸¸Å­ ÇöÀç Ã¼·Â ¼³Á¤
+			// ï¿½Ö´ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ÒºÐ¸ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			SetHealth(FMath::Min(GetHealth(), NewMaxHealth));
 		}
 
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, NewMaxHealth));
 	}
-	// ÀÌµ¿ ¼Óµµ º¸Á¤ °»½Å
+	// ï¿½Ìµï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetMoveSpeedModAttribute())
 	{
-		// »õ º¸Á¤ °ª (ex. 0.1 = +10%)
+		// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ (ex. 0.1 = +10%)
 		float NewMoveSpeedMod = GetMoveSpeedMod();
 
-		// ÃÖ¼Ò/ÃÖ´ë ÀÌµ¿ ¼Óµµ Clamp (-90% ~ +300%)
+		// ï¿½Ö¼ï¿½/ï¿½Ö´ï¿½ ï¿½Ìµï¿½ ï¿½Óµï¿½ Clamp (-90% ~ +300%)
 		NewMoveSpeedMod = FMath::Clamp(NewMoveSpeedMod, -0.9f, 3.0f);
 		SetMoveSpeedMod(NewMoveSpeedMod);
 
-		// ¾Æ¹ÙÅ¸ÀÇ ¹«ºê¸ÕÆ® ÄÄÆ÷³ÍÆ® °¡Á®¿À±â
+		// ï¿½Æ¹ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		ACharacter* Avatar = Cast<ACharacter>(Data.Target.GetAvatarActor());
 		if (!Avatar) return;
 
 		UCharacterMovementComponent* MoveComp = Avatar->GetCharacterMovement();
 		if (!MoveComp) return;
 
-		// ±âº» ÀÌµ¿ ¼Óµµ¸¦ ÇÑ ¹ø¸¸ Ä³½Ì
+		// ï¿½âº» ï¿½Ìµï¿½ ï¿½Óµï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½
 		if (DefaultMovementSpeed <= 0.f)
 		{
 			DefaultMovementSpeed = MoveComp->MaxWalkSpeed;
 		}
 
-		// ÃÖÁ¾ ÀÌµ¿ ¼Óµµ = ±âº» ¼Óµµ * (1 + º¸Á¤ °ª)
-		// ex) º¸Á¤ 0.1 ¡æ 1.1¹è, -0.3 ¡æ 0.7¹è
+		// ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½Óµï¿½ = ï¿½âº» ï¿½Óµï¿½ * (1 + ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
+		// ex) ï¿½ï¿½ï¿½ï¿½ 0.1 ï¿½ï¿½ 1.1ï¿½ï¿½, -0.3 ï¿½ï¿½ 0.7ï¿½ï¿½
 		const float FinalMoveSpeed = DefaultMovementSpeed * (1.f + NewMoveSpeedMod);
 		MoveComp->MaxWalkSpeed = FinalMoveSpeed;
 	}
-	// ÁÖ¹® Å©±â º¸Á¤ °»½Å
+	// ï¿½Ö¹ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetSpellSizeModAttribute())
 	{
 		SetSpellSizeMod(GetSpellSizeMod());
 	}
 
-	// Äð´Ù¿î °¨¼Ò °»½Å
+	// ï¿½ï¿½Ù¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetCooldownReductionAttribute())
 	{
 		SetCooldownReduction(GetCooldownReduction());
 	}
 
-	// Ä¡¸íÅ¸ È®·ü °»½Å
+	// Ä¡ï¿½ï¿½Å¸ È®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetCritChanceAttribute())
 	{
 		SetCritChance(GetCritChance());
 	}
 
-	// Ä¡¸íÅ¸ ÇÇÇØ °»½Å
+	// Ä¡ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetCritDamageAttribute())
 	{
 		SetCritDamage(GetCritDamage());
 	}
 
-	// È¹µæ ¹Ý°æ º¸Á¤ °»½Å
+	// È¹ï¿½ï¿½ ï¿½Ý°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	else if (Data.EvaluatedData.Attribute == GetPickupRangeModAttribute())
 	{
-		// »õ È¹µæ ¹Ý°æ
+		// ï¿½ï¿½ È¹ï¿½ï¿½ ï¿½Ý°ï¿½
 		float NewRangeMod = GetMoveSpeedMod();
 		SetPickupRangeMod(NewRangeMod);
 
-		// Todo: ±èÁØÇü | °æÇèÄ¡ ½Ã½ºÅÛ ±¸Çö ÈÄ, È¹µæ ¹Ý°æ ¼Ó¼º °»½Å ±¸ÇöÇÏ±â
+		// Todo: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ | ï¿½ï¿½ï¿½ï¿½Ä¡ ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, È¹ï¿½ï¿½ ï¿½Ý°ï¿½ ï¿½Ó¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
 	}
 }
 
@@ -148,9 +149,9 @@ void UMSPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	/*
-	* °¢ ¼Ó¼ºÀ» ¼ÒÀ¯ÀÚ¿¡°Ô¸¸ º¹Á¦
-	* REPNOTIFY_Always´Â °ªÀ» Ç×»ó OnRep È£ÃâÇÏµµ·Ï ¼³Á¤
-	* REPNOTIFY_Always´Â ºÎµ¿ ¼Ò¼öÁ¡ ¹Ý¿Ã¸²À¸·Î ÀÎÇØ °ªÀÌ º¯°æµÇÁö ¾Ê´õ¶óµµ OnRep ÇÔ¼ö°¡ È£ÃâµÇµµ·Ï ÇÑ´Ù.
+	* ï¿½ï¿½ ï¿½Ó¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ï¿½Ô¸ï¿½ ï¿½ï¿½ï¿½ï¿½
+	* REPNOTIFY_Alwaysï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×»ï¿½ OnRep È£ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	* REPNOTIFY_Alwaysï¿½ï¿½ ï¿½Îµï¿½ ï¿½Ò¼ï¿½ï¿½ï¿½ ï¿½Ý¿Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´ï¿½ï¿½ï¿½ OnRep ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½Çµï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½.
 	*/
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSPlayerAttributeSet, MaxHealth, COND_OwnerOnly, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSPlayerAttributeSet, Health, COND_OwnerOnly, REPNOTIFY_Always);

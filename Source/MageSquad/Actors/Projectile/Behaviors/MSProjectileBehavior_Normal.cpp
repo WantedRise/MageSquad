@@ -68,7 +68,7 @@ void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
 
 	SpecHandle.Data->SetSetByCallerMagnitude(
 		MSGameplayTags::Data_Damage,
-		FinalDamage
+		(FinalDamage * -1)
 	);
 	
 	if (bIsCritical)
