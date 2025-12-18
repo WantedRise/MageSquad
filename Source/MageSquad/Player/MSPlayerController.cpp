@@ -34,17 +34,17 @@ void AMSPlayerController::BeginPlay()
 		NotifyHUDReinitialize();
 
 		// 맵 로딩을 위한 딜레이, 로딩창을 2초뒤 제거
-		//if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
-		//{
-		//	FTimerHandle MatchEntryDelayTimer;
-		//	GetWorldTimerManager().SetTimer(
-		//		MatchEntryDelayTimer,
-		//		Subsystem,
-		//		&UMSLevelManagerSubsystem::HideLoadingWidget,
-		//		2.0f,
-		//		false
-		//	);
-		//}
+		if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+		{
+			FTimerHandle MatchEntryDelayTimer;
+			GetWorldTimerManager().SetTimer(
+				MatchEntryDelayTimer,
+				Subsystem,
+				&UMSLevelManagerSubsystem::HideLoadingWidget,
+				2.0f,
+				false
+			);
+		}
 	}
 }
 
