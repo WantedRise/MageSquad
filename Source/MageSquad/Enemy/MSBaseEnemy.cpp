@@ -3,6 +3,7 @@
 
 #include "Enemy/MSBaseEnemy.h"
 
+#include "MSGameplayTags.h"
 #include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Animation/Enemy/MSEnemyAnimInstance.h"
@@ -10,6 +11,7 @@
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/MSPlayerCharacter.h"
 #include "System/MSEnemySpawnSubsystem.h"
 
 // Sets default values
@@ -63,6 +65,15 @@ AMSBaseEnemy::AMSBaseEnemy()
 	
 	// 액터 태그 설정
 	Tags.AddUnique(TEXT("Enemy"));
+	
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMSBaseEnemy::OnCapsuleBeginOverlap);
+	
+	static ConstructorHelpers::FClassFinder<UGameplayEffect> CollisionDamageRef(TEXT("/Game/Blueprints/GAS/GE/BPGE_EnemyCollisionDamage.BPGE_EnemyCollisionDamage_C"));
+	
+	if (CollisionDamageRef.Succeeded())
+	{
+		CollisionDamage = CollisionDamageRef.Class;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -73,20 +84,6 @@ void AMSBaseEnemy::BeginPlay()
 	{
 		ASC->InitAbilityActorInfo(this, this);
 	}
-	
-	// // ✅ 이 로그 주석 해제!
-	// UE_LOG(LogTemp, Error, TEXT("★★★ [%s] Enemy BeginPlay: %s at %s | Mesh: %s ★★★"),
-	// 	HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-	// 	*GetName(),
-	// 	*GetActorLocation().ToString(),
-	// 	GetMesh()->GetSkeletalMeshAsset() ? *GetMesh()->GetSkeletalMeshAsset()->GetName() : TEXT("NULL")
-	// );
-	//
-	// UE_LOG(LogTemp, Error, TEXT("bReplicates: %d | LocalRole: %d | RemoteRole: %d"),
-	// GetIsReplicated(),
-	// (int32)GetLocalRole(),
-	// (int32)GetRemoteRole()
-	// );
 }
 
 void AMSBaseEnemy::PossessedBy(AController* NewController)
@@ -116,6 +113,36 @@ UAbilitySystemComponent* AMSBaseEnemy::GetAbilitySystemComponent() const
 	}
 	
 	return ASC;
+}
+
+void AMSBaseEnemy::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (AMSPlayerCharacter* Player = Cast<AMSPlayerCharacter>(OtherActor))
+	{
+		UAbilitySystemComponent* TargetASC = Player->GetAbilitySystemComponent();	
+		// GameplayEffectSpec 생성
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		Context.AddSourceObject(this);
+		Context.AddHitResult(SweepResult);
+	
+		FGameplayEffectSpecHandle SpecHandle =
+			ASC->MakeOutgoingSpec(CollisionDamage, 1.f, Context);
+
+		if (!SpecHandle.IsValid())
+		{
+			return;
+		}
+		
+		// @Todo : 시간이 지날수록 쎄짐
+		// @Todo : 플레이어 방어력도 계산해야됨
+		SpecHandle.Data->SetSetByCallerMagnitude(
+			MSGameplayTags::Data_Damage,
+			-AttributeSet->GetAttackDamage()
+		);
+		
+		// GameplayEffect 적용
+		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	}
 }
 
 void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)

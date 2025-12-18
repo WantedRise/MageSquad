@@ -21,7 +21,8 @@ AMSNormalEnemy::AMSNormalEnemy()
 		AIControllerClass = NormalEnemyControllerRef.Class;
 	}
 	
-	SetActorScale3D(FVector(1.3f, 1.3f,1.3f));
+	// @Todo : 스케일 조정 나중에 DataTable에서 반영하도록 변경
+	SetActorScale3D(FVector(1.3f,1.3f,1.3f));
 }
 
 void AMSNormalEnemy::BeginPlay()
