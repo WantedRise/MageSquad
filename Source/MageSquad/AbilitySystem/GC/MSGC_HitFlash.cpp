@@ -3,11 +3,13 @@
 
 #include "AbilitySystem/GC/MSGC_HitFlash.h"
 
+#include "GameplayTagsManager.h"
 #include "GameFramework/Character.h"
 
 UMSGC_HitFlash::UMSGC_HitFlash()
 {
-	GameplayCueTag = FGameplayTag::RequestGameplayTag(
+	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
+	GameplayCueTag =TagsMgr.RequestGameplayTag(
 		FName("GameplayCue.HitFlash")
 	);
 }

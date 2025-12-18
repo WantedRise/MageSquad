@@ -37,4 +37,10 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo, 
 		bool bReplicateEndAbility, 
 		bool bWasCancelled) override;
+	
+private:
+	UFUNCTION()
+	void OnCompleteCallback();
+	UFUNCTION()
+	void OnInterruptedCallback();
 };
