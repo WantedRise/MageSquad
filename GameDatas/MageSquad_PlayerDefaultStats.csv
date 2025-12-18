@@ -1,6 +1,6 @@
 ﻿,1.00 
-Player.Stats.MaxHealth,100.00 
-Player.Stats.HealthRegen,0.25 
+Player.Stats.MaxHealth,500.00 
+Player.Stats.HealthRegen,0.00 
 Player.Stats.Defense,0.00 
 Player.Stats.DodgeRate,0.00 
 Player.Stats.MoveSpeedMod,0.00 
