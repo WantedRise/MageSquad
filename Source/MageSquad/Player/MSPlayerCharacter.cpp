@@ -20,6 +20,7 @@
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "MSGameplayTags.h"
 
 #include "DataAssets/Player/DA_PlayerStartUpData.h"
 
@@ -32,16 +33,16 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// Enemy Àü¿ë ÄÝ¸®ÀüÀ¸·Î ¼³Á¤
+	// Enemy ï¿½ï¿½ï¿½ï¿½ ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSPlayer"));
 
-	// ³×Æ®¿öÅ© ¼³Á¤
+	// ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	SetNetUpdateFrequency(30.f); // ±âº»°ªº¸´Ù ³·Ãç¼­ ´ë¿ªÆø Àý¾à
+	SetNetUpdateFrequency(30.f); // ï¿½âº»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ç¼­ ï¿½ë¿ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	SetMinNetUpdateFrequency(5.f);
 
-	// Ä³¸¯ÅÍ & Ä«¸Þ¶ó ¼³Á¤
+	// Ä³ï¿½ï¿½ï¿½ï¿½ & Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½
 	GetCapsuleComponent()->InitCapsuleSize(50.f, 100.f);
 
 	bUseControllerRotationPitch = false;
@@ -80,7 +81,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 
 	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
 
-	// ¾×ÅÍ ÅÂ±× ¼³Á¤
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½ ï¿½ï¿½ï¿½ï¿½
 	Tags.AddUnique(TEXT("Player"));
 }
 
@@ -88,7 +89,7 @@ void AMSPlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	// ±âº» ½ÃÀÛ µ¥ÀÌÅÍ¸¦ ¼¼ÆÃ
+	// ï¿½âº» ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (::IsValid(PlayerStartUpData))
 	{
 		SetPlayerData(PlayerStartUpData->PlayerStartAbilityData);
@@ -104,13 +105,13 @@ void AMSPlayerCharacter::Tick(float DeltaSecond)
 {
 	Super::Tick(DeltaSecond);
 
-	// ·ÎÄÃ¿¡¼­ Á¦¾îµÇ´Â Æù¸¸ ¼öÇà (¼­¹ö ¿¬µ¿ ÇÊ¿ä ¾øÀ½)
+	// ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	if (!IsLocallyControlled())
 	{
 		return;
 	}
 
-	// Ä«¸Þ¶ó ÁÜ ÀÎ/¾Æ¿ô º¸°£ ¼öÇà
+	// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½ï¿½/ï¿½Æ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UpdateCameraZoom(DeltaSecond);
 }
 
@@ -118,40 +119,49 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	// ¼­¹ö¿¡¼­¸¸ ¼öÇà
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!HasAuthority()) return;
 
-	// PlayerState °¡Á®¿À±â
+	// PlayerState ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
 
-	// ASC, AttributeSet ÃÊ±âÈ­
+	// ASC, AttributeSet ï¿½Ê±ï¿½È­
 	AbilitySystemComponent = Cast<UMSPlayerAbilitySystemComponent>(PS->GetAbilitySystemComponent());
 	AttributeSet = PS->GetAttributeSet();
 
 	if (AbilitySystemComponent)
 	{
-		// GASÀÇ ¾×ÅÍ Á¤º¸¸¦ ¼ÒÀ¯ÀÚ´Â PlayerState·Î, ¾Æ¹ÙÅ¸´Â ÀÚ½ÅÀ¸·Î ÃÊ±âÈ­
+		// GASï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ PlayerStateï¿½ï¿½, ï¿½Æ¹ï¿½Å¸ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
-	// ½ÃÀÛ ¾îºô¸®Æ¼/ÀÌÆåÆ® ºÎ¿© (¼­¹ö Àü¿ë)
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼/ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Î¿ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
+	
+	// State.Invincible íƒœê·¸ ë³€ê²½ ê°ì§€
+	if (AbilitySystemComponent != nullptr)
+	{
+		AbilitySystemComponent->RegisterGameplayTagEvent(
+			MSGameplayTags::Player_State_Invincible,
+			EGameplayTagEventType::NewOrRemoved
+		).AddUObject(this, &AMSPlayerCharacter::OnInvincibilityChanged);
+	}
 
-	// HUD µ¥ÀÌÅÍ ÄÄÆ÷³ÍÆ®¿¡ ¾îºô¸®Æ¼ ½Ã½ºÅÛ ¹ÙÀÎµù
+	// HUD ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îµï¿½
 	if (HUDDataComponent && AbilitySystemComponent)
 	{
 		HUDDataComponent->BindToASC_Server(AbilitySystemComponent);
 	}
 
-	// ¼­¹ö ÀÚµ¿ °ø°Ý ½ÃÀÛ
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (bAutoAttackEnabledOnSpawn)
 	{
 		SetAutoAttackEnabledInternal(true);
 	}
 
-	// HUD °ø°³ µ¥ÀÌÅÍ ÃÊ±âÈ­
+	// HUD ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
 	InitPublicHUDData_Server();
 }
 
@@ -167,19 +177,19 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	// Å¬¶óÀÌ¾ðÆ®µµ ¾îºô¸®Æ¼ ½Ã½ºÅÛ ÄÄÆ÷³ÍÆ® ÃÊ±âÈ­ ¹× ±âº» Àû¿ë ÀÌÆåÆ® Àû¿ë
+	// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ê±ï¿½È­ ï¿½ï¿½ ï¿½âº» ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
 
-	// PlayerState °¡Á®¿À±â
+	// PlayerState ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
 
-	// Å¬¶óÀÌ¾ðÆ® ASC, AttributeSet ÃÊ±âÈ­
+	// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ASC, AttributeSet ï¿½Ê±ï¿½È­
 	AbilitySystemComponent = Cast<UMSPlayerAbilitySystemComponent>(PS->GetAbilitySystemComponent());
 	AttributeSet = PS->GetAttributeSet();
 
 	if (AbilitySystemComponent)
 	{
-		// GASÀÇ ¾×ÅÍ Á¤º¸¸¦ ¼ÒÀ¯ÀÚ´Â PlayerState·Î, ¾Æ¹ÙÅ¸´Â ÀÚ½ÅÀ¸·Î ÃÊ±âÈ­
+		// GASï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ PlayerStateï¿½ï¿½, ï¿½Æ¹ï¿½Å¸ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
@@ -191,7 +201,7 @@ void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
 {
 	if (!SpringArm) return;
 
-	// ¸ñÇ¥ ÁÜ ±æÀÌ±îÁö ºÎµå·´°Ô º¸°£
+	// ï¿½ï¿½Ç¥ ï¿½ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½ï¿½ï¿½ ï¿½Îµå·´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	const float CurrentLength = SpringArm->TargetArmLength;
 	const float NewLength = FMath::FInterpTo(CurrentLength, TargetArmLength, DeltaTime, CameraZoomInterpSpeed);
 	SpringArm->TargetArmLength = NewLength;
@@ -203,7 +213,8 @@ void AMSPlayerCharacter::PawnClientRestart()
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
+			UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->ClearAllMappings();
 			if (DefaultMappingContext)
@@ -218,51 +229,58 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// ÀÌµ¿ ÀÔ·Â ¸ÊÇÎ
+		// ï¿½Ìµï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::Move);
 
-		// Ä«¸Þ¶ó ÁÜ ÀÎ/¾Æ¿ô ÀÔ·Â ¸ÊÇÎ
-		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::CameraZoom);
+		// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½ï¿½/ï¿½Æ¿ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this,
+		                                   &AMSPlayerCharacter::CameraZoom);
 
-		// Ä«¸Þ¶ó ÁÜ ÀÎ/¾Æ¿ô ÀÔ·Â ¸ÊÇÎ
+		// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½ï¿½/ï¿½Æ¿ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½
 		EnhancedInputComponent->BindAction(BlinkAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseBlink);
 
-		// ÁÂÅ¬¸¯ °ø°Ý ÀÔ·Â ¸ÊÇÎ
-		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::UseLeftSkill);
+		// ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Started, this,
+		                                   &AMSPlayerCharacter::UseLeftSkill);
 
-		// ¿ìÅ¬¸¯ °ø°Ý ÀÔ·Â ¸ÊÇÎ
-		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::UseRightSkill);
+		// ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Started, this,
+		                                   &AMSPlayerCharacter::UseRightSkill);
 
 
-		// TEST: HP Áõ°¡/°¨¼Ò ÀÔ·Â ¸ÊÇÎ
-		EnhancedInputComponent->BindAction(TEST_HpIncreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_HpIncrease);
-		EnhancedInputComponent->BindAction(TEST_HpDecreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_HpDecrease);
-		EnhancedInputComponent->BindAction(TEST_MaxHpIncreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_MaxHpIncrease);
-		EnhancedInputComponent->BindAction(TEST_MaxHpDecreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_MaxHpDecrease);
+		// TEST: HP ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EnhancedInputComponent->BindAction(TEST_HpIncreaseAction, ETriggerEvent::Started, this,
+		                                   &AMSPlayerCharacter::TEST_HpIncrease);
+		EnhancedInputComponent->BindAction(TEST_HpDecreaseAction, ETriggerEvent::Started, this,
+		                                   &AMSPlayerCharacter::TEST_HpDecrease);
+		EnhancedInputComponent->BindAction(TEST_MaxHpIncreaseAction, ETriggerEvent::Started, this,
+		                                   &AMSPlayerCharacter::TEST_MaxHpIncrease);
+		EnhancedInputComponent->BindAction(TEST_MaxHpDecreaseAction, ETriggerEvent::Started, this,
+		                                   &AMSPlayerCharacter::TEST_MaxHpDecrease);
 	}
 }
 
 void AMSPlayerCharacter::Move(const FInputActionValue& Value)
 {
-	// 2D Ãà ÀÔ·ÂÀ» FVector2D·Î º¯È¯
+	// 2D ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½ï¿½ FVector2Dï¿½ï¿½ ï¿½ï¿½È¯
 	const FVector2D MoveValue = Value.Get<FVector2D>();
 
-	// ÀÔ·Â/ÄÁÆ®·Ñ·¯°¡ À¯È¿ÇÏÁö ¾Ê°Å³ª, ÀÔ·Â °ªÀÌ °ÅÀÇ 0ÀÌ¸é ¹«½Ã
+	// ï¿½Ô·ï¿½/ï¿½ï¿½Æ®ï¿½Ñ·ï¿½ï¿½ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°Å³ï¿½, ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 0ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!Controller || MoveValue.IsNearlyZero())
 	{
 		return;
 	}
 
-	// ÄÁÆ®·Ñ·¯ÀÇ È¸Àü°ª¿¡¼­ Yaw(ÁÂ¿ì)¸¸ »ç¿ëÇØ¼­ ¿ùµå ¹æÇâ º¤ÅÍ »ý¼º
+	// ï¿½ï¿½Æ®ï¿½Ñ·ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Yaw(ï¿½Â¿ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	const FRotator ControlRotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 
-	// ÀüÁø(Forward) ¹æÇâ(XÃà), ¿À¸¥ÂÊ(Right) ¹æÇâ(YÃà) ±¸ÇÏ±â
+	// ï¿½ï¿½ï¿½ï¿½(Forward) ï¿½ï¿½ï¿½ï¿½(Xï¿½ï¿½), ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(Right) ï¿½ï¿½ï¿½ï¿½(Yï¿½ï¿½) ï¿½ï¿½ï¿½Ï±ï¿½
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	// InputValue.Y : Àü/ÈÄ (W,S)
-	// InputValue.X : ÁÂ/¿ì (A,D)
+	// InputValue.Y : ï¿½ï¿½/ï¿½ï¿½ (W,S)
+	// InputValue.X : ï¿½ï¿½/ï¿½ï¿½ (A,D)
 	if (!FMath::IsNearlyZero(MoveValue.Y))
 	{
 		AddMovementInput(ForwardDirection, MoveValue.Y);
@@ -278,37 +296,35 @@ void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
 {
 	const float AxisValue = Value.Get<float>();
 
-	// °ªÀÌ ³Ê¹« ÀÛÀ¸¸é ÆÐ½º
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½
 	if (FMath::IsNearlyZero(AxisValue))
 	{
 		return;
 	}
 
-	// À§·Î ½ºÅ©·Ñ(+): Ä«¸Þ¶ó¸¦ Ä³¸¯ÅÍ¿Í °¡±îÀÌ
-	// ¾Æ·¡·Î ½ºÅ©·Ñ(-): Ä«¸Þ¶ó¸¦ Ä³¸¯ÅÍ¿Í ¸Ö¸®
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½(+): Ä«ï¿½Þ¶ï¿½ Ä³ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	// ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½(-): Ä«ï¿½Þ¶ï¿½ Ä³ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½Ö¸ï¿½
 	TargetArmLength -= AxisValue * CameraZoomStep;
 
-	// ÃÖ´ë/ÃÖ¼Ò Ä«¸Þ¶ó ÁÜ ±æÀÌ·Î Clamp
+	// ï¿½Ö´ï¿½/ï¿½Ö¼ï¿½ Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ì·ï¿½ Clamp
 	TargetArmLength = FMath::Clamp(TargetArmLength, MinCameraZoomLength, MaxCameraZoomLength);
 }
 
 void AMSPlayerCharacter::UseBlink(const FInputActionValue& Value)
 {
-	// ·ÎÄÃ ÆùÀÌ ¾Æ´Ñ °æ¿ì Á¾·á
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!IsLocallyControlled()) return;
 
-	// Æ®¸®°Å ÇÔ¼ö È£Ãâ
+	// Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ È£ï¿½ï¿½
 	TriggerAbilityEvent(BlinkEventTag);
 }
 
 void AMSPlayerCharacter::UseLeftSkill(const FInputActionValue& Value)
 {
-
 }
 
 void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
 {
-
 }
 
 void AMSPlayerCharacter::StartAutoAttack()
@@ -337,10 +353,10 @@ void AMSPlayerCharacter::StopAutoAttack()
 
 void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 {
-	// ¼­¹ö°¡ ¾Æ´Ï¸é Á¾·á
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!HasAuthority()) return;
 
-	// °°Àº ¼³Á¤ÀÏ °æ¿ì ¹«½Ã
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (bAutoAttackEnabled == bEnabled) return;
 
 	bAutoAttackEnabled = bEnabled;
@@ -349,7 +365,7 @@ void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 
 	if (bAutoAttackEnabled)
 	{
-		// ¼­¹ö¿¡¼­ ±âº» °ø°ÝÀ» ¼öÇà
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½âº» ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		GetWorldTimerManager().SetTimer(
 			AutoAttackTimerHandle,
 			this,
@@ -363,13 +379,13 @@ void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 
 void AMSPlayerCharacter::HandleAutoAttack_Server()
 {
-	// ¼­¹ö°¡ ¾Æ´Ï°Å³ª, ÀÚµ¿ °ø°ÝÀÌ ºñÈ°¼ºÈ­ »óÅÂ¶ó¸é Á¾·á
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Ï°Å³ï¿½, ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È°ï¿½ï¿½È­ ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!HasAuthority() || !bAutoAttackEnabled) return;
 
-	// ÀÌº¥Æ® ÅÂ±×°¡ À¯È¿ÇÏÁö ¾ÊÀ¸¸é Á¾·á
+	// ï¿½Ìºï¿½Æ® ï¿½Â±×°ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!AttackStartedEventTag.IsValid()) return;
 
-	// ÀÌº¥Æ® ÅÂ±× Àü´Þ
+	// ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½ ï¿½ï¿½ï¿½ï¿½
 	FGameplayEventData Payload;
 	Payload.EventTag = AttackStartedEventTag;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackStartedEventTag, Payload);
@@ -382,31 +398,31 @@ void AMSPlayerCharacter::ServerRPCSetAutoAttackEnabled_Implementation(bool bEnab
 
 void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)
 {
-	// À¯È¿¼º °Ë»ç
+	// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Ë»ï¿½
 	if (!IsAllowedAbilityEventTag(EventTag)) return;
 
-	// ¼­¹ö ·ÎÁ÷
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (HasAuthority())
 	{
-		// ÀÌº¥Æ® ÅÂ±× Àü´Þ
+		// ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½ ï¿½ï¿½ï¿½ï¿½
 		FGameplayEventData Payload;
 		Payload.EventTag = EventTag;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 	}
-	// Å¬¶óÀÌ¾ðÆ® ·ÎÁ÷
+	// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
 	else
 	{
-		// ¼­¹ö¿¡°Ô Æ®¸®°Å ¿äÃ»
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
 		ServerRPCTriggerAbilityEvent(EventTag);
 	}
 }
 
 void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTag EventTag)
 {
-	// À¯È¿¼º °Ë»ç
+	// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Ë»ï¿½
 	if (!IsAllowedAbilityEventTag(EventTag)) return;
 
-	// ÀÌº¥Æ® ÅÂ±× Àü´Þ
+	// ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½ ï¿½ï¿½ï¿½ï¿½
 	FGameplayEventData Payload;
 	Payload.EventTag = EventTag;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
@@ -414,7 +430,7 @@ void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTa
 
 bool AMSPlayerCharacter::IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const
 {
-	// ·ÎÄÃ ÇÃ·¹ÀÌ¾î°¡ ÀÌ ÀÌº¥Æ® ÅÂ±×¸¦ °¡Áö°í ÀÖ´ÂÁö °Ë»ç (ÀÌÈÄ Ãß°¡)
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½Â±×¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½)
 	return EventTag.IsValid() /*&& (EventTag == BlinkEventTag || EventTag == AttackStartedEventTag)*/;
 }
 
@@ -432,15 +448,18 @@ UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
 	return nullptr;
 }
 
-bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle)
+bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,
+                                                   FGameplayEffectContextHandle InEffectContextHandle)
 {
-	// À¯È¿ÇÑ ÀÌÆåÆ® Å¬·¡½º¿Í ASC°¡ ÇÊ¿äÇÑ ¼­¹ö Àü¿ë ÇïÆÛ ÇÔ¼ö
+	// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ASCï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	if (!Effect.Get() || !AbilitySystemComponent) return false;
 
-	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, /*Level*/ 1.0f, InEffectContextHandle);
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+		Effect, /*Level*/ 1.0f, InEffectContextHandle);
 	if (SpecHandle.IsValid())
 	{
-		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(
+			*SpecHandle.Data.Get());
 		return ActiveGEHandle.WasSuccessfullyApplied();
 	}
 
@@ -449,10 +468,10 @@ bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> 
 
 void AMSPlayerCharacter::GivePlayerStartAbilities()
 {
-	// ¼­¹ö¿¡¼­¸¸ ¾îºô¸®Æ¼¸¦ ºÎ¿©
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½ ï¿½Î¿ï¿½
 	if (!HasAuthority() || !AbilitySystemComponent) return;
 
-	// ÇÃ·¹ÀÌ¾î ½ÃÀÛ µ¥ÀÌÅÍÀÇ ¾îºô¸®Æ¼ ¹è¿­À» ¼øÈ¸ÇÏ¸ç ºÎ¿©
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½È¸ï¿½Ï¸ï¿½ ï¿½Î¿ï¿½
 	for (TSubclassOf<UGameplayAbility> DefaultAbilityClass : PlayerData.Abilties)
 	{
 		if (*DefaultAbilityClass)
@@ -464,13 +483,13 @@ void AMSPlayerCharacter::GivePlayerStartAbilities()
 
 void AMSPlayerCharacter::ApplyPlayerStartEffects()
 {
-	// ¼­¹ö¿¡¼­¸¸ GameplayEffect¸¦ Àû¿ë
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ GameplayEffectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (!HasAuthority() || !AbilitySystemComponent) return;
 
 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
 
-	// ÇÃ·¹ÀÌ¾î ½ÃÀÛ µ¥ÀÌÅÍÀÇ ÀÌÆåÆ® ¹è¿­À» ¼øÈ¸ÇÏ¸ç Àû¿ë
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½È¸ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 	for (TSubclassOf<UGameplayEffect> DefaultEffectClass : PlayerData.Effects)
 	{
 		if (*DefaultEffectClass)
@@ -484,7 +503,7 @@ void AMSPlayerCharacter::InitPublicHUDData_Server()
 {
 	if (!HasAuthority() || !HUDDataComponent) return;
 
-	// ÇÃ·¹ÀÌ¾î ÀÌ¸§ ¹× ¾ÆÀÌÄÜ ÃÊ±âÈ­
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ì¸ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
 	if (APlayerState* PS = GetPlayerState())
 	{
 		HUDDataComponent->BindDisplayName_Server(FText::FromString(PS->GetPlayerName()));
@@ -492,11 +511,38 @@ void AMSPlayerCharacter::InitPublicHUDData_Server()
 	HUDDataComponent->BindPortraitIcon_Server(PortraitIcon);
 }
 
+void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bool bIsInvincible = (NewCount > 0);
 
+	UE_LOG(LogTemp, Warning, TEXT("Invincibility changed: %s"),
+	       bIsInvincible ? TEXT("ON") : TEXT("OFF"));
 
+	SetInvincibleCollision(bIsInvincible);
+}
 
+void AMSPlayerCharacter::SetInvincibleCollision(bool bInvincible)
+{
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule)
+	{
+		return;
+	}
 
-
+	if (bInvincible)
+	{
+		// ë¬´ì : MSEnemyì™€ Ignore
+		// ECC_GameTraceChannel3 = MSEnemy
+		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);
+		UE_LOG(LogTemp, Log, TEXT("Collision Profile: PlayerInvincible (Ignore MSEnemy)"));
+	}
+	else
+	{
+		// ì¼ë°˜: MSEnemyì™€ Overlap
+		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Overlap);
+		UE_LOG(LogTemp, Log, TEXT("Collision Profile: Player (Overlap MSEnemy)"));
+	}
+}
 
 void AMSPlayerCharacter::TEST_HpIncrease(const FInputActionValue& Value)
 {
