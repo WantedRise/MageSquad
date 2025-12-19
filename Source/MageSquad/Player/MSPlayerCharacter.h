@@ -11,13 +11,13 @@
 #include "MSPlayerCharacter.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ï¿½Û¼ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½Û¼ï¿½ï¿½ï¿½: 25/12/08
  *
- * ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍ Å¬·¡½º
- * - ±âº» ÀÌµ¿ ¹× ½ºÅ³ ÀÚµ¿ ¹ß»ç
- * - ÀÌµ¿ ½ºÅ³(Á¡¸ê)
- * - °æÇèÄ¡ / ½ºÅ³ ½½·Ô ½Ã½ºÅÛ
+ * ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
+ * - ï¿½âº» ï¿½Ìµï¿½ ï¿½ï¿½ ï¿½ï¿½Å³ ï¿½Úµï¿½ ï¿½ß»ï¿½
+ * - ï¿½Ìµï¿½ ï¿½ï¿½Å³(ï¿½ï¿½ï¿½ï¿½)
+ * - ï¿½ï¿½ï¿½ï¿½Ä¡ / ï¿½ï¿½Å³ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySystemInterface
@@ -34,9 +34,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/*
-	* PlayerState OnRep ÇÔ¼ö
-	* PlayerState°¡ Å¬¶óÀÌ¾ðÆ®¿¡ º¹Á¦µÇ¾úÀ» ¶§, È£Ãâ
-	* Å¬¶óÀÌ¾ðÆ® Ãø ASC ÃÊ±âÈ­¿¡ »ç¿ë
+	* PlayerState OnRep ï¿½Ô¼ï¿½
+	* PlayerStateï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ ï¿½ï¿½, È£ï¿½ï¿½
+	* Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ ASC ï¿½Ê±ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½
 	*/
 	virtual void OnRep_PlayerState() override;
 
@@ -46,11 +46,11 @@ public:
 	* Player Section
 	*****************************************************/
 protected:
-	// ÁöÆÎÀÌ ¸Þ½Ã
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Weapon")
 	TObjectPtr<class UStaticMeshComponent> StaffMesh;
 
-	// ÁöÆÎÀÌ ¸Þ½Ã¸¦ ºÎÂøÇÒ ¼ÒÄÏ ÀÌ¸§
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½Ã¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Weapon")
 	FName StaffAttachSocketName = TEXT("s_Staff");
 
@@ -60,7 +60,7 @@ protected:
 	* Camera Section
 	*****************************************************/
 protected:
-	// Ä«¸Þ¶ó ÁÜ ¾÷µ¥ÀÌÆ® ÇÔ¼ö
+	// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ô¼ï¿½
 	void UpdateCameraZoom(float DeltaTime);
 
 protected:
@@ -70,23 +70,23 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
 	TObjectPtr<class USpringArmComponent> SpringArm;
 
-	// ÇöÀç Ä«¸Þ¶ó ÁÜÀÇ ¸ñÇ¥ ±æÀÌ (SpringArm TargetArmLengthÀÇ ¸ñÇ¥°ª)
+	// ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ (SpringArm TargetArmLengthï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
 	float TargetArmLength = 2000.f;
 
-	// Ä«¸Þ¶ó ÁÜ ÃÖ¼Ò °Å¸®
+	// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½Å¸ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
 	float MinCameraZoomLength = 1000.f;
 
-	// Ä«¸Þ¶ó ÁÜ ÃÖ´ë °Å¸®
+	// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Å¸ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
 	float MaxCameraZoomLength = 2500.f;
 
-	// ¸¶¿ì½º ÈÙ ÇÑ ¹ø´ç º¯°æµÇ´Â °Å¸® °ª
+	// ï¿½ï¿½ï¿½ì½º ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½Å¸ï¿½ ï¿½ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
 	float CameraZoomStep = 300.f;
 
-	// ÁÜ ÀÎ/¾Æ¿ô º¸°£ ¼Óµµ (°ªÀÌ Å¬¼ö·Ï ºü¸£°Ô µû¶ó°¨)
+	// ï¿½ï¿½ ï¿½ï¿½/ï¿½Æ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ (ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Camera")
 	float CameraZoomInterpSpeed = 4.f;
 
@@ -99,17 +99,17 @@ protected:
 	virtual void PawnClientRestart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// ÀÌµ¿, Ä«¸Þ¶ó ÁÜ ÀÎ/¾Æ¿ô ÇÔ¼ö
+	// ï¿½Ìµï¿½, Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ ï¿½ï¿½/ï¿½Æ¿ï¿½ ï¿½Ô¼ï¿½
 	void Move(const FInputActionValue& Value);
 	void CameraZoom(const FInputActionValue& Value);
 
-	// ½ºÅ³ ÀÔ·Â ÇÔ¼ö
+	// ï¿½ï¿½Å³ ï¿½Ô·ï¿½ ï¿½Ô¼ï¿½
 	void UseBlink(const FInputActionValue& Value);
 	void UseLeftSkill(const FInputActionValue& Value);
 	void UseRightSkill(const FInputActionValue& Value);
 
 
-	// TEST: HP Áõ°¡/°¨¼Ò ÇÔ¼ö
+	// TEST: HP ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	void TEST_HpIncrease(const FInputActionValue& Value);
 	void TEST_HpDecrease(const FInputActionValue& Value);
 	void TEST_MaxHpIncrease(const FInputActionValue& Value);
@@ -135,7 +135,7 @@ private:
 	TObjectPtr<class UInputAction> RightSkillAction;
 
 
-	// TEST: HP Áõ°¡/°¨¼Ò ÀÔ·Â ¾×¼Ç
+	// TEST: HP ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ ï¿½×¼ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> TEST_HpIncreaseAction;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Input", meta = (AllowPrivateAccess = "true"))
@@ -151,41 +151,41 @@ private:
 	* Attack Section
 	*****************************************************/
 public:
-	// ÀÚµ¿ °ø°Ý ½ÃÀÛ ÇÔ¼ö
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
 	void StartAutoAttack();
 
-	// ÀÚµ¿ °ø°Ý ¸ØÃã ÇÔ¼ö
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
 	void StopAutoAttack();
 
 private:
-	// ÀÚµ¿ °ø°Ý È£Ãâ ¿äÃ» ÇÔ¼ö
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ ï¿½ï¿½Ã» ï¿½Ô¼ï¿½
 	void SetAutoAttackEnabledInternal(bool bEnabled);
 
-	// ÀÚµ¿ °ø°Ý È£Ãâ ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ ï¿½Ô¼ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	void HandleAutoAttack_Server();
 
-	// ¼­¹ö¿¡°Ô ÀÚµ¿ °ø°Ý È£Ãâ ¿äÃ» ServerRPC
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ ï¿½ï¿½Ã» ServerRPC
 	UFUNCTION(Server, Reliable)
 	void ServerRPCSetAutoAttackEnabled(bool bEnabled);
 
 protected:
-	// ÀÚµ¿ °ø°Ý ÁÖ±â
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
 	float AutoAttackInterval = 0.6f;
 
-	// ÀÌ °ªÀÌ trueÀÌ¸é, ¼­¹ö´Â ÆùÀÌ ºùÀÇµÇ´Â Áï½Ã ÀÚµ¿ °ø°ÝÀ» È°¼ºÈ­ ÇÔ
+	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ trueï¿½Ì¸ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ÇµÇ´ï¿½ ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È°ï¿½ï¿½È­ ï¿½ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
 	bool bAutoAttackEnabledOnSpawn = true;
 
 private:
-	// ÀÚµ¿ °ø°Ý »óÅÂ
-	// ¼­¹ö »óÅÂ. Å¬¶óÀÌ¾ðÆ®°¡ ÇÊ¿ä¿¡ µû¶ó UI¸¦ ¹Ý¿µÇÒ ¼ö ÀÖµµ·Ï º¹Á¦
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½Ê¿ä¿¡ ï¿½ï¿½ï¿½ï¿½ UIï¿½ï¿½ ï¿½Ý¿ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Öµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(Replicated)
 	bool bAutoAttackEnabled = false;
 
-	// ÀÚµ¿ °ø°Ý Å¸ÀÌ¸Ó
+	// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ì¸ï¿½
 	FTimerHandle AutoAttackTimerHandle;
 
 
@@ -194,14 +194,14 @@ private:
 	* Gameplay Event Trigger Section
 	*****************************************************/
 private:
-	// ¾îºô¸®Æ¼ Æ®¸®°Å ÇÔ¼ö
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	void TriggerAbilityEvent(const FGameplayTag& EventTag);
 
-	// ¼­¹ö¿¡°Ô °ÔÀÓÇÃ·¹ÀÌ ÀÌº¥Æ®¸¦ ¿äÃ»ÇÏ´Â ServerRPC
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ®ï¿½ï¿½ ï¿½ï¿½Ã»ï¿½Ï´ï¿½ ServerRPC
 	UFUNCTION(Server, Reliable)
 	void ServerRPCTriggerAbilityEvent(FGameplayTag EventTag);
 
-	// À¯È¿¼º °Ë»ç ÇÔ¼ö (ÅÂ±× À¯È¿ ¿©ºÎ)
+	// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Ë»ï¿½ ï¿½Ô¼ï¿½ (ï¿½Â±ï¿½ ï¿½ï¿½È¿ ï¿½ï¿½ï¿½ï¿½)
 	bool IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const;
 
 
@@ -210,20 +210,20 @@ private:
 	* Gameplay Event Tag Section
 	*****************************************************/
 protected:
-	// ±âº» °ø°Ý ÀÌº¥Æ® ÅÂ±×
+	// ï¿½âº» ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag AttackStartedEventTag;
 
-	// Á¡¸ê ÀÌº¥Æ® ÅÂ±×
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag BlinkEventTag;
 
-	// ÆÐ½Ãºê ½ºÅ³1 ÀÌº¥Æ® ÅÂ±×
+	// ï¿½Ð½Ãºï¿½ ï¿½ï¿½Å³1 ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag Passive_Skill_01_EventTag;
 
 
-	// TEST: HP Áõ°¡/°¨¼Ò ÀÌº¥Æ® ÅÂ±×
+	// TEST: HP ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½Â±ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag TEST_HpIncreaseEventTag;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
@@ -239,20 +239,20 @@ protected:
 	* Player Data Section
 	*****************************************************/
 public:
-	// ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ Getter
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Getter
 	UFUNCTION(BlueprintCallable, Category = "Custom | Player")
 	FPlayerStartAbilityData GetPlayerData() const { return PlayerData; }
 
-	// ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ Setter
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Setter
 	UFUNCTION(BlueprintCallable, Category = "Custom | Player")
 	void SetPlayerData(const FPlayerStartAbilityData& InPlayerData);
 
 protected:
-	// ÇÃ·¹ÀÌ¾î ½ÃÀÛ µ¥ÀÌÅÍ ¿¡¼Â
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Player")
 	TObjectPtr<class UDA_PlayerStartUpData> PlayerStartUpData;
 
-	// ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(Replicated)
 	FPlayerStartAbilityData PlayerData;
 
@@ -264,18 +264,18 @@ protected:
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	// ÀÚ½Å¿¡°Ô °ÔÀÓÇÃ·¹ÀÌ ÀÌÆåÆ®¸¦ Àû¿ëÇÏ´Â ÇïÆÛ ÇÔ¼ö
+	// ï¿½Ú½Å¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	bool ApplyGameplayEffectToSelf(TSubclassOf<class UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle);
 
-	// ÇÃ·¹ÀÌ¾î ±âº» ¾îºô¸®Æ¼ ºÎ¿© ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½âº» ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ ï¿½Î¿ï¿½ ï¿½Ô¼ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	void GivePlayerStartAbilities();
 
-	// ÇÃ·¹ÀÌ¾î ±âº» ÀÌÆåÆ® Àû¿ë ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½âº» ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	void ApplyPlayerStartEffects();
 
 private:
-	// ½ÇÁ¦ ÀÎ½ºÅÏ½º´Â PlayerState°¡ ¼ÒÀ¯ÇÏ¸ç, Ä³¸¯ÅÍ´Â Æ÷ÀÎÅÍ¸¸ ÂüÁ¶
-	// PossessedBy/OnRep_PlayerState¿¡¼­ ÇÒ´çµÈ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ PlayerStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½, Ä³ï¿½ï¿½ï¿½Í´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½
+	// PossessedBy/OnRep_PlayerStateï¿½ï¿½ï¿½ï¿½ ï¿½Ò´ï¿½È´ï¿½.
 
 	UPROPERTY(Transient)
 	TObjectPtr<class UMSPlayerAbilitySystemComponent> AbilitySystemComponent;
@@ -283,21 +283,27 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<class UMSPlayerAttributeSet> AttributeSet;
 
-
-
 	/*****************************************************
 	* UI / HUD Section
 	*****************************************************/
 protected:
-	// HUD °ø°³ µ¥ÀÌÅÍ ÃÊ±âÈ­ ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// HUD ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ô¼ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	void InitPublicHUDData_Server();
 
 protected:
-	// ÇÃ·¹ÀÌ¾î ¾ÆÀÌÄÜ (ÆÀ¿ø¿¡°Ô¸¸ Ç¥½Ã)
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¸ï¿½ Ç¥ï¿½ï¿½)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
 	TObjectPtr<UTexture2D> PortraitIcon = nullptr;
 
-	// ¼­¹ö¿¡¼­ ¹Þ´Â ÃÖ¼Ò HUD °ø°³ µ¥ÀÌÅÍ ÄÄÆ÷³ÍÆ®
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½ ï¿½Ö¼ï¿½ HUD ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | UI")
 	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent = nullptr;
+	
+	/*****************************************************
+	* Damaged Section
+	*****************************************************/
+public:
+	void OnInvincibilityChanged(const FGameplayTag CallbackTag, int32 NewCount);
+	void SetInvincibleCollision(bool bInvincible);
+	
 };
