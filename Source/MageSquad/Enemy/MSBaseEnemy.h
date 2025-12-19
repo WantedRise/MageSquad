@@ -46,6 +46,7 @@ public:
 	UFUNCTION()
 	virtual void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
+	virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);

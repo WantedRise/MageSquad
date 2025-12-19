@@ -39,10 +39,15 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	// DataTable 로드 및 에셋 사전 로딩
 	LoadMonsterDataTable();
+	//PrewarmPools();
+	
 
 	// 풀 사전 생성
-	PrewarmPools();
-
+	if (HasAuthority())
+	{
+		PrewarmPools();
+	}
+	
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
 		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
@@ -165,7 +170,7 @@ void UMSEnemySpawnSubsystem::PrewarmPools()
 {
 	// 풀 클래스 설정
 	NormalEnemyPool.EnemyClass = AMSNormalEnemy::StaticClass();
-	NormalEnemyPool.InitialPoolSize = NormalEnemyPoolSize;
+	NormalEnemyPool.InitialPoolSize = 5;//NormalEnemyPoolSize;
 
 	EliteEnemyPool.EnemyClass = AMSEliteEnemy::StaticClass();
 	EliteEnemyPool.InitialPoolSize = EliteEnemyPoolSize;
@@ -209,8 +214,18 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 				NormalEnemy->SetPoolingMode(true);
 			}
 			
-			Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
-			DeactivateEnemy(Enemy);
+			// 스폰 직후 네트워크 등록 강제
+			// if (UWorld* World = GetWorld())
+			// {
+			// 	if (UNetDriver* NetDriver = World->GetNetDriver())
+			// 	{
+			// 		NetDriver->NotifyActorSpawn(Enemy);
+			// 	}
+			// }
+   //  
+			
+			//Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
+			//DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
 	}
@@ -613,12 +628,15 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
+		UE_LOG(LogTemp, Error, TEXT("[EnemySetting : SkeletalMeshSet Success]"));
 	}
+	
 
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
 		Enemy->SetAnimData(Data->AnimationSet);
+		UE_LOG(LogTemp, Error, TEXT("[EnemySetting : AnimDataSet Success]"));
 	}
 
 	// GAS 속성 초기화
@@ -689,7 +707,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// //Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
     
 	// 네트워크 상태 활성화
-	Enemy->SetNetDormancy(DORM_Awake);
+	//Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->FlushNetDormancy();
 	Enemy->SetReplicateMovement(true);
     
