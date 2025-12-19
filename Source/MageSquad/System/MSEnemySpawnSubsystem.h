@@ -100,6 +100,8 @@ public:
 	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	
+	void InitializePool();
 
 	//~=============================================================================
 	// Spawn Control (Blueprint Callable)

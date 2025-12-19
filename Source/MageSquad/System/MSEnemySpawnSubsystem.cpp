@@ -19,41 +19,9 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-//~=============================================================================
-// Subsystem Lifecycle
-//~=============================================================================
-
 void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
-	if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
-	{
-		return;
-	}
-
-	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
-		return;
-	}
-
-	// if (!HasAuthority())
-	// {
-	// 	return;
-	// }
-
-	// NavSystem 참조 획득
-	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-
-	// DataTable 로드 및 에셋 사전 로딩
-	LoadMonsterDataTable();
-
-	// 풀 사전 생성
-	PrewarmPools();
-
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
-	       HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
 
 void UMSEnemySpawnSubsystem::Deinitialize()
@@ -92,9 +60,31 @@ void UMSEnemySpawnSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-//~=============================================================================
-// Initialization
-//~=============================================================================
+void UMSEnemySpawnSubsystem::InitializePool()
+{
+	// if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
+	// {
+	// 	return;
+	// }
+
+	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
+		return;
+	}
+	
+	// NavSystem 참조 획득
+	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
+	// DataTable 로드 및 에셋 사전 로딩
+	LoadMonsterDataTable();
+
+	// 풀 사전 생성
+	PrewarmPools();
+
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
+		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
+}
 
 void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
@@ -227,10 +217,6 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 	       *Pool.EnemyClass->GetName(), Pool.InitialPoolSize);
 }
 
-//~=============================================================================
-// Spawn Control
-//~=============================================================================
-
 void UMSEnemySpawnSubsystem::StartSpawning()
 {
 	// 서버에서만 실행
@@ -331,10 +317,6 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterByID(const FName& MonsterID, c
 
 	return SpawnMonsterInternal(MonsterID, Location);
 }
-
-//~=============================================================================
-// Spawn Logic
-//~=============================================================================
 
 void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 {
@@ -602,11 +584,6 @@ FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, 
 	return ScreenPoint;
 }
 
-
-//~=============================================================================
-// Enemy Initialization & Cleanup
-//~=============================================================================
-
 void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID)
 {
 	if (!Enemy)
@@ -780,7 +757,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		return;
 	}
 
-	// ✅ 1. Hidden 처리
+	// Hidden 처리
 	Enemy->SetActorHiddenInGame(true);
 	Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
@@ -803,13 +780,13 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		}
 	}
 	
-	// ✅ 4. GAS 초기화
+	//  GAS 초기화
 	ResetEnemyGASState(Enemy);
     
-	// ✅ 5. 리플리케이션 끄기 (클라이언트에서 사라짐)
+	// 리플리케이션 끄기 (클라이언트에서 사라짐)
 	// Enemy->SetReplicates(false);
 	
-	// ✅ 6. 위치는 그대로 두거나 원점으로
+	// 위치는 그대로 두거나 원점으로
 	// Enemy->SetActorLocation(FVector(0, 0, 100.0f));  // 선택사항
     
 	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
@@ -830,21 +807,17 @@ void UMSEnemySpawnSubsystem::ResetEnemyGASState(AMSBaseEnemy* Enemy)
 		return;
 	}
 
-	// 1. 모든 GameplayTag 제거
+	// 모든 GameplayTag 제거
 	FGameplayTagContainer AllTags;
 	ASC->GetOwnedGameplayTags(AllTags);
 	ASC->RemoveLooseGameplayTags(AllTags);
 
-	// 2. 모든 활성 GameplayEffect 제거
+	// 모든 활성 GameplayEffect 제거
 	ASC->RemoveActiveEffects(FGameplayEffectQuery());
 
-	// 3. 모든 Ability 취소
+	//  모든 Ability 취소
 	ASC->CancelAllAbilities();
 }
-
-//~=============================================================================
-// Death Event Handling
-//~=============================================================================
 
 void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 {
@@ -967,10 +940,6 @@ void UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSE
 	       Pool->FreeEnemies.Num(), Pool->ActiveEnemies.Num());
 }
 
-//~=============================================================================
-// Configuration Setters
-//~=============================================================================
-
 void UMSEnemySpawnSubsystem::SetSpawnInterval(float NewInterval)
 {
 	SpawnInterval = FMath::Max(0.1f, NewInterval);
@@ -1042,10 +1011,6 @@ void UMSEnemySpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] DataTable reloaded successfully"));
 }
 
-//~=============================================================================
-// Helper Functions
-//~=============================================================================
-
 FMSEnemyPool* UMSEnemySpawnSubsystem::FindPoolForEnemy(AMSBaseEnemy* Enemy) const
 {
 	FMSEnemyPool* const* PoolPtr = EnemyToPoolMap.Find(Enemy);
@@ -1064,10 +1029,6 @@ bool UMSEnemySpawnSubsystem::HasAuthority() const
 	ENetMode NetMode = World->GetNetMode();
 	return NetMode == NM_Standalone || NetMode == NM_DedicatedServer || NetMode == NM_ListenServer;
 }
-
-//~=============================================================================
-// Static Accessor
-//~=============================================================================
 
 UMSEnemySpawnSubsystem* UMSEnemySpawnSubsystem::Get(UObject* WorldContextObject)
 {
