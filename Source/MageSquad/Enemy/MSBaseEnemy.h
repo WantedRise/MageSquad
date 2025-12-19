@@ -43,6 +43,9 @@ public:
 	//virtual void OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator) override;
 	// ~ End IMSHitReactableInterface Interface
 	
+	UFUNCTION()
+	virtual void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
@@ -68,7 +71,10 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_MonsterID)
 	FName CurrentMonsterID;
 	
-	UPROPERTY();
+	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAnimationSet> AnimData;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Attack")
+	TSubclassOf<class UGameplayEffect> CollisionDamage;
 	
 };

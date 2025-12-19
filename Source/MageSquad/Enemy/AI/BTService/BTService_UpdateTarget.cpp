@@ -25,18 +25,14 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerComp.GetAIOwner()))
 	{
 		// 주변 적 탐지
+		// @Todo : 나중에 그냥 플레이 리스트 저장하도록 수정할 예정
 		TArray<AMSPlayerCharacter*> FoundActors;
 		// 월드에 있는 Player 액터를 검색해서 배열에 추가
-		for (AMSPlayerCharacter* PlayerStart : TActorRange<AMSPlayerCharacter>(GetWorld()))
+		for (AMSPlayerCharacter* Player : TActorRange<AMSPlayerCharacter>(GetWorld()))
 		{
 			// 배열에 추가
-			FoundActors.Add(PlayerStart);	
+			FoundActors.Add(Player);	
 		}
-		
-		AActor* CurrentTarget = Cast<AActor>(FoundActors[0]);
-		// if (CurrentTarget != FoundActors[0])
-		// {
-		// Blackboard 갱신
 		
 		// Owner Pawn 가져오기
 		AMSBaseEnemy* OwnerPawn = Cast<AMSBaseEnemy>(OwnerComp.GetAIOwner()->GetPawn());
@@ -45,7 +41,23 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 		
-		float Distance = FVector::Dist(OwnerPawn->GetActorLocation(), CurrentTarget->GetActorLocation());
+		// 가장 가까운 플레이어 찾기
+		AActor* CurrentTarget = nullptr;
+		float ClosestDistanceSq = FLT_MAX;
+		FVector MyLocation = OwnerPawn->GetActorLocation();
+
+		for (AMSPlayerCharacter* Player : FoundActors)
+		{
+			if (Player)
+			{
+				float DistanceSq = FVector::DistSquared(MyLocation, Player->GetActorLocation());
+				if (DistanceSq < ClosestDistanceSq)
+				{
+					ClosestDistanceSq = DistanceSq;
+					CurrentTarget = Player;
+				}
+			}
+		}
 		
 		// AttributeSet에서 Range 가져오기
 		const UMSEnemyAttributeSet* AttributeSet = Cast<const UMSEnemyAttributeSet>(OwnerPawn->GetAbilitySystemComponent()->GetAttributeSet(
@@ -56,16 +68,13 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 	
-		float AttackRange = AttributeSet->GetAttackRange();
-		OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), Distance <= AttackRange);
+		float AttackRangeSq = (AttributeSet->GetAttackRange() * AttributeSet->GetAttackRange());
+		OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), ClosestDistanceSq <= AttackRangeSq);
 		
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(
-			AIController->GetTargetActorKey(), FoundActors[0]);
+			AIController->GetTargetActorKey(), CurrentTarget);
 		
 		OwnerComp.GetBlackboardComponent()->SetValueAsVector(
-			AIController->GetTargetLocationKey(), FoundActors[0]->GetActorLocation());
-		
-		OwnerComp.GetBlackboardComponent()->SetValueAsFloat(
-			AIController->GetTargetDistanceKey(), Distance);
+			AIController->GetTargetLocationKey(), CurrentTarget->GetActorLocation());
 	}
 }
