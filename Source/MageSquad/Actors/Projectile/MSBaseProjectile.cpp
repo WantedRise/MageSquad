@@ -294,9 +294,6 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 		ProjectileMesh->SetWorldScale3D(FVector(EffectiveData.Radius));
 	}
 
-	// 이동/속도/방향 세팅은 제거!
-	// -> 투사체/장판의 행동 차이를 Behavior가 가져가야 “부착”이 아니라 “연동”이 됨
-
 	// Attach VFX
 	if (bSpawnAttachVFX)
 	{
