@@ -5,20 +5,18 @@
 #include "GameStates/MSGameState.h"
 #include "MageSquad.h"
 #include "Components/MSGameProgressComponent.h"
-
-void UMSGameFlowPvE::Initialize(AMSGameState* InOwnerGameState)
+#include "System/MSLevelManagerSubsystem.h"
+#include "GameModes/MSGameMode.h"
+void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, float InTotalGameTime)
 {
-	Super::Initialize(InOwnerGameState);
+	Super::Initialize(InOwnerGameState, InTotalGameTime);
 	UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE Initialize Begin"));
 	
 	bIsBossDefeated = false;
-	SetState(EGameFlowState::None);
-	GameProgress->OnGameTimeReached.AddUObject(this, &UMSGameFlowPvE::OnTimeCheckpoint);
-}
-
-void UMSGameFlowPvE::TickFlow(float DeltaSeconds)
-{
-
+	if (GameProgress)
+	{
+		GameProgress->OnGameTimeReached.AddUObject(this, &UMSGameFlowPvE::OnTimeCheckpoint);
+	}
 }
 
 void UMSGameFlowPvE::OnEnterState(EGameFlowState NewState)
@@ -109,7 +107,12 @@ void UMSGameFlowPvE::HandleMissionFinished(int32 MissionId, bool bSuccess)
 
 void UMSGameFlowPvE::OnTimeCheckpoint()
 {
-	UE_LOG(LogMSNetwork, Warning, TEXT("Server : Success Last Checkpoint"));
+	//호스트 로딩창 띄우기
+	if (UMSLevelManagerSubsystem* LevelManager = OwnerGameState->GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	{
+		//LevelManager->ShowLoadingWidget();
+		LevelManager->HostGameAndTravelToLobby();
+	}
 }
 
 int32 UMSGameFlowPvE::SelectRandomMissionId()
