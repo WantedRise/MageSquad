@@ -8,6 +8,13 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnGameTimeReached);
 
+/**
+ * 작성자: 이상준
+ * 작성일: 25/12/19
+ *
+ * 게임 진행 시간을 관리한다.
+ * 이벤트 발생을 알린다.
+ */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MAGESQUAD_API UMSGameProgressComponent : public UActorComponent
 {

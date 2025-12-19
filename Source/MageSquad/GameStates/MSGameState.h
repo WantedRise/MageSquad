@@ -33,9 +33,11 @@ public:
 	void StartGame();
 
 	FOnProgressUpdated OnProgressUpdated;
-protected:
+
 	UFUNCTION()
 	void OnRep_ProgressNormalized();
+protected:
+
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ProgressNormalized)
 	float ProgressNormalized;

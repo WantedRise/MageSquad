@@ -25,6 +25,7 @@ void UMSGameProgressComponent::BeginPlay()
 void UMSGameProgressComponent::Initialize(float InTotalGameTime)
 {
     TotalGameTime = InTotalGameTime;
+    ElapsedGameTime = 0.0f;
 }
 
 void UMSGameProgressComponent::StartProgress()
@@ -62,7 +63,7 @@ float UMSGameProgressComponent::GetNormalizedProgress() const
 
 void UMSGameProgressComponent::TickProgress()
 {
-    if (!bRunning || NextCheckpointIndex >= TimeCheckpoints.Num())
+    if (!bRunning)
         return;
     ElapsedGameTime += 1.f;
 
@@ -71,9 +72,10 @@ void UMSGameProgressComponent::TickProgress()
     if (OwnerGameState)
     {
         OwnerGameState->SetProgressNormalized(Normalized);
+        OwnerGameState->OnRep_ProgressNormalized();
     }
 
-    if (1.0f >= Normalized)
+    if (1.0f <= Normalized)
     {
         bRunning = false;
         OnGameTimeReached.Broadcast();
