@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actors/Projectile/MSBaseProjectile.h"
@@ -78,7 +78,76 @@ void AMSBaseProjectile::SetProjectileRuntimeData(const FProjectileRuntimeData& I
 	// 이미 실행 중인 경우 즉시 적용 (서버 측 지연 생성때문에 늦게 나온 경우)
 	if (HasActorBegunPlay())
 	{
-		ApplyProjectileRuntimeData(false);
+		EnsureBehavior();
+		ApplyProjectileRuntimeData(true);
+
+		if (HasAuthority())
+		{
+			ArmLifeTimerIfNeeded(GetEffectiveRuntimeData());
+		}
+	}
+}
+
+FProjectileRuntimeData AMSBaseProjectile::GetEffectiveRuntimeData() const
+{
+	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
+
+	if (!bRuntimeDataInitialized)
+	{
+		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
+		EffectiveData.CopyFromStaticData(StaticData);
+	}
+
+	return EffectiveData;
+}
+
+void AMSBaseProjectile::SetCollisionRadius(float Radius)
+{
+	if (CollisionSphere)
+	{
+		CollisionSphere->SetSphereRadius(Radius);
+	}
+}
+
+void AMSBaseProjectile::EnableCollision(bool bEnable)
+{
+	if (CollisionSphere)
+	{
+		CollisionSphere->SetGenerateOverlapEvents(bEnable);
+		CollisionSphere->SetCollisionEnabled(bEnable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void AMSBaseProjectile::StopMovement()
+{
+	if (ProjectileMovementComponent)
+	{
+		ProjectileMovementComponent->StopMovementImmediately();
+		ProjectileMovementComponent->Velocity = FVector::ZeroVector;
+	}
+}
+
+void AMSBaseProjectile::SpawnAttachVFXOnce()
+{
+	if (bAttachVfxSpawned)
+	{
+		return;
+	}
+
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
+	if (EffectiveData.OnAttachVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			EffectiveData.OnAttachVFX,
+			GetRootComponent(),
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset,
+			false
+		);
+
+		bAttachVfxSpawned = true;
 	}
 }
 
@@ -86,40 +155,37 @@ void AMSBaseProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 런타임 데이터의 초기화가 되지 않은 경우
-	// 발사체 원본 데이터를 복제하여 발사체 재정의 데이터를 초기화
+	// 서버에서 RuntimeData가 아직 없으면 StaticData로 초기화
 	if (HasAuthority() && !bRuntimeDataInitialized)
 	{
 		InitProjectileRuntimeDataFromClass(ProjectileDataClass);
 	}
 
+	// 서버/클라 모두 Behavior 보장
+	EnsureBehavior();
+
 	// 런타임 데이터 적용
 	ApplyProjectileRuntimeData(true);
 	
-	// 서버에서만 Behavior 준비
+	// 서버 LifeTime 타이머
 	if (HasAuthority())
 	{
-		InitializeBehavior();
+		ArmLifeTimerIfNeeded(GetEffectiveRuntimeData());
 	}
 }
 
 void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// 수명 타이머 정리(중복/누수 방지)
+	// 서버 타이머 정리
 	if (HasAuthority())
 	{
-		GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(LifeTimerHandle);
+		}
 	}
-	
-	// 런타임 데이터 가져오기
-	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
 
-	// 런타임 데이터가 초기화되지 않았으면, 원본 데이터를 가져와 런타임 데이터로 초기화
-	if (!bRuntimeDataInitialized)
-	{
-		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
-		EffectiveData.CopyFromStaticData(StaticData);
-	}
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
 
 	if (EffectiveData.OnHitVFX)
 	{
@@ -146,11 +212,16 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AMSBaseProjectile, ProjectileRuntimeData);
 }
 
-void AMSBaseProjectile::InitializeBehavior()
+void AMSBaseProjectile::EnsureBehavior()
 {
-	if (Behavior) return;
+	if (Behavior)
+	{
+		return;
+	}
 
-	TSubclassOf<UMSProjectileBehaviorBase> ClassToUse = ProjectileRuntimeData.BehaviorClass;
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
+
+	TSubclassOf<UMSProjectileBehaviorBase> ClassToUse = EffectiveData.BehaviorClass;
 	if (!ClassToUse)
 	{
 		ClassToUse = UMSProjectileBehavior_Normal::StaticClass(); // fallback
@@ -160,7 +231,7 @@ void AMSBaseProjectile::InitializeBehavior()
 
 	if (Behavior)
 	{
-		Behavior->Initialize(this, ProjectileRuntimeData);
+		Behavior->Initialize(this, EffectiveData);
 		Behavior->OnBegin();
 	}
 }
@@ -174,19 +245,19 @@ void AMSBaseProjectile::OnHitOverlap(
 	const FHitResult& SweepResult
 )
 {
+	// 서버에서만
 	if (!HasAuthority())
 	{
 		return;
 	}
-
-	if (!Behavior)
-	{
-		InitializeBehavior();
-		if (!Behavior) return;
-	}
-
-	// Enemy 채널로 이미 거른 상태지만, 안전하게 nullptr만 방지
+	// 자기 자신이라면 무시
 	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+	// Behavior 보장
+	EnsureBehavior();
+	if (!Behavior)
 	{
 		return;
 	}
@@ -206,74 +277,53 @@ void AMSBaseProjectile::OnProjectileStop(const FHitResult& ImpactResult)
 
 void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 {
-	if (!ProjectileMovementComponent) return;
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
 
-	// 런타임 데이터 가져오기
-	FProjectileRuntimeData EffectiveData = ProjectileRuntimeData;
-
-	// 런타임 데이터가 초기화되지 않았으면, 원본 데이터를 가져와 런타임 데이터로 초기화
-	if (!bRuntimeDataInitialized)
-	{
-		const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
-		EffectiveData.CopyFromStaticData(StaticData);
-	}
-
-	// 스태틱 메시 초기화
+	// Mesh
 	if (ProjectileMesh && EffectiveData.StaticMesh)
 	{
 		ProjectileMesh->SetStaticMesh(EffectiveData.StaticMesh);
 	}
 
-	// 범위는 CollisionSphere 반경으로 맞추기
-	if (CollisionSphere)
-	{
-		CollisionSphere->SetSphereRadius(EffectiveData.Radius);
-	}
-	
-	// 메시 크기 설정
-	ProjectileMesh->SetWorldScale3D(FVector(EffectiveData.Radius));
-		
-	// 발사체 무브먼트 설정
-	ProjectileMovementComponent->bInitialVelocityInLocalSpace = false;
-	ProjectileMovementComponent->InitialSpeed = EffectiveData.InitialSpeed;
-	ProjectileMovementComponent->MaxSpeed = EffectiveData.MaxSpeed;
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
-	ProjectileMovementComponent->bShouldBounce = false;
-	ProjectileMovementComponent->Bounciness = 0.f;
-	ProjectileMovementComponent->ProjectileGravityScale = EffectiveData.GravityMultiplayer;
+	// Radius
+	SetCollisionRadius(EffectiveData.Radius);
 
-	// 발사체 방향 설정
-	FVector Dir = EffectiveData.Direction.GetSafeNormal();
-	if (Dir.IsNearlyZero())
+	// Mesh Scale
+	if (ProjectileMesh)
 	{
-		Dir = GetActorForwardVector();
-	}
-	ProjectileMovementComponent->Velocity = EffectiveData.InitialSpeed * Dir;
-
-	// 부착 VFX 부착(한 번만)
-	if (bSpawnAttachVFX && EffectiveData.OnAttachVFX)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAttached(
-			EffectiveData.OnAttachVFX,
-			GetRootComponent(),
-			NAME_None,
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::KeepRelativeOffset,
-			false
-		);
+		ProjectileMesh->SetWorldScale3D(FVector(EffectiveData.Radius));
 	}
 
-	// 서버에서 생명주기 타이머 관리
-	if (HasAuthority())
+	// 이동/속도/방향 세팅은 제거!
+	// -> 투사체/장판의 행동 차이를 Behavior가 가져가야 “부착”이 아니라 “연동”이 됨
+
+	// Attach VFX
+	if (bSpawnAttachVFX)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(
+		SpawnAttachVFXOnce();
+	}
+}
+
+void AMSBaseProjectile::ArmLifeTimerIfNeeded(const FProjectileRuntimeData& EffectiveData)
+{
+	if (EffectiveData.LifeTime <= 0.f)
+	{
+		return; // 무한 지속(Behavior가 종료 제어)
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(LifeTimerHandle);
+		World->GetTimerManager().SetTimer(
 			LifeTimerHandle,
 			FTimerDelegate::CreateLambda([this]()
-			{
-				Destroy();
-			}),
+				{
+					if (HasAuthority() && Behavior)
+					{
+						Behavior->OnEnd();
+					}
+					Destroy();
+				}),
 			EffectiveData.LifeTime,
 			false
 		);
@@ -283,5 +333,6 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
 {
 	// 런타임 데이터 리플리케이션 시, VFX만 제외하고 런타임 데이터 적용
-	ApplyProjectileRuntimeData(false);
+	EnsureBehavior();
+	ApplyProjectileRuntimeData(true);
 }

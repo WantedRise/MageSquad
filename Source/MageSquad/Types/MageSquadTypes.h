@@ -7,19 +7,19 @@
 #include "MageSquadTypes.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
- * MageSquad¿¡ »ç¿ëµÉ ¿©·¯ Å¸ÀÔ ±¸Á¶Ã¼µéÀ» Á¤ÀÇÇÏ´Â Å¬·¡½º
+ * MageSquadì— ì‚¬ìš©ë  ì—¬ëŸ¬ íƒ€ì… êµ¬ì¡°ì²´ë“¤ì„ ì •ì˜í•˜ëŠ” í´ë˜ìŠ¤
  */
 
  /**
-  * ÀÛ¼ºÀÚ: ±èÁØÇü
-  * ÀÛ¼ºÀÏ: 25/12/15
+  * ì‘ì„±ì: ê¹€ì¤€í˜•
+  * ì‘ì„±ì¼: 25/12/15
   *
-  * ÇÃ·¹ÀÌ¾î ½ÃÀÛ ¾îºô¸®Æ¼ / °ÔÀÓÇÃ·¹ÀÌ ÀÌÆåÆ® ±¸Á¶Ã¼
-  * Abilities : ÇÃ·¹ÀÌ¾î°¡ ¼ÒÀ¯ÇÏ°Ô µÉ UGameplayAbility Å¬·¡½º ¸ñ·Ï
-  * Effects   : ½ÃÀÛ ½Ã ÇÑ ¹ø Àû¿ëµÇ´Â UGameplayEffect Å¬·¡½º ¸ñ·Ï
+  * í”Œë ˆì´ì–´ ì‹œì‘ ì–´ë¹Œë¦¬í‹° / ê²Œì„í”Œë ˆì´ ì´í™íŠ¸ êµ¬ì¡°ì²´
+  * Abilities : í”Œë ˆì´ì–´ê°€ ì†Œìœ í•˜ê²Œ ë  UGameplayAbility í´ë˜ìŠ¤ ëª©ë¡
+  * Effects   : ì‹œì‘ ì‹œ í•œ ë²ˆ ì ìš©ë˜ëŠ” UGameplayEffect í´ë˜ìŠ¤ ëª©ë¡
   */
 
 
@@ -30,22 +30,22 @@ struct MAGESQUAD_API FPlayerStartAbilityData
 	GENERATED_BODY()
 
 public:
-	// ÇÃ·¹ÀÌ¾î°¡ ½ÃÀÛ ½Ã ºÎ¿©¹Ş´Â ¾îºô¸®Æ¼ ¸ñ·Ï
+	// í”Œë ˆì´ì–´ê°€ ì‹œì‘ ì‹œ ë¶€ì—¬ë°›ëŠ” ì–´ë¹Œë¦¬í‹° ëª©ë¡
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom | StartUp")
 	TArray<TSubclassOf<class UGameplayAbility>> Abilties;
 
-	// ÇÃ·¹ÀÌ¾î°¡ ½ÃÀÛ ½Ã ÇÑ ¹ø Àû¿ëµÇ´Â °ÔÀÓÇÃ·¹ÀÌ ÀÌÆåÆ® ¸ñ·Ï
+	// í”Œë ˆì´ì–´ê°€ ì‹œì‘ ì‹œ í•œ ë²ˆ ì ìš©ë˜ëŠ” ê²Œì„í”Œë ˆì´ ì´í™íŠ¸ ëª©ë¡
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom | StartUp")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
 };
 
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
- * ¹ß»çÃ¼ÀÇ ¿øº» µ¥ÀÌÅÍ
- * °¢ ¹ß»çÃ¼¸¶´Ù »ı¼º
+ * ë°œì‚¬ì²´ì˜ ì›ë³¸ ë°ì´í„°
+ * ê° ë°œì‚¬ì²´ë§ˆë‹¤ ìƒì„±
  */
 
 class UMSProjectileBehaviorBase;
@@ -56,87 +56,71 @@ class MAGESQUAD_API UProjectileStaticData : public UObject
 	GENERATED_BODY()
 
 public:
-	// ¹ß»çÃ¼ ´ë¹ÌÁö
+	// ë°œì‚¬ì²´ ëŒ€ë¯¸ì§€
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Damage = 0;
 
-	// Ä¡¸íÅ¸ È®·ü
+	// ì¹˜ëª…íƒ€ í™•ë¥ 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
-	// µ¥¹ÌÁö Àû¿ë GE
+	// ë°ë¯¸ì§€ ì ìš© GE
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
-	// ¹ß»çÃ¼ Å©±â(ÇÇÇØ ¹üÀ§)
+	// ë°œì‚¬ì²´ í¬ê¸°(í”¼í•´ ë²”ìœ„)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Radius = 1.f;
 
-	// ¹æÇâ
+	// ë°©í–¥
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	FVector Direction = FVector::ZeroVector;
 
-	// Áß·Â ¿µÇâ·Â [ 0 = Áß·Â ¾øÀ½, 1 = ±âº» Áß·Â ]
+	// íˆ¬ì‚¬ì²´ ì†ë„
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float GravityMultiplayer = 0.f;
+	float ProjectileSpeed = 1000.f;
 
-	// ÃÊ±â ¹ß»ç ¼Óµµ
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float InitialSpeed = 1000.f;
-
-	// ÃÖ´ë ¹ß»ç ¼Óµµ
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float MaxSpeed = 1000.f;
-
-	// »ı¸í ÁÖ±â
+	// ìƒëª… ì£¼ê¸°
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float LifeTime = 3.f;
 
-	// ÀÚµ¿ ¹ß»ç ¿©ºÎ
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	bool bIsAutoAttack = true;
-
-	// ÀÚµ¿ ¹ß»ç ÁÖ±â
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile", meta = (EditCondition = "bIsAutoAttack"))
-	float AutoAttackInterval = 1.f;
-
-	// °üÅë È½¼ö
+	// ê´€í†µ íšŸìˆ˜
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	int32 PenetrationCount = 0;
 
-	// ¹ß»çÃ¼ ¸Ş½¬
+	// ë°œì‚¬ì²´ ë©”ì‰¬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	UStaticMesh* StaticMesh;
 
-	// Àû¿ë °ÔÀÓÇÃ·¹ÀÌ ÀÌÆåÆ®
+	// ì ìš© ê²Œì„í”Œë ˆì´ ì´í™íŠ¸
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
 
-	// ºÎÂø VFX
+	// ë¶€ì°© VFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	class UNiagaraSystem* OnAttachVFX = nullptr;
 
-	// ÇÇ°İ VFX
+	// í”¼ê²© VFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	class UNiagaraSystem* OnHitVFX = nullptr;
 
-	// ÇÇ°İ SFX
+	// í”¼ê²© SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	USoundBase* OnHitSFX = nullptr;
 
-	// Behavior Å¬·¡½º
+	// Behavior í´ë˜ìŠ¤
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
 };
 
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
- * ¹ß»çÃ¼ÀÇ ·±Å¸ÀÓ µ¥ÀÌÅÍ
- * ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ¸¦ º¹Á¦ÇÏ¿© ·±Å¸ÀÓ¿¡ ÀçÁ¤ÀÇµÇ´Â µ¥ÀÌÅÍ
- * ¹ß»çÃ¼´Â ½ÇÁ¦·Î ÀÌ µ¥ÀÌÅÍ¸¦ »ç¿ë. ¹ß»çÃ¼¸¦ »ı¼ºÇÏ´Â ÂÊ¿¡¼­ ÀÚÀ¯·Ó°Ô ¼öÁ¤ °¡´É
+ * ë°œì‚¬ì²´ì˜ ëŸ°íƒ€ì„ ë°ì´í„°
+ * ë°œì‚¬ì²´ ì›ë³¸ ë°ì´í„°ë¥¼ ë³µì œí•˜ì—¬ ëŸ°íƒ€ì„ì— ì¬ì •ì˜ë˜ëŠ” ë°ì´í„°
+ * ë°œì‚¬ì²´ëŠ” ì‹¤ì œë¡œ ì´ ë°ì´í„°ë¥¼ ì‚¬ìš©. ë°œì‚¬ì²´ë¥¼ ìƒì„±í•˜ëŠ” ìª½ì—ì„œ ììœ ë¡­ê²Œ ìˆ˜ì • ê°€ëŠ¥
  */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FProjectileRuntimeData
@@ -144,7 +128,7 @@ struct MAGESQUAD_API FProjectileRuntimeData
 	GENERATED_BODY()
 
 public:
-	// ¹ß»çÃ¼ÀÇ ¿øº» µ¥ÀÌÅÍ¸¦ ±âÁØÀ¸·Î ¸ğµç µ¥ÀÌÅÍ º¹»çÇÏ´Â ÇÔ¼ö
+	// ë°œì‚¬ì²´ì˜ ì›ë³¸ ë°ì´í„°ë¥¼ ê¸°ì¤€ìœ¼ë¡œ ëª¨ë“  ë°ì´í„° ë³µì‚¬í•˜ëŠ” í•¨ìˆ˜
 	void CopyFromStaticData(const UProjectileStaticData* StaticData)
 	{
 		if (!StaticData) return;
@@ -154,13 +138,8 @@ public:
 		DamageEffect = StaticData->DamageEffect;
 		Radius = StaticData->Radius;
 		Direction = StaticData->Direction;
-		InitialSpeed = StaticData->InitialSpeed;
-		GravityMultiplayer = StaticData->GravityMultiplayer;
-		InitialSpeed = StaticData->InitialSpeed;
-		MaxSpeed = StaticData->MaxSpeed;
+		ProjectileSpeed = StaticData->ProjectileSpeed;
 		LifeTime = StaticData->LifeTime;
-		bIsAutoAttack = StaticData->bIsAutoAttack;
-		AutoAttackInterval = StaticData->AutoAttackInterval;
 		PenetrationCount = StaticData->PenetrationCount;
 		StaticMesh = StaticData->StaticMesh;
 		Effects = StaticData->Effects;
@@ -171,85 +150,69 @@ public:
 	}
 
 public:
-	// ¹ß»çÃ¼ ´ë¹ÌÁö
+	// ë°œì‚¬ì²´ ëŒ€ë¯¸ì§€
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Damage = 0;
 
-	// Ä¡¸íÅ¸ È®·ü
+	// ì¹˜ëª…íƒ€ í™•ë¥ 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
-	// µ¥¹ÌÁö Àû¿ë GE
+	// ë°ë¯¸ì§€ ì ìš© GE
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
-	// ¹ß»çÃ¼ Å©±â(ÇÇÇØ ¹üÀ§)
+	// ë°œì‚¬ì²´ í¬ê¸°(í”¼í•´ ë²”ìœ„)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Radius;
 
-	// ¹æÇâ
+	// ë°©í–¥
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	FVector Direction = FVector::ZeroVector;
 
-	// Áß·Â ¿µÇâ·Â [ 0 = Áß·Â ¾øÀ½, 1 = ±âº» Áß·Â ]
+	// íˆ¬ì‚¬ì²´ ì†ë„
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float GravityMultiplayer = 0.f;
+	float ProjectileSpeed = 1000.f;
 
-	// ÃÊ±â ¹ß»ç ¼Óµµ
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float InitialSpeed = 1000.f;
-
-	// ÃÖ´ë ¹ß»ç ¼Óµµ
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float MaxSpeed = 1000.f;
-
-	// »ı¸í ÁÖ±â
+	// ìƒëª… ì£¼ê¸°
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float LifeTime = 3.f;
 
-	// ÀÚµ¿ ¹ß»ç ¿©ºÎ
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	bool bIsAutoAttack = true;
-
-	// ÀÚµ¿ ¹ß»ç ÁÖ±â
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile", meta = (EditCondition = "bIsAutoAttack"))
-	float AutoAttackInterval = 1.f;
-
-	// °üÅë È½¼ö
+	// ê´€í†µ íšŸìˆ˜
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	int32 PenetrationCount = 0;
 
-	// ¹ß»çÃ¼ ¸Ş½¬
+	// ë°œì‚¬ì²´ ë©”ì‰¬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	UStaticMesh* StaticMesh;
 
-	// Àû¿ë °ÔÀÓÇÃ·¹ÀÌ ÀÌÆåÆ®
+	// ì ìš© ê²Œì„í”Œë ˆì´ ì´í™íŠ¸
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
 
-	// ºÎÂø VFX
+	// ë¶€ì°© VFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	class UNiagaraSystem* OnAttachVFX = nullptr;
 
-	// ÇÇ°İ VFX
+	// í”¼ê²© VFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	class UNiagaraSystem* OnHitVFX = nullptr;
 
-	// ÇÇ°İ SFX
+	// í”¼ê²© SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	USoundBase* OnHitSFX = nullptr;
 
-	// Behavior Å¬·¡½º
+	// Behavior í´ë˜ìŠ¤
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
 };
 
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
- * ³ªÀÌ¾Æ°¡¶ó¿¡ FLinearColor¸¦ ³Ñ°ÜÁÖ±â À§ÇÑ °ÔÀÓÇÃ·¹ÀÌ ÀÌÆåÆ® ÄÜÅØ½ºÆ®
+ * ë‚˜ì´ì•„ê°€ë¼ì— FLinearColorë¥¼ ë„˜ê²¨ì£¼ê¸° ìœ„í•œ ê²Œì„í”Œë ˆì´ ì´í™íŠ¸ ì½˜í…ìŠ¤íŠ¸
  */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
@@ -262,12 +225,12 @@ public:
 
 	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
 
-	// º¹Á¦/Á÷·ÄÈ­ Áö¿ø
+	// ë³µì œ/ì§ë ¬í™” ì§€ì›
 	virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
 	{
 		bOutSuccess = true;
 
-		// ºÎ¸ğ Á÷·ÄÈ­
+		// ë¶€ëª¨ ì§ë ¬í™”
 		if (!FGameplayEffectContext::NetSerialize(Ar, Map, bOutSuccess))
 		{
 			bOutSuccess = false;
@@ -287,11 +250,11 @@ struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTra
 
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/16
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/16
  *
- * ÆÀ ¸â¹ö Á¤º¸ µ¥ÀÌÅÍ
- * ÇÃ·¹ÀÌ¾î HUDÀÇ ÆÀ ¸â¹ö¿¡ µé¾î°¥ µ¥ÀÌÅÍ ¸ñ·Ï
+ * íŒ€ ë©¤ë²„ ì •ë³´ ë°ì´í„°
+ * í”Œë ˆì´ì–´ HUDì˜ íŒ€ ë©¤ë²„ì— ë“¤ì–´ê°ˆ ë°ì´í„° ëª©ë¡
  */
 USTRUCT(BlueprintType)
 struct FMSHUDTeamMemberData
@@ -299,23 +262,23 @@ struct FMSHUDTeamMemberData
 	GENERATED_BODY()
 
 public:
-	// ÇöÀç Ã¼·Â
+	// í˜„ì¬ ì²´ë ¥
 	UPROPERTY(BlueprintReadOnly)
 	float Health = 0.f;
 
-	// ÃÖ´ë Ã¼·Â
+	// ìµœëŒ€ ì²´ë ¥
 	UPROPERTY(BlueprintReadOnly)
 	float MaxHealth = 0.f;
 
-	// ÇöÀç ³²Àº Ã¼·Â ºñÀ²
+	// í˜„ì¬ ë‚¨ì€ ì²´ë ¥ ë¹„ìœ¨
 	UPROPERTY(BlueprintReadOnly)
 	float HealthPct = 0.f;
 
-	// ÇÃ·¹ÀÌ¾î ÀÌ¸§
+	// í”Œë ˆì´ì–´ ì´ë¦„
 	UPROPERTY(BlueprintReadOnly)
 	FText DisplayName;
 
-	// ÇÃ·¹ÀÌ¾î ¾ÆÀÌÄÜ
+	// í”Œë ˆì´ì–´ ì•„ì´ì½˜
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UTexture2D> PortraitIcon = nullptr;
 };
