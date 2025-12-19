@@ -33,8 +33,12 @@ protected:
 	int32 CurrentSkillID = 21;
 	
 	// 피해량
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float SkillDamage = 20.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<float> DamageSequence = { 0.1f, 0.1f, 0.1f, 0.7f };
+
+	// 피해 주기
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float DamageInterval = 0.2f;
 
 	// 쿨타임
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -42,5 +46,13 @@ protected:
 
 	// 스킬 범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Range = 0.f;
+	float Range = 1.f;
+
+	// 투사체 스태틱데이터 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
+
+	// 틱 데미지 적용에 사용할 GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<class UGameplayEffect> DamageEffect;
 };

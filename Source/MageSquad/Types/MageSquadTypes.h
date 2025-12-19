@@ -64,6 +64,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
+	// 다단히트 데미지 시퀀스: [a, b, c, d] 처럼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TArray<float> DamageSequence;
+
+	// 다단히트 주기(초): 0.2
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float DamageInterval = 0.2f;
+
 	// 데미지 적용 GE
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UGameplayEffect> DamageEffect;
@@ -135,6 +143,8 @@ public:
 
 		Damage = StaticData->Damage;
 		CriticalChance = StaticData->CriticalChance;
+		DamageSequence = StaticData->DamageSequence;
+		DamageInterval = StaticData->DamageInterval;
 		DamageEffect = StaticData->DamageEffect;
 		Radius = StaticData->Radius;
 		Direction = StaticData->Direction;
@@ -157,6 +167,14 @@ public:
 	// 치명타 확률
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
+
+	// 다단히트 데미지 시퀀스: [a, b, c, d] 처럼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TArray<float> DamageSequence;
+
+	// 다단히트 주기(초): 0.2
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float DamageInterval = 0.2f;
 
 	// 데미지 적용 GE
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
