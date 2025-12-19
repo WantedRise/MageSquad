@@ -33,16 +33,16 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// Enemy ���� �ݸ������� ����
+	// Enemy 전용 콜리전으로 설정
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSPlayer"));
 
-	// ��Ʈ��ũ ����
+	// 네트워크 설정
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	SetNetUpdateFrequency(30.f); // �⺻������ ���缭 �뿪�� ����
+	SetNetUpdateFrequency(30.f); // 기본값보다 낮춰서 대역폭 절약
 	SetMinNetUpdateFrequency(5.f);
 
-	// ĳ���� & ī�޶� ����
+	// 캐릭터 & 카메라 설정
 	GetCapsuleComponent()->InitCapsuleSize(50.f, 100.f);
 
 	bUseControllerRotationPitch = false;
@@ -81,7 +81,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 
 	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
 
-	// ���� �±� ����
+	// 액터 태그 설정
 	Tags.AddUnique(TEXT("Player"));
 }
 
@@ -89,7 +89,7 @@ void AMSPlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	// �⺻ ���� �����͸� ����
+	// 기본 시작 데이터를 세팅
 	if (::IsValid(PlayerStartUpData))
 	{
 		SetPlayerData(PlayerStartUpData->PlayerStartAbilityData);
@@ -105,13 +105,13 @@ void AMSPlayerCharacter::Tick(float DeltaSecond)
 {
 	Super::Tick(DeltaSecond);
 
-	// ���ÿ��� ����Ǵ� ���� ���� (���� ���� �ʿ� ����)
+	// 로컬에서 제어되는 폰만 수행 (서버 연동 필요 없음)
 	if (!IsLocallyControlled())
 	{
 		return;
 	}
 
-	// ī�޶� �� ��/�ƿ� ���� ����
+	// 카메라 줌 인/아웃 보간 수행
 	UpdateCameraZoom(DeltaSecond);
 }
 
@@ -119,27 +119,27 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	// ���������� ����
+	// 서버에서만 수행
 	if (!HasAuthority()) return;
 
-	// PlayerState ��������
+	// PlayerState 가져오기
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
 
-	// ASC, AttributeSet �ʱ�ȭ
+	// ASC, AttributeSet 초기화
 	AbilitySystemComponent = Cast<UMSPlayerAbilitySystemComponent>(PS->GetAbilitySystemComponent());
 	AttributeSet = PS->GetAttributeSet();
 
 	if (AbilitySystemComponent)
 	{
-		// GAS�� ���� ������ �����ڴ� PlayerState��, �ƹ�Ÿ�� �ڽ����� �ʱ�ȭ
+		// GAS의 액터 정보를 소유자는 PlayerState로, 아바타는 자신으로 초기화
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
-	// ���� �����Ƽ/����Ʈ �ο� (���� ����)
+	// 시작 어빌리티/이펙트 부여 (서버 전용)
 	GivePlayerStartAbilities();
 	ApplyPlayerStartEffects();
-	
+
 	// State.Invincible 태그 변경 감지
 	if (AbilitySystemComponent != nullptr)
 	{
@@ -149,19 +149,19 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 		).AddUObject(this, &AMSPlayerCharacter::OnInvincibilityChanged);
 	}
 
-	// HUD ������ ������Ʈ�� �����Ƽ �ý��� ���ε�
+	// HUD 데이터 컴포넌트에 어빌리티 시스템 바인딩
 	if (HUDDataComponent && AbilitySystemComponent)
 	{
 		HUDDataComponent->BindToASC_Server(AbilitySystemComponent);
 	}
 
-	// ���� �ڵ� ���� ����
+	// 서버 자동 공격 시작
 	if (bAutoAttackEnabledOnSpawn)
 	{
 		SetAutoAttackEnabledInternal(true);
 	}
 
-	// HUD ���� ������ �ʱ�ȭ
+	// HUD 공개 데이터 초기화
 	InitPublicHUDData_Server();
 }
 
@@ -177,19 +177,19 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	// Ŭ���̾�Ʈ�� �����Ƽ �ý��� ������Ʈ �ʱ�ȭ �� �⺻ ���� ����Ʈ ����
+	// 클라이언트도 어빌리티 시스템 컴포넌트 초기화 및 기본 적용 이펙트 적용
 
-	// PlayerState ��������
+	// PlayerState 가져오기
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
 
-	// Ŭ���̾�Ʈ ASC, AttributeSet �ʱ�ȭ
+	// 클라이언트 ASC, AttributeSet 초기화
 	AbilitySystemComponent = Cast<UMSPlayerAbilitySystemComponent>(PS->GetAbilitySystemComponent());
 	AttributeSet = PS->GetAttributeSet();
 
 	if (AbilitySystemComponent)
 	{
-		// GAS�� ���� ������ �����ڴ� PlayerState��, �ƹ�Ÿ�� �ڽ����� �ʱ�ȭ
+		// GAS의 액터 정보를 소유자는 PlayerState로, 아바타는 자신으로 초기화
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 	}
 
@@ -201,7 +201,7 @@ void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
 {
 	if (!SpringArm) return;
 
-	// ��ǥ �� ���̱��� �ε巴�� ����
+	// 목표 줌 길이까지 부드럽게 보간
 	const float CurrentLength = SpringArm->TargetArmLength;
 	const float NewLength = FMath::FInterpTo(CurrentLength, TargetArmLength, DeltaTime, CameraZoomInterpSpeed);
 	SpringArm->TargetArmLength = NewLength;
@@ -213,8 +213,7 @@ void AMSPlayerCharacter::PawnClientRestart()
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
-			UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->ClearAllMappings();
 			if (DefaultMappingContext)
@@ -229,58 +228,51 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// �̵� �Է� ����
+		// 이동 입력 맵핑
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::Move);
 
-		// ī�޶� �� ��/�ƿ� �Է� ����
-		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this,
-		                                   &AMSPlayerCharacter::CameraZoom);
+		// 카메라 줌 인/아웃 입력 맵핑
+		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::CameraZoom);
 
-		// ī�޶� �� ��/�ƿ� �Է� ����
+		// 카메라 줌 인/아웃 입력 맵핑
 		EnhancedInputComponent->BindAction(BlinkAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::UseBlink);
 
-		// ��Ŭ�� ���� �Է� ����
-		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Started, this,
-		                                   &AMSPlayerCharacter::UseLeftSkill);
+		// 좌클릭 공격 입력 맵핑
+		EnhancedInputComponent->BindAction(LeftSkillAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::UseLeftSkill);
 
-		// ��Ŭ�� ���� �Է� ����
-		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Started, this,
-		                                   &AMSPlayerCharacter::UseRightSkill);
+		// 우클릭 공격 입력 맵핑
+		EnhancedInputComponent->BindAction(RightSkillAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::UseRightSkill);
 
 
-		// TEST: HP ����/���� �Է� ����
-		EnhancedInputComponent->BindAction(TEST_HpIncreaseAction, ETriggerEvent::Started, this,
-		                                   &AMSPlayerCharacter::TEST_HpIncrease);
-		EnhancedInputComponent->BindAction(TEST_HpDecreaseAction, ETriggerEvent::Started, this,
-		                                   &AMSPlayerCharacter::TEST_HpDecrease);
-		EnhancedInputComponent->BindAction(TEST_MaxHpIncreaseAction, ETriggerEvent::Started, this,
-		                                   &AMSPlayerCharacter::TEST_MaxHpIncrease);
-		EnhancedInputComponent->BindAction(TEST_MaxHpDecreaseAction, ETriggerEvent::Started, this,
-		                                   &AMSPlayerCharacter::TEST_MaxHpDecrease);
+		// TEST: HP 증가/감소 입력 맵핑
+		EnhancedInputComponent->BindAction(TEST_HpIncreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_HpIncrease);
+		EnhancedInputComponent->BindAction(TEST_HpDecreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_HpDecrease);
+		EnhancedInputComponent->BindAction(TEST_MaxHpIncreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_MaxHpIncrease);
+		EnhancedInputComponent->BindAction(TEST_MaxHpDecreaseAction, ETriggerEvent::Started, this, &AMSPlayerCharacter::TEST_MaxHpDecrease);
 	}
 }
 
 void AMSPlayerCharacter::Move(const FInputActionValue& Value)
 {
-	// 2D �� �Է��� FVector2D�� ��ȯ
+	// 2D 축 입력을 FVector2D로 변환
 	const FVector2D MoveValue = Value.Get<FVector2D>();
 
-	// �Է�/��Ʈ�ѷ��� ��ȿ���� �ʰų�, �Է� ���� ���� 0�̸� ����
+	// 입력/컨트롤러가 유효하지 않거나, 입력 값이 거의 0이면 무시
 	if (!Controller || MoveValue.IsNearlyZero())
 	{
 		return;
 	}
 
-	// ��Ʈ�ѷ��� ȸ�������� Yaw(�¿�)�� ����ؼ� ���� ���� ���� ����
+	// 컨트롤러의 회전값에서 Yaw(좌우)만 사용해서 월드 방향 벡터 생성
 	const FRotator ControlRotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 
-	// ����(Forward) ����(X��), ������(Right) ����(Y��) ���ϱ�
+	// 전진(Forward) 방향(X축), 오른쪽(Right) 방향(Y축) 구하기
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	// InputValue.Y : ��/�� (W,S)
-	// InputValue.X : ��/�� (A,D)
+	// InputValue.Y : 전/후 (W,S)
+	// InputValue.X : 좌/우 (A,D)
 	if (!FMath::IsNearlyZero(MoveValue.Y))
 	{
 		AddMovementInput(ForwardDirection, MoveValue.Y);
@@ -296,35 +288,37 @@ void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)
 {
 	const float AxisValue = Value.Get<float>();
 
-	// ���� �ʹ� ������ �н�
+	// 값이 너무 작으면 패스
 	if (FMath::IsNearlyZero(AxisValue))
 	{
 		return;
 	}
 
-	// ���� ��ũ��(+): ī�޶� ĳ���Ϳ� ������
-	// �Ʒ��� ��ũ��(-): ī�޶� ĳ���Ϳ� �ָ�
+	// 위로 스크롤(+): 카메라를 캐릭터와 가까이
+	// 아래로 스크롤(-): 카메라를 캐릭터와 멀리
 	TargetArmLength -= AxisValue * CameraZoomStep;
 
-	// �ִ�/�ּ� ī�޶� �� ���̷� Clamp
+	// 최대/최소 카메라 줌 길이로 Clamp
 	TargetArmLength = FMath::Clamp(TargetArmLength, MinCameraZoomLength, MaxCameraZoomLength);
 }
 
 void AMSPlayerCharacter::UseBlink(const FInputActionValue& Value)
 {
-	// ���� ���� �ƴ� ��� ����
+	// 로컬 폰이 아닌 경우 종료
 	if (!IsLocallyControlled()) return;
 
-	// Ʈ���� �Լ� ȣ��
+	// 트리거 함수 호출
 	TriggerAbilityEvent(BlinkEventTag);
 }
 
 void AMSPlayerCharacter::UseLeftSkill(const FInputActionValue& Value)
 {
+
 }
 
 void AMSPlayerCharacter::UseRightSkill(const FInputActionValue& Value)
 {
+
 }
 
 void AMSPlayerCharacter::StartAutoAttack()
@@ -353,10 +347,10 @@ void AMSPlayerCharacter::StopAutoAttack()
 
 void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 {
-	// ������ �ƴϸ� ����
+	// 서버가 아니면 종료
 	if (!HasAuthority()) return;
 
-	// ���� ������ ��� ����
+	// 같은 설정일 경우 무시
 	if (bAutoAttackEnabled == bEnabled) return;
 
 	bAutoAttackEnabled = bEnabled;
@@ -365,7 +359,7 @@ void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 
 	if (bAutoAttackEnabled)
 	{
-		// �������� �⺻ ������ ����
+		// 서버에서 기본 공격을 수행
 		GetWorldTimerManager().SetTimer(
 			AutoAttackTimerHandle,
 			this,
@@ -379,13 +373,13 @@ void AMSPlayerCharacter::SetAutoAttackEnabledInternal(bool bEnabled)
 
 void AMSPlayerCharacter::HandleAutoAttack_Server()
 {
-	// ������ �ƴϰų�, �ڵ� ������ ��Ȱ��ȭ ���¶�� ����
+	// 서버가 아니거나, 자동 공격이 비활성화 상태라면 종료
 	if (!HasAuthority() || !bAutoAttackEnabled) return;
 
-	// �̺�Ʈ �±װ� ��ȿ���� ������ ����
+	// 이벤트 태그가 유효하지 않으면 종료
 	if (!AttackStartedEventTag.IsValid()) return;
 
-	// �̺�Ʈ �±� ����
+	// 이벤트 태그 전달
 	FGameplayEventData Payload;
 	Payload.EventTag = AttackStartedEventTag;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackStartedEventTag, Payload);
@@ -398,31 +392,31 @@ void AMSPlayerCharacter::ServerRPCSetAutoAttackEnabled_Implementation(bool bEnab
 
 void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)
 {
-	// ��ȿ�� �˻�
+	// 유효성 검사
 	if (!IsAllowedAbilityEventTag(EventTag)) return;
 
-	// ���� ����
+	// 서버 로직
 	if (HasAuthority())
 	{
-		// �̺�Ʈ �±� ����
+		// 이벤트 태그 전달
 		FGameplayEventData Payload;
 		Payload.EventTag = EventTag;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 	}
-	// Ŭ���̾�Ʈ ����
+	// 클라이언트 로직
 	else
 	{
-		// �������� Ʈ���� ��û
+		// 서버에게 트리거 요청
 		ServerRPCTriggerAbilityEvent(EventTag);
 	}
 }
 
 void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTag EventTag)
 {
-	// ��ȿ�� �˻�
+	// 유효성 검사
 	if (!IsAllowedAbilityEventTag(EventTag)) return;
 
-	// �̺�Ʈ �±� ����
+	// 이벤트 태그 전달
 	FGameplayEventData Payload;
 	Payload.EventTag = EventTag;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
@@ -430,7 +424,7 @@ void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTa
 
 bool AMSPlayerCharacter::IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const
 {
-	// ���� �÷��̾ �� �̺�Ʈ �±׸� ������ �ִ��� �˻� (���� �߰�)
+	// 로컬 플레이어가 이 이벤트 태그를 가지고 있는지 검사 (이후 추가)
 	return EventTag.IsValid() /*&& (EventTag == BlinkEventTag || EventTag == AttackStartedEventTag)*/;
 }
 
@@ -448,18 +442,15 @@ UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
 	return nullptr;
 }
 
-bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,
-                                                   FGameplayEffectContextHandle InEffectContextHandle)
+bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle)
 {
-	// ��ȿ�� ����Ʈ Ŭ������ ASC�� �ʿ��� ���� ���� ���� �Լ�
+	// 유효한 이펙트 클래스와 ASC가 필요한 서버 전용 헬퍼 함수
 	if (!Effect.Get() || !AbilitySystemComponent) return false;
 
-	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
-		Effect, /*Level*/ 1.0f, InEffectContextHandle);
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, /*Level*/ 1.0f, InEffectContextHandle);
 	if (SpecHandle.IsValid())
 	{
-		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(
-			*SpecHandle.Data.Get());
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		return ActiveGEHandle.WasSuccessfullyApplied();
 	}
 
@@ -468,10 +459,10 @@ bool AMSPlayerCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> 
 
 void AMSPlayerCharacter::GivePlayerStartAbilities()
 {
-	// ���������� �����Ƽ�� �ο�
+	// 서버에서만 어빌리티를 부여
 	if (!HasAuthority() || !AbilitySystemComponent) return;
 
-	// �÷��̾� ���� �������� �����Ƽ �迭�� ��ȸ�ϸ� �ο�
+	// 플레이어 시작 데이터의 어빌리티 배열을 순회하며 부여
 	for (TSubclassOf<UGameplayAbility> DefaultAbilityClass : PlayerData.Abilties)
 	{
 		if (*DefaultAbilityClass)
@@ -483,13 +474,13 @@ void AMSPlayerCharacter::GivePlayerStartAbilities()
 
 void AMSPlayerCharacter::ApplyPlayerStartEffects()
 {
-	// ���������� GameplayEffect�� ����
+	// 서버에서만 GameplayEffect를 적용
 	if (!HasAuthority() || !AbilitySystemComponent) return;
 
 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
 
-	// �÷��̾� ���� �������� ����Ʈ �迭�� ��ȸ�ϸ� ����
+	// 플레이어 시작 데이터의 이펙트 배열을 순회하며 적용
 	for (TSubclassOf<UGameplayEffect> DefaultEffectClass : PlayerData.Effects)
 	{
 		if (*DefaultEffectClass)
@@ -503,7 +494,7 @@ void AMSPlayerCharacter::InitPublicHUDData_Server()
 {
 	if (!HasAuthority() || !HUDDataComponent) return;
 
-	// �÷��̾� �̸� �� ������ �ʱ�ȭ
+	// 플레이어 이름 및 아이콘 초기화
 	if (APlayerState* PS = GetPlayerState())
 	{
 		HUDDataComponent->BindDisplayName_Server(FText::FromString(PS->GetPlayerName()));
@@ -516,7 +507,7 @@ void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, 
 	bool bIsInvincible = (NewCount > 0);
 
 	UE_LOG(LogTemp, Warning, TEXT("Invincibility changed: %s"),
-	       bIsInvincible ? TEXT("ON") : TEXT("OFF"));
+		bIsInvincible ? TEXT("ON") : TEXT("OFF"));
 
 	SetInvincibleCollision(bIsInvincible);
 }
@@ -543,6 +534,10 @@ void AMSPlayerCharacter::SetInvincibleCollision(bool bInvincible)
 		UE_LOG(LogTemp, Log, TEXT("Collision Profile: Player (Overlap MSEnemy)"));
 	}
 }
+
+
+
+
 
 void AMSPlayerCharacter::TEST_HpIncrease(const FInputActionValue& Value)
 {
