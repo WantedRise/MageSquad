@@ -22,6 +22,29 @@
 void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	
+	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")) || GetWorld()->GetName().Contains(TEXT("MainmenuLevel")))
+	{
+		return;
+	}
+	
+	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
+		return;
+	}
+	
+	// NavSystem 참조 획득
+	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
+	// DataTable 로드 및 에셋 사전 로딩
+	LoadMonsterDataTable();
+
+	// 풀 사전 생성
+	PrewarmPools();
+
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
+		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
 
 void UMSEnemySpawnSubsystem::Deinitialize()
@@ -60,38 +83,17 @@ void UMSEnemySpawnSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UMSEnemySpawnSubsystem::InitializePool()
-{
-	// if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
-	// {
-	// 	return;
-	// }
-
-	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
-		return;
-	}
-	
-	// NavSystem 참조 획득
-	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-
-	// DataTable 로드 및 에셋 사전 로딩
-	LoadMonsterDataTable();
-
-	// 풀 사전 생성
-	PrewarmPools();
-
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
-		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
-}
-
 void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
 	if (!MonsterStaticDataTable)
 	{
 		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
 		                                                TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
+		
+		if (MonsterStaticDataTable)
+		{
+			return;
+		}
 	}
 
 	TArray<FName> RowNames = MonsterStaticDataTable->GetRowNames();

@@ -20,6 +20,9 @@ class MAGESQUAD_API UMSEnemyAttributeSet : public UAttributeSet
 public:
 	UMSEnemyAttributeSet();
 
+	// 속성이 변경되기 전에 호출되는 함수
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+
 	UFUNCTION()
 	virtual void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue);
 
@@ -65,4 +68,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_AttackRange, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData AttackRange;
 		
+
+private:
+	// 이전 현재 체력 캐시
+	float CachedOldCurrentHealth = 0.f;
 };

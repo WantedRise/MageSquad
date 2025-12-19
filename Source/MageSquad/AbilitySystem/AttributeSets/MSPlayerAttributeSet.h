@@ -7,7 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "MSPlayerAttributeSet.generated.h"
 
-// Getter¿Í Setter¸¦ ÀÚµ¿ »ı¼º
+// Getterì™€ Setterë¥¼ ìë™ ìƒì„±
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
 GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
@@ -15,11 +15,11 @@ GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/08
  * 
- * ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍÀÇ AttributeSet Å¬·¡½º
- * ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍÀÇ ¸ğµç ´É·ÂÄ¡ ÁıÇÕ, ´É·ÂÄ¡ º¯°æÀ» Æ®·¡Å·ÇÏ°í º¹Á¦ÇÔ
+ * í”Œë ˆì´ì–´ ìºë¦­í„°ì˜ AttributeSet í´ë˜ìŠ¤
+ * í”Œë ˆì´ì–´ ìºë¦­í„°ì˜ ëª¨ë“  ëŠ¥ë ¥ì¹˜ ì§‘í•©, ëŠ¥ë ¥ì¹˜ ë³€ê²½ì„ íŠ¸ë˜í‚¹í•˜ê³  ë³µì œí•¨
  */
 UCLASS()
 class MAGESQUAD_API UMSPlayerAttributeSet : public UAttributeSet
@@ -32,127 +32,127 @@ public:
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
 	/*
-	* ÇöÀç Ã¼·Â
-	* Ä³¸¯ÅÍ°¡ ¹Ş´Â ÇÇÇØ¿¡ µû¶ó °¨¼Ò
+	* í˜„ì¬ ì²´ë ¥
+	* ìºë¦­í„°ê°€ ë°›ëŠ” í”¼í•´ì— ë”°ë¼ ê°ì†Œ
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Health)
 
 	/*
-	* ÃÖ´ë Ã¼·Â
+	* ìµœëŒ€ ì²´ë ¥
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, MaxHealth)
 
 	/*
-	* Ã¼·Â Àç»ı·®
-	* ÃÊ´ç È¸º¹µÇ´Â Ã¼·Â·®
+	* ì²´ë ¥ ì¬ìƒëŸ‰
+	* ì´ˆë‹¹ íšŒë³µë˜ëŠ” ì²´ë ¥ëŸ‰
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_HealthRegen)
 	FGameplayAttributeData HealthRegen;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, HealthRegen)
 
 	/*
-	* ¹æ¾î·Â
-	* ¹Ş´Â ÇÇÇØ¸¦ °¨¼Ò½ÃÅ°´Â °è¼ö
+	* ë°©ì–´ë ¥
+	* ë°›ëŠ” í”¼í•´ë¥¼ ê°ì†Œì‹œí‚¤ëŠ” ê³„ìˆ˜
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Defense)
 	FGameplayAttributeData Defense;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Defense)
 
 	/*
-	* È¸ÇÇÀ²
-	* ÀûÀÇ °ø°İÀ» È¸ÇÇÇÒ È®·ü(0 ~ 1)
+	* íšŒí”¼ìœ¨
+	* ì ì˜ ê³µê²©ì„ íšŒí”¼í•  í™•ë¥ (0 ~ 1)
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_DodgeRate)
 	FGameplayAttributeData DodgeRate;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, DodgeRate)
 
 	/*
-	* ÀÌµ¿ ¼Óµµ º¸Á¤
-	* ±âº» ÀÌµ¿ ¼Óµµ¿¡ ´ëÇÑ Ãß°¡/°¨¼Ò ºñÀ²(ex. 0.1 = +10%)
+	* ì´ë™ ì†ë„ ë³´ì •
+	* ê¸°ë³¸ ì´ë™ ì†ë„ì— ëŒ€í•œ ì¶”ê°€/ê°ì†Œ ë¹„ìœ¨(ex. 0.1 = +10%)
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MoveSpeedMod)
 	FGameplayAttributeData MoveSpeedMod;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, MoveSpeedMod)
 
 	/*
-	* ÇÇÇØ·® º¸Á¤
-	* ½ºÅ³ÀÌ³ª ±âº» °ø°İÀÇ ÇÇÇØ¿¡ ´ëÇÑ Ãß°¡/°¨¼Ò ºñÀ²
+	* í”¼í•´ëŸ‰ ë³´ì •
+	* ìŠ¤í‚¬ì´ë‚˜ ê¸°ë³¸ ê³µê²©ì˜ í”¼í•´ì— ëŒ€í•œ ì¶”ê°€/ê°ì†Œ ë¹„ìœ¨
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_DamageMod)
 	FGameplayAttributeData DamageMod;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, DamageMod)
 
 	/*
-	* ÁÖ¹® Å©±â º¸Á¤
-	* ½ºÅ³ ¹üÀ§/È¿°ú Å©±â¿¡ ´ëÇÑ ºñÀ²
+	* ì£¼ë¬¸ í¬ê¸° ë³´ì •
+	* ìŠ¤í‚¬ ë²”ìœ„/íš¨ê³¼ í¬ê¸°ì— ëŒ€í•œ ë¹„ìœ¨
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_SpellSizeMod)
 	FGameplayAttributeData SpellSizeMod;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, SpellSizeMod)
 
 	/*
-	* Äğ´Ù¿î °¨¼Ò
-	* ½ºÅ³ Äğ´Ù¿î ½Ã°£À» °¨¼Ò½ÃÅ°´Â ºñÀ²
+	* ì¿¨ë‹¤ìš´ ê°ì†Œ
+	* ìŠ¤í‚¬ ì¿¨ë‹¤ìš´ ì‹œê°„ì„ ê°ì†Œì‹œí‚¤ëŠ” ë¹„ìœ¨
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CooldownReduction)
 	FGameplayAttributeData CooldownReduction;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, CooldownReduction)
 
 	/*
-	* Ä¡¸íÅ¸ È®·ü
-	* ÇÇÇØ°¡ Ä¡¸íÅ¸·Î Àû¿ëµÉ È®·ü(0 ~ 1)
+	* ì¹˜ëª…íƒ€ í™•ë¥ 
+	* í”¼í•´ê°€ ì¹˜ëª…íƒ€ë¡œ ì ìš©ë  í™•ë¥ (0 ~ 1)
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CritChance)
 	FGameplayAttributeData CritChance;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, CritChance)
 
 	/*
-	* Ä¡¸íÅ¸ ÇÇÇØ
-	* Ä¡¸íÅ¸ ½Ã ÇÇÇØ ¹è¼ö (ex. 1.5 = 150%)
+	* ì¹˜ëª…íƒ€ í”¼í•´
+	* ì¹˜ëª…íƒ€ ì‹œ í”¼í•´ ë°°ìˆ˜ (ex. 1.5 = 150%)
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CritDamage)
 	FGameplayAttributeData CritDamage;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, CritDamage)
 
 	/*
-	* È¹µæ ¹İ°æ º¸Á¤
-	* ¾ÆÀÌÅÛ/°æÇèÄ¡ µîÀÇ È¹µæ ¹İ°æ¿¡ ´ëÇÑ Ãß°¡ ºñÀ²
+	* íšë“ ë°˜ê²½ ë³´ì •
+	* ì•„ì´í…œ/ê²½í—˜ì¹˜ ë“±ì˜ íšë“ ë°˜ê²½ì— ëŒ€í•œ ì¶”ê°€ ë¹„ìœ¨
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_PickupRangeMod)
 	FGameplayAttributeData PickupRangeMod;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, PickupRangeMod)
 
 	/*
-	* °æÇèÄ¡ È¹µæ·® º¸Á¤
-	* Ãß°¡ °æÇèÄ¡ È¹µæ ºñÀ²
+	* ê²½í—˜ì¹˜ íšë“ëŸ‰ ë³´ì •
+	* ì¶”ê°€ ê²½í—˜ì¹˜ íšë“ ë¹„ìœ¨
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_ExperienceGainMod)
 	FGameplayAttributeData ExperienceGainMod;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, ExperienceGainMod)
 
 	/*
-	* Çà¿î
-	* µå¶ø·üÀÌ³ª ·£´ı ÀÌº¥Æ®¿¡ ¿µÇâÀ» ¹ÌÄ¡´Â ¼Ó¼º
+	* í–‰ìš´
+	* ë“œëë¥ ì´ë‚˜ ëœë¤ ì´ë²¤íŠ¸ì— ì˜í–¥ì„ ë¯¸ì¹˜ëŠ” ì†ì„±
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Luck)
 	FGameplayAttributeData Luck;
 	ATTRIBUTE_ACCESSORS(UMSPlayerAttributeSet, Luck)
 
 protected:
-	// º¹Á¦ ÇÔ¼ö
+	// ë³µì œ í•¨ìˆ˜
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// ¼Ó¼º °ª º¯°æ Äİ¹é ÇÔ¼ö
+	// ì†ì„± ê°’ ë³€ê²½ ì½œë°± í•¨ìˆ˜
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	/*
-	* GAMEPLAYATTRIBUTE_REPNOTIFY ¸ÅÅ©·Î¸¦ »ç¿ëÇÏ´Â OnRep ±¸Çö
-	* ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍ ¼Ó¼º ¸®ÇÃ¸®ÄÉÀÌ¼Ç ÇÔ¼ö
-	* ÆÄ¶ó¹ÌÅÍ´Â ¸®ÇÃ¸®ÄÉÀÌÆ® µÇ±â ÀÌÀüÀÇ ¼Ó¼º °ª
+	* GAMEPLAYATTRIBUTE_REPNOTIFY ë§¤í¬ë¡œë¥¼ ì‚¬ìš©í•˜ëŠ” OnRep êµ¬í˜„
+	* í”Œë ˆì´ì–´ ìºë¦­í„° ì†ì„± ë¦¬í”Œë¦¬ì¼€ì´ì…˜ í•¨ìˆ˜
+	* íŒŒë¼ë¯¸í„°ëŠ” ë¦¬í”Œë¦¬ì¼€ì´íŠ¸ ë˜ê¸° ì´ì „ì˜ ì†ì„± ê°’
 	*/
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldValue);
@@ -197,12 +197,15 @@ protected:
 	virtual void OnRep_Luck(const FGameplayAttributeData& OldValue);
 
 private:
-	// ÇÃ·¹ÀÌ¾î ±âº» ÀÌµ¿ ¼Óµµ (°ÔÀÓ ½ÃÀÛ ½Ã ÇÑ ¹ø Ä³½Ì)
+	// í”Œë ˆì´ì–´ ê¸°ë³¸ ì´ë™ ì†ë„ (ê²Œì„ ì‹œì‘ ì‹œ í•œ ë²ˆ ìºì‹±)
 	float DefaultMovementSpeed = 0.f;
 	
-	// ÇÃ·¹ÀÌ¾î ±âº» È¹µæ ¹İ°æ (°ÔÀÓ ½ÃÀÛ ½Ã ÇÑ ¹ø Ä³½Ì)
+	// í”Œë ˆì´ì–´ ê¸°ë³¸ íšë“ ë°˜ê²½ (ê²Œì„ ì‹œì‘ ì‹œ í•œ ë²ˆ ìºì‹±)
 	float DefaultPickupRadius = 0.f;
 
-	// ÀÌÀü ÃÖ´ë Ã¼·Â Ä³½Ã
+	// ì´ì „ í˜„ì¬ ì²´ë ¥ ìºì‹œ
+	float CachedOldHealth = 0.f;
+
+	// ì´ì „ ìµœëŒ€ ì²´ë ¥ ìºì‹œ
 	float CachedOldMaxHealth = 0.f;
 };

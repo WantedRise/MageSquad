@@ -7,14 +7,14 @@
 #include "MSTeamMemberWidget.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/18
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/18
  *
- * ÇÃ·¹ÀÌ¾î HUD¿¡ Ç¥½ÃµÇ´Â ÆÀ ¸â¹öµéÀÇ µ¥ÀÌÅÍ À§Á¬
- * - ÆÀ¿ø Ã¼·Â¹Ù
- * - ÆÀ¿ø ¾ÆÀÌÄÜ
- * - ÆÀ¿ø ÀÌ¸§
- * - ÆÀ¿ø ½ºÅ³ ¸ñ·Ï
+ * í”Œë ˆì´ì–´ HUDì— í‘œì‹œë˜ëŠ” íŒ€ ë©¤ë²„ë“¤ì˜ ë°ì´í„° ìœ„ì ¯
+ * - íŒ€ì› ì²´ë ¥ë°”
+ * - íŒ€ì› ì•„ì´ì½˜
+ * - íŒ€ì› ì´ë¦„
+ * - íŒ€ì› ìŠ¤í‚¬ ëª©ë¡
  */
 UCLASS()
 class MAGESQUAD_API UMSTeamMemberWidget : public UUserWidget
@@ -22,30 +22,29 @@ class MAGESQUAD_API UMSTeamMemberWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// HUD µ¥ÀÌÅÍ °»½Å ÇÔ¼ö
-	/** HUDDataComponent·ÎºÎÅÍ °ªÀ» ÀĞ¾î UI¸¦ °»½Å */
+	// HUD ë°ì´í„° ê°±ì‹  í•¨ìˆ˜ (HUDDataComponentë¡œë¶€í„° ê°’ì„ ì½ì–´ UIë¥¼ ê°±ì‹ )
 	void UpdateFromHUDData(const class UMSHUDDataComponent* HUDData);
 
-	// Á÷Á¢ °ªÀ¸·Î °»½ÅÇÏ´Â ÇÔ¼ö
+	// ì§ì ‘ ê°’ìœ¼ë¡œ ê°±ì‹ í•˜ëŠ” í•¨ìˆ˜
 	void UpdateHealth(float InHealth, float InMaxHealth);
 	void UpdateName(const FText& InName);
 	void UpdatePortrait(UTexture2D* InPortrait);
 
 private:
-	// Ã¼·Â ºñÀ² °è»ê ÇÔ¼ö
+	// ì²´ë ¥ ë¹„ìœ¨ ê³„ì‚° í•¨ìˆ˜
 	static float CalcHealthPct(float InHealth, float InMaxHealth);
 
 protected:
 	/* ======================== BindWidget ======================== */
-	// ÆÀ¿ø Ã¼·Â ¹Ù À§Á¬
+	// íŒ€ì› ì²´ë ¥ ë°” ìœ„ì ¯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UProgressBar> TeamHealthBarWidget;
 
-	// ÆÀ¿ø ÀÌ¸§ ÅØ½ºÆ® À§Á¬
+	// íŒ€ì› ì´ë¦„ í…ìŠ¤íŠ¸ ìœ„ì ¯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UTextBlock> TeamNameTextWidget;
 
-	// ÆÀ¿ø ¾ÆÀÌÄÜ À§Á¬
+	// íŒ€ì› ì•„ì´ì½˜ ìœ„ì ¯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UImage> TeamPortraitIconWidget;
 	/* ======================== BindWidget ======================== */

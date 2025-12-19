@@ -7,22 +7,28 @@
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 
+#include "Kismet/GameplayStatics.h"
+#include "GameplayTagsManager.h"
+
 #include "Types/MageSquadTypes.h"
 
 UMSGC_PlayerBlinkStart::UMSGC_PlayerBlinkStart()
 {
+	// GameplayCue Tag ë°”ì¸ë”©
+	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	GameplayCueTag = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
 }
 
 bool UMSGC_PlayerBlinkStart::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
 	if (!MyTarget || !StartNiagara) return false;
 
-	// ½ºÆù À§Ä¡/È¸Àü°ª ±¸ÇÏ±â
+	// ìŠ¤í° ìœ„ì¹˜/íšŒì „ê°’ êµ¬í•˜ê¸°
 	const FVector SpawnLocation = ResolveSpawnLocation(MyTarget, Parameters);
 	const FRotator SpawnRotation = ResolveSpawnRotation(MyTarget);
 	const FLinearColor Color = ResolveLinearColor(Parameters);
 
-	// ³ªÀÌ¾Æ°¡¶ó ½ºÆù
+	// ë‚˜ì´ì•„ê°€ë¼ ìŠ¤í°
 	UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 		MyTarget->GetWorld(),
 		StartNiagara,
@@ -40,7 +46,7 @@ bool UMSGC_PlayerBlinkStart::OnExecute_Implementation(AActor* MyTarget, const FG
 
 FVector UMSGC_PlayerBlinkStart::ResolveSpawnLocation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-	// Ability¿¡¼­ Params.LocationÀ» ³Ö¾îÁá´Ù¸é ±× À§Ä¡°¡ ¿ì¼±
+	// Abilityì—ì„œ Params.Locationì„ ë„£ì–´ì¤¬ë‹¤ë©´ ê·¸ ìœ„ì¹˜ê°€ ìš°ì„ 
 	if (!Parameters.Location.IsNearlyZero())
 	{
 		return Parameters.Location;
