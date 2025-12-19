@@ -22,7 +22,7 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialFinder(TEXT("/Game/Level/Materials/Lobby/Widget3DPassThrough.Widget3DPassThrough"));
 	if (MaterialFinder.Succeeded())
 	{
-		LobbyPlayerEntryWidgetComponent->SetMaterial(0, MaterialFinder.Object);
+		Widget3DPassThroughMaterial = MaterialFinder.Object;
 	}
 }
 
@@ -34,6 +34,8 @@ void AMSLobbyCharacter::BeginPlay()
 
 	if (LobbyPlayerEntryWidgetComponent)
 	{
+		LobbyPlayerEntryWidgetComponent->SetMaterial(0, Widget3DPassThroughMaterial);
+	
 		LobbyPlayerEntryWidgetComponent->InitWidget();
 
 		LobbyPlayerEntryWidget = Cast<UMSLobbyPlayerEntryWidget>(LobbyPlayerEntryWidgetComponent->GetWidget());

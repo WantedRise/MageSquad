@@ -52,6 +52,9 @@ public:
 
 protected:
 	void InitializeLobbyCharacterFromPlayerState();
+	
+    UPROPERTY()
+    TObjectPtr<UMaterial> Widget3DPassThroughMaterial;
 
 protected:
 	// 로비 캐릭터 머리 위에 표시되는 플레이어 정보 UI 컴포넌트

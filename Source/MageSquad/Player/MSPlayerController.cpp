@@ -56,12 +56,11 @@ void AMSPlayerController::BeginPlay()
 		{
 			PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
 		}
-    
-		// ASC로 초기화 - 이것만 호출하면 끝!
-		if (UAbilitySystemComponent* ASC = Cast<AMSPlayerCharacter>(GetPawn())->GetAbilitySystemComponent())
-		{
-			PlayerViewModel->InitializeWithASC(ASC);
-		}
+		
+		// if (UAbilitySystemComponent* ASC = Cast<AMSPlayerCharacter>(GetPawn())->GetAbilitySystemComponent())
+		// {
+		// 	PlayerViewModel->InitializeWithASC(ASC);
+		// }
 	}
 }
 
