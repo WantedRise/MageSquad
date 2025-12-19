@@ -7,30 +7,36 @@
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 
+#include "Kismet/GameplayStatics.h"
+#include "GameplayTagsManager.h"
+
 #include "Types/MageSquadTypes.h"
 
 UMSGC_PlayerBlinkEnd::UMSGC_PlayerBlinkEnd()
 {
+	// GameplayCue Tag ë°”ì¸ë”©
+	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	GameplayCueTag = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
 }
 
 bool UMSGC_PlayerBlinkEnd::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
 	if (!MyTarget) return false;
 
-	// µÑ Áß ÇÏ³ª¶óµµ ÀÖÀ¸¸é ½ÇÇà
+	// ë‘˜ ì¤‘ í•˜ë‚˜ë¼ë„ ìˆìœ¼ë©´ ì‹¤í–‰
 	if (!EndNiagaraA && !EndNiagaraB) return false;
 
-	// ½ºÆù À§Ä¡/È¸Àü°ª ±¸ÇÏ±â
+	// ìŠ¤í° ìœ„ì¹˜/íšŒì „ê°’ êµ¬í•˜ê¸°
 	const FVector SpawnLocation = ResolveSpawnLocation(MyTarget, Parameters);
 	const FRotator SpawnRotation = ResolveSpawnRotation(MyTarget);
 	const FLinearColor Color = ResolveLinearColor(Parameters);
 
-	// ³ªÀÌ¾Æ°¡¶ó ½ºÆù
+	// ë‚˜ì´ì•„ê°€ë¼ ìŠ¤í°
 	if (EndNiagaraA)
 	{
 		UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAtLocation(MyTarget->GetWorld(), EndNiagaraA, SpawnLocation, SpawnRotation);
 		
-		// ÆÄ¶ó¹ÌÅÍ ¼³Á¤
+		// íŒŒë¼ë¯¸í„° ì„¤ì •
 		Niagara->SetVectorParameter(TEXT("Blink_End"), SpawnLocation);
 		//Niagara->SetColorParameter(TEXT("Blink_Color"), Color);
 	}
@@ -38,7 +44,7 @@ bool UMSGC_PlayerBlinkEnd::OnExecute_Implementation(AActor* MyTarget, const FGam
 	{
 		UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAtLocation(MyTarget->GetWorld(), EndNiagaraB, SpawnLocation, SpawnRotation);
 		
-		// ÆÄ¶ó¹ÌÅÍ ¼³Á¤
+		// íŒŒë¼ë¯¸í„° ì„¤ì •
 		Niagara->SetVectorParameter(TEXT("Blink_End"), SpawnLocation);
 		//Niagara->SetColorParameter(TEXT("Blink_Color"), Color);
 	}
@@ -48,7 +54,7 @@ bool UMSGC_PlayerBlinkEnd::OnExecute_Implementation(AActor* MyTarget, const FGam
 
 FVector UMSGC_PlayerBlinkEnd::ResolveSpawnLocation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-	// Ability¿¡¼­ Params.LocationÀ» ³Ö¾îÁá´Ù¸é ±× À§Ä¡°¡ ¿ì¼±
+	// Abilityì—ì„œ Params.Locationì„ ë„£ì–´ì¤¬ë‹¤ë©´ ê·¸ ìœ„ì¹˜ê°€ ìš°ì„ 
 	if (!Parameters.Location.IsNearlyZero())
 	{
 		return Parameters.Location;

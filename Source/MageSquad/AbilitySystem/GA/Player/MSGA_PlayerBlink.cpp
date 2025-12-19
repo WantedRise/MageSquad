@@ -14,33 +14,33 @@ UMSGA_PlayerBlink::UMSGA_PlayerBlink()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-	// ¾îºô¸®Æ¼ ÅÂ±× ¼³Á¤
+	// ì–´ë¹Œë¦¬í‹° íƒœê·¸ ì„¤ì •
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(MSGameplayTags::Player_Ability_Blink);
 	SetAssetTags(TagContainer);
 
-	// Æ®¸®°Å ÀÌº¥Æ® ÅÂ±× ¼³Á¤ (Gameplay Event·Î È°¼ºÈ­)
+	// íŠ¸ë¦¬ê±° ì´ë²¤íŠ¸ íƒœê·¸ ì„¤ì • (Gameplay Eventë¡œ í™œì„±í™”)
 	FAbilityTriggerData Trigger;
 	Trigger.TriggerTag = FGameplayTag(MSGameplayTags::Player_Event_Blink);
 	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(Trigger);
 
-	// GameplayCue ÅÂ±× ¼³Á¤
-	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
-	Cue_BlinkStart = TagsMgr.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
-	Cue_BlinkEnd = TagsMgr.RequestGameplayTag(FName("GameplayCue.Player.Blink.End"), false);
+	// GameplayCue íƒœê·¸ ì„¤ì •
+	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	Cue_BlinkStart = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
+	Cue_BlinkEnd = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Blink.End"), false);
 }
 
 void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	// ¾îºô¸®Æ¼¸¦ È°¼ºÈ­ÇØµµ µÇ´ÂÁö °Ë»ç
+	// ì–´ë¹Œë¦¬í‹°ë¥¼ í™œì„±í™”í•´ë„ ë˜ëŠ”ì§€ ê²€ì‚¬
 	if (!CheckAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
-	// ASC ¹× Owner Character °¡Á®¿À±â
+	// ASC ë° Owner Character ê°€ì ¸ì˜¤ê¸°
 	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
 	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (!ASC || !Character)
@@ -49,7 +49,7 @@ void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
-	// Á¡¸ê ½Ãµµ
+	// ì ë©¸ ì‹œë„
 	const bool bSuccess = PerformBlink(Character, ASC);
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, !bSuccess);
@@ -57,13 +57,13 @@ void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 bool UMSGA_PlayerBlink::CheckAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	// ¾×ÅÍ À¯È¿¼º °Ë»ç
+	// ì•¡í„° ìœ íš¨ì„± ê²€ì‚¬
 	if (!ActorInfo || !ActorInfo->AvatarActor.IsValid()) return false;
 
-	// ¼­¹ö¿¡¼­¸¸ ·ÎÁ÷ ¼öÇà
+	// ì„œë²„ì—ì„œë§Œ ë¡œì§ ìˆ˜í–‰
 	if (!ActorInfo->IsNetAuthority()) return false;
 
-	// ÄÚ½ºÆ® ¹× ÄğÅ¸ÀÓ °Ë»ç
+	// ì½”ìŠ¤íŠ¸ ë° ì¿¨íƒ€ì„ ê²€ì‚¬
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) return false;
 
 	return true;
@@ -73,34 +73,34 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 {
 	check(Character);
 
-	// Á¡¸ê ½ÃÀÛ À§Ä¡ / Á¡¸ê µµÂø À§Ä¡
+	// ì ë©¸ ì‹œì‘ ìœ„ì¹˜ / ì ë©¸ ë„ì°© ìœ„ì¹˜
 	const FVector StartLocation = Character->GetActorLocation();
 	const FVector DesiredLocation = ComputeDesiredLocation(Character);
 
-	// ½ÃÀÛ VFX Àç»ı (GameplayCue)
+	// ì‹œì‘ VFX ì¬ìƒ (GameplayCue)
 	ExecuteCue(ASC, Cue_BlinkStart, StartLocation);
 
 	FVector FinalLocation = DesiredLocation;
 
-	// Á¡¸ê °¡´ÉÇÑ À§Ä¡ Ã£±â
+	// ì ë©¸ ê°€ëŠ¥í•œ ìœ„ì¹˜ ì°¾ê¸°
 	if (!ResolveFinalLocation(Character, StartLocation, DesiredLocation, FinalLocation))
 	{
-		// ÀÌµ¿ ºÒ°¡ ½Ã false ¹İÈ¯
+		// ì´ë™ ë¶ˆê°€ ì‹œ false ë°˜í™˜
 		return false;
 	}
 
-	// ÀÌµ¿ ¹æÇâ È¸Àü°ª
+	// ì´ë™ ë°©í–¥ íšŒì „ê°’
 	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
 
-	// TeleportTo¸¦ ÅëÇØ ÀÌµ¿
-	// TeleportTo´Â ¼­¹ö¿¡¼­ ½ÇÇàÇÏ¸é Ä³¸¯ÅÍ ÀÌµ¿ÀÌ ³×Æ®¿öÅ©·Î º¹Á¦µÊ
+	// TeleportToë¥¼ í†µí•´ ì´ë™
+	// TeleportToëŠ” ì„œë²„ì—ì„œ ì‹¤í–‰í•˜ë©´ ìºë¦­í„° ì´ë™ì´ ë„¤íŠ¸ì›Œí¬ë¡œ ë³µì œë¨
 	const bool bTeleported = Character->TeleportTo(FinalLocation, FacingRot, false, false);
 	if (!bTeleported)
 	{
 		return false;
 	}
 
-	// Á¾·á VFX Àç»ı (GameplayCue)
+	// ì¢…ë£Œ VFX ì¬ìƒ (GameplayCue)
 	ExecuteCue(ASC, Cue_BlinkEnd, Character->GetActorLocation());
 	return true;
 }
@@ -112,7 +112,7 @@ FVector UMSGA_PlayerBlink::ComputeDesiredLocation(const ACharacter* Character) c
 	FVector CursorLocation;
 	FVector CursorDirection;
 
-	// Ä¿¼­ ¹æÇâ ¹× À§Ä¡ ±¸ÇÏ±â
+	// ì»¤ì„œ ë°©í–¥ ë° ìœ„ì¹˜ êµ¬í•˜ê¸°
 	if (GetCurrentActorInfo()->IsNetAuthority())
 	{
 		if (AMSPlayerController* PC = Cast<AMSPlayerController>(GetCurrentActorInfo()->PlayerController.Get()))
@@ -122,13 +122,13 @@ FVector UMSGA_PlayerBlink::ComputeDesiredLocation(const ACharacter* Character) c
 		}
 	}
 
-	// Á¡¸ê ÃÖ´ë °Å¸®·Î ÀÌµ¿
+	// ì ë©¸ ìµœëŒ€ ê±°ë¦¬ë¡œ ì´ë™
 	float A = FVector::Dist(Character->GetActorLocation(), Character->GetActorLocation() + BlinkDistance);
 
-	// Ä¿¼­ À§Ä¡·Î ÀÌµ¿
+	// ì»¤ì„œ ìœ„ì¹˜ë¡œ ì´ë™
 	float B = FVector::Dist(Character->GetActorLocation(), CursorLocation);
 
-	// Á¡¸ê ÃÖ´ë °Å¸®¿Í Ä¿¼­ À§Ä¡ Áß¿¡¼­ ´õ °¡±î¿î À§Ä¡·Î ÀÌµ¿
+	// ì ë©¸ ìµœëŒ€ ê±°ë¦¬ì™€ ì»¤ì„œ ìœ„ì¹˜ ì¤‘ì—ì„œ ë” ê°€ê¹Œìš´ ìœ„ì¹˜ë¡œ ì´ë™
 	return Character->GetActorLocation() + CursorDirection * FMath::Min(A, B);;
 }
 
@@ -136,17 +136,17 @@ bool UMSGA_PlayerBlink::ResolveFinalLocation(ACharacter* Character, const FVecto
 {
 	if (!Character) return false;
 
-	// ÀÌµ¿ ¹æÇâ È¸Àü°ª
+	// ì´ë™ ë°©í–¥ íšŒì „ê°’
 	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
 
-	// ¸ñÇ¥ ÁöÁ¡À¸·Î ÀÌµ¿ ½Ãµµ
+	// ëª©í‘œ ì§€ì ìœ¼ë¡œ ì´ë™ ì‹œë„
 	if (CanTeleportTo(Character, DesiredLocation, FacingRot))
 	{
 		OutFinalLocation = DesiredLocation;
 		return true;
 	}
 
-	// ÀÌµ¿ ºÒ°¡¸é ±ÙÃ³·Î ÀÌµ¿ °¡´ÉÇÑ ÁöÁ¡ Å½»ö
+	// ì´ë™ ë¶ˆê°€ë©´ ê·¼ì²˜ë¡œ ì´ë™ ê°€ëŠ¥í•œ ì§€ì  íƒìƒ‰
 	return FindNearbyValidLocation(Character, StartLocation, DesiredLocation, OutFinalLocation);
 }
 
@@ -157,7 +157,7 @@ bool UMSGA_PlayerBlink::FindNearbyValidLocation(ACharacter* Character, const FVe
 	UWorld* World = Character->GetWorld();
 	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
 
-	// #1: ¿£Áø ³»Àå ±â´ÉÀ» ÅëÇØ ±ÙÃ³ ÅÚ·¹Æ÷Æ® À§Ä¡ Ã£±â
+	// #1: ì—”ì§„ ë‚´ì¥ ê¸°ëŠ¥ì„ í†µí•´ ê·¼ì²˜ í…”ë ˆí¬íŠ¸ ìœ„ì¹˜ ì°¾ê¸°
 	{
 		FVector Candidate = DesiredLocation;
 		if (World->FindTeleportSpot(Character, Candidate, FacingRot))
@@ -167,7 +167,7 @@ bool UMSGA_PlayerBlink::FindNearbyValidLocation(ACharacter* Character, const FVe
 		}
 	}
 
-	// #2: ¿øÇü Å½»ö: DesiredLocation ÁÖº¯À» ¹İ°æ Áõ°¡½ÃÅ°¸ç »ùÇÃ¸µ
+	// #2: ì›í˜• íƒìƒ‰: DesiredLocation ì£¼ë³€ì„ ë°˜ê²½ ì¦ê°€ì‹œí‚¤ë©° ìƒ˜í”Œë§
 	{
 		const int32 Steps = FMath::Max(4, FallbackAngleSteps);
 		const float MaxR = FMath::Max(0.f, FallbackMaxRadius);
@@ -190,14 +190,14 @@ bool UMSGA_PlayerBlink::FindNearbyValidLocation(ACharacter* Character, const FVe
 		}
 	}
 
-	// #3: ÀÌÁø Å½»ö: ½ÃÀÛ À§Ä¡¿¡¼­ ¸ñÇ¥ À§Ä¡±îÁöÀÇ ¼±ºĞ¿¡¼­ °¡Àå ¸Ö¸® °¡´ÉÇÑ À§Ä¡ Ã£±â
-	// - ¸ñÇ¥ ÁöÁ¡ ÀÚÃ¼´Â ºÒ°¡ÀÌ¹Ç·Î, °¡´ÉÇÑ ÃÖ´ë t¸¦ Ã£´Â ÇüÅÂ
+	// #3: ì´ì§„ íƒìƒ‰: ì‹œì‘ ìœ„ì¹˜ì—ì„œ ëª©í‘œ ìœ„ì¹˜ê¹Œì§€ì˜ ì„ ë¶„ì—ì„œ ê°€ì¥ ë©€ë¦¬ ê°€ëŠ¥í•œ ìœ„ì¹˜ ì°¾ê¸°
+	// - ëª©í‘œ ì§€ì  ìì²´ëŠ” ë¶ˆê°€ì´ë¯€ë¡œ, ê°€ëŠ¥í•œ ìµœëŒ€ të¥¼ ì°¾ëŠ” í˜•íƒœ
 	{
 		float Low = 0.f;
 		float High = 1.f;
 		FVector Best = StartLocation;
 
-		for (int32 Iter = 0; Iter < 10; ++Iter) // 10È¸¸é ÃæºĞÈ÷ ±Ù»ç
+		for (int32 Iter = 0; Iter < 10; ++Iter) // 10íšŒë©´ ì¶©ë¶„íˆ ê·¼ì‚¬
 		{
 			const float Mid = (Low + High) * 0.5f;
 			const FVector Candidate = FMath::Lerp(StartLocation, DesiredLocation, Mid);
@@ -205,15 +205,15 @@ bool UMSGA_PlayerBlink::FindNearbyValidLocation(ACharacter* Character, const FVe
 			if (CanTeleportTo(Character, Candidate, FacingRot))
 			{
 				Best = Candidate;
-				Low = Mid;    // ´õ ¸Ö¸® ½Ãµµ
+				Low = Mid;    // ë” ë©€ë¦¬ ì‹œë„
 			}
 			else
 			{
-				High = Mid;   // ´ú ¸Ö¸®
+				High = Mid;   // ëœ ë©€ë¦¬
 			}
 		}
 
-		// Best°¡ Start¿Í °ÅÀÇ °°À¸¸é ½ÇÆĞ·Î Ã³¸®(¿øÇÏ´Â Á¤Ã¥¿¡ µû¶ó º¯°æ °¡´É)
+		// Bestê°€ Startì™€ ê±°ì˜ ê°™ìœ¼ë©´ ì‹¤íŒ¨ë¡œ ì²˜ë¦¬(ì›í•˜ëŠ” ì •ì±…ì— ë”°ë¼ ë³€ê²½ ê°€ëŠ¥)
 		if (!Best.Equals(StartLocation, 1.0f))
 		{
 			OutLocation = Best;
@@ -228,7 +228,7 @@ bool UMSGA_PlayerBlink::CanTeleportTo(ACharacter* Character, const FVector& Loca
 {
 	if (!Character) return false;
 
-	// bIsATest ¿É¼ÇÀ» true·Î ÇÏ°í ÅÚ·¹Æ÷Æ® ¼öÇà (½ÇÁ¦ ÀÌµ¿ ¾øÀÌ Ã¼Å©ÇÑ ¼öÇà)
+	// bIsATest ì˜µì…˜ì„ trueë¡œ í•˜ê³  í…”ë ˆí¬íŠ¸ ìˆ˜í–‰ (ì‹¤ì œ ì´ë™ ì—†ì´ ì²´í¬í•œ ìˆ˜í–‰)
 	return Character->TeleportTo(Location, Rot, true, false);
 }
 
@@ -236,10 +236,10 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 {
 	if (!ASC || !CueTag.IsValid()) return;
 
-	// ¼­¹ö¿¡¼­¸¸ Cue ½ÇÇà
+	// ì„œë²„ì—ì„œë§Œ Cue ì‹¤í–‰
 	if (!ASC->GetOwner() || !ASC->GetOwner()->HasAuthority()) return;
 
-	// FLinearColor¸¦ ³Ñ±â±â À§ÇØ ÀÌÆåÆ® ÄÁÅØ½ºÆ® ÇÚµé »ı¼º
+	// FLinearColorë¥¼ ë„˜ê¸°ê¸° ìœ„í•´ ì´í™íŠ¸ ì»¨í…ìŠ¤íŠ¸ í•¸ë“¤ ìƒì„±
 	//FGameplayEffectContextHandle CtxHandle = ASC->MakeEffectContext();
 	//FMSGameplayEffectContext* Ctx = static_cast<FMSGameplayEffectContext*>(CtxHandle.Get());
 	//if (Ctx)
@@ -247,11 +247,11 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 	//	Ctx->CueColor = BlinkColor;
 	//}
 
-	// Å¥ ÆÄ¶ó¹ÌÅÍ ¼³Á¤ (Àç»ıÇÒ À§Ä¡, ÆÄ¶ó¹ÌÅÍµéÀ» º¸³»±â À§ÇÔ)
+	// í íŒŒë¼ë¯¸í„° ì„¤ì • (ì¬ìƒí•  ìœ„ì¹˜, íŒŒë¼ë¯¸í„°ë“¤ì„ ë³´ë‚´ê¸° ìœ„í•¨)
 	FGameplayCueParameters Params;
 	Params.Location = Location;
 	//Params.EffectContext = CtxHandle;
 
-	// Cue ½ÇÇà
+	// Cue ì‹¤í–‰
 	ASC->ExecuteGameplayCue(CueTag, Params);
 }

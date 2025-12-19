@@ -10,6 +10,8 @@
 #include "Enemy/AIController/MSBaseAIController.h"
 #include "Interfaces/MSHitReactableInterface.h"
 
+#include "MSGameplayTags.h"
+
 UMSEnemyAttributeSet::UMSEnemyAttributeSet()
 {
 }
@@ -23,6 +25,17 @@ void UMSEnemyAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, MoveSpeed, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, AttackDamage, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, AttackRange, COND_None, REPNOTIFY_Always);
+}
+
+void UMSEnemyAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	// 현재 체력 변경 시, 캐시 저장
+	if (Attribute == GetCurrentHealthAttribute())
+	{
+		CachedOldCurrentHealth = GetCurrentHealth();
+	}
 }
 
 void UMSEnemyAttributeSet::OnRep_CurrentHealth(const FGameplayAttributeData& OldValue)
@@ -57,8 +70,36 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 	// Clamp Health to [0, MaxHealth]
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
+		/*
+		* 김준형
+		* 받은 피해량 출력 이벤트 전달 로직 구현
+		*/
+		{
+			// 현재 체력 및 받은 피해량 계산
+			const float NewHealth = GetCurrentHealth();
+			const float DeltaHealth = NewHealth - CachedOldCurrentHealth;
+
+			// 이벤트 데이터에 이벤트 태그 + 최종 피해량 저장
+			FGameplayEventData Payload;
+			Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
+			Payload.EventMagnitude = DeltaHealth;
+
+			// 치명타 포함 추가 태그 확인
+			// EffectSpec에서 모든 태그를 가져와서 이벤트 데이터에 넘김
+			FGameplayTagContainer SpecAssetTags;
+			Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
+			Payload.InstigatorTags = SpecAssetTags;
+
+			// EffectContext도 함께 전달(가해자/히트 결과 등 확장 가능)
+			Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
+
+			// 받은 피해량 출력 이벤트 전달
+			UAbilitySystemComponent* TargetASC = &Data.Target;
+			TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+		}
+
 		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
-		
+
 		if (GetCurrentHealth() <= 0.f)
 		{
 			if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))

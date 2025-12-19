@@ -1,4 +1,4 @@
-﻿
+
 #include "MSGameplayTags.h"
 
 namespace MSGameplayTags
@@ -43,6 +43,10 @@ namespace MSGameplayTags
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
 
+
+	/* Shared Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_DrawDamageNumber, "Shared.Ability.DrawDamageNumber");
+	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_DrawDamageNumber, "Shared.Event.DrawDamageNumber");
 
 
 	/* TEST Tags */
