@@ -23,7 +23,7 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	
-	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")))
+	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")) || GetWorld()->GetName().Contains(TEXT("MainmenuLevel")))
 	{
 		return;
 	}
@@ -89,6 +89,11 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 	{
 		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
 		                                                TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
+		
+		if (MonsterStaticDataTable)
+		{
+			return;
+		}
 	}
 
 	TArray<FName> RowNames = MonsterStaticDataTable->GetRowNames();
