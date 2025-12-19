@@ -10,13 +10,27 @@ void UGameProgressWidget::NativeConstruct()
     Super::NativeConstruct();
 
 
-    if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
-    {
-        GS->OnProgressUpdated.AddUObject(this,&UGameProgressWidget::OnProgressUpdated);
+    UE_LOG(LogTemp, Warning, TEXT("UGameProgressWidget NativeConstruct"));
 
+    TryInitializGameProgress();
+}
+
+void UGameProgressWidget::TryInitializGameProgress()
+{
+    AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>();
+    if (GS)
+    {
+        GS->OnProgressUpdated.AddUObject(this, &UGameProgressWidget::OnProgressUpdated);
         OnProgressUpdated(GS->GetProgressNormalized());
     }
+    else
+    {
+        // 일정 시간 후 재시도
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UGameProgressWidget::TryInitializGameProgress, 0.2f, false);
+    }
 }
+
 void UGameProgressWidget::OnProgressUpdated(float Normalized)
 {
     if (PB_GameProgress)

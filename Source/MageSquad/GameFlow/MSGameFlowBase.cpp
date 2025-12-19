@@ -48,8 +48,6 @@ void UMSGameFlowBase::SetState(EGameFlowState NewState)
 		return;
 	}
 
-	CurrentState = NewState;
-
     const EGameFlowState PrevState = CurrentState;
 
     //이전 상태 종료 처리

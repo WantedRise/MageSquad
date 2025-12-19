@@ -25,6 +25,7 @@ public:
 	void RequestSpawnFinalBoss();
 	//보스 처치 여부(또는 다른 종료 조건)
 	bool IsFinalBossDefeated() const;
+	void SetupGameFlow();
 	void SetProgressNormalized(float InPercent) { ProgressNormalized = InPercent; };
 	float GetProgressNormalized() const { return ProgressNormalized; };
 	//현재 GameFlow 반환
@@ -36,11 +37,13 @@ public:
 
 	UFUNCTION()
 	void OnRep_ProgressNormalized();
+
 protected:
 
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ProgressNormalized)
 	float ProgressNormalized;
+
 
 	UPROPERTY(VisibleAnywhere)
 	class UMSGameProgressComponent* GameProgress;

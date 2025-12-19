@@ -11,8 +11,6 @@
 void AMSGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
-    
 }
 void AMSGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -34,40 +32,44 @@ bool AMSGameState::IsFinalBossDefeated() const
     return false;
 }
 
+void AMSGameState::SetupGameFlow()
+{
+    if (HasAuthority())
+    {
+        if (nullptr == GameProgress)
+        {
+            GameProgress = NewObject<UMSGameProgressComponent>(this);
+            GameProgress->RegisterComponent();
+        }
+        
+        if (nullptr == GameFlow)
+        {
+            if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
+            {
+                TSubclassOf<UMSGameFlowBase> GameFlowToSet = GM->GetGameFlowClass();
+                if (GameFlowToSet)
+                {
+                    GameFlow = NewObject<UMSGameFlowBase>(this, GameFlowToSet);
+                    GameFlow->Initialize(this);
+                }
+            }
+            else
+            {
+                UE_LOG(LogMSNetwork, Warning, TEXT("Server: GameFlowClass is not set in GameMode"));
+            }
+        }
+    }
+}
+
 // 서버에서 게임 시작을 트리거한다.
 // 실제 진행(시간/미션)은 GameFlow가 담당한다.
 void AMSGameState::StartGame()
 {
-    if (HasAuthority())
-    {
-        UE_LOG(LogMSNetwork, Warning, TEXT("Server: AMSGameState BeginPlay"));
-        GameProgress = NewObject<UMSGameProgressComponent>(this);
-        GameProgress->RegisterComponent();
-
-
-        if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
-        {
-            TSubclassOf<UMSGameFlowBase> GameFlowToSet = GM->GetGameFlowClass();
-            if (GameFlowToSet)
-            {
-                GameFlow = NewObject<UMSGameFlowBase>(this, GameFlowToSet);
-                GameFlow->Initialize(this);
-            }
-        }
-        else
-        {
-            UE_LOG(LogMSNetwork, Warning, TEXT("Server: GameFlowClass is not set in GameMode"));
-        }
-    }
+    SetupGameFlow();
 
     if (!GameFlow)
     {
         UE_LOG(LogMSNetwork, Warning, TEXT("Server: GameFlow is nullptr"));
-        return;
-    }
-    else if (GameFlow->GetCurrentState() != EGameFlowState::None)
-    {
-        UE_LOG(LogMSNetwork, Warning, TEXT("Server: GameFlow is EGameFlowState::None"));
         return;
     }
     
@@ -78,3 +80,5 @@ void AMSGameState::OnRep_ProgressNormalized()
 {
     OnProgressUpdated.Broadcast(ProgressNormalized);
 }
+
+
