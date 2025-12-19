@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "NativeGameplayTags.h"
 
@@ -55,6 +55,9 @@ namespace MSGameplayTags
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Damage);
 
 
+	/* Shared Tags */
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Ability_DrawDamageNumber);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_DrawDamageNumber);
 
 	/* TEST Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TEST_Ability_HpIncrease);
