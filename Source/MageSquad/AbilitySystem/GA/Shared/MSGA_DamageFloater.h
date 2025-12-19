@@ -10,7 +10,7 @@
  * 작성자: 김준형
  * 작성일: 25/12/19
  *
- * 피해를 입으면, 받은 피해량만큼 대미지 플로터를 표시
+ * 체력에 변화가 생기면, 체력 변화량만큼 수치를 표시
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_DamageFloater : public UGameplayAbility

@@ -70,12 +70,16 @@ void UMSDamageFloaterWidget::Start(float InAmount, bool bInCritical, bool bInHea
 	// 이후 프레임은 RenderTranslation만 갱신(레이아웃 비용 최소화)
 	SetRenderTranslation(FVector2D::ZeroVector);
 
-	// 텍스트 기본 세팅
+	// 텍스트 위젯 설정
 	if (DamageTextWidget)
 	{
 		const int32 IntAmount = FMath::Max(0, FMath::RoundToInt(Amount));
 		const FString Prefix = bHeal ? TEXT("+") : TEXT("");
 		DamageTextWidget->SetText(FText::FromString(FString::Printf(TEXT("%s%d"), *Prefix, IntAmount)));
+	
+		if (bHeal) DamageTextWidget->SetColorAndOpacity(HealColor);
+		else if (bCritical) DamageTextWidget->SetColorAndOpacity(CriticalColor);
+		else DamageTextWidget->SetColorAndOpacity(BaseColor);
 	}
 
 	// 뷰포트에 그리기 (이미 그려져있으면 중복 안 함)

@@ -10,7 +10,7 @@
  * 작성자: 김준형
  * 작성일: 25/12/19
  *
- * 피해/회복 발생 시, 로컬 UI로 대미지 숫자를 띄우는 GameplayCue
+ * 체력 변화량만큼 로컬 UI로 대미지 플로터 위젯을 그리는 GameplayCue
  */
 UCLASS()
 class MAGESQUAD_API UMSGC_DamageFloater_Burst : public UGameplayCueNotify_Burst

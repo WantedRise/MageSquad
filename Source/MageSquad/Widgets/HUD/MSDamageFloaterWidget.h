@@ -11,7 +11,7 @@
  * 작성일: 25/12/19
  *
  * 대미지 플로터 위젯
- * 피해를 입으면, 받은 피해량만큼 텍스트를 표시
+ * 체력 변화량만큼 로컬 UI에 텍스트를 표시
  */
 UCLASS()
 class MAGESQUAD_API UMSDamageFloaterWidget : public UUserWidget
@@ -50,6 +50,18 @@ protected:
 	// 최대 풀 사이즈
 	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI")
 	int32 MaxPoolSize = 256;
+
+	// 기본 색상
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI | Color")
+	FSlateColor BaseColor = FSlateColor(FLinearColor(0.823f, 0.745f, 0.571f, 1.0f));
+
+	// 회복 색상
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI | Color")
+	FSlateColor HealColor = FSlateColor(FLinearColor(0.207f, 0.823f, 0.068f, 1.0f));
+
+	// 치명타 색상
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI | Color")
+	FSlateColor CriticalColor = FSlateColor(FLinearColor(0.823f, 0.152f, 0.024f, 1.0f));
 
 private:
 	float Amount = 0.f;			// 대미지 수치
