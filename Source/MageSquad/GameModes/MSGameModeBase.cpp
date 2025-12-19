@@ -12,13 +12,16 @@ void AMSGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
-	{
-		return;
-	}
+	// if (!GetWorld()->GetName().Contains(TEXT("Lvl_Dev_Lim")))
+	// {
+	// 	return;
+	// }
 
 	if (UMSEnemySpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UMSEnemySpawnSubsystem>())
 	{
+		// 풀링 초기화
+		SpawnSystem->InitializePool();
+		
 		// 설정
 		SpawnSystem->SetSpawnInterval(2.0f);
 		SpawnSystem->SetMaxActiveMonsters(10);
