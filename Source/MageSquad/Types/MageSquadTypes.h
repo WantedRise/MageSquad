@@ -64,6 +64,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
+	// 다단히트 데미지 시퀀스: [a, b, c, d] 처럼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TArray<float> DamageSequence;
+
+	// 다단히트 주기(초): 0.2
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float DamageInterval = 0.2f;
+
 	// 데미지 적용 GE
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UGameplayEffect> DamageEffect;
@@ -76,29 +84,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	FVector Direction = FVector::ZeroVector;
 
-	// 중력 영향력 [ 0 = 중력 없음, 1 = 기본 중력 ]
+	// 투사체 속도
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float GravityMultiplayer = 0.f;
-
-	// 초기 발사 속도
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float InitialSpeed = 1000.f;
-
-	// 최대 발사 속도
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float MaxSpeed = 1000.f;
+	float ProjectileSpeed = 1000.f;
 
 	// 생명 주기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float LifeTime = 3.f;
-
-	// 자동 발사 여부
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	bool bIsAutoAttack = true;
-
-	// 자동 발사 주기
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile", meta = (EditCondition = "bIsAutoAttack"))
-	float AutoAttackInterval = 1.f;
 
 	// 관통 횟수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
@@ -151,16 +143,14 @@ public:
 
 		Damage = StaticData->Damage;
 		CriticalChance = StaticData->CriticalChance;
+		DamageSequence = StaticData->DamageSequence;
+		DamageInterval = StaticData->DamageInterval;
 		DamageEffect = StaticData->DamageEffect;
 		Radius = StaticData->Radius;
 		Direction = StaticData->Direction;
+		ProjectileSpeed = StaticData->ProjectileSpeed;
 		InitialSpeed = StaticData->InitialSpeed;
-		GravityMultiplayer = StaticData->GravityMultiplayer;
-		InitialSpeed = StaticData->InitialSpeed;
-		MaxSpeed = StaticData->MaxSpeed;
 		LifeTime = StaticData->LifeTime;
-		bIsAutoAttack = StaticData->bIsAutoAttack;
-		AutoAttackInterval = StaticData->AutoAttackInterval;
 		PenetrationCount = StaticData->PenetrationCount;
 		StaticMesh = StaticData->StaticMesh;
 		Effects = StaticData->Effects;
@@ -179,6 +169,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
+	// 다단히트 데미지 시퀀스: [a, b, c, d] 처럼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TArray<float> DamageSequence;
+
+	// 다단히트 주기(초): 0.2
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float DamageInterval = 0.2f;
+
 	// 데미지 적용 GE
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UGameplayEffect> DamageEffect;
@@ -191,29 +189,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	FVector Direction = FVector::ZeroVector;
 
-	// 중력 영향력 [ 0 = 중력 없음, 1 = 기본 중력 ]
+	// 투사체 속도
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float GravityMultiplayer = 0.f;
-
-	// 초기 발사 속도
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float InitialSpeed = 1000.f;
-
-	// 최대 발사 속도
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	float MaxSpeed = 1000.f;
+	float ProjectileSpeed = 1000.f;
 
 	// 생명 주기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float LifeTime = 3.f;
-
-	// 자동 발사 여부
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	bool bIsAutoAttack = true;
-
-	// 자동 발사 주기
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile", meta = (EditCondition = "bIsAutoAttack"))
-	float AutoAttackInterval = 1.f;
 
 	// 관통 횟수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")

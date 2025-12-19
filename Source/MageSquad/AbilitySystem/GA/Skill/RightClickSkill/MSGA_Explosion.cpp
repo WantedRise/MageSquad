@@ -5,6 +5,8 @@
 #include "AbilitySystemComponent.h"
 #include "MSGameplayTags.h"
 #include "Player/MSPlayerController.h"
+#include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaPeriodic.h"
+#include "MSFunctionLibrary.h"
 
 UMSGA_Explosion::UMSGA_Explosion()
 {
@@ -26,10 +28,15 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	SkillID = CurrentSkillID;
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	SkillDamage = SkillDataRow.SkillDamage;
+
 	CoolTime = SkillDataRow.CoolTime;
 	Range = SkillDataRow.Range;
-	
+	for (auto& Damage : DamageSequence)
+	{
+		Damage *= SkillDataRow.SkillDamage;
+	}
+
+
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	AMSPlayerController* PC = Cast<AMSPlayerController>(ActorInfo->PlayerController.Get());
 	if (!Avatar || !PC)
@@ -41,14 +48,43 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	// 서버가 알고 있는 커서 위치
 	const FVector ExplosionLocation = PC->GetServerCursor();
 
-	FGameplayCueParameters Params;
-	Params.Location = ExplosionLocation;
-	Params.RawMagnitude = Range;
-	
-	GetAbilitySystemComponentFromActorInfo()->ExecuteGameplayCue(
-		MSGameplayTags::GameplayCue_Skill_Explosion,
-		Params
+	// 서버에서만 실제 스폰/판정
+	if (!Avatar->HasAuthority())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	// 투사체 데이터 없으면 종료
+	if (!ProjectileDataClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] ProjectileDataClass is null"), *GetName());
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	// RuntimeData 생성
+	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
+
+	// RuntimeData 설정
+	const FTransform SpawnTM(FRotator::ZeroRotator, ExplosionLocation);
+	RuntimeData.Radius = Range;
+	RuntimeData.LifeTime = 0.f;
+	RuntimeData.DamageEffect = DamageEffect;
+	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaPeriodic::StaticClass();
+	RuntimeData.DamageSequence = DamageSequence;
+	RuntimeData.DamageInterval = DamageInterval;
+
+	// 공격 스폰
+	UMSFunctionLibrary::LaunchProjectile(
+		this,
+		ProjectileDataClass,
+		RuntimeData,
+		SpawnTM,
+		Avatar,
+		Cast<APawn>(Avatar)
 	);
-	
+
+
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
