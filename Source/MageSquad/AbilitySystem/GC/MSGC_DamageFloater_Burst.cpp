@@ -11,11 +11,6 @@
 
 UMSGC_DamageFloater_Burst::UMSGC_DamageFloater_Burst()
 {
-	// GameplayCue Tag 바인딩
-	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
-	GameplayCueTag = TagsManager.RequestGameplayTag(FName("GameplayCue.UI.DamageFloater"), false);
-
-	CriticalTag = FGameplayTag();
 }
 
 bool UMSGC_DamageFloater_Burst::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const

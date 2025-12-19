@@ -6,20 +6,33 @@
 #include "MSGameFlowBase.h"
 #include "MSGameFlowPvE.generated.h"
 
-/**
- * 
- */
+/*
+* 작성자: 이상준
+* 작성일: 2025-12-19
+*
+* PvE 전용 게임 진행 흐름(Game Flow)을 정의하는 클래스.
+*  
+*  - 시간 경과에 따른 상태 전환 (예: 플레이 -> 미션 -> 플레이 -> 보스 등장)
+*  - 미션 완료 이벤트 수신 및 결과에 따른 흐름 제어
+*  - GameFlowBase를 상속하여 PvP / PvE / Coop 등 확장 가능 구조 유지
+*  - GameState에 귀속되어 서버 권한 하에서만 동작 (서버에서만 존재)
+*
+*/
 UCLASS(Blueprintable)
 class MAGESQUAD_API UMSGameFlowPvE : public UMSGameFlowBase
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(class AMSGameState* InOwnerGameState) override;
-	virtual void TickFlow(float DeltaSeconds) override;
+	//PvE 전용 이벤트 및 초기 상태 설정
+	virtual void Initialize(class AMSGameState* InOwnerGameState, float InTotalGameTime) override;
+	//미션 시작, 보스 준비 등 트리거 처리
 	virtual void OnEnterState(EGameFlowState NewState) override;
+	//상태 종료 시 필요한 후처리
 	virtual void OnExitState(EGameFlowState PreState) override;
+	//게임 흐름을 실제로 시작시키는 진입점
 	virtual void Start() override;
+	//지정된 시간 후 이벤트를 발생시키는 타이머 등록 함수
 	void RegisterTimeEvent(EGameFlowState EventType, float TriggerTime);
 
 	void OnGameEvent(EGameFlowState InEventType);

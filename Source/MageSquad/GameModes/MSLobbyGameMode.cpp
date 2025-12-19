@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GameModes/MSLobbyGameMode.h"
@@ -52,18 +52,23 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 void AMSLobbyGameMode::HandleReadyCountdownFinished()
 {
     UE_LOG(LogTemp, Warning, TEXT("Lobby -> GameLevel ServerTravel"));
-    //호스트 로딩창 띄우기
-    if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
-    {
-        LevelManager->ShowLoadingWidget();
-    }
-
     //클라이언트들에게 로딩창 띄우라고 명령
     if (AMSLobbyGameState* LobbyGS = Cast<AMSLobbyGameState>(GameState))
     {
         LobbyGS->Multicast_ShowLoadingScreen();
     }
-    GetWorld()->ServerTravel(TEXT("LSJTestGame?listen"));
+
+    //호스트 로딩창 띄우기
+    if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+    {
+        LevelManager->ShowLoadingWidget();
+        GetWorld()->ServerTravel(LevelManager->GetGameLevelURL());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem is nullptr"));
+    }
+    
 }
 
 

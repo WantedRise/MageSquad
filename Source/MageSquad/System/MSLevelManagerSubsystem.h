@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -24,8 +24,10 @@ public:
 
 public:
     void TravelToLoadingLevel();
+    void TravelToGameLevel();
     void HostGameAndTravelToLobby();
 
+    FString GetGameLevelURL() { return GameLevelURL; }
     void ShowLoadingWidget();
     void HideLoadingWidget();
     void OnMapLoaded(UWorld* World, const UWorld::InitializationValues IVS);
@@ -39,4 +41,6 @@ private:
     FString LobbyLevelURL;
     UPROPERTY(VisibleAnywhere)
     FString LoadingLevelURL;
+    UPROPERTY(VisibleAnywhere)
+    FString GameLevelURL;
 };
