@@ -90,7 +90,7 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
 		                                                TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
 		
-		if (MonsterStaticDataTable)
+		if (!MonsterStaticDataTable)
 		{
 			return;
 		}
