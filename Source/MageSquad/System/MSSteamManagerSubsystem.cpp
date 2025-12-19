@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "System/MSSteamManagerSubsystem.h"
@@ -62,6 +62,16 @@ void UMSSteamManagerSubsystem::CreateSteamSession(bool bIsLAN, int32 MaxPlayers)
 {
 	if (SessionInterface.IsValid())
 	{
+
+		FOnlineSession* CurrentSession = SessionInterface->GetNamedSession(SESSION_NAME_GAME);
+		//현재 참여중
+		if (CurrentSession != nullptr)
+		{
+			
+			UE_LOG(LogTemp, Log, TEXT("Player is already in the InviteResult session (ID: %s)."), *CurrentSession->GetSessionIdStr());
+			return;
+		}
+
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bIsLANMatch = false;
 		SessionSettings.bUsesPresence = true;

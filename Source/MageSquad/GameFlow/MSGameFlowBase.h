@@ -15,7 +15,7 @@
 *
 * - 게임의 현재 진행 상태(EGameFlowState)를 보관
 * - GameState를 소유자로 하여 서버 기준으로 흐름을 제어
-* - 모드(PvE / PvP / Event)에 따라 상속 클래스로 교체 가능
+* - 게임모드 블루프린트에서 선택하여 모드(PvE / PvP)에 따라 게임규칙 정해짐
 *
 */
 UCLASS(Blueprintable)
@@ -24,7 +24,7 @@ class MAGESQUAD_API UMSGameFlowBase : public UObject
 	GENERATED_BODY()
 	
 public:
-	virtual void Initialize(class AMSGameState* InOwnerGameState);
+	virtual void Initialize(class AMSGameState* InOwnerGameState, float InTotalGameTime);
 	virtual void TickFlow(float DeltaSeconds);
 	virtual void Start();
 	EGameFlowState GetCurrentState() const { return CurrentState; }

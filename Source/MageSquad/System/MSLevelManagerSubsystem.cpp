@@ -43,7 +43,14 @@ void UMSLevelManagerSubsystem::TravelToGameLevel()
 
 void UMSLevelManagerSubsystem::HostGameAndTravelToLobby()
 {
-    UGameplayStatics::OpenLevel(GetWorld(), FName(LobbyLevelURL));
+	UWorld* CurrentWorld = GetWorld();
+	if (CurrentWorld)
+	{
+		CurrentWorld->ServerTravel(LobbyLevelURL);
+	}
+	
+
+    //UGameplayStatics::OpenLevel(GetWorld(), FName(LobbyLevelURL));
 }
 
 void UMSLevelManagerSubsystem::ShowLoadingWidget()

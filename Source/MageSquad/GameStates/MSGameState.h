@@ -37,7 +37,6 @@ public:
 
 	UFUNCTION()
 	void OnRep_ProgressNormalized();
-
 protected:
 
 protected:

@@ -50,7 +50,7 @@ void AMSGameState::SetupGameFlow()
                 if (GameFlowToSet)
                 {
                     GameFlow = NewObject<UMSGameFlowBase>(this, GameFlowToSet);
-                    GameFlow->Initialize(this);
+                    GameFlow->Initialize(this, GM->GetTotalGameTime());
                 }
             }
             else
