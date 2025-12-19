@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GameFlow/MSGameFlowPvE.h"
@@ -13,10 +13,7 @@ void UMSGameFlowPvE::Initialize(AMSGameState* InOwnerGameState)
 	
 	bIsBossDefeated = false;
 	SetState(EGameFlowState::None);
-
-	//이벤트 등록
-
-	//
+	GameProgress->OnGameTimeReached.AddUObject(this, &UMSGameFlowPvE::OnTimeCheckpoint);
 }
 
 void UMSGameFlowPvE::TickFlow(float DeltaSeconds)
@@ -108,6 +105,11 @@ void UMSGameFlowPvE::HandleMissionFinished(int32 MissionId, bool bSuccess)
 	{
 		//보상처리 및 SetState Play로 전환
 	}
+}
+
+void UMSGameFlowPvE::OnTimeCheckpoint()
+{
+	UE_LOG(LogMSNetwork, Warning, TEXT("Server : Success Last Checkpoint"));
 }
 
 int32 UMSGameFlowPvE::SelectRandomMissionId()

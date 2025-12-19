@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Components/MSGameProgressComponent.h"
@@ -25,6 +25,7 @@ void UMSGameProgressComponent::BeginPlay()
 void UMSGameProgressComponent::Initialize(float InTotalGameTime)
 {
     TotalGameTime = InTotalGameTime;
+    ElapsedGameTime = 0.0f;
 }
 
 void UMSGameProgressComponent::StartProgress()
@@ -47,6 +48,7 @@ void UMSGameProgressComponent::StartProgress()
 void UMSGameProgressComponent::StopProgress()
 {
     GetWorld()->GetTimerManager().ClearTimer(ProgressTimerHandle);
+    bRunning = false;
 }
 
 float UMSGameProgressComponent::GetNormalizedProgress() const
@@ -56,16 +58,26 @@ float UMSGameProgressComponent::GetNormalizedProgress() const
         return 0.f;
     }
 
-    return FMath::Clamp(
-        OwnerGameState->GetElapsedGameTime() / TotalGameTime,
-        0.f,
-        1.f
-    );
+    return FMath::Clamp(ElapsedGameTime / TotalGameTime,0.f,1.f);
 }
 
 void UMSGameProgressComponent::TickProgress()
 {
-    if (!bRunning || NextCheckpointIndex >= TimeCheckpoints.Num())
+    if (!bRunning)
         return;
-    OwnerGameState->AddElapsedGameTime(1.f);
+    ElapsedGameTime += 1.f;
+
+    float Normalized = ElapsedGameTime / TotalGameTime;
+
+    if (OwnerGameState)
+    {
+        OwnerGameState->SetProgressNormalized(Normalized);
+        OwnerGameState->OnRep_ProgressNormalized();
+    }
+
+    if (1.0f <= Normalized)
+    {
+        bRunning = false;
+        OnGameTimeReached.Broadcast();
+    }
 }

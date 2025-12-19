@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GameModes/MSGameMode.h"
@@ -11,6 +11,7 @@
 #include "GameStates/MSGameState.h"
 #include "System/MSSteamManagerSubsystem.h"
 #include <Player/MSPlayerState.h>
+#include "MageSquad.h"
 
 void AMSGameMode::BeginPlay()
 {
@@ -45,8 +46,14 @@ void AMSGameMode::TryStartGame()
 	for (APlayerState* PS : GameState->PlayerArray)
 	{
 		AMSPlayerState* MSPS = Cast<AMSPlayerState>(PS);
-		if (!MSPS || !MSPS->IsUIReady())
+		if (!MSPS)
 		{
+			MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSPlayerState == null"));
+			return;
+		}
+		else if (!MSPS->IsUIReady())
+		{
+			MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSPlayerState IsUIReady"));
 			return;
 		}
 	}
