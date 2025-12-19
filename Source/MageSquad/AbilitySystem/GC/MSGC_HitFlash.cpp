@@ -8,10 +8,10 @@
 
 UMSGC_HitFlash::UMSGC_HitFlash()
 {
-	const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
-	GameplayCueTag = TagsMgr.RequestGameplayTag(
-		FName("GameplayCue.HitFlash")
-	);
+	//const UGameplayTagsManager& TagsMgr = UGameplayTagsManager::Get();
+	//GameplayCueTag = TagsMgr.RequestGameplayTag(
+	//	FName("GameplayCue.HitFlash")
+	//);
 }
 
 bool UMSGC_HitFlash::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const

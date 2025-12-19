@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSGA_SkillBase.h"
@@ -17,7 +17,7 @@ void UMSGA_SkillBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	// 데이터테이블 불러오기
 	if (!SkillDataTable)
 	{
-		static const TCHAR* SkillDTPath = TEXT("/Game/Data/Skill/DA_SkillData.DA_SkillData");
+		static const TCHAR* SkillDTPath = TEXT("/Game/Data/Skill/DT_SkillData.DT_SkillData");
 
 		UDataTable* LoadedTable = LoadObject<UDataTable>(nullptr, SkillDTPath);
 		if (!LoadedTable)
