@@ -13,7 +13,8 @@
 				"GameplayAbilities",
 				"AIModule",
 				"UMG",
-				"CoreUObject"
+				"CoreUObject",
+				"ModelViewViewModel"
 			]
 		}
 	],
