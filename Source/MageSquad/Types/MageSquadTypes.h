@@ -149,7 +149,6 @@ public:
 		Radius = StaticData->Radius;
 		Direction = StaticData->Direction;
 		ProjectileSpeed = StaticData->ProjectileSpeed;
-		InitialSpeed = StaticData->InitialSpeed;
 		LifeTime = StaticData->LifeTime;
 		PenetrationCount = StaticData->PenetrationCount;
 		StaticMesh = StaticData->StaticMesh;
