@@ -15,8 +15,8 @@
 UMSGC_PlayerBlinkEnd::UMSGC_PlayerBlinkEnd()
 {
 	// GameplayCue Tag 바인딩
-	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
-	GameplayCueTag = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
+	//const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	//GameplayCueTag = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Blink.Start"), false);
 }
 
 bool UMSGC_PlayerBlinkEnd::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
