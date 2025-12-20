@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameplayEffectTypes.h"
+#include "SkillData/MSSkillDataRow.h"
 #include "MageSquadTypes.generated.h"
 
 /**
@@ -13,17 +14,38 @@
  * MageSquad에 사용될 여러 타입 구조체들을 정의하는 클래스
  */
 
+
  /**
   * 작성자: 김준형
   * 작성일: 25/12/15
   *
-  * 플레이어 시작 어빌리티 / 게임플레이 이펙트 구조체
-  * Abilities : 플레이어가 소유하게 될 UGameplayAbility 클래스 목록
-  * Effects   : 시작 시 한 번 적용되는 UGameplayEffect 클래스 목록
+  * 플레이어 시작 스킬 데이터
+  * [스킬 어빌리티 / 스킬ID / 스킬 레벨]
   */
+USTRUCT(BlueprintType)
+struct MAGESQUAD_API FStartSkillData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<class UGameplayAbility> SkillAbilty;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 SkillId = 0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 SkillLevel = 1;
+};
 
 
-
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/15
+ *
+ * 플레이어 시작 어빌리티 / 게임플레이 이펙트 구조체
+ * Abilities : 플레이어가 소유하게 될 UGameplayAbility 클래스 목록
+ * Effects   : 시작 시 한 번 적용되는 UGameplayEffect 클래스 목록
+ */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FPlayerStartAbilityData
 {
@@ -31,11 +53,15 @@ struct MAGESQUAD_API FPlayerStartAbilityData
 
 public:
 	// 플레이어가 시작 시 부여받는 어빌리티 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom | StartUp")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
 	TArray<TSubclassOf<class UGameplayAbility>> Abilties;
 
+	// 시작 스킬 데이터 목록
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
+	TArray<FStartSkillData> StartSkillDatas;
+
 	// 플레이어가 시작 시 한 번 적용되는 게임플레이 이펙트 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom | StartUp")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
 };
 
@@ -47,7 +73,6 @@ public:
  * 발사체의 원본 데이터
  * 각 발사체마다 생성
  */
-
 class UMSProjectileBehaviorBase;
 
 UCLASS(BlueprintType, Blueprintable)
@@ -223,6 +248,77 @@ public:
 	// Behavior 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
+};
+
+
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/20
+ *
+ * 스킬 슬롯 런타임 데이터
+ * 스킬 데이터테이블의 행을 캐싱하여, 어빌리티가 매번 DT를 조회하지 않도록 함
+ * GameplayEvent의 OptionalObject로 전달하기 위해 UObject를 상속
+ */
+UCLASS(BlueprintType)
+class MAGESQUAD_API UMSSkillSlotRuntimeData : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	// 스킬 행 초기화 함수
+	void InitFromRow(const FMSSkillDataRow& InRow, int32 InSlotIndex)
+	{
+		SkillRow = InRow;
+		SlotIndex = InSlotIndex;
+	}
+
+public:
+	// 어떤 슬롯에서 발생한 이벤트인지(디버깅/확장용)
+	UPROPERTY(BlueprintReadOnly)
+	int32 SlotIndex = INDEX_NONE;
+
+	// 해당 스킬의 최종 데이터(레벨 반영된 한 행)
+	UPROPERTY(BlueprintReadOnly)
+	FMSSkillDataRow SkillRow;
+};
+
+
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/20
+ *
+ * 네트워크로 전달되는 최소 스킬 슬롯 정보
+ * 플레이어는 "어떤 스킬을 갖고 있는지"와 "쿨타임"만 알고, 실제 스킬 동작은 어빌리티에서 처리
+ */
+USTRUCT(BlueprintType)
+struct MAGESQUAD_API FMSPlayerSkillSlotNet
+{
+	GENERATED_BODY()
+
+	// 스킬 종류 (1: 자동(패시브), 2: 좌클릭 액티브, 3: 우클릭 액티브)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	int32 SkillType = 0;
+
+	// 스킬 ID. 스킬 식별용
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	int32 SkillID = 0;
+
+	// 스킬 레벨
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	int32 SkillLevel = 0;
+
+	// 스킬 어빌리티를 활성화할 이벤트 태그
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	FGameplayTag SkillEventTag;
+
+	// 스킬의 원본 쿨타임
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	float BaseCoolTime = 0.f;
+
+	bool IsValid() const
+	{
+		return SkillID > 0 && SkillEventTag.IsValid();
+	}
 };
 
 

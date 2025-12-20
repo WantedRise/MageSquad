@@ -11,6 +11,20 @@
 #include "MSPlayerCharacter.generated.h"
 
 /**
+ * 스킬 슬롯 인덱스(고정)
+ */
+UENUM(BlueprintType)
+enum class EMSSkillSlotIndex : uint8
+{
+	ActiveLeft = 0,		// 좌클릭 액티브 스킬 슬롯
+	ActiveRight = 1,	// 우클릭 액티브 스킬 슬롯
+	Passive01 = 2,		// 패시브 스킬 1번
+	Passive02 = 3,		// 패시브 스킬 2번
+	Passive03 = 4,		// 패시브 스킬 3번
+	Passive04 = 5,		// 패시브 스킬 4번
+};
+
+/**
  * 작성자: 김준형
  * 작성일: 25/12/08
  *
@@ -103,10 +117,15 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void CameraZoom(const FInputActionValue& Value);
 
-	// 스킬 입력 함수
+	// 이동 스킬 함수
 	void UseBlink(const FInputActionValue& Value);
+
+	// 액티브 스킬 입력 함수
 	void UseLeftSkill(const FInputActionValue& Value);
 	void UseRightSkill(const FInputActionValue& Value);
+
+	// 액티브 스킬(좌/우) 사용 요청 함수 (로컬 입력 -> 서버 RPC)
+	void RequestUseActiveSkill(EMSSkillSlotIndex SlotIndex);
 
 
 	// TEST: HP 증가/감소 함수
@@ -148,50 +167,94 @@ private:
 
 
 	/*****************************************************
-	* Attack Section
+	* Skill Slot Section
 	*****************************************************/
 public:
-	// 자동 공격 시작 함수
-	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
-	void StartAutoAttack();
+	/**
+	 * 스킬 획득 함수 (외부에서 호출)
+	 * 서버에서 호출하는 것을 권장. 클라이언트 호출도 안전하게 ServerRPC로 처리
+	 * SkillType에 따라 슬롯에 장착(패시브: 4칸 중 빈 칸, 액티브: 좌/우 고정)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Custom | Skill")
+	void AcquireSkill(int32 SkillID, int32 SkillLevel = 1);
 
-	// 자동 공격 멈춤 함수
-	UFUNCTION(BlueprintCallable, Category = "Custom | Attack")
-	void StopAutoAttack();
-
-private:
-	// 자동 공격 호출 요청 함수
-	void SetAutoAttackEnabledInternal(bool bEnabled);
-
-	// 자동 공격 호출 함수 (서버 전용)
-	void HandleAutoAttack_Server();
-
-	// 서버에게 자동 공격 호출 요청 ServerRPC
-	UFUNCTION(Server, Reliable)
-	void ServerRPCSetAutoAttackEnabled(bool bEnabled);
+	// 현재 슬롯 정보(OwnerOnly 복제, UI/입력 바인딩 용도)
+	UFUNCTION(BlueprintCallable, Category = "Custom | Skill")
+	const TArray<FMSPlayerSkillSlotNet>& GetSkillSlots() const { return SkillSlots; }
 
 protected:
-	// 자동 공격 주기
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
-	float AutoAttackInterval = 0.6f;
+	// 스킬 슬롯 변경 OnRep 함수
+	UFUNCTION()
+	void OnRep_SkillSlots();
 
-	// 이 값이 true이면, 서버는 폰이 빙의되는 즉시 자동 공격을 활성화 함
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Attack")
-	bool bAutoAttackEnabledOnSpawn = true;
+protected:
+	// 스킬 데이터 테이블
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Skill")
+	TObjectPtr<UDataTable> SkillDataTable;
+
+	// 스킬 슬롯
+	UPROPERTY(ReplicatedUsing = OnRep_SkillSlots)
+	TArray<FMSPlayerSkillSlotNet> SkillSlots;
+	 
+private:
+	// 스킬 슬롯 보정 함수 (배열/런타임 데이터/타이머)
+	void EnsureSkillSlotArrays();
+
+	// 서버에게 스킬 획득을 요청하는 함수 ServerRPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPCAcquireSkill(int32 SkillID, int32 SkillLevel = 1);
+
+	// 서버에게 액티브 스킬 사용을 요청하는 함수 ServerRPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPCUseActiveSkillSlot(uint8 SlotIndex);
+
+	// 액티브 스킬 실제 트리거 함수 (서버 전용)
+	void HandleActiveSkillSlot_Server(int32 SlotIndex);
+
+	// SkillID/Level을 기반으로 DT에서 Row를 찾는 함수
+	bool ResolveSkillRow(int32 SkillID, int32 SkillLevel, FMSSkillDataRow& OutRow) const;
+
+
+	// SkillType에 맞게 슬롯에 장착하는 함수들 (서버 전용)
+	void EquipSkillFromRow_Server(const FMSSkillDataRow& Row);
+	void SetSkillSlot_Server(int32 SlotIndex, const FMSSkillDataRow& Row);
+	int32 FindOrAllocatePassiveSlotIndex_Server(int32 SkillID) const;
+
+
+	// 패시브 스킬 자동 발동 타이머 재구성 함수 (서버 전용)
+	void RebuildPassiveSkillTimers_Server();
+
+	// 패시브 스킬 실제 자동 발동 트리거 함수 (서버 전용)
+	void HandlePassiveSkillTimer_Server(int32 SlotIndex);
+
+
+	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 속성 변경 델리게이트 바인딩 함수
+	void BindCooldownReductionDelegate();
+
+	// 속성 변경에 따른 콜백 함수
+	void OnCooldownReductionChanged(const FOnAttributeChangeData& Data);
+	
+	// 최종 자동 사용 주기 계산 함수
+	float ComputeFinalInterval(float BaseCoolTime) const;
+
+	// 스스로 스킬을 획득하는 함수
+	void AcquireSkillSelf();
 
 private:
-	// 자동 공격 상태
-	// 서버 상태. 클라이언트가 필요에 따라 UI를 반영할 수 있도록 복제
-	UPROPERTY(Replicated)
-	bool bAutoAttackEnabled = false;
+	// 패시브 스킬 타이머 핸들(4개)
+	TArray<FTimerHandle> PassiveSkillTimerHandles;
 
-	// 자동 공격 타이머
-	FTimerHandle AutoAttackTimerHandle;
+	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 속성 변경 델리게이트 핸들
+	FDelegateHandle AttributeSetCooldownReductionChangedHandle;
+
+	// 스킬 런타임 데이터 (서버 전용)
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UMSSkillSlotRuntimeData>> SkillRuntimeData;
 
 
 
 	/*****************************************************
-	* Gameplay Event Trigger Section
+	* Non-Skill Ability Section
 	*****************************************************/
 private:
 	// 어빌리티 트리거 함수
@@ -201,26 +264,10 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerRPCTriggerAbilityEvent(FGameplayTag EventTag);
 
-	// 유효성 검사 함수 (태그 유효 여부)
-	bool IsAllowedAbilityEventTag(const FGameplayTag& EventTag) const;
-
-
-
-	/*****************************************************
-	* Gameplay Event Tag Section
-	*****************************************************/
 protected:
-	// 기본 공격 이벤트 태그
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
-	FGameplayTag AttackStartedEventTag;
-
-	// 점멸 이벤트 태그
+	// 이동 스킬 이벤트 태그
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag BlinkEventTag;
-
-	// 패시브 스킬1 이벤트 태그
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
-	FGameplayTag Passive_Skill_01_EventTag;
 
 
 	// TEST: HP 증가/감소 이벤트 태그
@@ -268,10 +315,10 @@ public:
 	bool ApplyGameplayEffectToSelf(TSubclassOf<class UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContextHandle);
 
 	// 플레이어 기본 어빌리티 부여 함수 (서버 전용)
-	void GivePlayerStartAbilities();
+	void GivePlayerStartAbilities_Server();
 
 	// 플레이어 기본 이펙트 적용 함수 (서버 전용)
-	void ApplyPlayerStartEffects();
+	void ApplyPlayerStartEffects_Server();
 
 private:
 	// 실제 인스턴스는 PlayerState가 소유하며, 캐릭터는 포인터만 참조
