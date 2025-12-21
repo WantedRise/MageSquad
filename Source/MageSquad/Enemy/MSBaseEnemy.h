@@ -70,7 +70,7 @@ protected:
 	TArray<TObjectPtr<class UGameplayAbility>> StartAbilities;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_MonsterID)
-	FName CurrentMonsterID;
+	FName CurrentMonsterID = "";
 	
 	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAnimationSet> AnimData;

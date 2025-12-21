@@ -290,7 +290,7 @@ private:
 	// Pool Configuration
 	//~=============================================================================
 	
-	const int32 NormalEnemyPoolSize = 100;
+	const int32 NormalEnemyPoolSize = 10;
 
 	const int32 EliteEnemyPoolSize = 5;
 

@@ -9,7 +9,6 @@
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "AbilitySystemComponent.h"
-#include "MageSquad.h"
 #include "NavigationSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -23,33 +22,18 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	
+	// Commandlet(패키징, 데이터 처리 등) 환경이면 초기화 중단
+	if (IsRunningCommandlet())
+	{
+		return;
+	}
+	
 	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")) || GetWorld()->GetName().Contains(TEXT("MainmenuLevel")))
 	{
 		return;
 	}
 	
-	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
-		return;
-	}
-	
-	// NavSystem 참조 획득
-	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-
-	// DataTable 로드 및 에셋 사전 로딩
 	LoadMonsterDataTable();
-	//PrewarmPools();
-	
-
-	// 풀 사전 생성
-	if (HasAuthority())
-	{
-		PrewarmPools();
-	}
-	
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
-		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
 
 void UMSEnemySpawnSubsystem::Deinitialize()
@@ -88,13 +72,48 @@ void UMSEnemySpawnSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
+void UMSEnemySpawnSubsystem::InitializePool()
+{
+	// Commandlet(패키징, 데이터 처리 등) 환경이면 초기화 중단
+	if (IsRunningCommandlet())
+	{
+		return;
+	}
+	
+	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")) || GetWorld()->GetName().Contains(TEXT("MainmenuLevel")))
+	{
+		return;
+	}
+
+	if (GetWorld()->WorldType != EWorldType::PIE && GetWorld()->WorldType != EWorldType::Game)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SpawnSystem] Not PIE/Game world, skipping initialization"));
+		return;
+	}
+
+	// NavSystem 참조 획득
+	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
+	// DataTable 로드 및 에셋 사전 로딩
+	// LoadMonsterDataTable();
+
+	// 풀 사전 생성 -> 서버에서만
+	if (HasAuthority())
+	{
+		PrewarmPools();
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
+		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
+}
+
 void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
 	if (!MonsterStaticDataTable)
 	{
 		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
 		                                                TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
-		
+
 		if (!MonsterStaticDataTable)
 		{
 			return;
@@ -170,7 +189,7 @@ void UMSEnemySpawnSubsystem::PrewarmPools()
 {
 	// 풀 클래스 설정
 	NormalEnemyPool.EnemyClass = AMSNormalEnemy::StaticClass();
-	NormalEnemyPool.InitialPoolSize = 5;//NormalEnemyPoolSize;
+	NormalEnemyPool.InitialPoolSize = NormalEnemyPoolSize;
 
 	EliteEnemyPool.EnemyClass = AMSEliteEnemy::StaticClass();
 	EliteEnemyPool.InitialPoolSize = EliteEnemyPoolSize;
@@ -195,9 +214,9 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 	for (int32 i = 0; i < Pool.InitialPoolSize; ++i)
 	{
 		FActorSpawnParameters Params;
-		//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		Params.SpawnCollisionHandlingOverride =
-			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
 		// 맵 밖으로 스폰 (비활성 상태)
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
@@ -207,13 +226,13 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		);
 
 		if (Enemy)
-		{   
+		{
 			//  풀링 모드 설정 (AI Controller 생성 방지)
 			if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
 			{
 				NormalEnemy->SetPoolingMode(true);
 			}
-			
+
 			// 스폰 직후 네트워크 등록 강제
 			// if (UWorld* World = GetWorld())
 			// {
@@ -222,10 +241,21 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 			// 		NetDriver->NotifyActorSpawn(Enemy);
 			// 	}
 			// }
-   //  
-			
+			//  
+
 			//Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
-			//DeactivateEnemy(Enemy);
+			UE_LOG(LogTemp, Warning,
+			       TEXT(
+				       "[PrewarmPool] %s | bReplicates: %d | bNetLoadOnClient: %d | bAlwaysRelevant: %d | NetDormancy: %d | Flags: %u"
+			       ),
+			       *Enemy->GetName(),
+			       Enemy->GetIsReplicated(),
+			       Enemy->bNetLoadOnClient,
+			       Enemy->bAlwaysRelevant,
+			       (int32)Enemy->NetDormancy,
+			       (uint32)Enemy->GetFlags()
+			);
+			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
 	}
@@ -428,13 +458,13 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 
 	// 활성화
 	ActivateEnemy(Enemy, Location);
-	
+
 	// 몬스터 ID 설정
 	Enemy->SetMonsterID(MonsterID);
 
 	// DataTable 데이터로 초기화
 	InitializeEnemyFromData(Enemy, MonsterID);
-	
+
 	// Active 풀에 추가
 	Pool->ActiveEnemies.Add(Enemy);
 	EnemyToPoolMap.Add(Enemy, Pool);
@@ -444,7 +474,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 
 	// 사망 이벤트 바인딩
 	BindEnemyDeathEvent(Enemy);
-	
+
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
 	       *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
 
@@ -469,30 +499,30 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No player pawn found"));
 		return false;
 	}
-	
+
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PC)
 	{
 		return false;
 	}
-	
+
 	// 카메라 정보
 	FVector CameraLocation;
 	FRotator CameraRotation;
 	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-	
+
 	// 뷰포트 크기
 	int32 ViewportSizeX, ViewportSizeY;
 	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
 
 	constexpr int32 MaxAttempts = 30; // 위치 찾는 시도 횟수
 	constexpr float OffScreenMargin = 1000.f; // 화면 밖 여유 거리
-	
+
 	for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
 	{
 		// 화면 가장자리 4방향 중 랜덤 선택
 		FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
-		
+
 		// 스크린 좌표를 월드 좌표로 역변환
 		FVector WorldLocation, WorldDirection;
 		if (PC->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
@@ -540,7 +570,7 @@ bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(APlayerController* PC, co
 
 		// 화면 경계에 마진 추가 (선택적 - 완전히 화면 밖을 원할 경우)
 		constexpr float Margin = 100.0f; // 픽셀 단위
-        
+
 		// 화면 내부에 있는지 체크
 		if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
 			ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
@@ -563,41 +593,41 @@ bool UMSEnemySpawnSubsystem::IsLocationVisibleToAnyPlayer(const FVector& Locatio
 			return true; // 한 명이라도 보고 있으면 true
 		}
 	}
-    
+
 	return false; // 모든 플레이어 시야 밖
 }
 
 FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY,
-	float Margin)
+                                                           float Margin)
 {
 	// 4개 가장자리 중 하나 선택: 0=상단, 1=하단, 2=좌측, 3=우측
 	int32 Edge = FMath::RandRange(0, 3);
-    
+
 	FVector2D ScreenPoint;
-    
+
 	switch (Edge)
 	{
 	case 0: // 상단
 		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
 		ScreenPoint.Y = -Margin;
 		break;
-        
+
 	case 1: // 하단
 		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
 		ScreenPoint.Y = ViewportSizeY + Margin;
 		break;
-        
+
 	case 2: // 좌측
 		ScreenPoint.X = -Margin;
 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
 		break;
-        
+
 	case 3: // 우측
 		ScreenPoint.X = ViewportSizeX + Margin;
 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
 		break;
 	}
-    
+
 	return ScreenPoint;
 }
 
@@ -628,15 +658,16 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
-		UE_LOG(LogTemp, Error, TEXT("[EnemySetting : SkeletalMeshSet Success]"));
-	}
 	
+		UE_LOG(LogTemp, Error, TEXT("%s : EnemySetting : SkeletalMeshSet Success"), HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]"));
+	}
+
 
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
 		Enemy->SetAnimData(Data->AnimationSet);
-		UE_LOG(LogTemp, Error, TEXT("[EnemySetting : AnimDataSet Success]"));
+		UE_LOG(LogTemp, Error, TEXT("%s : EnemySetting : AnimDataSet Success"), HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]"));
 	}
 
 	// GAS 속성 초기화
@@ -694,7 +725,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	{
 		return;
 	}
-	
+
 	// 풀링 모드 해제
 	if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
 	{
@@ -705,29 +736,29 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// Enemy->SetActorRotation(FRotator::ZeroRotator);
 	// Enemy->SetActorHiddenInGame(false);
 	// //Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
-    
+
 	// 네트워크 상태 활성화
-	//Enemy->SetNetDormancy(DORM_Awake);
+	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->FlushNetDormancy();
 	Enemy->SetReplicateMovement(true);
-    
+
 	// 위치 설정
 	Enemy->SetActorLocation(Location);
 	Enemy->SetActorRotation(FRotator::ZeroRotator);
-    
+
 	//  가시성/충돌 활성화
 	Enemy->SetActorHiddenInGame(false);
 	Enemy->SetActorEnableCollision(true);
-	
+
 	//  AI Controller 생성 (수동)
 	if (!Enemy->GetController())
 	{
 		Enemy->SpawnDefaultController();
 	}
-    
+
 	// 네트워크 업데이트 강제
 	Enemy->ForceNetUpdate();
-	
+
 	// 디버그 로그
 	// UE_LOG(LogTemp, Error, TEXT("★★★ ActivateEnemy: %s | bReplicates: %d | Dormancy: %d ★★★"),
 	// 	*Enemy->GetName(),
@@ -777,20 +808,31 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		return;
 	}
 
+	Enemy->SetMonsterID(NAME_None);
+	
 	// Hidden 처리
 	Enemy->SetActorHiddenInGame(true);
 	Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
-	
+
 	// Movement 정리
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
 		MovementComp->StopMovementImmediately();
 		MovementComp->Velocity = FVector::ZeroVector;
-		// RVO 비활성화 (다음 활성화 시 재등록됨)
-		MovementComp->SetAvoidanceEnabled(false);
+		
+		// SetAvoidanceEnabled 내부의 ensure(GetCharacterOwner()) 통과를 위함
+		if (MovementComp->GetCharacterOwner() != nullptr)
+		{
+			MovementComp->SetAvoidanceEnabled(false);
+		}
+		else 
+		{
+			// Owner가 없다면 RVO를 직접 끌 수 없으므로, bUseRVOAvoidance 변수를 직접 건드리는 방법도 있습니다.
+			MovementComp->bUseRVOAvoidance = false;
+		}
 	}
-	
+
 	// AI 정지
 	if (AController* Controller = Enemy->GetController())
 	{
@@ -799,16 +841,16 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 			AIController->StopAI();
 		}
 	}
-	
+
 	//  GAS 초기화
 	ResetEnemyGASState(Enemy);
-    
+
 	// 리플리케이션 끄기 (클라이언트에서 사라짐)
 	// Enemy->SetReplicates(false);
-	
+
 	// 위치는 그대로 두거나 원점으로
 	// Enemy->SetActorLocation(FVector(0, 0, 100.0f));  // 선택사항
-    
+
 	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
 	// 	Enemy->GetIsReplicated()
 	// );

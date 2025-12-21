@@ -42,6 +42,9 @@ AMSBaseEnemy::AMSBaseEnemy()
 	bReplicates = true;
 	ACharacter::SetReplicateMovement(true);  // Movement 리플리케이트 (기본값)S
 	bNetLoadOnClient = true;
+	bAlwaysRelevant = true;
+	SetNetCullDistanceSquared(0.f); // 리플레케이션 거리 무한 // 스폰할 때 무한으로
+	SetNetUpdateFrequency(500.f);
 	NetDormancy = DORM_Never;  // 중요: Dormancy 완전 비활성화
     
 	// RVO 설정
@@ -78,6 +81,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 		CollisionDamage = CollisionDamageRef.Class;
 	}
 	
+	// Todo : 패키징에서 에러를 일으키는 코드, 패키징시 지워야함
 	// UE_LOG(LogTemp, Error, TEXT("[Enemy Constructor] %s - NetMode: %d"), 
 	// *GetName(), 
 	// GetWorld() ? (int32)GetWorld()->GetNetMode() : -1);
@@ -93,6 +97,22 @@ void AMSBaseEnemy::BeginPlay()
 		*GetName(),
 		(int32)NetMode,
 		HasAuthority() ? TEXT("Server") : TEXT("Client"));
+	
+	// ENetMode NetMode1 = GetWorld()->GetNetMode();
+	// UE_LOG(LogTemp, Error, TEXT("[Enemy BeginPlay] %s | NetMode: %d | HasAuth: %d | LocalRole: %d | RemoteRole: %d | bReplicates: %d | bHidden: %d"), 
+	// 	*GetName(),
+	// 	(int32)NetMode,
+	// 	HasAuthority(),
+	// 	(int32)GetLocalRole(),
+	// 	(int32)GetRemoteRole(),
+	// 	GetIsReplicated(),
+	// 	IsHidden()
+	// );
+	
+	if (!HasAuthority() && !CurrentMonsterID.IsNone())
+	{
+		OnRep_MonsterID(); 
+	}
 	
 	if (ASC && !ASC->AbilityActorInfo.IsValid())
 	{
@@ -121,7 +141,7 @@ void AMSBaseEnemy::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 bool AMSBaseEnemy::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
 {
 	// 항상 Relevant (풀링된 비활성 액터도 클라이언트에 존재해야 함)
-	UE_LOG(LogTemp, Warning, TEXT("[IsNetRelevantFor] %s called"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("[IsNetRelevantFor] %s called"), *GetName());
 	return true;
 }
 
@@ -168,8 +188,23 @@ void AMSBaseEnemy::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponen
 
 void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
 {
+	if (CurrentMonsterID == NewMonsterID)
+	{
+		return;
+	}
+	
+	UE_LOG(LogTemp, Error, TEXT("[SetMonsterID] %s | Old: %s -> New: %s | HasAuth: %d"), 
+*GetName(),
+*CurrentMonsterID.ToString(),
+*NewMonsterID.ToString(),
+HasAuthority());
+	
 	CurrentMonsterID = NewMonsterID;
-	UE_LOG(LogTemp, Warning, TEXT("Call SetMonsterID: %s"), *CurrentMonsterID.ToString());
+	
+	if (HasAuthority())
+	{
+		ForceNetUpdate();
+	}
 }
 
 void AMSBaseEnemy::SetAnimData(UDA_EnemyAnimationSet* NewAnimData)
@@ -181,6 +216,11 @@ void AMSBaseEnemy::SetAnimData(UDA_EnemyAnimationSet* NewAnimData)
 void AMSBaseEnemy::OnRep_MonsterID()
 {    // 클라이언트에서 MonsterID 변경 시 자동 호출됨!
 	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: %s"), *CurrentMonsterID.ToString());
+	
+	if ( CurrentMonsterID == NAME_None)
+	{
+		return;
+	}
 	
 	// Subsystem에서 캐시된 데이터 가져오기
 	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(this))
