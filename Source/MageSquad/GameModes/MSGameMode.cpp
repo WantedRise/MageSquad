@@ -17,17 +17,27 @@ void AMSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (UMSEnemySpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UMSEnemySpawnSubsystem>())
-	{
-		// 설정
-		SpawnSystem->SetSpawnInterval(2.0f);
-		SpawnSystem->SetMaxActiveMonsters(10);
-		SpawnSystem->SetSpawnRadius(1500.0f);
-		SpawnSystem->SetSpawnCountPerTick(10);
+	// 10초 뒤에 실행될 람다 함수나 별도의 함수를 예약합니다.
+	FTimerHandle SpawnDelayTimerHandle;
+	GetWorldTimerManager().SetTimer(SpawnDelayTimerHandle, [this]()
+		{
+			if (UMSEnemySpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UMSEnemySpawnSubsystem>())
+			{
+				// 오브젝트 풀링 시키기
+				SpawnSystem->InitializePool();
 
-		// 스폰 시작
-		SpawnSystem->StartSpawning();
-	}
+				// 설정
+				SpawnSystem->SetSpawnInterval(2.0f);
+				SpawnSystem->SetMaxActiveMonsters(10);
+				SpawnSystem->SetSpawnRadius(1500.0f);
+				SpawnSystem->SetSpawnCountPerTick(10);
+
+				// 10초 뒤 스폰 시작
+				SpawnSystem->StartSpawning();
+
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
+			}
+		}, 10.0f, false); // 10.0f는 지연 시간(초), false는 반복 여부
 }
 
 void AMSGameMode::SetupGameFlow()
