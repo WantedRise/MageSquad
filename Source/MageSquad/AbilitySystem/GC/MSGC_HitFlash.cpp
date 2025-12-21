@@ -35,7 +35,8 @@ bool UMSGC_HitFlash::OnExecute_Implementation(AActor* Target, const FGameplayCue
 	}
 
 	// Dynamic Material Instance 생성 또는 재사용
-	TArray<UMaterialInstanceDynamic*> DynamicMaterials;
+	// 약참조(WeakObjectPtr) 배열을 생성
+	TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> WeakDynamicMaterials;
 	for (int32 i = 0; i < Mesh->GetNumMaterials(); ++i)
 	{
 		UMaterialInstanceDynamic* DMI = Cast<UMaterialInstanceDynamic>(Mesh->GetMaterial(i));
@@ -46,23 +47,27 @@ bool UMSGC_HitFlash::OnExecute_Implementation(AActor* Target, const FGameplayCue
 
 		if (DMI)
 		{
-			DynamicMaterials.Add(DMI);
+			WeakDynamicMaterials.Add(DMI);
 			// HitFlash 적용
 			DMI->SetScalarParameterValue(MaterialParameterName, 1.0f);
 		}
 	}
 
+	// 이름 변수를 값으로 복사 (this를 캡처하지 않기 위함)
+	FName LocalParamName = MaterialParameterName;
+	
 	// 타이머로 리셋
 	FTimerHandle TimerHandle;
 	Target->GetWorldTimerManager().SetTimer(
 		TimerHandle,
-		[DynamicMaterials, this]()
+		[WeakDynamicMaterials, LocalParamName]()
 		{
-			for (UMaterialInstanceDynamic* DMI : DynamicMaterials)
+			for (auto& WeakDMI : WeakDynamicMaterials)
 			{
-				if (DMI)
+				// 타이머가 실행될 때 객체가 아직 유효한지 확인
+				if (WeakDMI.IsValid())
 				{
-					DMI->SetScalarParameterValue(MaterialParameterName, 0.0f);
+				   WeakDMI->SetScalarParameterValue(LocalParamName, 0.0f);
 				}
 			}
 		},
