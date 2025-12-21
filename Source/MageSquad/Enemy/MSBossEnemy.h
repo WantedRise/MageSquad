@@ -14,4 +14,10 @@ class MAGESQUAD_API AMSBossEnemy : public AMSBaseEnemy
 {
 	GENERATED_BODY()
 	
+public:
+	AMSBossEnemy();
+	
+public:
+	virtual void BeginPlay() override;	
+	
 };

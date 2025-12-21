@@ -12,6 +12,7 @@
 #include "System/MSSteamManagerSubsystem.h"
 #include <Player/MSPlayerState.h>
 #include "MageSquad.h"
+#include "Utils/MSUtils.h"
 
 void AMSGameMode::BeginPlay()
 {
@@ -21,7 +22,7 @@ void AMSGameMode::BeginPlay()
 	FTimerHandle SpawnDelayTimerHandle;
 	GetWorldTimerManager().SetTimer(SpawnDelayTimerHandle, [this]()
 		{
-			if (UMSEnemySpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UMSEnemySpawnSubsystem>())
+			if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(GetWorld()))
 			{
 				// 오브젝트 풀링 시키기
 				SpawnSystem->InitializePool();
@@ -36,8 +37,12 @@ void AMSGameMode::BeginPlay()
 				SpawnSystem->StartSpawning();
 
 				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
+				
+				// Test Boss Spawn 코드 입니다. 이 코드로 보스 스폰 가능합니다.
+				SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS, FVector(0.f, 0.f,0.f));
 			}
 		}, 10.0f, false); // 10.0f는 지연 시간(초), false는 반복 여부
+	
 }
 
 
