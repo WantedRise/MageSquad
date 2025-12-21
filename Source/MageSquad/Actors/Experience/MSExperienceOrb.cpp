@@ -33,11 +33,7 @@ AMSExperienceOrb::AMSExperienceOrb()
 	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
 	CollisionComp->SetupAttachment(RootComp);
 	CollisionComp->InitBoxExtent(FVector(32.f));
-	CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CollisionComp->SetCollisionObjectType(ECC_WorldDynamic);
-	CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	// 플레이어 콜리전 채널과만 오버랩 설정
-	CollisionComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+	CollisionComp->SetCollisionProfileName(TEXT("MSExperienceOrb"));
 	CollisionComp->SetGenerateOverlapEvents(true);
 }
 
@@ -158,4 +154,13 @@ void AMSExperienceOrb::DeferredDestroy_Server()
 		DestroyDelay,
 		false
 	);
+}
+
+void AMSExperienceOrb::OnRep_Collected()
+{
+	if (CollisionComp)
+	{
+		CollisionComp->SetGenerateOverlapEvents(false);
+		CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }

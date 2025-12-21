@@ -195,7 +195,7 @@ protected:
 	// 스킬 슬롯
 	UPROPERTY(ReplicatedUsing = OnRep_SkillSlots)
 	TArray<FMSPlayerSkillSlotNet> SkillSlots;
-	 
+
 private:
 	// 스킬 슬롯 보정 함수 (배열/런타임 데이터/타이머)
 	void EnsureSkillSlotArrays();
@@ -233,12 +233,9 @@ private:
 
 	// 속성 변경에 따른 콜백 함수
 	void OnCooldownReductionChanged(const FOnAttributeChangeData& Data);
-	
+
 	// 최종 자동 사용 주기 계산 함수
 	float ComputeFinalInterval(float BaseCoolTime) const;
-
-	// 스스로 스킬을 획득하는 함수
-	void AcquireSkillSelf();
 
 private:
 	// 패시브 스킬 타이머 핸들(4개)
@@ -329,6 +326,34 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<class UMSPlayerAttributeSet> AttributeSet;
+
+
+
+	/*****************************************************
+	* Experience Section
+	*****************************************************/
+protected:
+	// 경험치 픽업 범위가 경험치 오브와 겹칠 때 호출 (서버 전용)
+	UFUNCTION()
+	void OnExperiencePickupSphereBeginOverlap_Server(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 속성 변경 델리게이트 바인딩 함수
+	void UpdateExperiencePickupRange();
+
+	// 속성 변경에 따른 콜백 함수
+	void OnPickupRangeModChanged(const FOnAttributeChangeData& Data);
+
+protected:
+	// 기본 경험치 픽업 반경
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Experience")
+	float BaseExperiencePickupRange = 250.f;
+
+	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 속성 변경 델리게이트 핸들
+	FDelegateHandle AttributeSetPickupRangeModChangedHandle;
+
+	// 경험치 오브를 감지하는 픽업 콜리전
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Experience")
+	TObjectPtr<class USphereComponent> ExperiencePickupCollision;
 
 
 

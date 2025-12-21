@@ -38,6 +38,10 @@ protected:
 	// 지연 Destroy 함수 (서버 전용)
 	void DeferredDestroy_Server();
 
+	// 중복 획득 방지용 플래그 변경 OnRep 함수
+	UFUNCTION()
+	void OnRep_Collected();
+
 public:
 	// 경험치 오브가 제공하는 기본 경험치(보정 전)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Experience")
@@ -80,7 +84,7 @@ public:
 
 private:
 	// 중복 획득 방지용 플래그 (서버에서만 true로 설정)
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_Collected)
 	bool bCollected = false;
 
 	// 연출 진행 여부

@@ -9,6 +9,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -21,6 +22,8 @@
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "MSGameplayTags.h"
+
+#include "Actors/Experience/MSExperienceOrb.h"
 
 #include "DataAssets/Player/DA_PlayerStartUpData.h"
 
@@ -79,6 +82,13 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
 	StaffMesh->bReceivesDecals = false;
 
+	ExperiencePickupCollision = CreateDefaultSubobject<USphereComponent>(TEXT("ExperiencePickupCollision"));
+	ExperiencePickupCollision->SetupAttachment(RootComponent);
+	ExperiencePickupCollision->InitSphereRadius(BaseExperiencePickupRange);
+	ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ExperiencePickupCollision->SetGenerateOverlapEvents(false);
+	ExperiencePickupCollision->SetCollisionProfileName(TEXT("MSPlayer"));
+
 	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
 
 	// 액터 태그 설정
@@ -99,6 +109,25 @@ void AMSPlayerCharacter::PostInitializeComponents()
 void AMSPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	/*
+	* 경험치 픽업 판정 설정
+	* 경험치 픽업 판정은 서버에서만 수행
+	*/
+	if (HasAuthority() && ExperiencePickupCollision)
+	{
+		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		ExperiencePickupCollision->SetGenerateOverlapEvents(true);
+		ExperiencePickupCollision->OnComponentBeginOverlap.AddDynamic(this, &AMSPlayerCharacter::OnExperiencePickupSphereBeginOverlap_Server);
+
+		// 획득 반경 보정 속성 변경 델리게이트 바인딩
+		UpdateExperiencePickupRange();
+	}
+	else if (ExperiencePickupCollision)
+	{
+		ExperiencePickupCollision->SetGenerateOverlapEvents(false);
+		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -778,6 +807,57 @@ void AMSPlayerCharacter::ApplyPlayerStartEffects_Server()
 			ApplyGameplayEffectToSelf(DefaultEffectClass, EffectContext);
 		}
 	}
+}
+
+void AMSPlayerCharacter::OnExperiencePickupSphereBeginOverlap_Server(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!HasAuthority()) return;
+
+	// 경험치 오브 액터로 캐스팅
+	AMSExperienceOrb* Orb = Cast<AMSExperienceOrb>(OtherActor);
+	if (!Orb) return;
+
+	// 서버에서만 수집 처리(오브 내부에서 중복 획득 방지)
+	Orb->Collect_Server(this);
+}
+
+void AMSPlayerCharacter::UpdateExperiencePickupRange()
+{
+	if (!HasAuthority()) return;
+
+	if (!AbilitySystemComponent || !AttributeSet) return;
+
+	// 중복 바인딩 방지
+	if (AttributeSetPickupRangeModChangedHandle.IsValid())
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPickupRangeModAttribute())
+			.Remove(AttributeSetPickupRangeModChangedHandle);
+		AttributeSetPickupRangeModChangedHandle.Reset();
+	}
+
+	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 속성 변경 델리게이트 바인딩
+	AttributeSetPickupRangeModChangedHandle = AbilitySystemComponent
+		->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPickupRangeModAttribute())
+		.AddUObject(this, &AMSPlayerCharacter::OnPickupRangeModChanged);
+}
+
+void AMSPlayerCharacter::OnPickupRangeModChanged(const FOnAttributeChangeData& Data)
+{
+	if (!HasAuthority()) return;
+
+	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 가져오기
+	float PickupRangeMod = 0.f;
+	if (AttributeSet)
+	{
+		PickupRangeMod = AttributeSet->GetPickupRangeMod();
+	}
+
+	// 기본 경험치 픽업 반경 * 획득 반경 보정 비율로 최종 경험치 픽업 반경 계산
+	const float FinalExperiencePickupRange
+		= BaseExperiencePickupRange * (1.f + PickupRangeMod);
+
+	// 경험치 픽업 반경 업데이트
+	ExperiencePickupCollision->SetSphereRadius(FinalExperiencePickupRange);
 }
 
 void AMSPlayerCharacter::InitPublicHUDData_Server()
