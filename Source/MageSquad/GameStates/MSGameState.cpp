@@ -7,33 +7,32 @@
 #include "MageSquad.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/MSGameProgressComponent.h"
+#include "Components/MSMissionComponent.h"
+AMSGameState::AMSGameState()
+{
+    MissionComponent = CreateDefaultSubobject<UMSMissionComponent>(TEXT("MissionComponent"));
+    //GameProgress = CreateDefaultSubobject<UMSGameProgressComponent>(TEXT("GameProgress"));
+}
 
 void AMSGameState::BeginPlay()
 {
 	Super::BeginPlay();
+
+    
 }
 void AMSGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(AMSGameState, ProgressNormalized);
+    DOREPLIFETIME(AMSGameState, CurrentMissionID);
+    DOREPLIFETIME(AMSGameState, MissionProgress);
+    DOREPLIFETIME(AMSGameState, bMissionSuccess);
 }
 
-void AMSGameState::OnRep_MissionIDs()
+void AMSGameState::HandleMatchIsWaitingToStart()
 {
-
-}
-void AMSGameState::RequestSpawnFinalBoss()
-{
-}
-
-bool AMSGameState::IsFinalBossDefeated() const
-{
-    return false;
-}
-
-void AMSGameState::SetupGameFlow()
-{
+    Super::HandleMatchIsWaitingToStart();
     if (HasAuthority())
     {
         if (nullptr == GameProgress)
@@ -41,39 +40,34 @@ void AMSGameState::SetupGameFlow()
             GameProgress = NewObject<UMSGameProgressComponent>(this);
             GameProgress->RegisterComponent();
         }
-        
-        if (nullptr == GameFlow)
-        {
-            if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
-            {
-                TSubclassOf<UMSGameFlowBase> GameFlowToSet = GM->GetGameFlowClass();
-                if (GameFlowToSet)
-                {
-                    GameFlow = NewObject<UMSGameFlowBase>(this, GameFlowToSet);
-                    GameFlow->Initialize(this, GM->GetTotalGameTime());
-                }
-            }
-            else
-            {
-                UE_LOG(LogMSNetwork, Warning, TEXT("Server: GameFlowClass is not set in GameMode"));
-            }
-        }
     }
 }
 
-// 서버에서 게임 시작을 트리거한다.
-// 실제 진행(시간/미션)은 GameFlow가 담당한다.
-void AMSGameState::StartGame()
+void AMSGameState::SetCurrentMissionID(int32 NewMissionID)
 {
-    SetupGameFlow();
-
-    if (!GameFlow)
-    {
-        UE_LOG(LogMSNetwork, Warning, TEXT("Server: GameFlow is nullptr"));
+    if (!HasAuthority())
         return;
-    }
-    
-    GameFlow->Start();
+
+    CurrentMissionID = NewMissionID;
+    OnMissionChanged.Broadcast(CurrentMissionID);
+}
+
+void AMSGameState::SetMissionProgress(float NewProgress)
+{
+    if (!HasAuthority())
+        return;
+
+    MissionProgress = FMath::Clamp(NewProgress, 0.f, 1.f);
+    OnMissionProgressChanged.Broadcast(MissionProgress);
+}
+
+void AMSGameState::NotifyMissionFinished(bool bSuccess)
+{
+    if (!HasAuthority())
+        return;
+
+    bMissionSuccess = bSuccess;
+    OnMissionFinished.Broadcast(bMissionSuccess);
 }
 
 void AMSGameState::OnRep_ProgressNormalized()
@@ -81,4 +75,17 @@ void AMSGameState::OnRep_ProgressNormalized()
     OnProgressUpdated.Broadcast(ProgressNormalized);
 }
 
+void AMSGameState::OnRep_CurrentMissionID()
+{
+    OnMissionChanged.Broadcast(CurrentMissionID);
+}
 
+void AMSGameState::OnRep_MissionProgress()
+{
+    OnMissionProgressChanged.Broadcast(MissionProgress);
+}
+
+void AMSGameState::OnRep_MissionFinished()
+{
+    OnMissionFinished.Broadcast(bMissionSuccess);
+}

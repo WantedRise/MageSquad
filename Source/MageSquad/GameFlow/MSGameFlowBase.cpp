@@ -11,16 +11,15 @@ void UMSGameFlowBase::Start()
     
 }
 
-void UMSGameFlowBase::Initialize(AMSGameState* InOwnerGameState, float InTotalGameTime)
+void UMSGameFlowBase::Initialize(AMSGameState* InGameState, UDataTable* InTimelineTable)
 {
-    OwnerGameState = InOwnerGameState;
-    GameProgress = OwnerGameState->FindComponentByClass<UMSGameProgressComponent>();
-    if (GameProgress)
-    {
-        //GameProgress->OnGameTimeReached.AddUObject(this,&UMSGameFlowBase::OnGameTimeReached);
-        GameProgress->Initialize(InTotalGameTime);
-    }
-
+    check(InTimelineTable);
+    MissionTimelineTable = InTimelineTable;
+    check(InGameState);
+    GameState = InGameState;
+    GameProgress = GameState->FindComponentByClass<UMSGameProgressComponent>();
+    check(GameProgress);
+    
     CurrentState = EGameFlowState::None;
 }
 

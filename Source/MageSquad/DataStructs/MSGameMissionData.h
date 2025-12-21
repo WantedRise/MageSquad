@@ -4,21 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "Types/GameMissionTypes.h"
+#include "GameFlow/Mission/MSMissionScript.h"
 #include "MSGameMissionData.generated.h"
 
 /*
  * 작성자 : 이상준
- * 작성일 : 2025/12/17
+ * 작성일 : 2025/12/20
  * 미션 데이터 정보
  */
 
 USTRUCT(BlueprintType)
-struct FMissionData
+struct FMSMissionRow : public FTableRowBase
 {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
-    int32 MissionId;
+    int32 MissionID;
 
     UPROPERTY(EditAnywhere)
     EMissionType MissionType;
@@ -26,9 +27,11 @@ struct FMissionData
     UPROPERTY(EditAnywhere)
     float TimeLimit;
 
+    // UI용 아이콘 (Soft Reference)
     UPROPERTY(EditAnywhere)
-    int32 TargetCount;
-
+    TSoftObjectPtr<class UTexture2D> MissionIcon;
+    
+    //미션용 스크립트
     UPROPERTY(EditAnywhere)
-    TSubclassOf<AActor> TargetActorClass;
+    TSubclassOf<class UMSMissionScript> ScriptClass;
 };

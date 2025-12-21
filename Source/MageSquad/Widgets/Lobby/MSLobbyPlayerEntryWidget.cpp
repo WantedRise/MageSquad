@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Widgets/Lobby/MSLobbyPlayerEntryWidget.h"
@@ -28,10 +28,12 @@ void UMSLobbyPlayerEntryWidget::SetTextReadyStatus(bool bReady)
 		if (bReady)
 		{
 			Text_ReadyStatus->SetText(FText::FromString(TEXT("준비")));
+			Text_ReadyStatus->SetColorAndOpacity(FLinearColor::Yellow);
 		}
 		else
 		{
 			Text_ReadyStatus->SetText(FText::FromString(TEXT("준비되지 않음")));
+			Text_ReadyStatus->SetColorAndOpacity(FLinearColor::Red);
 		}
 	}
 }

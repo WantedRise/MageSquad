@@ -15,13 +15,15 @@ class MAGESQUAD_API UGameProgressWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	virtual void NativeConstruct() override;
-	
+
 protected:
 	UFUNCTION()
 	void TryInitializGameProgress();
 	UFUNCTION()
 	void OnProgressUpdated(float Normalized);
-public:
+private:
+	void HandleMissionChanged(int32 MissionID);
+private:
 	UPROPERTY(meta=(BindWidget))
 	class UProgressEventMarkerWidget* WBP_ProgressIcon_Start;
 	UPROPERTY(meta = (BindWidget))
@@ -34,4 +36,6 @@ public:
 	class UProgressEventMarkerWidget* WBP_ProgressIcon_End;
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* PB_GameProgress;
+
+	int32 CurrentSlotIndex = 0;
 };

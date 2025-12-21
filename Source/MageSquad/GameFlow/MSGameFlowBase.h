@@ -24,7 +24,7 @@ class MAGESQUAD_API UMSGameFlowBase : public UObject
 	GENERATED_BODY()
 	
 public:
-	virtual void Initialize(class AMSGameState* InOwnerGameState, float InTotalGameTime);
+	virtual void Initialize(class AMSGameState* InGameState, class UDataTable* InTimelineTable);
 	virtual void TickFlow(float DeltaSeconds);
 	virtual void Start();
 	EGameFlowState GetCurrentState() const { return CurrentState; }
@@ -36,12 +36,15 @@ protected:
 	virtual void OnEnterState(EGameFlowState NewState);
 	virtual void OnExitState(EGameFlowState PreState);
 
-	class AMSGameState* GetOwnerGameState() const { return OwnerGameState; }
+	class AMSGameState* GetOwnerGameState() const { return GameState; }
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "GameFlow")
 	EGameFlowState CurrentState = EGameFlowState::None;
 	UPROPERTY()
-	class AMSGameState* OwnerGameState = nullptr;
+	class AMSGameState* GameState = nullptr;
 	UPROPERTY()
 	class UMSGameProgressComponent* GameProgress = nullptr;
+	//미션 타임라인 DataTable
+	UPROPERTY(EditDefaultsOnly, Category = "GameFlow")
+	class UDataTable* MissionTimelineTable;
 };

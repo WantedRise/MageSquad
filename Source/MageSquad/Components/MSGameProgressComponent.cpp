@@ -32,10 +32,6 @@ void UMSGameProgressComponent::StartProgress()
 {
     bRunning = true;
 
-    // 예시: 1, 4, 7, 10분 이벤트
-    TimeCheckpoints = { 60.f, 240.f, 420.f, 600.f };
-    NextCheckpointIndex = 0;
-
     GetWorld()->GetTimerManager().SetTimer(
         ProgressTimerHandle,
         this,
@@ -77,7 +73,6 @@ void UMSGameProgressComponent::TickProgress()
 
     if (1.0f <= Normalized)
     {
-        bRunning = false;
-        OnGameTimeReached.Broadcast();
+        StopProgress();
     }
 }

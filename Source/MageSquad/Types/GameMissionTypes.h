@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +7,8 @@
 UENUM(BlueprintType)
 enum class EMissionType : uint8
 {
-	KillElite  UMETA(DisplayName = "KillElite"),
-	ClearPaint UMETA(DisplayName = "ClearPaint"),
+	None			UMETA(DisplayName = "None"),
+	EliteMonster    UMETA(DisplayName = "EliteMonster"),
+	Boss			UMETA(DisplayName = "Boss"),
+	ClearPaint		UMETA(DisplayName = "ClearPaint"),
 };

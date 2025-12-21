@@ -7,16 +7,16 @@
 #include "Components/MSGameProgressComponent.h"
 #include "System/MSLevelManagerSubsystem.h"
 #include "GameModes/MSGameMode.h"
-void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, float InTotalGameTime)
+void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable* InTimelineTable)
 {
-	Super::Initialize(InOwnerGameState, InTotalGameTime);
+	Super::Initialize(InOwnerGameState, InTimelineTable);
 	UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE Initialize Begin"));
 	
-	bIsBossDefeated = false;
-	if (GameProgress)
-	{
-		GameProgress->OnGameTimeReached.AddUObject(this, &UMSGameFlowPvE::OnTimeCheckpoint);
-	}
+
+	static const FString Context(TEXT("PvEGameFlow"));
+	MissionTimelineTable->GetAllRows(Context, MissionTimelineRows);
+	
+	CurrentMissionIndex = 0;
 }
 
 void UMSGameFlowPvE::OnEnterState(EGameFlowState NewState)
@@ -26,7 +26,6 @@ void UMSGameFlowPvE::OnEnterState(EGameFlowState NewState)
 	case EGameFlowState::None:
 		break;
 	case EGameFlowState::Playing:
-		GameProgress->StartProgress();
 		break;
 	case EGameFlowState::Mission:
 		break;
@@ -59,42 +58,55 @@ void UMSGameFlowPvE::OnExitState(EGameFlowState OldState)
 }
 void UMSGameFlowPvE::Start()
 {
-	SetState(EGameFlowState::Playing);
+	//SetState(EGameFlowState::Playing);
+
+	for (const FMissionTimelineRow* Row : MissionTimelineRows)
+	{
+		if (!Row)
+			continue;
+		MissionTriggerTime += Row->TriggerTime;
+		if (Row->MissionID == INDEX_NONE)
+		{
+			//랜덤 실행 //중복방지
+		}
+		else
+		{
+			ScheduleMission(MissionTriggerTime, Row->MissionID);
+		}
+	}
+
+	if (GameProgress && MissionTimelineRows.Num() > 0)
+	{
+		GameProgress->Initialize(MissionTriggerTime);
+	}
+
+	if (GameProgress)
+	{
+		GameProgress->StartProgress();
+	}
 }
 
-void UMSGameFlowPvE::RegisterTimeEvent(EGameFlowState EventType,float TriggerTime)
+void UMSGameFlowPvE::ScheduleMission(float TriggerTime, int32 MissionID)
 {
-	if (!OwnerGameState) return;
+	if (!GameState)
+		return;
 
 	FTimerHandle Handle;
 
-	FTimerDelegate Delegate;
-	Delegate.BindUObject(this, &UMSGameFlowPvE::OnGameEvent, EventType);
+	GameState->GetWorldTimerManager().SetTimer(
+		Handle,
+		[this, MissionID]()
+		{
+			if (GameState)
+			{
+				GameState->SetCurrentMissionID(MissionID);
+			}
+		},
+		TriggerTime,
+		false
+	);
 
-	OwnerGameState->GetWorld()->GetTimerManager().SetTimer(Handle, Delegate, TriggerTime, false);
-	ScheduledEventHandles.Add(Handle);
-}
-
-void UMSGameFlowPvE::OnGameEvent(EGameFlowState InEventType)
-{
-	switch (InEventType)
-	{
-	case EGameFlowState::None:
-		break;
-	case EGameFlowState::Playing:
-		//OwnerGameState->몬스터 스폰너에게 요청
-		break;
-	case EGameFlowState::Mission:
-		TriggerRandomMission();
-		break;
-	case EGameFlowState::Boss:
-		OwnerGameState->RequestSpawnFinalBoss();
-		break;
-	case EGameFlowState::Finished:
-		break;
-	default:
-		break;
-	}
+	MissionTimerHandles.Add(Handle);
 }
 
 void UMSGameFlowPvE::HandleMissionFinished(int32 MissionId, bool bSuccess)
@@ -108,7 +120,7 @@ void UMSGameFlowPvE::HandleMissionFinished(int32 MissionId, bool bSuccess)
 void UMSGameFlowPvE::OnTimeCheckpoint()
 {
 	//호스트 로딩창 띄우기
-	if (UMSLevelManagerSubsystem* LevelManager = OwnerGameState->GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	if (UMSLevelManagerSubsystem* LevelManager = GameState->GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
 	{
 		//LevelManager->ShowLoadingWidget();
 		LevelManager->HostGameAndTravelToLobby();
@@ -125,4 +137,3 @@ void UMSGameFlowPvE::TriggerRandomMission()
 	int32 MissionId = SelectRandomMissionId();
 	//OwnerGameState->GetMissionComponent()->StartMission(MissionId);
 }
-

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MSGameFlowBase.h"
+#include "DataStructs/MSMissionTimeline.h"
 #include "MSGameFlowPvE.generated.h"
 
 /*
@@ -25,17 +26,15 @@ class MAGESQUAD_API UMSGameFlowPvE : public UMSGameFlowBase
 
 public:
 	//PvE 전용 이벤트 및 초기 상태 설정
-	virtual void Initialize(class AMSGameState* InOwnerGameState, float InTotalGameTime) override;
+	virtual void Initialize(class AMSGameState* InOwnerGameState, UDataTable* InTimelineTable) override;
 	//미션 시작, 보스 준비 등 트리거 처리
 	virtual void OnEnterState(EGameFlowState NewState) override;
 	//상태 종료 시 필요한 후처리
 	virtual void OnExitState(EGameFlowState PreState) override;
 	//게임 흐름을 실제로 시작시키는 진입점
 	virtual void Start() override;
-	//지정된 시간 후 이벤트를 발생시키는 타이머 등록 함수
-	void RegisterTimeEvent(EGameFlowState EventType, float TriggerTime);
-
-	void OnGameEvent(EGameFlowState InEventType);
+	//
+	void ScheduleMission(float TriggerTime, int32 MissionID);
 	//미션컴포넌트 OnMissionFinished에 바인드할 함수
 	void HandleMissionFinished(int32 MissionId, bool bSuccess);
 
@@ -44,17 +43,11 @@ private:
 	void OnTimeCheckpoint();
 	int32 SelectRandomMissionId();
 	void TriggerRandomMission();
-
 private:
-	//PvE 튜닝 값(나중에 DataAsset로 빼도 됨)
-	UPROPERTY(EditDefaultsOnly, Category = "GameFlow|PvE")
-	float TimeToEnterQuesting = 30.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "GameFlow|PvE")
-	float TimeToSpawnBoss = 300.f;
-	//보스 처치 여부
-	uint8 bIsBossDefeated = false;
 	//이벤트를 관리하기 위해
 	UPROPERTY()
-	TArray<FTimerHandle> ScheduledEventHandles;
+	TArray<FTimerHandle> MissionTimerHandles;
+	TArray<const FMissionTimelineRow*> MissionTimelineRows;
+	int32 CurrentMissionIndex = 0;
+	float MissionTriggerTime = 0;
 };

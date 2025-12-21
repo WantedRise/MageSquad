@@ -4,6 +4,7 @@
 #include "Widgets/HUD/GameProgressWidget.h"
 #include "Components/ProgressBar.h"
 #include "GameStates/MSGameState.h"
+#include "ProgressEventMarkerWidget.h"
 
 void UGameProgressWidget::NativeConstruct()
 {
@@ -20,6 +21,7 @@ void UGameProgressWidget::TryInitializGameProgress()
     AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>();
     if (GS)
     {
+        GS->OnMissionChanged.AddUObject(this, &UGameProgressWidget::HandleMissionChanged);
         GS->OnProgressUpdated.AddUObject(this, &UGameProgressWidget::OnProgressUpdated);
         OnProgressUpdated(GS->GetProgressNormalized());
     }
@@ -36,5 +38,25 @@ void UGameProgressWidget::OnProgressUpdated(float Normalized)
     if (PB_GameProgress)
     {
         PB_GameProgress->SetPercent(Normalized);
+    }
+}
+
+void UGameProgressWidget::HandleMissionChanged(int32 MissionID)
+{
+    TArray<UProgressEventMarkerWidget*> Slots =
+    {
+        WBP_ProgressIcon_Event_1,
+        WBP_ProgressIcon_Event_2,
+        WBP_ProgressIcon_Event_3,
+        WBP_ProgressIcon_End
+    };
+
+    if (!Slots.IsValidIndex(CurrentSlotIndex))
+        return;
+
+    if (Slots[CurrentSlotIndex])
+    {
+        Slots[CurrentSlotIndex]->SetMissionID(MissionID);
+        ++CurrentSlotIndex;
     }
 }
