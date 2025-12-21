@@ -50,7 +50,8 @@ public:
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
-	
+	// 풀링 모드 제어
+	void SetPoolingMode(bool bInPooling);
 public:
 	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AnimData->AttackAnim;}
 	FORCEINLINE UAnimMontage* GetDeadMontage() const {return AnimData->DeadAnim;}
@@ -58,7 +59,7 @@ public:
 protected:
 	UFUNCTION()
 	void OnRep_MonsterID();
-	
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UMSEnemyAbilitySystemComponent> ASC;
@@ -78,4 +79,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Attack")
 	TSubclassOf<class UGameplayEffect> CollisionDamage;
 	
+	bool bIsInPool = false;
 };

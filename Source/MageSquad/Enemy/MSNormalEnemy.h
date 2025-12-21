@@ -23,11 +23,4 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void PostInitializeComponents() override;	
 
-	// ✅ 추가: 풀링 모드 제어
-	void SetPoolingMode(bool bInPooling);
-	
-private:
-	// ✅ 풀링 중에는 Possess 안 함
-	bool bIsInPool = false;
-
 };

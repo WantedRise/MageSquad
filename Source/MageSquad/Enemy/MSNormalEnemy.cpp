@@ -18,7 +18,7 @@ AMSNormalEnemy::AMSNormalEnemy()
 		AIControllerClass = NormalEnemyControllerRef.Class;
 	}
 	
-	AutoPossessAI = EAutoPossessAI::Disabled;
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	
 	// @Todo : 스케일 조정 나중에 DataTable에서 반영하도록 변경
 	SetActorScale3D(FVector(1.3f,1.3f,1.3f));
@@ -28,11 +28,6 @@ void AMSNormalEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 풀링 중에는 AI Controller 생성 안 함
-	if (!bIsInPool && !GetController() && HasAuthority())
-	{
-		SpawnDefaultController();
-	}
 }
 
 void AMSNormalEnemy::PossessedBy(AController* NewController)
@@ -44,26 +39,4 @@ void AMSNormalEnemy::PossessedBy(AController* NewController)
 void AMSNormalEnemy::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-}
-
-void AMSNormalEnemy::SetPoolingMode(bool bInPooling)
-{  
-	bIsInPool = bInPooling;
-
-	if (UCapsuleComponent* Cap = GetCapsuleComponent())
-	{
-		if (bInPooling)
-		{
-			Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			Cap->SetGenerateOverlapEvents(false);
-		}
-		else
-		{
-			Cap->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-			Cap->SetGenerateOverlapEvents(true);
-
-			// 캡슐 오브젝트 타입을 확실히 MSEnemy로 유지
-			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnemy
-		}
-	}
 }

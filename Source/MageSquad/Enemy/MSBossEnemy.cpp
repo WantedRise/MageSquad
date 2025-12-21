@@ -17,7 +17,7 @@ AMSBossEnemy::AMSBossEnemy()
 	{
 		AIControllerClass = NormalEnemyControllerRef.Class;
 	}	
-	AutoPossessAI = EAutoPossessAI::Disabled;
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 void AMSBossEnemy::BeginPlay()

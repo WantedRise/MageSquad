@@ -64,6 +64,9 @@ void UMSEnemySpawnSubsystem::Deinitialize()
 
 	// 캐시 정리
 	CachedMonsterData.Empty();
+	CachedNormalMonsterData.Empty();
+	CachedEliteMonsterData.Empty();
+	CachedBossMonsterData.Empty();
 	MonsterPoolMap.Empty();
 	EnemyToPoolMap.Empty();
 
@@ -128,7 +131,6 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		{
 			continue;
 		}
-
 		// 캐시된 데이터 생성 (값 복사)
 		FMSCachedEnemyData& CachedData = CachedMonsterData.Add(RowName);
 
@@ -168,14 +170,17 @@ void UMSEnemySpawnSubsystem::AssignMonsterToPool(const FName& RowName)
 	if (RowString.StartsWith(TEXT("Normal_")))
 	{
 		MonsterPoolMap.Add(RowName, &NormalEnemyPool);
+		CachedNormalMonsterData.Add(RowName, CachedMonsterData[RowName]);
 	}
 	else if (RowString.StartsWith(TEXT("Elite_")))
 	{
 		MonsterPoolMap.Add(RowName, &EliteEnemyPool);
+		CachedEliteMonsterData.Add(RowName, CachedMonsterData[RowName]);
 	}
 	else if (RowString.StartsWith(TEXT("Boss_")))
 	{
 		MonsterPoolMap.Add(RowName, &BossEnemyPool);
+		CachedBossMonsterData.Add(RowName, CachedMonsterData[RowName]);
 	}
 	else
 	{
@@ -228,33 +233,20 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		if (Enemy)
 		{
 			//  풀링 모드 설정 (AI Controller 생성 방지)
-			if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
-			{
-				NormalEnemy->SetPoolingMode(true);
-			}
-
-			// 스폰 직후 네트워크 등록 강제
-			// if (UWorld* World = GetWorld())
-			// {
-			// 	if (UNetDriver* NetDriver = World->GetNetDriver())
-			// 	{
-			// 		NetDriver->NotifyActorSpawn(Enemy);
-			// 	}
-			// }
-			//  
+			Enemy->SetPoolingMode(true);
 
 			//Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
-			UE_LOG(LogTemp, Warning,
-			       TEXT(
-				       "[PrewarmPool] %s | bReplicates: %d | bNetLoadOnClient: %d | bAlwaysRelevant: %d | NetDormancy: %d | Flags: %u"
-			       ),
-			       *Enemy->GetName(),
-			       Enemy->GetIsReplicated(),
-			       Enemy->bNetLoadOnClient,
-			       Enemy->bAlwaysRelevant,
-			       (int32)Enemy->NetDormancy,
-			       (uint32)Enemy->GetFlags()
-			);
+			// UE_LOG(LogTemp, Warning,
+			//        TEXT(
+			// 	       "[PrewarmPool] %s | bReplicates: %d | bNetLoadOnClient: %d | bAlwaysRelevant: %d | NetDormancy: %d | Flags: %u"
+			//        ),
+			//        *Enemy->GetName(),
+			//        Enemy->GetIsReplicated(),
+			//        Enemy->bNetLoadOnClient,
+			//        Enemy->bAlwaysRelevant,
+			//        (int32)Enemy->NetDormancy,
+			//        (uint32)Enemy->GetFlags()
+			// );
 			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
@@ -382,8 +374,9 @@ void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 	{
 		// 랜덤 몬스터 타입 선택
 		TArray<FName> AllMonsterTypes;
-		CachedMonsterData.GetKeys(AllMonsterTypes);
-
+		//CachedMonsterData.GetKeys(AllMonsterTypes);
+		CachedNormalMonsterData.GetKeys(AllMonsterTypes);
+		
 		if (AllMonsterTypes.Num() == 0)
 		{
 			return;
@@ -728,15 +721,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	}
 
 	// 풀링 모드 해제
-	if (AMSNormalEnemy* NormalEnemy = Cast<AMSNormalEnemy>(Enemy))
-	{
-		NormalEnemy->SetPoolingMode(false);
-	}
-
-	// Enemy->SetActorLocation(Location);
-	// Enemy->SetActorRotation(FRotator::ZeroRotator);
-	// Enemy->SetActorHiddenInGame(false);
-	// //Enemy->SetActorTickEnabled(true);  // 틱 활성화 추가
+	Enemy->SetPoolingMode(false);
 
 	// 네트워크 상태 활성화
 	Enemy->SetNetDormancy(DORM_Awake);
@@ -752,10 +737,10 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->SetActorEnableCollision(true);
 
 	//  AI Controller 생성 (수동)
-	if (!Enemy->GetController())
-	{
-		Enemy->SpawnDefaultController();
-	}
+	// if (!Enemy->GetController())
+	// {
+	// 	Enemy->SpawnDefaultController();
+	// }
 
 	// 네트워크 업데이트 강제
 	Enemy->ForceNetUpdate();
@@ -1060,6 +1045,9 @@ void UMSEnemySpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
 
 	// 캐시 정리
 	CachedMonsterData.Empty();
+	CachedNormalMonsterData.Empty();
+	CachedEliteMonsterData.Empty();
+	CachedBossMonsterData.Empty();
 	MonsterPoolMap.Empty();
 
 	// 새 DataTable 할당

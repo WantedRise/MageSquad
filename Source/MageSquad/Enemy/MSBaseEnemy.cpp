@@ -231,3 +231,25 @@ void AMSBaseEnemy::OnRep_MonsterID()
 		SpawnSystem->InitializeEnemyFromData(this, CurrentMonsterID);
 	}
 }
+
+void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
+{
+	bIsInPool = bInPooling;
+
+	if (UCapsuleComponent* Cap = GetCapsuleComponent())
+	{
+		if (bInPooling)
+		{
+			Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Cap->SetGenerateOverlapEvents(false);
+		}
+		else
+		{
+			Cap->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			Cap->SetGenerateOverlapEvents(true);
+
+			// 캡슐 오브젝트 타입을 확실히 MSEnemy로 유지
+			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnemy
+		}
+	}
+}
