@@ -3,9 +3,14 @@
 
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyDead.h"
 
+#include "AbilitySystemComponent.h"
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
+#include "Actors/Experience/MSExperienceOrb.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
+#include "Enemy/AIController/MSBaseAIController.h"
 
 UMSGA_EnemyDead::UMSGA_EnemyDead()
 {
@@ -16,6 +21,8 @@ UMSGA_EnemyDead::UMSGA_EnemyDead()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Dead);
+	
+	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead)	;
 }
 
 void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -24,18 +31,15 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (UAnimMontage* DeadMontage = Owner->GetDeadMontage())
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-	
-	if (UAnimMontage* AttackMontage = Owner->GetAttackMontage())
-	{
-		UAbilityTask_PlayMontageAndWait* EnemyAttackTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("NormalAttack"), AttackMontage);
-		EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
-		EnemyAttackTask->ReadyForActivation();
+		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Dead"), DeadMontage);
+		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
+		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
+		//EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 추가
+		EnemyDeadTask->ReadyForActivation();
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
+		
 	}
 }
 
@@ -49,12 +53,49 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
+	UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability End"), *GetAvatarActorFromActorInfo()->GetName())
+	
+	if (AMSBaseAIController* EnemyAIController = Cast<AMSBaseAIController>(Owner->GetController()))
+	{
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetIsDeadKey(), false);
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetCanAttackKey(), false);
+	}
+	
+	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
+	
+	if (!ExpReward)
+	{
+		return;
+	}
+	
+	AMSExperienceOrb* ExpObject = Cast<AMSExperienceOrb>(GetWorld()->SpawnActor<AMSExperienceOrb>(
+		ExpReward, 
+		Owner->GetActorLocation(), 
+		FRotator(0.0f, 0.0f, 0.0f)));
+	
+	if (ExpObject)
+	{
+		// 3. ASC 확인
+		if (UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent())
+		{
+			// 4. AttributeSet 확인 및 캐스팅
+			if (const UMSEnemyAttributeSet* EnemyAS = Cast<UMSEnemyAttributeSet>(ASC->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())))
+			{
+				// 모든 값이 안전할 때만 값 대입
+				ExpObject->ExperienceValue = EnemyAS->GetDropExpValue();
+			}
+		}
+	}
 }
 
 void UMSGA_EnemyDead::OnCompleteCallback()
 {
 	bool bReplicatedEndAbility = true;
-	bool bWasCancelled = true;
+	bool bWasCancelled = false;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
 

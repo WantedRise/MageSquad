@@ -25,6 +25,7 @@ void UMSEnemyAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, MoveSpeed, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, AttackDamage, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, AttackRange, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UMSEnemyAttributeSet, DropExpValue, COND_None, REPNOTIFY_Always);
 }
 
 void UMSEnemyAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -61,6 +62,12 @@ void UMSEnemyAttributeSet::OnRep_AttackDamage(const FGameplayAttributeData& OldV
 void UMSEnemyAttributeSet::OnRep_AttackRange(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UMSEnemyAttributeSet, AttackRange, OldValue);
+}
+
+void UMSEnemyAttributeSet::OnRep_DropExpValue(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UMSEnemyAttributeSet, DropExpValue, OldValue);
+	
 }
 
 void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -105,7 +112,7 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))
 			{
 				if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerEnemy->GetController()))
-				{
+				{	
 					AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
 				}
 			}

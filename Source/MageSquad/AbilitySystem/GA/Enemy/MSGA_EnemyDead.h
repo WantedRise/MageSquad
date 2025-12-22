@@ -43,4 +43,8 @@ private:
 	void OnCompleteCallback();
 	UFUNCTION()
 	void OnInterruptedCallback();
+	
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AMSExperienceOrb> ExpReward;	
 };

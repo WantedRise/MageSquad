@@ -37,6 +37,9 @@ public:
 
 	UFUNCTION()
 	virtual void OnRep_AttackRange(const FGameplayAttributeData& OldValue);
+	
+	UFUNCTION()
+	virtual void OnRep_DropExpValue(const FGameplayAttributeData& OldValue);
 
 public:
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, CurrentHealth)
@@ -44,6 +47,7 @@ public:
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, MoveSpeed)
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, AttackDamage)
 	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, AttackRange)
+	ATTRIBUTE_ACCESSORS_BASIC(UMSEnemyAttributeSet, DropExpValue)
 	
 protected:
 	// 복제 함수
@@ -67,6 +71,9 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_AttackRange, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData AttackRange;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing=OnRep_DropExpValue, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData DropExpValue;
 		
 
 private:

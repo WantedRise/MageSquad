@@ -9,5 +9,6 @@
  */
 namespace MSUtils
 {
-	const FName ENEMY_BOSS = FName(TEXT("Boss_Sevarog"));
+	const FName ENEMY_BOSS_SEVAROG = FName(TEXT("Boss_Sevarog"));
+	const FName ENEMY_BOSS_FEY = FName(TEXT("Boss_Fey"));
 }

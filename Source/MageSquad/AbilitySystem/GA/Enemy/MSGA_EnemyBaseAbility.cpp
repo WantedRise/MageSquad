@@ -7,7 +7,7 @@
 UMSGA_EnemyBaseAbility::UMSGA_EnemyBaseAbility()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 }
 
 void UMSGA_EnemyBaseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

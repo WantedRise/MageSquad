@@ -21,12 +21,14 @@ namespace MSGameplayTags
 	/*Enemy Ability Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_NormalAttack, "Enemy.Ability.NormalAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dead, "Enemy.Ability.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Spawn, "Enemy.Ability.Spawn");
 	
 	/*Enemy State Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Chase, "Enemy.State.Chase");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Attack, "Enemy.State.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Dead, "Enemy.State.Dead");
-
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Spawn, "Enemy.State.Spawn");
+	
 	/*Enemy Tier Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Tier_Normal, "Enemy.Tier.Normal");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Tier_Elite, "Enemy.Tier.Elite");
