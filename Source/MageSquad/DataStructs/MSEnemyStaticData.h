@@ -44,4 +44,7 @@ struct FMSEnemyStaticData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bIsRanged;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float DropExpValue;
 };

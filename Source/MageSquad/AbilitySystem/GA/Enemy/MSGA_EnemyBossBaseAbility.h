@@ -7,7 +7,9 @@
 #include "MSGA_EnemyBossBaseAbility.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/22
+ * 보스 전용 어빌리티의 Base 클래스
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_EnemyBossBaseAbility : public UGameplayAbility

@@ -8,7 +8,9 @@
 #include "MSGA_EnemySpawn.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/22
+ * 보스가 등장하는 어빌리티.
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_EnemySpawn : public UMSGA_EnemyBossBaseAbility

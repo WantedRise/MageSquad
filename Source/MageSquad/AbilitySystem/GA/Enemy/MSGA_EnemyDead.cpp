@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Actors/Experience/MSExperienceOrb.h"
 #include "Enemy/MSBaseEnemy.h"
 
@@ -63,10 +64,12 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 		return;
 	}
 	
-	GetWorld()->SpawnActor<AMSExperienceOrb>(
+	AMSExperienceOrb* ExpObject = Cast<AMSExperienceOrb>(GetWorld()->SpawnActor<AMSExperienceOrb>(
 		ExpReward, 
 		Owner->GetActorLocation(), 
-		FRotator(0.0f, 0.0f, 0.0f));
+		FRotator(0.0f, 0.0f, 0.0f)));
+	
+	ExpObject->ExperienceValue = Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()))->GetDropExpValue();
 }
 
 void UMSGA_EnemyDead::OnCompleteCallback()
