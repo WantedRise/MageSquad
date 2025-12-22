@@ -368,7 +368,7 @@ struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTra
  *
  * 플레이어 스테이트에서 스킬 레벨업 후보를 저장할 때 사용하는 구조체
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FMSLevelUpChoicePair
 {
 	GENERATED_BODY()

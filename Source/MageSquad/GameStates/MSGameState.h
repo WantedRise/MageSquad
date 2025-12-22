@@ -150,6 +150,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Custom | Experience")
 	int32 GetActivePlayerCount() const { return ActivePlayerCount; }
 
+	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
+	UFUNCTION(BlueprintCallable)
+	void StartSkillLevelUpPhase();
+
 protected:
 	// 현재 레벨 변동 OnRep 함수
 	UFUNCTION()
@@ -163,8 +167,7 @@ protected:
 	UFUNCTION()
 	void OnRep_ActivePlayerCount();
 
-	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
-	void StartSkillLevelUpPhase();
+	
 
 private:
 	// 서버: PlayerArray 기반 유효 인원 계산 함수
