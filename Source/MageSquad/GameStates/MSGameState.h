@@ -33,6 +33,10 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnActivePlayerCountChangedNative, int32 /*N
 * 공유 경험치/레벨 시스템 추가
 * - 경험치/레벨은 모든 플레이어가 공유 (누가 먹어도 모두 동일하게 증가)
 * - 플레이 인원(1~4)에 따라 레벨별 필요 경험치가 달라지며, 인원 변동 시 유동적으로 재계산
+* 
+* 수정자: 박세찬
+* 수정일: 25/12/22
+* 레벨업 시 스킬 레벨업 선택지 호출 함수 추가
 */
 UCLASS()
 class MAGESQUAD_API AMSGameState : public AGameState
@@ -153,6 +157,9 @@ protected:
 	// 현재 플레이 인원 변동 OnRep 함수
 	UFUNCTION()
 	void OnRep_ActivePlayerCount();
+
+	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
+	void StartSkillLevelUpPhase();
 
 private:
 	// 서버: PlayerArray 기반 유효 인원 계산 함수

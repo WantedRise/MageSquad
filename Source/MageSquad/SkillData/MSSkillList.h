@@ -68,4 +68,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Range = 0.f;
 
+	// 가능한 업그레이드 종류
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTagContainer AvailableUpgradeTags;
 };

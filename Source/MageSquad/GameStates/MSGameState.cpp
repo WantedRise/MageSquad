@@ -20,6 +20,7 @@
 #include "DataStructs/MSSharedExperienceData.h"
 
 #include "MSFunctionLibrary.h"
+#include "Player/MSPlayerState.h"
 
 AMSGameState::AMSGameState()
 {
@@ -188,6 +189,40 @@ void AMSGameState::OnRep_ActivePlayerCount()
 	// 인원 변경은 요구XP에 영향을 주므로 UI 갱신도 함께 트리거
 	BroadcastPlayerCountChanged();
 	BroadcastExperienceChanged();
+}
+
+void AMSGameState::StartSkillLevelUpPhase()
+{
+	// 게임 일시정지 처리
+	// SetPause(true);
+
+	// 레벨업 세션 ID 증가 (중복 클릭 방지용)
+	static int32 LevelUpSessionId = 0;
+	LevelUpSessionId++;
+
+	UE_LOG(LogTemp, Log,
+		TEXT("[GameState] Start Skill LevelUp Phase. SessionId=%d"),
+		LevelUpSessionId
+	);
+
+	// 모든 PlayerState에 레벨업 시작 알림
+	for (APlayerState* PS : PlayerArray)
+	{
+		AMSPlayerState* MSPS = Cast<AMSPlayerState>(PS);
+		if (!MSPS)
+		{
+			continue;
+		}
+
+		// PlayerState :
+		// - 보유 스킬 확인
+		// - 후보 생성
+		// - 랜덤 3개 선택
+		// - PlayerController에 UI 띄우기(Client RPC)
+		MSPS->BeginSkillLevelUp(LevelUpSessionId);
+	}
+
+	// GameState는 여기서 "누가 완료했는지" 집계만 하면 됨
 }
 
 int32 AMSGameState::ComputeActivePlayerCount_Server() const

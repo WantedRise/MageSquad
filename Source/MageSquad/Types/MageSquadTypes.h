@@ -361,3 +361,21 @@ struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTra
 {
 	enum { WithNetSerializer = true, WithCopy = true };
 };
+
+/**
+ * 작성자: 박세찬
+ * 작성일: 25/12/22
+ *
+ * 플레이어 스테이트에서 스킬 레벨업 후보를 저장할 때 사용하는 구조체
+ */
+USTRUCT()
+struct FMSLevelUpChoicePair
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameplayTag SkillTag;
+
+	UPROPERTY()
+	FGameplayTag UpgradeTag;
+};

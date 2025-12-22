@@ -45,6 +45,13 @@ namespace MSGameplayTags
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
 
+	/* Skill Upgrade Type Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Damage, "Upgrade.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_CoolTime, "Upgrade.CoolTime");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_ProjectileNum, "Upgrade.ProjectileNum");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Penetration, "Upgrade.Penetration");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Radius, "Upgrade.Radius");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Duration, "Upgrade.Duration");
 
 	/* Shared Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_DrawDamageNumber, "Shared.Ability.DrawDamageNumber");
@@ -63,7 +70,6 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 	
 	/* GameplayCue Tags */
-	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_Explosion,"GameplayCue.Skill.Explosion");
 	//UE_DEFINE_GAMEPLAY_TAG(GameplayCue_HitFlash,"GameplayCue.HitFlash");
 	
 	/* Hit Result Tags */
