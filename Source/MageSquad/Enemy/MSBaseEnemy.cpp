@@ -81,10 +81,6 @@ AMSBaseEnemy::AMSBaseEnemy()
 		CollisionDamage = CollisionDamageRef.Class;
 	}
 	
-	// Todo : 패키징에서 에러를 일으키는 코드, 패키징시 지워야함
-	// UE_LOG(LogTemp, Error, TEXT("[Enemy Constructor] %s - NetMode: %d"), 
-	// *GetName(), 
-	// GetWorld() ? (int32)GetWorld()->GetNetMode() : -1);
 }
 
 // Called when the game starts or when spawned

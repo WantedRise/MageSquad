@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DataAssets/Enemy/DA_EnemyBossAnimationSet.h"
 #include "Enemy/MSBaseEnemy.h"
 #include "MSBossEnemy.generated.h"
 
@@ -19,5 +20,11 @@ public:
 	
 public:
 	virtual void BeginPlay() override;	
+	
+	// 풀링 모드 제어
+	virtual void SetPoolingMode(bool bInPooling) override;
+	
+public:
+	FORCEINLINE UAnimMontage* GetSpawnMontage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->SpawnAnim;}
 	
 };

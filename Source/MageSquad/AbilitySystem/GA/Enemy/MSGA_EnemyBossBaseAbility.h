@@ -3,21 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
-#include "MSGA_EnemyDead.generated.h"
+#include "Abilities/GameplayAbility.h"
+#include "MSGA_EnemyBossBaseAbility.generated.h"
 
 /**
- * 작성자 : 임희섭
- * 작성일 : 2025/12/17
- * Enemy들이 죽을 때 발동될 Dead Ability
+ * 
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_EnemyDead : public UMSGA_EnemyBaseAbility
+class MAGESQUAD_API UMSGA_EnemyBossBaseAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_EnemyDead();
+	UMSGA_EnemyBossBaseAbility();
+	
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, 
@@ -38,13 +37,8 @@ public:
 		bool bReplicateEndAbility, 
 		bool bWasCancelled) override;
 	
-private:
-	UFUNCTION()
-	void OnCompleteCallback();
-	UFUNCTION()
-	void OnInterruptedCallback();
+protected:
+	UPROPERTY()
+	TObjectPtr<class AMSBossEnemy> Owner;
 	
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AMSExperienceOrb> ExpReward;	
 };
