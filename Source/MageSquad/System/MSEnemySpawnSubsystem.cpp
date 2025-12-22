@@ -649,6 +649,13 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		}
 
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
+		
+		// 이전 스켈레탈메시의 머테리얼 정보가 남아있어 머테리얼이 이상하게 나타나던 현상 방지 코드
+		const TArray<FSkeletalMaterial>& MeshMaterials = Data->SkeletalMesh->GetMaterials();
+		for (int32 i = 0; i < MeshMaterials.Num(); ++i)
+		{
+			Enemy->GetMesh()->SetMaterial(i, MeshMaterials[i].MaterialInterface);
+		}
 
 		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
