@@ -38,7 +38,8 @@ bool UMSGC_PlayerBlinkStart::OnExecute_Implementation(AActor* MyTarget, const FG
 
 	if (Niagara)
 	{
-		//Niagara->SetColorParameter(TEXT("Blink_Color"), Color);
+		Niagara->SetColorParameter(TEXT("User.Blink.Color"), Color);
+		Niagara->SetColorParameter(TEXT("Blink_Color"), Color);
 	}
 
 	return true;
@@ -46,12 +47,17 @@ bool UMSGC_PlayerBlinkStart::OnExecute_Implementation(AActor* MyTarget, const FG
 
 FVector UMSGC_PlayerBlinkStart::ResolveSpawnLocation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-	// Ability에서 Params.Location을 넣어줬다면 그 위치가 우선
-	if (!Parameters.Location.IsNearlyZero())
+	// Beam Start는 EffectContext에 기록된 BlinkStart를 우선 사용
+	if (const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get()))
 	{
-		return Parameters.Location;
+		if (Context->HasBlinkSegment())
+		{
+			return Context->BlinkStart;
+		}
 	}
-	return MyTarget ? MyTarget->GetActorLocation() : FVector::ZeroVector;
+
+	// 기존 방식(Parameters.Location)
+	return Parameters.Location;
 }
 
 FRotator UMSGC_PlayerBlinkStart::ResolveSpawnRotation(AActor* MyTarget) const
@@ -63,8 +69,8 @@ FLinearColor UMSGC_PlayerBlinkStart::ResolveLinearColor(const FGameplayCueParame
 {
 	if (const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get()))
 	{
-		return Context->LinearColor;
+		return Context->CueColor;
 	}
 
-	return FLinearColor();
+	return FLinearColor::White;
 }

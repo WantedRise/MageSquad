@@ -47,7 +47,9 @@ protected:
 	bool CanTeleportTo(ACharacter* Character, const FVector& Location, const FRotator& Rot) const;
 
 	// GameplayCue 실행 함수 (서버에서 실행하면 ASC가 네트워크로 동기화)
-	void ExecuteCue(UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& Location) const;
+	// - CueLocation: 해당 큐 자체의 재생 위치(예: Start 큐는 Start, End 큐는 End)
+	// - BlinkStart/BlinkEnd: Beam 등 2점 연출용 세그먼트 데이터
+	void ExecuteCue(class UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& CueLocation, const FVector& BlinkStart, const FVector& BlinkEnd) const;
 
 	// ===== Animation / Montage Flow =====
 	UFUNCTION()
