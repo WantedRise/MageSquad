@@ -21,19 +21,22 @@
 #include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
 
+#include "GameStates/MSGameState.h"
+
 void UMSPlayerHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	// HUD À§Á¬ ÃÊ±âÈ­
+	// HUD ìœ„ì ¯ ì´ˆê¸°í™”
 	InitializeHUD();
 }
 
 void UMSPlayerHUDWidget::NativeDestruct()
 {
-	// ¹ÙÀÎµùµÈ µ¨¸®°ÔÀÌÆ®/Å¸ÀÌ¸Ó Á¤¸®
+	// ë°”ì¸ë”©ëœ ë¸ë¦¬ê²Œì´íŠ¸/íƒ€ì´ë¨¸ ì •ë¦¬
 	ClearRebindTimer();
 	UnbindLocalHealth();
+	UnbindSharedExperience();
 	ClearTeamPollTimer();
 
 	Super::NativeDestruct();
@@ -41,36 +44,40 @@ void UMSPlayerHUDWidget::NativeDestruct()
 
 void UMSPlayerHUDWidget::InitializeHUD()
 {
-	// ÀÌ¹Ì ¹ÙÀÎµù µÇ¾î ÀÖÀ¸¸é ±×´ë·Î À¯Áö(ÀçÁøÀÔ ¾ÈÀü)
+	// ì´ë¯¸ ë°”ì¸ë”© ë˜ì–´ ìˆìœ¼ë©´ ê·¸ëŒ€ë¡œ ìœ ì§€(ì¬ì§„ì… ì•ˆì „)
 	if (bBoundLocalASC && LocalASC.IsValid())
 	{
 		RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
+		RefreshSharedExperienceUI();
 		return;
 	}
 
-	// ¹ÙÀÎµù ½Ãµµ
-	if (TryBindLocalHealth())
+	// ë°”ì¸ë”© ì‹œë„
+	const bool bLocalHealthOk = TryBindLocalHealth();
+	const bool bSharedExperienceOk = TryBindSharedExperience();
+
+	if (bLocalHealthOk && bSharedExperienceOk)
 	{
-		// ¹ÙÀÎµù Àç½Ãµµ Å¸ÀÌ¸Ó Á¾·á
+		// ë°”ì¸ë”© ì¬ì‹œë„ íƒ€ì´ë¨¸ ì¢…ë£Œ
 		ClearRebindTimer();
 
-		// ÆÀ µ¥ÀÌÅÍ °»½Å ½ÃÀÛ
+		// íŒ€ ë°ì´í„° ê°±ì‹  ì‹œì‘
 		StartTeamPoll();
 
-		return;
+		return;;
 	}
 
-	// ½ÇÆĞÇÏ¸é ÀÏÁ¤ ÁÖ±â·Î Àç½Ãµµ
+	// ì‹¤íŒ¨í•˜ë©´ ì¼ì • ì£¼ê¸°ë¡œ ì¬ì‹œë„
 	ScheduleRebind();
 }
 
 void UMSPlayerHUDWidget::RequestReinitialize()
 {
-	// ¹ÙÀÎµùµÈ µ¨¸®°ÔÀÌÆ®/Å¸ÀÌ¸Ó Á¤¸®
+	// ë°”ì¸ë”©ëœ ë¸ë¦¬ê²Œì´íŠ¸/íƒ€ì´ë¨¸ ì •ë¦¬
 	ClearRebindTimer();
 	UnbindLocalHealth();
 
-	// HUD À§Á¬ ÃÊ±âÈ­ (ÀçÃÊ±âÈ­)
+	// HUD ìœ„ì ¯ ì´ˆê¸°í™” (ì¬ì´ˆê¸°í™”)
 	InitializeHUD();
 }
 
@@ -84,13 +91,13 @@ bool UMSPlayerHUDWidget::TryBindLocalHealth()
 
 	UAbilitySystemComponent* FoundASC = nullptr;
 
-	// #1: PawnÀÌ ASC¸¦ Á¦°øÇÏ´Â °æ¿ì
+	// #1: Pawnì´ ASCë¥¼ ì œê³µí•˜ëŠ” ê²½ìš°
 	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Pawn))
 	{
 		FoundASC = ASI->GetAbilitySystemComponent();
 	}
 
-	// #2: PlayerState¿¡¼­ ASC Ã£±â
+	// #2: PlayerStateì—ì„œ ASC ì°¾ê¸°
 	if (!IsValid(FoundASC))
 	{
 		if (APlayerState* PS = PC->PlayerState)
@@ -104,28 +111,53 @@ bool UMSPlayerHUDWidget::TryBindLocalHealth()
 
 	if (!IsValid(FoundASC)) return false;
 
-	// ASC¿¡¼­ ¾ÆÁ÷ ActorInfo(Owner/Avatar) ÃÊ±âÈ­°¡ ÀÌ·ïÁöÁö ¾ÊÀº °æ¿ì
+	// ASCì—ì„œ ì•„ì§ ActorInfo(Owner/Avatar) ì´ˆê¸°í™”ê°€ ì´ë¤„ì§€ì§€ ì•Šì€ ê²½ìš°
 	if (!FoundASC->GetOwnerActor() || !FoundASC->GetAvatarActor()) return false;
 
-	// ±âÁ¸ ¹ÙÀÎµù Á¤¸® ÈÄ »õ ASC·Î ¹ÙÀÎµù
+	// ê¸°ì¡´ ë°”ì¸ë”© ì •ë¦¬ í›„ ìƒˆ ASCë¡œ ë°”ì¸ë”©
 	UnbindLocalHealth();
 	LocalASC = FoundASC;
 
-	// ÃÊ±â °ª ¹İ¿µ
+	// ì´ˆê¸° ê°’ ë°˜ì˜
 	CachedHealth = FoundASC->GetNumericAttribute(UMSPlayerAttributeSet::GetHealthAttribute());
 	CachedMaxHealth = FoundASC->GetNumericAttribute(UMSPlayerAttributeSet::GetMaxHealthAttribute());
 	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
 
-	// µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù(ÇÚµéÀ» º¸°üÇØ Á¤È®È÷ ÇØÁ¦)
+	// ë¸ë¦¬ê²Œì´íŠ¸ ë°”ì¸ë”©(í•¸ë“¤ì„ ë³´ê´€í•´ ì •í™•íˆ í•´ì œ)
 	HealthChangedHandle = FoundASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetHealthAttribute())
 		.AddUObject(this, &UMSPlayerHUDWidget::OnLocalHealthChanged);
 
 	MaxHealthChangedHandle = FoundASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetMaxHealthAttribute())
 		.AddUObject(this, &UMSPlayerHUDWidget::OnLocalMaxHealthChanged);
 
-	// ÇöÀç ¹ÙÀÎµù »óÅÂ ¼³Á¤ ¹× Ä«¿îÆ® ÃÊ±âÈ­
+	// í˜„ì¬ ë°”ì¸ë”© ìƒíƒœ ì„¤ì • ë° ì¹´ìš´íŠ¸ ì´ˆê¸°í™”
 	bBoundLocalASC = true;
 	RebindAttemptCount = 0;
+	return true;
+}
+
+bool UMSPlayerHUDWidget::TryBindSharedExperience()
+{
+	CachedGameState = nullptr;
+
+	if (!GetWorld()) return false;
+
+	AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>();
+	if (!GS) return false;
+
+	// ê¸°ì¡´ ë°”ì¸ë”© ì •ë¦¬ í›„ ìƒˆ GameStateë¡œ ë°”ì¸ë”©
+	UnbindSharedExperience();
+
+	// ê²Œì„ ìŠ¤í…Œì´íŠ¸ ì´ˆê¸°í™”
+	CachedGameState = GS;
+
+	// ë¸ë¦¬ê²Œì´íŠ¸ ë°”ì¸ë”©(í•¸ë“¤ì„ ë³´ê´€í•´ ì •í™•íˆ í•´ì œ)
+	SharedExpChangedHandle = CachedGameState->OnSharedExperienceChanged.AddUObject(
+		this, &UMSPlayerHUDWidget::OnSharedExperienceChanged);
+
+	SharedLevelUpHandle = CachedGameState->OnSharedLevelUp.AddUObject(
+		this, &UMSPlayerHUDWidget::OnSharedLevelUp);
+
 	return true;
 }
 
@@ -134,7 +166,7 @@ void UMSPlayerHUDWidget::StartTeamPoll()
 	if (bTeamPolling) return;
 	bTeamPolling = true;
 
-	// °øÀ¯ µ¥ÀÌÅÍ °»½Å ½ÃÀÛ
+	// ê³µìœ  ë°ì´í„° ê°±ì‹  ì‹œì‘
 	GetWorld()->GetTimerManager().SetTimer(
 		TeamPollTimer,
 		this,
@@ -143,7 +175,7 @@ void UMSPlayerHUDWidget::StartTeamPoll()
 		true
 	);
 
-	// Áï½Ã 1È¸ °»½Å
+	// ì¦‰ì‹œ 1íšŒ ê°±ì‹ 
 	PollTeamMembers();
 }
 
@@ -151,7 +183,7 @@ void UMSPlayerHUDWidget::UnbindLocalHealth()
 {
 	bBoundLocalASC = false;
 
-	// ¹ÙÀÎµùÇÑ µ¨¸®°ÔÀÌÆ® ¾ğ¹ÙÀÎµå
+	// ë°”ì¸ë”©í•œ ë¸ë¦¬ê²Œì´íŠ¸ ì–¸ë°”ì¸ë“œ
 	if (UAbilitySystemComponent* ASC = LocalASC.Get())
 	{
 		if (HealthChangedHandle.IsValid())
@@ -169,9 +201,30 @@ void UMSPlayerHUDWidget::UnbindLocalHealth()
 	LocalASC.Reset();
 }
 
+void UMSPlayerHUDWidget::UnbindSharedExperience()
+{
+	// ë°”ì¸ë”©í•œ ë¸ë¦¬ê²Œì´íŠ¸ ì–¸ë°”ì¸ë“œ
+	if (CachedGameState)
+	{
+		if (SharedExpChangedHandle.IsValid())
+		{
+			CachedGameState->OnSharedExperienceChanged.Remove(SharedExpChangedHandle);
+			SharedExpChangedHandle.Reset();
+		}
+
+		if (SharedLevelUpHandle.IsValid())
+		{
+			CachedGameState->OnSharedLevelUp.Remove(SharedLevelUpHandle);
+			SharedLevelUpHandle.Reset();
+		}
+	}
+
+	CachedGameState = nullptr;
+}
+
 void UMSPlayerHUDWidget::ClearRebindTimer()
 {
-	// ¹ÙÀÎµù Àç½Ãµµ Å¸ÀÌ¸Ó ÃÊ±âÈ­
+	// ë°”ì¸ë”© ì¬ì‹œë„ íƒ€ì´ë¨¸ ì´ˆê¸°í™”
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(RebindTimer);
@@ -182,7 +235,7 @@ void UMSPlayerHUDWidget::ClearRebindTimer()
 
 void UMSPlayerHUDWidget::ClearTeamPollTimer()
 {
-	// °øÀ¯ µ¥ÀÌÅÍ °»½Å Å¸ÀÌ¸Ó ÃÊ±âÈ­
+	// ê³µìœ  ë°ì´í„° ê°±ì‹  íƒ€ì´ë¨¸ ì´ˆê¸°í™”
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(TeamPollTimer);
@@ -192,19 +245,19 @@ void UMSPlayerHUDWidget::ClearTeamPollTimer()
 
 void UMSPlayerHUDWidget::RefreshLocalHealthUI(const float Health, const float MaxHealth)
 {
-	// ÇöÀç Ã¼·Â ºñÀ² °è»ê (ex. 0.1 = 10%)
+	// í˜„ì¬ ì²´ë ¥ ë¹„ìœ¨ ê³„ì‚° (ex. 0.1 = 10%)
 	const float Pct = (MaxHealth > 0.f) ? FMath::Clamp(Health / MaxHealth, 0.f, 1.f) : 0.f;
 
-	// Ã¼·Â ¹Ù °»½Å
+	// ì²´ë ¥ ë°” ê°±ì‹ 
 	if (LocalHealthBarWidget)
 	{
 		LocalHealthBarWidget->SetPercent(Pct);
 	}
 
-	// Ã¼·Â ¹Ù ÅØ½ºÆ® °»½Å
+	// ì²´ë ¥ ë°” í…ìŠ¤íŠ¸ ê°±ì‹ 
 	if (LocalHealthTextWidget)
 	{
-		// "ÇöÀç Ã¼·Â/ÃÖ´ë Ã¼·Â"À¸·Î Ç¥½Ã (ex. "264/600") 
+		// "í˜„ì¬ ì²´ë ¥/ìµœëŒ€ ì²´ë ¥"ìœ¼ë¡œ í‘œì‹œ (ex. "264/600") 
 		const FText Cur = FText::AsNumber(FMath::RoundToInt(Health));
 		const FText Max = FText::AsNumber(FMath::RoundToInt(MaxHealth));
 		LocalHealthTextWidget->SetText(FText::Format(NSLOCTEXT("MSHUD", "LocalHealthFmt", "{0}/{1}"), Cur, Max));
@@ -213,14 +266,14 @@ void UMSPlayerHUDWidget::RefreshLocalHealthUI(const float Health, const float Ma
 
 void UMSPlayerHUDWidget::OnLocalHealthChanged(const FOnAttributeChangeData& Data)
 {
-	// ÇöÀç Ã¼·Â °»½Å ÈÄ UI ¾÷µ¥ÀÌÆ®
+	// í˜„ì¬ ì²´ë ¥ ê°±ì‹  í›„ UI ì—…ë°ì´íŠ¸
 	CachedHealth = Data.NewValue;
 	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
 }
 
 void UMSPlayerHUDWidget::OnLocalMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
-	// ÃÖ´ë Ã¼·Â °»½Å ÈÄ UI ¾÷µ¥ÀÌÆ®
+	// ìµœëŒ€ ì²´ë ¥ ê°±ì‹  í›„ UI ì—…ë°ì´íŠ¸
 	CachedMaxHealth = Data.NewValue;
 	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
 }
@@ -232,38 +285,38 @@ void UMSPlayerHUDWidget::PollTeamMembers()
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	// Ã¹ ¹øÂ° ÇÃ·¹ÀÌ¾î(ÀÚ½Å) ÄÁÆ®·Ñ·¯¿Í ±× ¼ÒÀ¯ÀÚ °¡Á®¿À±â
+	// ì²« ë²ˆì§¸ í”Œë ˆì´ì–´(ìì‹ ) ì»¨íŠ¸ë¡¤ëŸ¬ì™€ ê·¸ ì†Œìœ ì ê°€ì ¸ì˜¤ê¸°
 	APlayerController* PC = World->GetFirstPlayerController();
 	APawn* LocalPawn = PC ? PC->GetPawn() : nullptr;
 
-	// ¿ùµå¿¡ÀÖ´Â ¸ğµç ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍ¸¦ Ã£¾Æ ÀúÀå
+	// ì›”ë“œì—ìˆëŠ” ëª¨ë“  í”Œë ˆì´ì–´ ìºë¦­í„°ë¥¼ ì°¾ì•„ ì €ì¥
 	TArray<AActor*> Found;
 	UGameplayStatics::GetAllActorsOfClass(World, AMSPlayerCharacter::StaticClass(), Found);
 
-	// ÀÌ¹ø ÇÁ·¹ÀÓ¿¡ Á¸ÀçÇÏ´Â ¸â¹ö ÁıÇÕ
+	// ì´ë²ˆ í”„ë ˆì„ì— ì¡´ì¬í•˜ëŠ” ë©¤ë²„ ì§‘í•©
 	TSet<TWeakObjectPtr<AActor>> Alive;
 
 	for (AActor* Actor : Found)
 	{
-		// ÀÚ½Å Á¦¿Ü
+		// ìì‹  ì œì™¸
 		if (!Actor || Actor == LocalPawn) continue;
 
-		// ÆÀ ¸â¹ö¿¡ Ãß°¡
+		// íŒ€ ë©¤ë²„ì— ì¶”ê°€
 		Alive.Add(Actor);
 
-		// ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍ Å¬·¡½º·Î Ä³½ºÆÃ
+		// í”Œë ˆì´ì–´ ìºë¦­í„° í´ë˜ìŠ¤ë¡œ ìºìŠ¤íŒ…
 		AMSPlayerCharacter* Member = Cast<AMSPlayerCharacter>(Actor);
 		if (!Member) continue;
 
-		// ÇØ´ç Ä³¸¯ÅÍÀÇ HUD °øÀ¯ µ¥ÀÌÅÍ¸¦ °¡Á®¿È
+		// í•´ë‹¹ ìºë¦­í„°ì˜ HUD ê³µìœ  ë°ì´í„°ë¥¼ ê°€ì ¸ì˜´
 		UMSHUDDataComponent* HUDData = Member->FindComponentByClass<UMSHUDDataComponent>();
 		if (!HUDData) continue;
 
-		// ÆÀ ¸â¹ö À§Á¬ »ı¼º
+		// íŒ€ ë©¤ë²„ ìœ„ì ¯ ìƒì„±
 		EnsureTeamMemberWidget(Actor, HUDData);
 	}
 
-	// »ç¶óÁø ¸â¹öÀÇ À§Á¬ Á¤¸®
+	// ì‚¬ë¼ì§„ ë©¤ë²„ì˜ ìœ„ì ¯ ì •ë¦¬
 	for (auto It = TeamMembers.CreateIterator(); It; ++It)
 	{
 		if (!Alive.Contains(It.Key()))
@@ -281,25 +334,25 @@ void UMSPlayerHUDWidget::EnsureTeamMemberWidget(AActor* MemberActor, UMSHUDDataC
 {
 	if (!MemberActor || !HUDData) return;
 
-	// ÀÌÀü ÇÁ·¹ÀÓ¿¡ ÀÖ´ø ¸â¹ö¶ó¸é À§Á¬ Àç»ç¿ë
+	// ì´ì „ í”„ë ˆì„ì— ìˆë˜ ë©¤ë²„ë¼ë©´ ìœ„ì ¯ ì¬ì‚¬ìš©
 	UMSTeamMemberWidget* Widget = nullptr;
 	if (TObjectPtr<UMSTeamMemberWidget>* Found = TeamMembers.Find(MemberActor))
 	{
 		Widget = Found->Get();
 	}
 
-	// »õ ¸â¹ö¶ó¸é À§Á¬ »õ·Î »ı¼º
+	// ìƒˆ ë©¤ë²„ë¼ë©´ ìœ„ì ¯ ìƒˆë¡œ ìƒì„±
 	if (!Widget)
 	{
 		Widget = CreateWidget<UMSTeamMemberWidget>(GetWorld(), TeamMemberWidgetClass);
 		if (!Widget) return;
 
-		// »ı¼ºµÈ À§Á¬À» VerticalBox¿¡ Ãß°¡
+		// ìƒì„±ëœ ìœ„ì ¯ì„ VerticalBoxì— ì¶”ê°€
 		TeamMembers.Add(MemberActor, Widget);
 		TeamMembersBoxWidget->AddChild(Widget);
 	}
 
-	// À§Á¬ µ¥ÀÌÅÍ °»½Å
+	// ìœ„ì ¯ ë°ì´í„° ê°±ì‹ 
 	Widget->UpdateFromHUDData(HUDData);
 }
 
@@ -307,7 +360,7 @@ void UMSPlayerHUDWidget::ScheduleRebind()
 {
 	if (RebindTimer.IsValid()) return;
 
-	// ¹ÙÀÎµù Àç½Ãµµ Å¸ÀÌ¸Ó ¼³Á¤
+	// ë°”ì¸ë”© ì¬ì‹œë„ íƒ€ì´ë¨¸ ì„¤ì •
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
@@ -322,20 +375,57 @@ void UMSPlayerHUDWidget::ScheduleRebind()
 
 void UMSPlayerHUDWidget::TickRebind()
 {
-	// ÃÖ´ë ½Ãµµ Á¦ÇÑÀÌ ÀÖÀ¸¸é ÃÊ°ú ½Ã Áß´Ü
+	// ìµœëŒ€ ì‹œë„ ì œí•œì´ ìˆìœ¼ë©´ ì´ˆê³¼ ì‹œ ì¤‘ë‹¨
 	if (MaxRebindAttempts > 0 && RebindAttemptCount++ >= MaxRebindAttempts)
 	{
 		ClearRebindTimer();
 		return;
 	}
 
-	// ¹ÙÀÎµù Àç½Ãµµ
-	if (TryBindLocalHealth())
+	// ë°”ì¸ë”© ì‹œë„
+	const bool bLocalHealthOk = TryBindLocalHealth();
+	const bool bSharedExperienceOk = TryBindSharedExperience();
+
+	if (bLocalHealthOk && bSharedExperienceOk)
 	{
-		// ¹ÙÀÎµù Àç½Ãµµ Å¸ÀÌ¸Ó Á¾·á
+		// ë°”ì¸ë”© ì¬ì‹œë„ íƒ€ì´ë¨¸ ì¢…ë£Œ
 		ClearRebindTimer();
 
-		// ÆÀ µ¥ÀÌÅÍ °»½Å ½ÃÀÛ
+		// íŒ€ ë°ì´í„° ê°±ì‹  ì‹œì‘
 		StartTeamPoll();
+	}
+}
+
+void UMSPlayerHUDWidget::OnSharedExperienceChanged()
+{
+	RefreshSharedExperienceUI();
+}
+
+void UMSPlayerHUDWidget::OnSharedLevelUp(int32 NewLevel)
+{
+	// HUDëŠ” ê°’ë§Œ ê°±ì‹ 
+	RefreshSharedExperienceUI();
+}
+
+void UMSPlayerHUDWidget::RefreshSharedExperienceUI()
+{
+	if (!CachedGameState) return;
+
+	// GameStateë¡œë¶€í„° ê³µìœ  ë ˆë²¨ ë° ê²½í—˜ì¹˜ ëª¨ë‘ ê°€ì ¸ì˜¤ê¸°
+	const int32 Level = CachedGameState->GetSharedLevel();
+	const float Cur = CachedGameState->GetSharedCurrentXP();
+	const float Req = CachedGameState->GetSharedXPRequired();
+	const float Pct = CachedGameState->GetSharedXPPct();
+
+	// ê³µìœ  ê²½í—˜ì¹˜ ë°” ê°±ì‹ 
+	if (SharedExpBarWidget)
+	{
+		SharedExpBarWidget->SetPercent(Pct);
+	}
+
+	// ê³µìœ  ë ˆë²¨ í…ìŠ¤íŠ¸ ë°” ê°±ì‹ 
+	if (SharedLevelTextWidget)
+	{
+		SharedLevelTextWidget->SetText(FText::AsNumber(Level));
 	}
 }
