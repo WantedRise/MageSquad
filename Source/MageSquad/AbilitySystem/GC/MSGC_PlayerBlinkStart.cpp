@@ -63,7 +63,7 @@ FLinearColor UMSGC_PlayerBlinkStart::ResolveLinearColor(const FGameplayCueParame
 {
 	if (const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get()))
 	{
-		return Context->CueColor;
+		return Context->LinearColor;
 	}
 
 	return FLinearColor();
