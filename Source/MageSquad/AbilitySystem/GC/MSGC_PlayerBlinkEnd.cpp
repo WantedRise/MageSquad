@@ -54,12 +54,7 @@ bool UMSGC_PlayerBlinkEnd::OnExecute_Implementation(AActor* MyTarget, const FGam
 
 FVector UMSGC_PlayerBlinkEnd::ResolveSpawnLocation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-	// Ability에서 Params.Location을 넣어줬다면 그 위치가 우선
-	if (!Parameters.Location.IsNearlyZero())
-	{
-		return Parameters.Location;
-	}
-	return MyTarget ? MyTarget->GetActorLocation() : FVector::ZeroVector;
+	return Parameters.Location;
 }
 
 FRotator UMSGC_PlayerBlinkEnd::ResolveSpawnRotation(AActor* MyTarget) const
@@ -71,7 +66,7 @@ FLinearColor UMSGC_PlayerBlinkEnd::ResolveLinearColor(const FGameplayCueParamete
 {
 	if (const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get()))
 	{
-		return Context->CueColor;
+		return Context->LinearColor;
 	}
 
 	return FLinearColor();

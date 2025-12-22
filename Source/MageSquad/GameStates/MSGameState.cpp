@@ -373,3 +373,15 @@ void AMSGameState::OnRep_MissionFinished()
 {
 	OnMissionFinished.Broadcast(bMissionSuccess);
 }
+
+void AMSGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 등록된 모든 함수 바인딩 해제
+	OnSharedExperienceChanged.Clear();
+	OnActivePlayerCountChanged.Clear();
+	OnProgressUpdated.Clear();
+	OnMissionChanged.Clear();
+	OnMissionProgressChanged.Clear();
+	OnMissionFinished.Clear();
+	Super::EndPlay(EndPlayReason);
+}

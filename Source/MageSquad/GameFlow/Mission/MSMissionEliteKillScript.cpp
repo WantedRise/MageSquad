@@ -29,6 +29,7 @@ void UMSMissionEliteKillScript::Deinitialize()
 
 void UMSMissionEliteKillScript::SpawnElite(UWorld* World)
 {
+
     // SpawnActor<AEliteMonster>(...)
 }
 

@@ -45,6 +45,7 @@ class MAGESQUAD_API AMSGameState : public AGameState
 public:
 	AMSGameState();
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 	virtual void HandleMatchIsWaitingToStart() override;
 
@@ -77,11 +78,13 @@ public:
 	void OnRep_MissionFinished();
 	//현재 게임 진행률 반환
 	float GetProgressNormalized() const { return ProgressNormalized; };
+	float GetServerTime() const { return CurrentServerTime; }
 public:
 	/* ===== Server Only ===== */
 	//현재 게임 진행률(0~1)을 설정
-	void SetProgressNormalized(float InPercent) { ProgressNormalized = InPercent; };
+	void SetProgressNormalized(float InPercent, float InServerTime) { ProgressNormalized = InPercent; CurrentServerTime = InServerTime;  };
 	//현재 미션ID를 설정
+	UFUNCTION()
 	void SetCurrentMissionID(int32 InMissionID);
 	//미션 진행도 설정
 	void SetMissionProgress(float NewProgress);
@@ -101,6 +104,8 @@ protected:
 	//전체 게임 진행도를 나타내는 정규화된 값
 	UPROPERTY(ReplicatedUsing = OnRep_ProgressNormalized)
 	float ProgressNormalized;
+	UPROPERTY(Replicated)
+	float CurrentServerTime;
 protected:
 
 	//UPROPERTY(ReplicatedUsing = OnRep_RemainingTime)
