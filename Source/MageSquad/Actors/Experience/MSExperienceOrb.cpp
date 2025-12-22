@@ -111,11 +111,11 @@ void AMSExperienceOrb::Collect_Server(AActor* CollectorActor)
 		CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
-	// 공유 경험치 누적(2-2에서 HUD/레벨업까지 연결될 예정)
-	//if (AMSMageSquadGameState* GS = GetWorld() ? GetWorld()->GetGameState<AMSMageSquadGameState>() : nullptr)
-	//{
-	//	GS->AddSharedExperience(CollectorActor, ExperienceValue);
-	//}
+	// 공유 경험치 누적 함수를 호출하여 공유 경험치 획득 처리
+	if (AMSGameState* GS = GetWorld() ? GetWorld()->GetGameState<AMSGameState>() : nullptr)
+	{
+		GS->AddSharedExperience_Server(CollectorActor, ExperienceValue);
+	}
 
 	// 모든 클라이언트에서 연출 시작
 	MulticastRPCBeginAttract(CollectorActor);

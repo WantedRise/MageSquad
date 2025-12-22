@@ -8,11 +8,11 @@
 #include "MSFunctionLibrary.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/08
  *
- * Àü¿ª ÇïÆÛ ÇÔ¼ö ¶óÀÌºê·¯¸®
- * ºí·çÇÁ¸°Æ®/C++¿¡¼­ »ç¿ëÇÒ ´Ù¾çÇÑ ÇïÆÛ ÇÔ¼ö ¶óÀÌºê·¯¸® (GAS Æ÷ÇÔ)
+ * ì „ì—­ í—¬í¼ í•¨ìˆ˜ ë¼ì´ë¸ŒëŸ¬ë¦¬
+ * ë¸”ë£¨í”„ë¦°íŠ¸/C++ì—ì„œ ì‚¬ìš©í•  ë‹¤ì–‘í•œ í—¬í¼ í•¨ìˆ˜ ë¼ì´ë¸ŒëŸ¬ë¦¬ (GAS í¬í•¨)
  */
 UCLASS()
 class MAGESQUAD_API UMSFunctionLibrary : public UBlueprintFunctionLibrary
@@ -20,38 +20,38 @@ class MAGESQUAD_API UMSFunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	// ¾×ÅÍÀÇ ÇÃ·¹ÀÌ¾î ASC¸¦ °¡Á®¿À´Â ÇÔ¼ö
+	// ì•¡í„°ì˜ í”Œë ˆì´ì–´ ASCë¥¼ ê°€ì ¸ì˜¤ëŠ” í•¨ìˆ˜
 	static class UMSPlayerAbilitySystemComponent* NativeGetPlayerAbilitySystemComponentFromActor(AActor* InActor);
 
-	// ¾×ÅÍÀÇ Æ¯Á¤ ÅÂ±× º¸À¯ ¿©ºÎ ¹İÈ¯ ÇÔ¼ö
+	// ì•¡í„°ì˜ íŠ¹ì • íƒœê·¸ ë³´ìœ  ì—¬ë¶€ ë°˜í™˜ í•¨ìˆ˜
 	static bool NativeDoesActorHaveTag(AActor* InActor, const FGameplayTag TagToCheck);
 
-	// ¹ß»çÃ¼ÀÇ ¿øº» µ¥ÀÌÅÍ¸¦ °¡Á®¿À´Â ÇÔ¼ö
+	// ë°œì‚¬ì²´ì˜ ì›ë³¸ ë°ì´í„°ë¥¼ ê°€ì ¸ì˜¤ëŠ” í•¨ìˆ˜
 	UFUNCTION(BlueprintCallable)
 	static const UProjectileStaticData* GetProjectileStaticData(TSubclassOf<UProjectileStaticData> ProjectileDataClass);
 
-	// ¹ß»çÃ¼ÀÇ ¿øº» µ¥ÀÌÅÍ·ÎºÎÅÍ ·±Å¸ÀÓ µ¥ÀÌÅÍ¸¦ »ı¼ºÇÏ´Â ÇÔ¼ö
+	// ë°œì‚¬ì²´ì˜ ì›ë³¸ ë°ì´í„°ë¡œë¶€í„° ëŸ°íƒ€ì„ ë°ì´í„°ë¥¼ ìƒì„±í•˜ëŠ” í•¨ìˆ˜
 	UFUNCTION(BlueprintCallable)
 	static FProjectileRuntimeData MakeProjectileRuntimeData(TSubclassOf<UProjectileStaticData> ProjectileDataClass);
 
-	// ¹ß»çÃ¼ ¹ß»ç ÇÔ¼ö (¿øº» µ¥ÀÌÅÍ)
+	// ë°œì‚¬ì²´ ë°œì‚¬ í•¨ìˆ˜ (ì›ë³¸ ë°ì´í„°)
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static class AMSBaseProjectile* LaunchProjectileNative(
-		UObject* WorldContextObject,	// ¿ùµå °´Ã¼
-		TSubclassOf<UProjectileStaticData> ProjectileDataClass,	// ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ Å¬·¡½º
-		FTransform Transform,			// À§Ä¡ ¹× È¸Àü°ª
-		AActor* Owner,					// ¹ß»çÃ¼ ¼ÒÀ¯ÀÚ
-		APawn* Instigator				// ¹ß»çÃ¼¸¦ ¹ß»çÇÑ °´Ã¼
+		UObject* WorldContextObject,	// ì›”ë“œ ê°ì²´
+		TSubclassOf<UProjectileStaticData> ProjectileDataClass,	// ë°œì‚¬ì²´ ì›ë³¸ ë°ì´í„° í´ë˜ìŠ¤
+		FTransform Transform,			// ìœ„ì¹˜ ë° íšŒì „ê°’
+		AActor* Owner,					// ë°œì‚¬ì²´ ì†Œìœ ì
+		APawn* Instigator				// ë°œì‚¬ì²´ë¥¼ ë°œì‚¬í•œ ê°ì²´
 	);
 
-	// ¹ß»çÃ¼ ¹ß»ç ÇÔ¼ö (ÀçÁ¤ÀÇ µ¥ÀÌÅÍ)
+	// ë°œì‚¬ì²´ ë°œì‚¬ í•¨ìˆ˜ (ì¬ì •ì˜ ë°ì´í„°)
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static class AMSBaseProjectile* LaunchProjectile(
-		UObject* WorldContextObject,	// ¿ùµå °´Ã¼
-		TSubclassOf<UProjectileStaticData> ProjectileDataClass,	// ¹ß»çÃ¼ ¿øº» µ¥ÀÌÅÍ Å¬·¡½º
-		FProjectileRuntimeData RuntimeData,						// ¹ß»çÃ¼ ÀçÁ¤ÀÇ µ¥ÀÌÅÍ
-		FTransform Transform,			// À§Ä¡ ¹× È¸Àü°ª
-		AActor* Owner,					// ¹ß»çÃ¼ ¼ÒÀ¯ÀÚ
-		APawn* Instigator				// ¹ß»çÃ¼¸¦ ¹ß»çÇÑ °´Ã¼
+		UObject* WorldContextObject,	// ì›”ë“œ ê°ì²´
+		TSubclassOf<UProjectileStaticData> ProjectileDataClass,	// ë°œì‚¬ì²´ ì›ë³¸ ë°ì´í„° í´ë˜ìŠ¤
+		FProjectileRuntimeData RuntimeData,						// ë°œì‚¬ì²´ ì¬ì •ì˜ ë°ì´í„°
+		FTransform Transform,			// ìœ„ì¹˜ ë° íšŒì „ê°’
+		AActor* Owner,					// ë°œì‚¬ì²´ ì†Œìœ ì
+		APawn* Instigator				// ë°œì‚¬ì²´ë¥¼ ë°œì‚¬í•œ ê°ì²´
 	);
 };

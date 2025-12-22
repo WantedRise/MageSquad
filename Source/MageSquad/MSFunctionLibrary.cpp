@@ -2,23 +2,53 @@
 
 
 #include "MSFunctionLibrary.h"
+
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
+
 #include "Actors/Projectile/MSBaseProjectile.h"
+
+#include "Player/MSPlayerState.h"
 
 #include "MSGameplayTags.h"
 
 UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySystemComponentFromActor(AActor* InActor)
 {
-	if (!InActor)
+	if (!InActor) return nullptr;
+
+	// #1: Actorê°€ ASCë¥¼ ì œê³µí•˜ëŠ” ê²½ìš°
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(InActor))
 	{
-		return nullptr;
+		return Cast<UMSPlayerAbilitySystemComponent>(ASI->GetAbilitySystemComponent());
 	}
 
-	if (UMSPlayerAbilitySystemComponent* ASC = Cast<UMSPlayerAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InActor)))
+	// #2: Pawnì´ë©´ PlayerStateì—ì„œ ASC ì°¾ê¸°
+	if (APawn* Pawn = Cast<APawn>(InActor))
 	{
-		return ASC;
+		if (AMSPlayerState* MSPS = Cast<AMSPlayerState>(Pawn->GetPlayerState()))
+		{
+			return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
+		}
 	}
+
+	// #3: Controllerë©´ PlayerStateì—ì„œ ASC ì°¾ê¸°
+	if (AController* PC = Cast<AController>(InActor))
+	{
+		if (AMSPlayerState* MSPS = Cast<AMSPlayerState>(PC->PlayerState))
+		{
+			return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
+		}
+	}
+
+	// #4: PlayerState ìì²´ë¼ë©´ ASC ë°˜í™˜
+	if (AMSPlayerState* MSPS = Cast<AMSPlayerState>(InActor))
+	{
+		return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
+	}
+	
 	return nullptr;
 }
 
@@ -35,9 +65,9 @@ const UProjectileStaticData* UMSFunctionLibrary::GetProjectileStaticData(TSubcla
 {
 	if (IsValid(ProjectileDataClass))
 	{
-		// Å¬·¡½ºÀÇ CDO ¹İÈ¯
-		// Å¬·¡½ºÀÇ ±âº» °´Ã¼¸¦ ¹İÈ¯ÇÏ¹Ç·Î, ¿©·¯ °³ÀÇ ¹ß»çÃ¼°¡ °°Àº µ¥ÀÌÅÍ °´Ã¼¸¦ °øÀ¯
-		// Áï, ¸Ş¸ğ¸®¿¡ »õ·Î¿î °´Ã¼¸¦ »ı¼ºÇÏÁö ¾Ê°í, ¹Ì¸® Á¸ÀçÇÏ´Â ±âº» °´Ã¼¸¦ »ç¿ë
+		// í´ë˜ìŠ¤ì˜ CDO ë°˜í™˜
+		// í´ë˜ìŠ¤ì˜ ê¸°ë³¸ ê°ì²´ë¥¼ ë°˜í™˜í•˜ë¯€ë¡œ, ì—¬ëŸ¬ ê°œì˜ ë°œì‚¬ì²´ê°€ ê°™ì€ ë°ì´í„° ê°ì²´ë¥¼ ê³µìœ 
+		// ì¦‰, ë©”ëª¨ë¦¬ì— ìƒˆë¡œìš´ ê°ì²´ë¥¼ ìƒì„±í•˜ì§€ ì•Šê³ , ë¯¸ë¦¬ ì¡´ì¬í•˜ëŠ” ê¸°ë³¸ ê°ì²´ë¥¼ ì‚¬ìš©
 		return GetDefault<UProjectileStaticData>(ProjectileDataClass);
 	}
 	return nullptr;
@@ -45,26 +75,26 @@ const UProjectileStaticData* UMSFunctionLibrary::GetProjectileStaticData(TSubcla
 
 FProjectileRuntimeData UMSFunctionLibrary::MakeProjectileRuntimeData(TSubclassOf<UProjectileStaticData> ProjectileDataClass)
 {
-	// ¹ß»çÃ¼ÀÇ ·±Å¸ÀÓ µ¥ÀÌÅÍ »ı¼º
+	// ë°œì‚¬ì²´ì˜ ëŸ°íƒ€ì„ ë°ì´í„° ìƒì„±
 	FProjectileRuntimeData Data;
 
-	// ¹ß»çÃ¼ÀÇ ¿øº» µ¥ÀÌÅÍ¸¦ ±âÁØÀ¸·Î ¸ğµç µ¥ÀÌÅÍ º¹»ç
+	// ë°œì‚¬ì²´ì˜ ì›ë³¸ ë°ì´í„°ë¥¼ ê¸°ì¤€ìœ¼ë¡œ ëª¨ë“  ë°ì´í„° ë³µì‚¬
 	Data.CopyFromStaticData(GetProjectileStaticData(ProjectileDataClass));
 	return Data;
 }
 
 AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator)
 {
-	// ¹ß»çÇÑ °´Ã¼ÀÇ ¿ùµå °¡Á®¿À±â
+	// ë°œì‚¬í•œ ê°ì²´ì˜ ì›”ë“œ ê°€ì ¸ì˜¤ê¸°
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
 
-	// ¼­¹ö¿¡¼­¸¸ ·ÎÁ÷À» ¼öÇàÇÏµµ·Ï °Ë»ç
+	// ì„œë²„ì—ì„œë§Œ ë¡œì§ì„ ìˆ˜í–‰í•˜ë„ë¡ ê²€ì‚¬
 	if (World && World->GetNetMode() < ENetMode::NM_Client)
 	{
-		// SpawnActorDeferred ÇÔ¼ö¸¦ ÅëÇØ, ¹ß»çÃ¼ Áö¿¬ »ı¼º
+		// SpawnActorDeferred í•¨ìˆ˜ë¥¼ í†µí•´, ë°œì‚¬ì²´ ì§€ì—° ìƒì„±
 		if (AMSBaseProjectile* Projectile = World->SpawnActorDeferred<AMSBaseProjectile>(AMSBaseProjectile::StaticClass(), Transform, Owner, Instigator, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn))
 		{
-			// ¹ß»çÃ¼ Á¤Àû µ¥ÀÌÅÍ Å¬·¡½º¸¦ ÃÊ±âÈ­
+			// ë°œì‚¬ì²´ ì •ì  ë°ì´í„° í´ë˜ìŠ¤ë¥¼ ì´ˆê¸°í™”
 			Projectile->ProjectileDataClass = ProjectileDataClass;
 			Projectile->InitProjectileRuntimeDataFromClass(ProjectileDataClass);
 			Projectile->FinishSpawning(Transform);
@@ -78,16 +108,16 @@ AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldCont
 
 AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectile(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FProjectileRuntimeData RuntimeData, FTransform Transform, AActor* Owner, APawn* Instigator)
 {
-	// ¹ß»çÇÑ °´Ã¼ÀÇ ¿ùµå °¡Á®¿À±â
+	// ë°œì‚¬í•œ ê°ì²´ì˜ ì›”ë“œ ê°€ì ¸ì˜¤ê¸°
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
 
-	// ¼­¹ö¿¡¼­¸¸ ·ÎÁ÷À» ¼öÇàÇÏµµ·Ï °Ë»ç
+	// ì„œë²„ì—ì„œë§Œ ë¡œì§ì„ ìˆ˜í–‰í•˜ë„ë¡ ê²€ì‚¬
 	if (World && World->GetNetMode() < ENetMode::NM_Client)
 	{
-		// SpawnActorDeferred ÇÔ¼ö¸¦ ÅëÇØ, ¹ß»çÃ¼ Áö¿¬ »ı¼º
+		// SpawnActorDeferred í•¨ìˆ˜ë¥¼ í†µí•´, ë°œì‚¬ì²´ ì§€ì—° ìƒì„±
 		if (AMSBaseProjectile* Projectile = World->SpawnActorDeferred<AMSBaseProjectile>(AMSBaseProjectile::StaticClass(), Transform, Owner, Instigator, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn))
 		{
-			// ¹ß»çÃ¼ Á¤Àû µ¥ÀÌÅÍ Å¬·¡½º¸¦ ÃÊ±âÈ­
+			// ë°œì‚¬ì²´ ì •ì  ë°ì´í„° í´ë˜ìŠ¤ë¥¼ ì´ˆê¸°í™”
 			Projectile->ProjectileDataClass = ProjectileDataClass;
 			Projectile->SetProjectileRuntimeData(RuntimeData);
 			Projectile->FinishSpawning(Transform);
