@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Animation/Enemy/MSEnemyAnimInstance.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/AIController/MSBaseAIController.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
@@ -151,7 +152,7 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		CachedData.AttackDamage = RowData->AttackDamage;
 		CachedData.AttackRange = RowData->AttackRange;
 		CachedData.bIsRanged = RowData->bIsRanged;
-
+		CachedData.DropExpValue = RowData->DropExpValue;
 		// GAS 데이터 복사
 		CachedData.StartAbilities = RowData->StartAbilities;
 		CachedData.StartEffects = RowData->StartEffects;
@@ -648,13 +649,19 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		}
 
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
+		
+		// 이전 스켈레탈메시의 머테리얼 정보가 남아있어 머테리얼이 이상하게 나타나던 현상 방지 코드
+		const TArray<FSkeletalMaterial>& MeshMaterials = Data->SkeletalMesh->GetMaterials();
+		for (int32 i = 0; i < MeshMaterials.Num(); ++i)
+		{
+			Enemy->GetMesh()->SetMaterial(i, MeshMaterials[i].MaterialInterface);
+		}
 
 		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
 	
 		UE_LOG(LogTemp, Error, TEXT("%s : EnemySetting : SkeletalMeshSet Success"), HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]"));
 	}
-
 
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
@@ -681,6 +688,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 				Enemy->GetCharacterMovement()->MaxWalkSpeed = Data->MoveSpeed;
 				ASC->SetNumericAttributeBase(AttributeSet->GetAttackDamageAttribute(), Data->AttackDamage);
 				ASC->SetNumericAttributeBase(AttributeSet->GetAttackRangeAttribute(), Data->AttackRange);
+				ASC->SetNumericAttributeBase(AttributeSet->GetDropExpValueAttribute(), Data->DropExpValue);
 			}
 
 			// 어빌리티 부여
@@ -825,17 +833,12 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(Controller))
 		{
 			AIController->StopAI();
+			//AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), false);
 		}
 	}
 
 	//  GAS 초기화
 	ResetEnemyGASState(Enemy);
-
-	// 리플리케이션 끄기 (클라이언트에서 사라짐)
-	// Enemy->SetReplicates(false);
-
-	// 위치는 그대로 두거나 원점으로
-	// Enemy->SetActorLocation(FVector(0, 0, 100.0f));  // 선택사항
 
 	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
 	// 	Enemy->GetIsReplicated()
@@ -907,9 +910,14 @@ void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
-	if (NewCount > 0) // 태그 추가됨 = 사망
+	if (NewCount >= 0) // 태그가 없음 == 몽타주 끝남
 	{
 		HandleEnemyDeath(Enemy);
+	}
+	
+	else // 태그가 제거됨 = 몽타주 끝남 = 사망처리
+	{
+		//HandleEnemyDeath(Enemy);
 	}
 }
 

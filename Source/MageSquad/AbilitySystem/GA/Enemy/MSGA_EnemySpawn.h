@@ -3,21 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MSGA_EnemyBossBaseAbility.h"
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
-#include "MSGA_EnemyDead.generated.h"
+#include "MSGA_EnemySpawn.generated.h"
 
 /**
  * 작성자 : 임희섭
- * 작성일 : 2025/12/17
- * Enemy들이 죽을 때 발동될 Dead Ability
+ * 작성일 : 2025/12/22
+ * 보스가 등장하는 어빌리티.
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_EnemyDead : public UMSGA_EnemyBaseAbility
+class MAGESQUAD_API UMSGA_EnemySpawn : public UMSGA_EnemyBossBaseAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_EnemyDead();
+	UMSGA_EnemySpawn();
+
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, 
@@ -44,7 +46,4 @@ private:
 	UFUNCTION()
 	void OnInterruptedCallback();
 	
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AMSExperienceOrb> ExpReward;	
 };

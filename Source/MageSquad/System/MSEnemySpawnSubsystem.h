@@ -79,6 +79,7 @@ struct FMSCachedEnemyData
 	float AttackDamage = 10.0f;
 	float AttackRange = 200.0f;
 	bool bIsRanged = false;
+	float DropExpValue = 10.f;
 
 	// GAS 관련
 	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
