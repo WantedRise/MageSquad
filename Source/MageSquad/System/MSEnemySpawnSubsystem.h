@@ -122,10 +122,7 @@ public:
 	/** 특정 타입의 몬스터 수동 스폰 (서버에서만 동작) */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
 	AMSBaseEnemy* SpawnMonsterByID(const FName& MonsterID, const FVector& Location);
-
-	//~=============================================================================
-	// Configuration Setters
-	//~=============================================================================
+	
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnInterval(float NewInterval);
@@ -141,10 +138,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetMonsterDataTable(UDataTable* NewDataTable);
-
-	//~=============================================================================
-	// Getters
-	//~=============================================================================
+	
 	
 	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	int32 GetCurrentActiveCount() const { return CurrentActiveCount; }
@@ -154,27 +148,17 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	bool IsSpawning() const { return bIsSpawning; }
-
-	//~=============================================================================
-	// Static Accessor
-	//~=============================================================================
+	
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn", meta = (WorldContext = "WorldContextObject"))
 	static UMSEnemySpawnSubsystem* Get(UObject* WorldContextObject);
-
-	//~=============================================================================
-	// Enemy Pool Management (Public for external death handling)
-	//~=============================================================================
+	
 	
 	/** 외부에서 Enemy 사망 시 호출하여 풀로 반환 */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Pool")
 	void ReturnEnemyToPool(AMSBaseEnemy* Enemy);
 
 private:
-	//~=============================================================================
-	// Initialization
-	//~=============================================================================
-	
 	/** DataTable에서 몬스터 데이터 로드 및 에셋 사전 로드 */
 	void LoadMonsterDataTable();
 	
@@ -186,10 +170,6 @@ private:
 	
 	/** 특정 풀 사전 생성 */
 	void PrewarmPool(FMSEnemyPool& Pool);
-
-	//~=============================================================================
-	// Spawn Logic
-	//~=============================================================================
 	
 	/** 타이머 콜백: 주기적으로 랜덤 몬스터 스폰 */
 	void SpawnMonsterTick();
@@ -209,24 +189,18 @@ private:
 	/** 화면 가장자리의 랜덤한 지점 반환 (화면 밖)*/
 	FVector2D GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY, float Margin);
 
-	//~=============================================================================
-	// Enemy Initialization & Cleanup
-	//~=============================================================================
 public:
 	/** DataTable 데이터로 Enemy 초기화 (메시, 애니메이션, GAS) */
 	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
 	/** Enemy 활성화 (위치 설정, AI 시작) */
 	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location) const;
+	
 private:
 	/** Enemy 비활성화 (숨김, 콜리전 끄기, AI 정지) */
 	void DeactivateEnemy(AMSBaseEnemy* Enemy);
 	
 	/** GAS 상태 완전 초기화 (태그, 이펙트, 어빌리티 제거) */
 	void ResetEnemyGASState(AMSBaseEnemy* Enemy);
-
-	//~=============================================================================
-	// Death Event Handling
-	//~=============================================================================
 	
 	/** Enemy의 사망 태그 이벤트 바인딩 */
 	void BindEnemyDeathEvent(AMSBaseEnemy* Enemy);
@@ -243,10 +217,6 @@ private:
 	
 	/** 타이머 콜백: 사망 애니메이션 후 풀로 반환 */
 	void ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSEnemyPool* Pool);
-
-	//~=============================================================================
-	// Helper Functions
-	//~=============================================================================
 	
 	/** Enemy가 속한 풀 찾기 (O(1) 조회) */
 	FMSEnemyPool* FindPoolForEnemy(AMSBaseEnemy* Enemy) const;
@@ -255,9 +225,6 @@ private:
 	bool HasAuthority() const;
 
 private:
-	//~=============================================================================
-	// DataTable & Cached Data
-	//~=============================================================================
 	
 	/** 몬스터 정적 데이터 테이블 */
 	UPROPERTY(EditDefaultsOnly, Category = "Monster Data")
@@ -266,10 +233,18 @@ private:
 	/** 몬스터별 캐시된 데이터 (에셋 사전 로드 포함) */
 	UPROPERTY()
 	TMap<FName, FMSCachedEnemyData> CachedMonsterData;
-
-	//~=============================================================================
-	// Object Pools
-	//~=============================================================================
+	
+	/*Normal 몬스터 데이터 캐싱용 맵*/
+	UPROPERTY()
+	TMap<FName, FMSCachedEnemyData> CachedNormalMonsterData;
+	
+	/*Elite 몬스터 데이터 캐싱용 맵*/
+	UPROPERTY()
+	TMap<FName, FMSCachedEnemyData> CachedEliteMonsterData;
+	
+	/*Boss몬스터 데이터 캐싱용 맵*/
+	UPROPERTY()
+	TMap<FName, FMSCachedEnemyData> CachedBossMonsterData;
 	
 	UPROPERTY()
 	FMSEnemyPool NormalEnemyPool;
@@ -285,20 +260,12 @@ private:
 
 	/** Enemy -> Pool 역참조 (O(1) 풀 검색) */
 	TMap<TObjectPtr<AMSBaseEnemy>, FMSEnemyPool*> EnemyToPoolMap;
-
-	//~=============================================================================
-	// Pool Configuration
-	//~=============================================================================
 	
 	const int32 NormalEnemyPoolSize = 10;
 
 	const int32 EliteEnemyPoolSize = 5;
 
 	const int32 BossEnemyPoolSize = 1;
-
-	//~=============================================================================
-	// Spawn Configuration
-	//~=============================================================================
 	
 	/** 스폰 간격 (초) */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
