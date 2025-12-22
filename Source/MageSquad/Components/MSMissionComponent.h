@@ -31,6 +31,8 @@ private: /* ===== Client ===== */
 	void HandleMissionChanged(int32 MissionID);
 	void HandleMissionProgressChanged(float Progress);
 	void HandleMissionFinished(bool bSuccess);
+	void OnMissionTimeExpired();
+	void FinishMission(bool bSuccess);
 private:
 	bool IsServer() const;
 private:
@@ -39,4 +41,5 @@ private:
 	EMissionType CurrentMissionType = EMissionType::None;
 	float CurrentProgress = 0.f;
 	class AMSGameState* OwnerGameState;
+	FTimerHandle MissionTimerHandle;
 };

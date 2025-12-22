@@ -4,6 +4,7 @@
 #include "Components/MSMissionComponent.h"
 #include "DataStructs/MSGameMissionData.h"
 #include "GameStates/MSGameState.h"
+#include <System/MSMissionDataSubsystem.h>
 
 // Sets default values for this component's properties
 UMSMissionComponent::UMSMissionComponent()
@@ -40,6 +41,28 @@ void UMSMissionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+void UMSMissionComponent::FinishMission(bool bSuccess)
+{
+    // 타이머 해제
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(MissionTimerHandle);
+    }
+
+    // 미션 스크립트 정리
+    if (MissionScript)
+    {
+        MissionScript->Deinitialize();
+        MissionScript = nullptr;
+    }
+
+    // GameState 알림
+    if (OwnerGameState)
+    {
+        OwnerGameState->NotifyMissionFinished(bSuccess);
+    }
+}
+
 void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
 {
     if (!IsServer())
@@ -49,12 +72,14 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
 
     if (MissionScript)
     {
-        MissionScript->Deinitialize();
-        MissionScript = nullptr;
+        // 기존 미션은 실패처리 하거나 단순 정리만 수행
+        FinishMission(false);
     }
 
     MissionScript = NewObject<UMSMissionScript>(this,MissionRow.ScriptClass);
     MissionScript->Initialize(GetWorld());
+
+    GetWorld()->GetTimerManager().SetTimer(MissionTimerHandle,this,&UMSMissionComponent::OnMissionTimeExpired,MissionRow.TimeLimit,false);
 }
 
 void UMSMissionComponent::UpdateMission()
@@ -68,10 +93,7 @@ void UMSMissionComponent::UpdateMission()
 
     if (MissionScript->IsCompleted())
     {
-        OwnerGameState->NotifyMissionFinished(true);
-
-        MissionScript->Deinitialize();
-        MissionScript = nullptr;
+        FinishMission(true);
     }
 }
 
@@ -80,13 +102,7 @@ void UMSMissionComponent::AbortMission()
     if (!IsServer() || OwnerGameState)
         return;
 
-    if (MissionScript)
-    {
-        MissionScript->Deinitialize();
-        MissionScript = nullptr;
-    }
-
-    OwnerGameState->NotifyMissionFinished(false);
+    FinishMission(false);
 }
 
 void UMSMissionComponent::BindGameStateDelegates()
@@ -115,7 +131,15 @@ void UMSMissionComponent::HandleMissionChanged(int32 MissionID)
     // Client:
     // - MissionID → DataSubsystem 조회
     // - UI 표시 / 연출
-    
+    UMSMissionDataSubsystem* MissionDataSubsystem = OwnerGameState->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+
+    if (!MissionDataSubsystem) return;
+
+    const FMSMissionRow* MissionData = MissionDataSubsystem->Find(MissionID);
+
+    if (!MissionData) return;
+
+    StartMission(*MissionData);
 }
 
 void UMSMissionComponent::HandleMissionProgressChanged(float Progress)
@@ -130,6 +154,14 @@ void UMSMissionComponent::HandleMissionFinished(bool bSuccess)
     // Client:
     // - 성공 / 실패 연출
 
+}
+
+void UMSMissionComponent::OnMissionTimeExpired()
+{
+    if (OwnerGameState)
+    {
+        OwnerGameState->NotifyMissionFinished(false);
+    }
 }
 
 bool UMSMissionComponent::IsServer() const

@@ -67,7 +67,7 @@ void UMSGameProgressComponent::TickProgress()
 
     if (OwnerGameState)
     {
-        OwnerGameState->SetProgressNormalized(Normalized);
+        OwnerGameState->SetProgressNormalized(Normalized, ElapsedGameTime);
         OwnerGameState->OnRep_ProgressNormalized();
     }
 
