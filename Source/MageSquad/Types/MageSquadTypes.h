@@ -326,7 +326,7 @@ struct MAGESQUAD_API FMSPlayerSkillSlotNet
  * 작성자: 김준형
  * 작성일: 25/12/15
  *
- * 나이아가라에 FLinearColor를 넘겨주기 위한 게임플레이 이펙트 콘텍스트
+ * 나이아가라 전달용 게임플레이 이펙트 콘텍스트
  */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
@@ -335,7 +335,7 @@ struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
 
 public:
 	UPROPERTY()
-	FLinearColor CueColor = FLinearColor::White;
+	FLinearColor LinearColor = FLinearColor::White;
 
 	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
 
@@ -351,7 +351,7 @@ public:
 			return false;
 		}
 
-		Ar << CueColor;
+		Ar << LinearColor;
 		return true;
 	}
 };
