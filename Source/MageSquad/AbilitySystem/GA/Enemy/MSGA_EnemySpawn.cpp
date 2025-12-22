@@ -5,8 +5,10 @@
 
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
 #include "Enemy/MSBossEnemy.h"
+#include "Enemy/AIController/MSBossAIController.h"
 
 UMSGA_EnemySpawn::UMSGA_EnemySpawn()
 {
@@ -16,7 +18,7 @@ UMSGA_EnemySpawn::UMSGA_EnemySpawn()
 	SetAssetTags(TagContainer);
 
 	// 활성화 시 Owner에게 부여되는 Tag
-	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Dead);
+	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Spawn);
 }
 
 void UMSGA_EnemySpawn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -31,12 +33,12 @@ void UMSGA_EnemySpawn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 	
-	if (UAnimMontage* AttackMontage = Owner->GetAttackMontage())
+	if (UAnimMontage* SpawnMontage = Owner->GetSpawnMontage())
 	{
-		UAbilityTask_PlayMontageAndWait* EnemyAttackTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Spawn"), AttackMontage);
-		EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemySpawn::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemySpawn::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
-		EnemyAttackTask->ReadyForActivation();
+		UAbilityTask_PlayMontageAndWait* EnemySpawnTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Spawn"), SpawnMontage);
+		EnemySpawnTask->OnCompleted.AddDynamic(this, &UMSGA_EnemySpawn::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
+		EnemySpawnTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemySpawn::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
+		EnemySpawnTask->ReadyForActivation();
 	}
 }
 
@@ -51,6 +53,11 @@ void UMSGA_EnemySpawn::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
+	if (AMSBossAIController* BossAIController = Cast<AMSBossAIController>(Owner->GetController()))
+	{
+		BossAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsSpawnd"), false);
+	}
 }
 
 void UMSGA_EnemySpawn::OnCompleteCallback()

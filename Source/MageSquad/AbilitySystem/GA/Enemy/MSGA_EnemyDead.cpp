@@ -8,7 +8,9 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Actors/Experience/MSExperienceOrb.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
+#include "Enemy/AIController/MSBaseAIController.h"
 
 UMSGA_EnemyDead::UMSGA_EnemyDead()
 {
@@ -54,6 +56,12 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	
 	UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability End"), *GetAvatarActorFromActorInfo()->GetName())
 	
+	if (AMSBaseAIController* EnemyAIController = Cast<AMSBaseAIController>(Owner->GetController()))
+	{
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetIsDeadKey(), false);
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetCanAttackKey(), false);
+	}
+	
 	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
 	{
 		return;
@@ -69,7 +77,19 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 		Owner->GetActorLocation(), 
 		FRotator(0.0f, 0.0f, 0.0f)));
 	
-	ExpObject->ExperienceValue = Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()))->GetDropExpValue();
+	if (ExpObject)
+	{
+		// 3. ASC 확인
+		if (UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent())
+		{
+			// 4. AttributeSet 확인 및 캐스팅
+			if (const UMSEnemyAttributeSet* EnemyAS = Cast<UMSEnemyAttributeSet>(ASC->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())))
+			{
+				// 모든 값이 안전할 때만 값 대입
+				ExpObject->ExperienceValue = EnemyAS->GetDropExpValue();
+			}
+		}
+	}
 }
 
 void UMSGA_EnemyDead::OnCompleteCallback()

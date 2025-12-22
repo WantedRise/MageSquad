@@ -826,6 +826,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(Controller))
 		{
 			AIController->StopAI();
+			//AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), false);
 		}
 	}
 
@@ -902,7 +903,7 @@ void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
-	if (NewCount > 0) // 태그가 없음 == 몽타주 끝남
+	if (NewCount >= 0) // 태그가 없음 == 몽타주 끝남
 	{
 		HandleEnemyDeath(Enemy);
 	}
