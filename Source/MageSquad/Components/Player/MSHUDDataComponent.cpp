@@ -17,14 +17,14 @@ UMSHUDDataComponent::UMSHUDDataComponent()
 
 void UMSHUDDataComponent::BindToASC_Server(UMSPlayerAbilitySystemComponent* InASC)
 {
-	// ¼­¹ö¿¡¼­¸¸ ¹ÙÀÎµù/°»½Å
+	// ì„œë²„ì—ì„œë§Œ ë°”ì¸ë”©/ê°±ì‹ 
 	if (!GetOwner() || !GetOwner()->HasAuthority() || !InASC) return;
 
-	// ASC ActorInfo°¡ ¾ÆÁ÷ ÁØºñµÇÁö ¾Ê¾ÒÀ¸¸é ¹ÙÀÎµùÀ» º¸·ùÇÏ´Â°Ô ¾ÈÀü
-	// ÇÏÁö¸¸ PossessedBy ÀÌÈÄ È£ÃâµÇ´Â °ÍÀ» ÀüÁ¦·Î ¿©±â¼­´Â ÃÖ¼Ò Ã¼Å©¸¸ ¼öÇà
+	// ASC ActorInfoê°€ ì•„ì§ ì¤€ë¹„ë˜ì§€ ì•Šì•˜ìœ¼ë©´ ë°”ì¸ë”©ì„ ë³´ë¥˜í•˜ëŠ”ê²Œ ì•ˆì „
+	// í•˜ì§€ë§Œ PossessedBy ì´í›„ í˜¸ì¶œë˜ëŠ” ê²ƒì„ ì „ì œë¡œ ì—¬ê¸°ì„œëŠ” ìµœì†Œ ì²´í¬ë§Œ ìˆ˜í–‰
 	if (!InASC->GetOwnerActor() || !InASC->GetAvatarActor()) return;
 
-	// ±âÁ¸ ¹ÙÀÎµùÀÌ ÀÖ´Ù¸é Á¤¸®
+	// ê¸°ì¡´ ë°”ì¸ë”©ì´ ìˆë‹¤ë©´ ì •ë¦¬
 	if (BoundASC)
 	{
 		if (HealthChangedHandle.IsValid())
@@ -39,13 +39,13 @@ void UMSHUDDataComponent::BindToASC_Server(UMSPlayerAbilitySystemComponent* InAS
 		}
 	}
 
-	// ASC ÃÊ±âÈ­
+	// ASC ì´ˆê¸°í™”
 	BoundASC = InASC;
 
-	// ÃÊ±â°ª ¹İ¿µ
+	// ì´ˆê¸°ê°’ ë°˜ì˜
 	PullHealthFromASC();
 
-	// µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù (¼­¹ö¿¡¼­¸¸)
+	// ë¸ë¦¬ê²Œì´íŠ¸ ë°”ì¸ë”© (ì„œë²„ì—ì„œë§Œ)
 	HealthChangedHandle =
 		BoundASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetHealthAttribute())
 		.AddUObject(this, &UMSHUDDataComponent::HandleHealthChanged);
@@ -54,7 +54,7 @@ void UMSHUDDataComponent::BindToASC_Server(UMSPlayerAbilitySystemComponent* InAS
 		BoundASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetMaxHealthAttribute())
 		.AddUObject(this, &UMSHUDDataComponent::HandleMaxHealthChanged);
 
-	// ¼­¹ö¿¡¼­µµ Áï½Ã ºê·ÎµåÄ³½ºÆ®
+	// ì„œë²„ì—ì„œë„ ì¦‰ì‹œ ë¸Œë¡œë“œìºìŠ¤íŠ¸
 	BroadcastHealth();
 }
 
@@ -62,10 +62,10 @@ void UMSHUDDataComponent::BindDisplayName_Server(const FText& InName)
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
-	// ÀÌ¸§ ÃÊ±âÈ­
+	// ì´ë¦„ ì´ˆê¸°í™”
 	RepDisplayName = InName;
 
-	// ¼­¹ö¿¡¼­´Â Á÷Á¢ È£ÃâÇØ UI °»½Å
+	// ì„œë²„ì—ì„œëŠ” ì§ì ‘ í˜¸ì¶œí•´ UI ê°±ì‹ 
 	OnRep_PublicData();
 }
 
@@ -73,10 +73,10 @@ void UMSHUDDataComponent::BindPortraitIcon_Server(UTexture2D* InPortrait)
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
-	// ÇÃ·¹ÀÌ¾î ¾ÆÀÌÄÜ ÃÊ±âÈ­
+	// í”Œë ˆì´ì–´ ì•„ì´ì½˜ ì´ˆê¸°í™”
 	RepPortraitIcon = InPortrait;
 
-	// ¼­¹ö¿¡¼­´Â Á÷Á¢ È£ÃâÇØ UI °»½Å
+	// ì„œë²„ì—ì„œëŠ” ì§ì ‘ í˜¸ì¶œí•´ UI ê°±ì‹ 
 	OnRep_PublicData();
 }
 
@@ -99,36 +99,36 @@ void UMSHUDDataComponent::PullHealthFromASC()
 {
 	if (!BoundASC) return;
 
-	// ASC¿¡¼­ ÃÊ±â°ªÀ» ÀĞ¾î Rep º¯¼ö¿¡ ¹İ¿µ
+	// ASCì—ì„œ ì´ˆê¸°ê°’ì„ ì½ì–´ Rep ë³€ìˆ˜ì— ë°˜ì˜
 	RepHealth = BoundASC->GetNumericAttribute(UMSPlayerAttributeSet::GetHealthAttribute());
 	RepMaxHealth = BoundASC->GetNumericAttribute(UMSPlayerAttributeSet::GetMaxHealthAttribute());
 }
 
 void UMSHUDDataComponent::BroadcastHealth()
 {
-	// ÇöÀç Ã¼·Â ºñÀ² °è»ê (ex. 0.1 = 10%)
+	// í˜„ì¬ ì²´ë ¥ ë¹„ìœ¨ ê³„ì‚° (ex. 0.1 = 10%)
 	const float Pct = (RepMaxHealth > 0.f) ? FMath::Clamp(RepHealth / RepMaxHealth, 0.f, 1.f) : 0.f;
 
-	// ÇöÀç Ã¼·Â º¯°æ ºê·ÎµåÄ³½ºÆ®
+	// í˜„ì¬ ì²´ë ¥ ë³€ê²½ ë¸Œë¡œë“œìºìŠ¤íŠ¸
 	OnPublicHealthChanged.Broadcast(RepHealth, RepMaxHealth, Pct);
 }
 
 void UMSHUDDataComponent::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
-	// ÇöÀç Ã¼·Â °»½Å ÈÄ µ¥ÀÌÅÍ º¯°æ ºê·ÎµåÄ³½ºÆ®
+	// í˜„ì¬ ì²´ë ¥ ê°±ì‹  í›„ ë°ì´í„° ë³€ê²½ ë¸Œë¡œë“œìºìŠ¤íŠ¸
 	RepHealth = Data.NewValue;
 	BroadcastHealth();
 }
 
 void UMSHUDDataComponent::HandleMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
-	// ÃÖ´ë Ã¼·Â °»½Å ÈÄ µ¥ÀÌÅÍ º¯°æ ºê·ÎµåÄ³½ºÆ®
+	// ìµœëŒ€ ì²´ë ¥ ê°±ì‹  í›„ ë°ì´í„° ë³€ê²½ ë¸Œë¡œë“œìºìŠ¤íŠ¸
 	RepMaxHealth = Data.NewValue;
 	BroadcastHealth();
 }
 
 void UMSHUDDataComponent::OnRep_PublicData()
 {
-	// UI °»½Å ÀÌº¥Æ® È£Ãâ
+	// UI ê°±ì‹  ì´ë²¤íŠ¸ í˜¸ì¶œ
 	BroadcastHealth();
 }

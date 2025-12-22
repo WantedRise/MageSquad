@@ -7,15 +7,15 @@
 #include "Types/MageSquadTypes.h"
 #include "MSHUDDataComponent.generated.h"
 
-// ÇöÀç Ã¼·Â º¯°æ µ¨¸®°ÔÀÌÆ® (ÇöÀç Ã¼·Â / ÃÖ´ë Ã¼·Â / Ã¼·Â ºñÀ²)
+// í˜„ì¬ ì²´ë ¥ ë³€ê²½ ë¸ë¦¬ê²Œì´íŠ¸ (í˜„ì¬ ì²´ë ¥ / ìµœëŒ€ ì²´ë ¥ / ì²´ë ¥ ë¹„ìœ¨)
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnPublicHealthChanged, float, float, float);
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/18
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/18
  *
- * HUD¿¡ ÇÊ¿äÇÑ ÃÖ¼Ò µ¥ÀÌÅÍ¸¦ ¼­¹ö -> ¸ğµç Å¬¶óÀÌ¾ğÆ®·Î º¹Á¦ÇÏ´Â ÄÄÆ÷³ÍÆ®
- * ÃÖ¼Ò µ¥ÀÌÅÍ(Ã¼·Â, ÀÌ¸§, ¾ÆÀÌÄÜ, ½ºÅ³ ½½·Ô ¾ÆÀÌÄÜ µî)
+ * HUDì— í•„ìš”í•œ ìµœì†Œ ë°ì´í„°ë¥¼ ì„œë²„ -> ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ë¡œ ë³µì œí•˜ëŠ” ì»´í¬ë„ŒíŠ¸
+ * ìµœì†Œ ë°ì´í„°(ì²´ë ¥, ì´ë¦„, ì•„ì´ì½˜, ìŠ¤í‚¬ ìŠ¬ë¡¯ ì•„ì´ì½˜ ë“±)
  */
 UCLASS(ClassGroup = (UI), meta = (BlueprintSpawnableComponent))
 class MAGESQUAD_API UMSHUDDataComponent : public UActorComponent
@@ -25,17 +25,17 @@ class MAGESQUAD_API UMSHUDDataComponent : public UActorComponent
 public:
 	UMSHUDDataComponent();
 
-	// ASC ¹ÙÀÎµù ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// ASC ë°”ì¸ë”© í•¨ìˆ˜ (ì„œë²„ ì „ìš©)
 	void BindToASC_Server(class UMSPlayerAbilitySystemComponent* InASC);
 
-	// ÆÀ¿ø ÀÌ¸§ ¼³Á¤ ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// íŒ€ì› ì´ë¦„ ì„¤ì • í•¨ìˆ˜ (ì„œë²„ ì „ìš©)
 	void BindDisplayName_Server(const FText& InName);
 
-	// ÆÀ¿ø ¾ÆÀÌÄÜ ¼³Á¤ ÇÔ¼ö (¼­¹ö Àü¿ë)
+	// íŒ€ì› ì•„ì´ì½˜ ì„¤ì • í•¨ìˆ˜ (ì„œë²„ ì „ìš©)
 	void BindPortraitIcon_Server(UTexture2D* InPortrait);
 
 
-	// ÆÀ¿ø UI¿¡¼­ ÀĞ±â À§ÇÑ Getter ÇÔ¼ö
+	// íŒ€ì› UIì—ì„œ ì½ê¸° ìœ„í•œ Getter í•¨ìˆ˜
 	float GetHealth() const { return RepHealth; }
 	float GetMaxHealth() const { return RepMaxHealth; }
 	FText GetDisplayName() const { return RepDisplayName; }
@@ -46,47 +46,47 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// ¸ğµç °ø°³ µ¥ÀÌÅÍ º¯°æ ½Ã È£Ãâ
+	// ëª¨ë“  ê³µê°œ ë°ì´í„° ë³€ê²½ ì‹œ í˜¸ì¶œ
 	UFUNCTION()
 	void OnRep_PublicData();
 
 private:
-	// ASC¿¡¼­ ÃÊ±â°ªÀ» ÀĞ¾î Rep º¯¼ö¿¡ ¹İ¿µÇÏ´Â ÇÔ¼ö
+	// ASCì—ì„œ ì´ˆê¸°ê°’ì„ ì½ì–´ Rep ë³€ìˆ˜ì— ë°˜ì˜í•˜ëŠ” í•¨ìˆ˜
 	void PullHealthFromASC();
 
-	// Ã¼·Â º¯°æ ºê·ÎµåÄ³½ºÆ® ÇÔ¼ö
+	// ì²´ë ¥ ë³€ê²½ ë¸Œë¡œë“œìºìŠ¤íŠ¸ í•¨ìˆ˜
 	void BroadcastHealth();
 
-	// AttributeSet °»½Å Äİ¹é ÇÔ¼ö
+	// AttributeSet ê°±ì‹  ì½œë°± í•¨ìˆ˜
 	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
 	void HandleMaxHealthChanged(const struct FOnAttributeChangeData& Data);
 
 public:
-	// º¹Á¦µÈ °ªÀÌ º¯°æµÇ¸é È£ÃâµÇ´Â ÀÌº¥Æ® (C++ Àü¿ë)
+	// ë³µì œëœ ê°’ì´ ë³€ê²½ë˜ë©´ í˜¸ì¶œë˜ëŠ” ì´ë²¤íŠ¸ (C++ ì „ìš©)
 	FOnPublicHealthChanged OnPublicHealthChanged;
 
 protected:
-	// ÇöÀç Ã¼·Â
+	// í˜„ì¬ ì²´ë ¥
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_PublicData)
 	float RepHealth = 0.f;
 
-	// ÃÖ´ë Ã¼·Â
+	// ìµœëŒ€ ì²´ë ¥
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_PublicData)
 	float RepMaxHealth = 0.f;
 
-	// ÀÌ¸§
+	// ì´ë¦„
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_PublicData)
 	FText RepDisplayName;
 
-	// ÇÃ·¹ÀÌ¾î ¾ÆÀÌÄÜ
+	// í”Œë ˆì´ì–´ ì•„ì´ì½˜
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_PublicData)
 	TObjectPtr<UTexture2D> RepPortraitIcon;
 
-	// ¹ÙÀÎµù µ¨¸®°ÔÀÌÆ® ÇÚµé(Áßº¹ ¹ÙÀÎµù/Á¤È®ÇÑ ÇØÁ¦ ¸ñÀû)
+	// ë°”ì¸ë”© ë¸ë¦¬ê²Œì´íŠ¸ í•¸ë“¤(ì¤‘ë³µ ë°”ì¸ë”©/ì •í™•í•œ í•´ì œ ëª©ì )
 	FDelegateHandle HealthChangedHandle;
 	FDelegateHandle MaxHealthChangedHandle;
 
-	// ¼­¹ö Àü¿ë ASC Ä³½Ã
+	// ì„œë²„ ì „ìš© ASC ìºì‹œ
 	UPROPERTY(Transient)
 	TObjectPtr<UMSPlayerAbilitySystemComponent> BoundASC = nullptr;
 };
