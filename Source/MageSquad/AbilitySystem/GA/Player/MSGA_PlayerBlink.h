@@ -8,12 +8,12 @@
 #include "MSGA_PlayerBlink.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
- * ÇÃ·¹ÀÌ¾îÀÇ ÀÌµ¿ ½ºÅ³
- * min(Á¡¸ê ÃÖ´ë °Å¸®, ¸¶¿ì½º Ä¿¼­) À§Ä¡·Î ¹«Á¶°Ç ÀÌµ¿ ½Ãµµ
- * ÀÌµ¿ÀÌ ºÒ°¡´ÉÇÏ¸é ±ÙÃ³ À§Ä¡·Î ÀÌµ¿
+ * í”Œë ˆì´ì–´ì˜ ì´ë™ ìŠ¤í‚¬
+ * min(ì ë©¸ ìµœëŒ€ ê±°ë¦¬, ë§ˆìš°ìŠ¤ ì»¤ì„œ) ìœ„ì¹˜ë¡œ ë¬´ì¡°ê±´ ì´ë™ ì‹œë„
+ * ì´ë™ì´ ë¶ˆê°€ëŠ¥í•˜ë©´ ê·¼ì²˜ ìœ„ì¹˜ë¡œ ì´ë™
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_PlayerBlink : public UGameplayAbility
@@ -26,59 +26,88 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
-	// ¾îºô¸®Æ¼¸¦ È°¼ºÈ­ÇØµµ µÇ´ÂÁö È®ÀÎÇÏ´Â ÇïÆÛ ÇÔ¼ö
+	// ì–´ë¹Œë¦¬í‹°ë¥¼ í™œì„±í™”í•´ë„ ë˜ëŠ”ì§€ í™•ì¸í•˜ëŠ” í—¬í¼ í•¨ìˆ˜
 	bool CheckAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData);
 
-	// Á¡¸ê ¼öÇà ÇÔ¼ö
+	// ì ë©¸ ìˆ˜í–‰ í•¨ìˆ˜
 	bool PerformBlink(ACharacter* Character, UAbilitySystemComponent* ASC);
 
-	// Á¡¸ê µµÂø À§Ä¡ °è»ê ÇÔ¼ö
+	// ì ë©¸ ë„ì°© ìœ„ì¹˜ ê³„ì‚° í•¨ìˆ˜
 	FVector ComputeDesiredLocation(const ACharacter* Character) const;
 
-	// Á¡¸ê ½Ãµµ ÈÄ ±ÙÃ³±îÁö Å½»öÇÏ´Â ÇÔ¼ö
-	// 1) DesiredLocationÀ¸·Î ¹«Á¶°Ç ½Ãµµ
-	// 2) ºÒ°¡ÇÏ¸é ±ÙÃ³·Î ´ëÃ¼ À§Ä¡ Å½»ö
+	// ì ë©¸ ì‹œë„ í›„ ê·¼ì²˜ê¹Œì§€ íƒìƒ‰í•˜ëŠ” í•¨ìˆ˜
+	// 1) DesiredLocationìœ¼ë¡œ ë¬´ì¡°ê±´ ì‹œë„
+	// 2) ë¶ˆê°€í•˜ë©´ ê·¼ì²˜ë¡œ ëŒ€ì²´ ìœ„ì¹˜ íƒìƒ‰
 	bool ResolveFinalLocation(ACharacter* Character, const FVector& StartLocation, const FVector& DesiredLocation, FVector& OutFinalLocation) const;
 
-	// ¸ñÇ¥ ÁöÁ¡ ±ÙÃ³ Å½»ö ÇÔ¼ö
+	// ëª©í‘œ ì§€ì  ê·¼ì²˜ íƒìƒ‰ í•¨ìˆ˜
 	bool FindNearbyValidLocation(ACharacter* Character, const FVector& StartLocation, const FVector& DesiredLocation, FVector& OutLocation) const;
 
-	// ½ÇÁ¦·Î ÇØ´ç À§Ä¡·Î ÀÌµ¿ °¡´ÉÇÑÁö °Ë»çÇÏ´Â ÇÔ¼ö
+	// ì‹¤ì œë¡œ í•´ë‹¹ ìœ„ì¹˜ë¡œ ì´ë™ ê°€ëŠ¥í•œì§€ ê²€ì‚¬í•˜ëŠ” í•¨ìˆ˜
 	bool CanTeleportTo(ACharacter* Character, const FVector& Location, const FRotator& Rot) const;
 
-	// GameplayCue ½ÇÇà ÇÔ¼ö (¼­¹ö¿¡¼­ ½ÇÇàÇÏ¸é ASC°¡ ³×Æ®¿öÅ©·Î µ¿±âÈ­)
+	// GameplayCue ì‹¤í–‰ í•¨ìˆ˜ (ì„œë²„ì—ì„œ ì‹¤í–‰í•˜ë©´ ASCê°€ ë„¤íŠ¸ì›Œí¬ë¡œ ë™ê¸°í™”)
 	void ExecuteCue(UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& Location) const;
 
+	// ===== Animation / Montage Flow =====
+	UFUNCTION()
+	void OnBlinkStartMontageCompleted();
+
+	UFUNCTION()
+	void OnBlinkStartMontageBlendOut();
+
+	UFUNCTION()
+	void OnBlinkStartMontageInterrupted();
+
+	UFUNCTION()
+	void OnBlinkStartMontageCancelled();
+
+	/** ëª½íƒ€ì£¼ ì¢…ë£Œ ì‹œì ì— ë¸”ë§í¬ë¥¼ ìˆ˜í–‰í•˜ê³  ì–´ë¹Œë¦¬í‹°ë¥¼ ì¢…ë£Œ */
+	void TryPerformBlinkAndEnd(bool bWasCancelled);
+
 protected:
-	// Á¡¸ê ÃÖ´ë °Å¸®
+	// ë¸”ë§í¬ ëª½íƒ€ì£¼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
+	TObjectPtr<class UAnimMontage> BlinkMontage;
+
+	// ë‚´ë¶€ ìºì‹œ: ëª½íƒ€ì£¼ ì½œë°±ì—ì„œ EndAbility/PerformBlinkë¥¼ ì•ˆì •ì ìœ¼ë¡œ í˜¸ì¶œí•˜ê¸° ìœ„í•¨
+	FGameplayAbilitySpecHandle CachedHandle;
+	FGameplayAbilityActivationInfo CachedActivationInfo;
+	TWeakObjectPtr<ACharacter> CachedCharacter;
+	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
+
+	// ë¸”ë§í¬ ìˆ˜í–‰ ì¤‘ í”Œë˜ê·¸
+	bool bBlinkPerformed = false;
+
+	// ì ë©¸ ìµœëŒ€ ê±°ë¦¬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	float BlinkDistance = 500.0f;
 
-	// Ãæµ¹ ÆÇÁ¤ ¹İ°æ(±ÙÃ³ Å½»ö¿¡ »ç¿ë)
+	// ì¶©ëŒ íŒì • ë°˜ê²½(ê·¼ì²˜ íƒìƒ‰ì— ì‚¬ìš©)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	float TeleportProbeRadius = 34.0f;
 
-	// ¸ñÇ¥ ÁöÁ¡ ±ÙÃ³ Å½»ö(¸µ Å½»ö) ½ºÅÜ
+	// ëª©í‘œ ì§€ì  ê·¼ì²˜ íƒìƒ‰(ë§ íƒìƒ‰) ìŠ¤í…
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	float FallbackRingStep = 50.0f;
 
-	// ¸ñÇ¥ ÁöÁ¡ ±ÙÃ³ Å½»ö(¸µ Å½»ö) ÃÖ´ë ¹İ°æ
+	// ëª©í‘œ ì§€ì  ê·¼ì²˜ íƒìƒ‰(ë§ íƒìƒ‰) ìµœëŒ€ ë°˜ê²½
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	float FallbackMaxRadius = 300.0f;
 
-	// ¸µ¿¡¼­ÀÇ °¢µµ »ùÇÃ ¼ö(Å¬¼ö·Ï ÃÎÃÎÇÏÁö¸¸ ºñ¿ë Áõ°¡)
+	// ë§ì—ì„œì˜ ê°ë„ ìƒ˜í”Œ ìˆ˜(í´ìˆ˜ë¡ ì´˜ì´˜í•˜ì§€ë§Œ ë¹„ìš© ì¦ê°€)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	int32 FallbackAngleSteps = 16;
 
-	// VFX »ö»ó
+	// VFX ìƒ‰ìƒ
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	FLinearColor BlinkColor;
 
-	// ½ÃÀÛ À§Ä¡ VFX (Gameplay Cue)
+	// ì‹œì‘ ìœ„ì¹˜ VFX (Gameplay Cue)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	FGameplayTag Cue_BlinkStart;
 
-	// ÃÖÁ¾ À§Ä¡ VFX (Gameplay Cue)
+	// ìµœì¢… ìœ„ì¹˜ VFX (Gameplay Cue)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	FGameplayTag Cue_BlinkEnd;
 };

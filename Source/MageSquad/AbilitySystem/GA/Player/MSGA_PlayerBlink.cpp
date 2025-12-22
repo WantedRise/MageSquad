@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Player/MSPlayerController.h"
 #include "GameplayTagsManager.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 
 #include "MSGameplayTags.h"
 
@@ -49,6 +50,40 @@ void UMSGA_PlayerBlink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
+	// 몽타주 콜백에서 사용하기 위한 캐시 저장
+	CachedHandle = Handle;
+	CachedActivationInfo = ActivationInfo;
+	CachedCharacter = Character;
+	CachedASC = ASC;
+	bBlinkPerformed = false;
+
+	// #1: 블링크 몽타주가 있으면 몽타주 재생
+	if (BlinkMontage)
+	{
+		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+			this, NAME_None, BlinkMontage, 1.0f, NAME_None, true
+		);
+
+		// 몽타주 상태별 콜백 함수 바인딩
+		if (MontageTask)
+		{
+			MontageTask->OnCompleted.AddDynamic(this, &UMSGA_PlayerBlink::OnBlinkStartMontageCompleted);
+			MontageTask->OnBlendOut.AddDynamic(this, &UMSGA_PlayerBlink::OnBlinkStartMontageBlendOut);
+			MontageTask->OnInterrupted.AddDynamic(this, &UMSGA_PlayerBlink::OnBlinkStartMontageInterrupted);
+			MontageTask->OnCancelled.AddDynamic(this, &UMSGA_PlayerBlink::OnBlinkStartMontageCancelled);
+
+			MontageTask->ReadyForActivation();
+			return; // 몽타주 종료 콜백에서 블링크 수행
+		}
+	}
+
+	// #2: 몽타주가 없거나 재생 실패 시 즉시 블링크
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
 	// 점멸 시도
 	const bool bSuccess = PerformBlink(Character, ASC);
 
@@ -63,8 +98,11 @@ bool UMSGA_PlayerBlink::CheckAbility(const FGameplayAbilitySpecHandle Handle, co
 	// 서버에서만 로직 수행
 	if (!ActorInfo->IsNetAuthority()) return false;
 
-	// 코스트 및 쿨타임 검사
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) return false;
+	// 코스트/쿨타임 검사만 수행
+	// - 실제 Commit은 몽타주 종료 후 블링크 직전에 수행하여,
+	// - 몽타주가 인터럽트/캔슬된 경우 비용과 쿨타임이 소비되지 않도록 함.
+	if (!CheckCost(Handle, ActorInfo, nullptr)) return false;
+	if (!CheckCooldown(Handle, ActorInfo, nullptr)) return false;
 
 	return true;
 }
@@ -101,7 +139,7 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 	}
 
 	// 종료 VFX 재생 (GameplayCue)
-	ExecuteCue(ASC, Cue_BlinkEnd, Character->GetActorLocation());
+	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation);
 	return true;
 }
 
@@ -254,4 +292,66 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 
 	// Cue 실행
 	ASC->ExecuteGameplayCue(CueTag, Params);
+}
+
+void UMSGA_PlayerBlink::OnBlinkStartMontageCompleted()
+{
+	// 몽타주가 정상 종료된 경우에만 블링크 수행
+	TryPerformBlinkAndEnd(false);
+}
+
+void UMSGA_PlayerBlink::OnBlinkStartMontageBlendOut()
+{
+}
+
+void UMSGA_PlayerBlink::OnBlinkStartMontageInterrupted()
+{
+	// 인터럽트되면 블링크는 수행하지 않고 어빌리티 종료
+	TryPerformBlinkAndEnd(true);
+}
+
+void UMSGA_PlayerBlink::OnBlinkStartMontageCancelled()
+{
+	// 캔슬되면 블링크는 수행하지 않고 어빌리티 종료
+	TryPerformBlinkAndEnd(true);
+}
+
+void UMSGA_PlayerBlink::TryPerformBlinkAndEnd(bool bWasCancelled)
+{
+	if (bBlinkPerformed) return;
+
+	bBlinkPerformed = true;
+
+	const FGameplayAbilityActorInfo* CurrentInfo = GetCurrentActorInfo();
+	if (!CurrentInfo) return;
+
+	// 몽타주가 취소된 경우 종료
+	if (bWasCancelled)
+	{
+		EndAbility(CachedHandle, CurrentInfo, CachedActivationInfo, true, true);
+		return;
+	}
+
+	bool bSuccess = true;
+	if (CurrentInfo->IsNetAuthority())
+	{
+		// 몽타주가 정상 종료된 시점에 실제 비용/쿨타임 Commit
+		if (!CommitAbility(CachedHandle, CurrentInfo, CachedActivationInfo))
+		{
+			EndAbility(CachedHandle, CurrentInfo, CachedActivationInfo, true, true);
+			return;
+		}
+
+		// 점멸 시도
+		if (CachedCharacter.IsValid() && CachedASC.IsValid())
+		{
+			bSuccess = PerformBlink(CachedCharacter.Get(), CachedASC.Get());
+		}
+		else
+		{
+			bSuccess = false;
+		}
+	}
+
+	EndAbility(CachedHandle, CurrentInfo, CachedActivationInfo, true, !bSuccess);
 }
