@@ -30,7 +30,8 @@ private: /* ===== Client ===== */
 	void BindGameStateDelegates();
 	void HandleMissionChanged(int32 MissionID);
 	void HandleMissionProgressChanged(float Progress);
-	void HandleMissionFinished(bool bSuccess);
+	UFUNCTION()
+	void OnMissionFinished(int32 MissionID,bool bSuccess);
 	void OnMissionTimeExpired();
 	void FinishMission(bool bSuccess);
 private:

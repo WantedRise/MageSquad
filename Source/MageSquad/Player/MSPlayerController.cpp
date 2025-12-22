@@ -134,7 +134,8 @@ void AMSPlayerController::NotifyHUDReinitialize()
 		HUDWidgetInstance->RequestReinitialize();
 		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 		{
-			GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::HandleMissionChanged);
+			GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::OnMissionChanged);
+			GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
 		}	
 	}
 }
@@ -234,10 +235,9 @@ void AMSPlayerController::ServerRPCReportReady_Implementation()
 	}
 }
 
-void AMSPlayerController::HandleMissionChanged(int32 MissionID)
+void AMSPlayerController::OnMissionChanged(int32 MissionID)
 {
-	UMSMissionDataSubsystem* MissionDataSubsystem =
-		GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	UMSMissionDataSubsystem* MissionDataSubsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
 
 	if (!MissionDataSubsystem) return;
 
@@ -301,8 +301,18 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 	Tracker->SetMissionMessage(MissionData.Description);
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
-		const float EndTime = MissionData.TimeLimit + GS->GetServerTime();
-		Tracker->StartMissionTimer(GS,EndTime);
+		Tracker->StartMissionTimer(GS, GS->GetMissionEndTime());
 		Tracker->SetVisibility(ESlateVisibility::Visible);
 	}
+}
+
+void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
+{
+	if (!HUDWidgetInstance) return;
+
+	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
+
+	if (!Notify) return;
+
+	Notify->PlayMissionResult(bSuccess);
 }

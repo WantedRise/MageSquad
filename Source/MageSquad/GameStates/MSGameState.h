@@ -10,7 +10,8 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnProgressUpdated, float/* Normalized */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionChanged, int32/* MissionID */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionProgressChanged, float);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionFinished, bool);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnMissionFinished, int32/* MissionID */,bool/* Result*/ );
+
 
 // 현재 레벨 내 공유 경험치 값 변동 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnSharedExperienceChangedNative);
@@ -75,6 +76,7 @@ public:
 	//현재 게임 진행률 반환
 	float GetProgressNormalized() const { return ProgressNormalized; };
 	float GetServerTime() const { return CurrentServerTime; }
+	float GetMissionEndTime() { return MissionEndTime; }
 public:
 	/* ===== Server Only ===== */
 	//현재 게임 진행률(0~1)을 설정
@@ -86,6 +88,8 @@ public:
 	void SetMissionProgress(float NewProgress);
 	//미션 완료 알림
 	void NotifyMissionFinished(bool bSuccess);
+	//
+	void SetMissionEndTime(float InMissionEndTime) { MissionEndTime = InMissionEndTime; }
 protected:
 	/* ===== Replicated State ===== */
 	//현재 미션ID
@@ -94,14 +98,19 @@ protected:
 	//미션 진행도
 	UPROPERTY(ReplicatedUsing = OnRep_MissionProgress)
 	float MissionProgress = 0.f;
-	//미션 성공 여부
+	//끝난 미션 카운트
 	UPROPERTY(ReplicatedUsing = OnRep_MissionFinished)
+	uint8 MissionFinishedCounter = 0;
+	//미션 성공 여부
+	UPROPERTY(Replicated)
 	uint8 bMissionSuccess : 1;
 	//전체 게임 진행도를 나타내는 정규화된 값
 	UPROPERTY(ReplicatedUsing = OnRep_ProgressNormalized)
 	float ProgressNormalized;
 	UPROPERTY(Replicated)
 	float CurrentServerTime;
+	UPROPERTY(Replicated)
+	float MissionEndTime = 0.f;
 protected:
 
 	//UPROPERTY(ReplicatedUsing = OnRep_RemainingTime)

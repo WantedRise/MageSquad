@@ -141,9 +141,10 @@ void AMSGameState::NotifyMissionFinished(bool bSuccess)
 {
 	if (!HasAuthority())
 		return;
-
 	bMissionSuccess = bSuccess;
-	OnMissionFinished.Broadcast(bMissionSuccess);
+	MissionFinishedCounter++;
+	UE_LOG(LogMSNetwork, Log, TEXT("NotifyMissionFinished"));
+	OnMissionFinished.Broadcast(CurrentMissionID, bMissionSuccess);
 }
 
 void AMSGameState::AddSharedExperience_Server(AActor* SourceActor, float BaseXP)
@@ -336,7 +337,7 @@ void AMSGameState::OnRep_MissionProgress()
 
 void AMSGameState::OnRep_MissionFinished()
 {
-	OnMissionFinished.Broadcast(bMissionSuccess);
+	OnMissionFinished.Broadcast(CurrentMissionID,bMissionSuccess);
 }
 
 void AMSGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -37,7 +37,8 @@ public:
 	//
 	void ScheduleMission(float TriggerTime, int32 MissionID);
 	//미션컴포넌트 OnMissionFinished에 바인드할 함수
-	void HandleMissionFinished(int32 MissionId, bool bSuccess);
+	UFUNCTION()
+	void OnMissionFinished(int32 MissionId, bool bSuccess);
 
 private:
 	UFUNCTION()
