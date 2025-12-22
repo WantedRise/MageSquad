@@ -105,7 +105,7 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))
 			{
 				if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerEnemy->GetController()))
-				{
+				{	
 					AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
 				}
 			}

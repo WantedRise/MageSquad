@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Animation/Enemy/MSEnemyAnimInstance.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/AIController/MSBaseAIController.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
@@ -655,7 +656,6 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		UE_LOG(LogTemp, Error, TEXT("%s : EnemySetting : SkeletalMeshSet Success"), HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]"));
 	}
 
-
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
@@ -831,12 +831,6 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	//  GAS 초기화
 	ResetEnemyGASState(Enemy);
 
-	// 리플리케이션 끄기 (클라이언트에서 사라짐)
-	// Enemy->SetReplicates(false);
-
-	// 위치는 그대로 두거나 원점으로
-	// Enemy->SetActorLocation(FVector(0, 0, 100.0f));  // 선택사항
-
 	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
 	// 	Enemy->GetIsReplicated()
 	// );
@@ -907,9 +901,14 @@ void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
-	if (NewCount > 0) // 태그 추가됨 = 사망
+	if (NewCount > 0) // 태그가 없음 == 몽타주 끝남
 	{
 		HandleEnemyDeath(Enemy);
+	}
+	
+	else // 태그가 제거됨 = 몽타주 끝남 = 사망처리
+	{
+		//HandleEnemyDeath(Enemy);
 	}
 }
 

@@ -50,8 +50,10 @@ public:
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
+	
 	// 풀링 모드 제어
-	void SetPoolingMode(bool bInPooling);
+	virtual void SetPoolingMode(bool bInPooling);
+	
 public:
 	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AnimData->AttackAnim;}
 	FORCEINLINE UAnimMontage* GetDeadMontage() const {return AnimData->DeadAnim;}

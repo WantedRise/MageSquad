@@ -1,33 +1,34 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
-#include "Enemy/MSBaseEnemy.h"
+#include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
 
-UMSGA_EnemyBaseAbility::UMSGA_EnemyBaseAbility()
-{
+#include "Enemy/MSBossEnemy.h"
+
+UMSGA_EnemyBossBaseAbility::UMSGA_EnemyBossBaseAbility()
+{	
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 }
 
-void UMSGA_EnemyBaseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+void UMSGA_EnemyBossBaseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
 	// 오너 지정
-	Owner = Cast<AMSBaseEnemy>(GetActorInfo().AvatarActor.Get());
+	Owner = Cast<AMSBossEnemy>(GetActorInfo().AvatarActor.Get());
 }
 
-void UMSGA_EnemyBaseAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
+void UMSGA_EnemyBossBaseAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
-void UMSGA_EnemyBaseAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
+void UMSGA_EnemyBossBaseAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {

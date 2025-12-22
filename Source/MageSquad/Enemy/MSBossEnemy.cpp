@@ -4,14 +4,15 @@
 #include "Enemy/MSBossEnemy.h"
 
 #include "AIController/MSBossAIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 AMSBossEnemy::AMSBossEnemy()
 {	
-	// Character´Â ¸®ÇÃ¸®ÄÉÀÌÆ®
+	// Characterï¿½ï¿½ ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	bReplicates = true;
-	ACharacter::SetReplicateMovement(true);  // Movement ¸®ÇÃ¸®ÄÉÀÌÆ® (±âº»°ª)
+	ACharacter::SetReplicateMovement(true);  // Movement ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½âº»ï¿½ï¿½)
 	
-	// AI Controller ¼¼ÆÃ
+	// AI Controller ï¿½ï¿½ï¿½ï¿½
 	static ConstructorHelpers::FClassFinder<AMSBossAIController> NormalEnemyControllerRef(TEXT("/Game/Blueprints/Enemies/AI/Boss/BP_BossAIController.BP_BossAIController_C"));
 	if (NormalEnemyControllerRef.Succeeded())
 	{
@@ -25,4 +26,14 @@ void AMSBossEnemy::BeginPlay()
 	Super::BeginPlay();
 	
 	SetActorScale3D(FVector(3.f, 3.f, 3.f));	
+}
+
+void AMSBossEnemy::SetPoolingMode(bool bInPooling)
+{
+	Super::SetPoolingMode(bInPooling);
+	
+	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(GetController()))
+	{
+		AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsSpawnd"), !bInPooling);		
+	}
 }
