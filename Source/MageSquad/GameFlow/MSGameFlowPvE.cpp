@@ -7,6 +7,22 @@
 #include "Components/MSGameProgressComponent.h"
 #include "System/MSLevelManagerSubsystem.h"
 #include "GameModes/MSGameMode.h"
+#include "TimerManager.h"
+
+void UMSGameFlowPvE::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	if (UWorld* World = GetWorld())
+	{
+		// 타이머 해제 로직
+		for (auto Handle : MissionTimerHandles)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(Handle);
+		}
+	}
+}
+
 void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable* InTimelineTable)
 {
 	Super::Initialize(InOwnerGameState, InTimelineTable);
@@ -93,18 +109,12 @@ void UMSGameFlowPvE::ScheduleMission(float TriggerTime, int32 MissionID)
 
 	FTimerHandle Handle;
 
-	GameState->GetWorldTimerManager().SetTimer(
-		Handle,
-		[this, MissionID]()
-		{
-			if (GameState)
-			{
-				GameState->SetCurrentMissionID(MissionID);
-			}
-		},
-		TriggerTime,
-		false
-	);
+	TWeakObjectPtr<UMSGameFlowPvE> WeakThis(this);
+
+	// AMSGameState.h에 선언되어 있다고 가정할 때
+	FTimerDelegate MissionDelegate;
+	MissionDelegate.BindUFunction(GameState, FName("SetCurrentMissionID"), MissionID);
+	GameState->GetWorldTimerManager().SetTimer(Handle, MissionDelegate, TriggerTime, false);
 
 	MissionTimerHandles.Add(Handle);
 }

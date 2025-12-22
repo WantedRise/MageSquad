@@ -8,14 +8,14 @@
 #include "MSPlayerHUDWidget.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/17
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/17
  *
- * ÇÃ·¹ÀÌ¾î HUD À§Á¬
- * - ·ÎÄÃ Ã¼·Â¹Ù
- * - ·ÎÄÃ ½ºÅ³/Äğ´Ù¿î(¿¹Á¤)
- * - ÆÀ¿ø »óÅÂ(ÀÚ½Å Á¦¿Ü)(¿¹Á¤)
- * - °øÀ¯ °æÇèÄ¡/·¹º§(¿¹Á¤)
+ * í”Œë ˆì´ì–´ HUD ìœ„ì ¯
+ * - ë¡œì»¬ ì²´ë ¥ë°”
+ * - ë¡œì»¬ ìŠ¤í‚¬/ì¿¨ë‹¤ìš´(ì˜ˆì •)
+ * - íŒ€ì› ìƒíƒœ(ìì‹  ì œì™¸)(ì˜ˆì •)
+ * - ê³µìœ  ê²½í—˜ì¹˜/ë ˆë²¨(ì˜ˆì •)
  */
 UCLASS()
 class MAGESQUAD_API UMSPlayerHUDWidget : public UUserWidget
@@ -26,100 +26,111 @@ public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
-	// HUD À§Á¬ ÃÊ±âÈ­ ÇÔ¼ö
+	// HUD ìœ„ì ¯ ì´ˆê¸°í™” í•¨ìˆ˜
 	UFUNCTION(BlueprintCallable, Category = "Custom | HUD")
 	void InitializeHUD();
 
-	// HUD À§Á¬ ÀçÃÊ±âÈ­ ÇÔ¼ö
-	// Pawn/ASC°¡ ¹Ù²î¾ú°Å³ª(Á¢¼Ó/¸®½ºÆù) ÃÊ±âÈ­ ¼ø¼­°¡ ²¿¿´À» ¶§, ÇöÀç ¹ÙÀÎµùÀ» Á¤¸®ÇÏ°í ´Ù½Ã ¹ÙÀÎµùÀ» ½Ãµµ
+	// HUD ìœ„ì ¯ ì¬ì´ˆê¸°í™” í•¨ìˆ˜
+	// Pawn/ASCê°€ ë°”ë€Œì—ˆê±°ë‚˜(ì ‘ì†/ë¦¬ìŠ¤í°) ì´ˆê¸°í™” ìˆœì„œê°€ ê¼¬ì˜€ì„ ë•Œ, í˜„ì¬ ë°”ì¸ë”©ì„ ì •ë¦¬í•˜ê³  ë‹¤ì‹œ ë°”ì¸ë”©ì„ ì‹œë„
 	UFUNCTION(BlueprintCallable, Category = "Custom | HUD")
 	void RequestReinitialize();
 
+	class UMSMissionNotifyWidget* GetMissionNotifyWidget() const { return MissionNotifyWidget; }
+	class UMSMissionTrackerWidget* GetMissionTrackerWidget() const { return MissionTrackerWidget; }
 protected:
-	// ·ÎÄÃ Ã¼·Â ¹ÙÀÎµù ½Ãµµ ÇÔ¼ö (¹ÙÀÎµù ¼º°ø ¿©ºÎ¿¡ µû¶ó °á±£°ª ¹İÈ¯)
+	// ë¡œì»¬ ì²´ë ¥ ë°”ì¸ë”© ì‹œë„ í•¨ìˆ˜ (ë°”ì¸ë”© ì„±ê³µ ì—¬ë¶€ì— ë”°ë¼ ê²°ê´ê°’ ë°˜í™˜)
 	bool TryBindLocalHealth();
 
-	// ÆÀ µ¥ÀÌÅÍ °»½Å ½ÃÀÛ ÇÔ¼ö
+	// íŒ€ ë°ì´í„° ê°±ì‹  ì‹œì‘ í•¨ìˆ˜
 	void StartTeamPoll();
 
-	// ¹ÙÀÎµùµÈ µ¨¸®°ÔÀÌÆ®/Å¸ÀÌ¸Ó Á¤¸® ÇÔ¼ö
+	// ë°”ì¸ë”©ëœ ë¸ë¦¬ê²Œì´íŠ¸/íƒ€ì´ë¨¸ ì •ë¦¬ í•¨ìˆ˜
 	void UnbindLocalHealth();
 	void ClearRebindTimer();
 	void ClearTeamPollTimer();
 
-	// Ã¼·Â º¯°æ UI ¹İ¿µ
+	// ì²´ë ¥ ë³€ê²½ UI ë°˜ì˜
 	void RefreshLocalHealthUI(float Health, float MaxHealth);
 
-	// AttributeSet °»½Å Äİ¹é ÇÔ¼ö
+	// AttributeSet ê°±ì‹  ì½œë°± í•¨ìˆ˜
 	void OnLocalHealthChanged(const FOnAttributeChangeData& Data);
 	void OnLocalMaxHealthChanged(const FOnAttributeChangeData& Data);
 
-	// ÆÀ ¸â¹ö ¸®½ºÆ® °»½Å ÇÔ¼ö
+	// íŒ€ ë©¤ë²„ ë¦¬ìŠ¤íŠ¸ ê°±ì‹  í•¨ìˆ˜
 	void PollTeamMembers();
 
-	// ÆÀ ¸â¹ö À§Á¬ »ı¼º/Àç»ç¿ë ÇÔ¼ö
+	// íŒ€ ë©¤ë²„ ìœ„ì ¯ ìƒì„±/ì¬ì‚¬ìš© í•¨ìˆ˜
 	void EnsureTeamMemberWidget(class AActor* MemberActor, class UMSHUDDataComponent* HUDData);
 
-	// ¹ÙÀÎµù Àç½Ãµµ ÇÔ¼ö (Å¬¶óÀÌ¾ğÆ® ¼ø¼­ ²¿ÀÓ ´ëÀÀ¿ë)
+	// ë°”ì¸ë”© ì¬ì‹œë„ í•¨ìˆ˜ (í´ë¼ì´ì–¸íŠ¸ ìˆœì„œ ê¼¬ì„ ëŒ€ì‘ìš©)
 	void ScheduleRebind();
 	void TickRebind();
 
 protected:
 	/* ======================== BindWidget ======================== */
-	// ·ÎÄÃ Ã¼·Â ¹Ù À§Á¬
+	// ë¡œì»¬ ì²´ë ¥ ë°” ìœ„ì ¯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UProgressBar> LocalHealthBarWidget;
 
-	// ·ÎÄÃ Ã¼·Â ¹Ù ÅØ½ºÆ® À§Á¬
+	// ë¡œì»¬ ì²´ë ¥ ë°” í…ìŠ¤íŠ¸ ìœ„ì ¯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UTextBlock> LocalHealthTextWidget;
 
-	// ÆÀ ¸â¹ö ¸ñ·Ï À§Á¬
+	// íŒ€ ë©¤ë²„ ëª©ë¡ ìœ„ì ¯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UVerticalBox> TeamMembersBoxWidget;
+
+	// ë¯¸ì…˜ ì•Œë¦¼ ìœ„ì ¯ í´ë˜ìŠ¤
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UMSMissionNotifyWidget> MissionNotifyWidget;
+
+	//ë¯¸ì…˜ ì§„í–‰ ìœ„ì ¯ í´ë˜ìŠ¤
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UMSMissionTrackerWidget> MissionTrackerWidget;
+
 	/* ======================== BindWidget ======================== */
 
-	// ÆÀ ¸â¹ö µ¥ÀÌÅÍ À§Á¬ Å¬·¡½º
+	// íŒ€ ë©¤ë²„ ë°ì´í„° ìœ„ì ¯ í´ë˜ìŠ¤
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | HUD")
 	TSubclassOf<class UMSTeamMemberWidget> TeamMemberWidgetClass;
 
-	// °øÀ¯ µ¥ÀÌÅÍ °»½Å ÁÖ±â(ÃÊ)
+	// ê³µìœ  ë°ì´í„° ê°±ì‹  ì£¼ê¸°(ì´ˆ)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | HUD")
 	float TeamPollInterval = 0.25f;
 
-	// ¹ÙÀÎµù Àç½Ãµµ °£°İ(ÃÊ)
+	// ë°”ì¸ë”© ì¬ì‹œë„ ê°„ê²©(ì´ˆ)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | HUD")
 	float RebindRetryInterval = 0.05f;
 
-	// °úµµÇÑ ¹ÙÀÎµù Àç½Ãµµ¸¦ ¹æÁöÇÏ±â À§ÇÑ ÃÖ´ë ½Ãµµ È½¼ö (0ÀÌ¸é ¹«Á¦ÇÑ)
+	// ê³¼ë„í•œ ë°”ì¸ë”© ì¬ì‹œë„ë¥¼ ë°©ì§€í•˜ê¸° ìœ„í•œ ìµœëŒ€ ì‹œë„ íšŸìˆ˜ (0ì´ë©´ ë¬´ì œí•œ)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | HUD")
-	int32 MaxRebindAttempts = 200; // 0.1s * 200 = ¾à 20ÃÊ
+	int32 MaxRebindAttempts = 200; // 0.1s * 200 = ì•½ 20ì´ˆ
 
 private:
-	// Ä³½ÃµÈ ÇöÀç/ÃÖ´ë Ã¼·Â
+	// ìºì‹œëœ í˜„ì¬/ìµœëŒ€ ì²´ë ¥
 	float CachedHealth = 0.f;
 	float CachedMaxHealth = 0.f;
 
-	// ¹ÙÀÎµù µ¨¸®°ÔÀÌÆ® ÇÚµé(Áßº¹ ¹ÙÀÎµù/Á¤È®ÇÑ ÇØÁ¦ ¸ñÀû)
+	// ë°”ì¸ë”© ë¸ë¦¬ê²Œì´íŠ¸ í•¸ë“¤(ì¤‘ë³µ ë°”ì¸ë”©/ì •í™•í•œ í•´ì œ ëª©ì )
 	FDelegateHandle HealthChangedHandle;
 	FDelegateHandle MaxHealthChangedHandle;
 
-	// ÇöÀç ¹ÙÀÎµù »óÅÂ
+	// í˜„ì¬ ë°”ì¸ë”© ìƒíƒœ
 	bool bBoundLocalASC = false;
 
-	// ÇöÀç °øÀ¯ µ¥ÀÌÅÍ °»½ÅÁß »óÅÂ
+	// í˜„ì¬ ê³µìœ  ë°ì´í„° ê°±ì‹ ì¤‘ ìƒíƒœ
 	bool bTeamPolling = false;
 
-	// ¹ÙÀÎµù Àç½Ãµµ Å¸ÀÌ¸Ó, Àç½Ãµµ È½¼ö Ä«¿îÆ®
+	// ë°”ì¸ë”© ì¬ì‹œë„ íƒ€ì´ë¨¸, ì¬ì‹œë„ íšŸìˆ˜ ì¹´ìš´íŠ¸
 	FTimerHandle RebindTimer;
 	int32 RebindAttemptCount = 0;
 
-	// °øÀ¯ µ¥ÀÌÅÍ °»½Å Å¸ÀÌ¸Ó
+	// ê³µìœ  ë°ì´í„° ê°±ì‹  íƒ€ì´ë¨¸
 	FTimerHandle TeamPollTimer;
 
-	// [ÆÀ ¸â¹ö / µ¥ÀÌÅÍ À§Á¬ ÀÎ½ºÅÏ½º] Ä³½Ã
+	// [íŒ€ ë©¤ë²„ / ë°ì´í„° ìœ„ì ¯ ì¸ìŠ¤í„´ìŠ¤] ìºì‹œ
 	TMap<TWeakObjectPtr<AActor>, TObjectPtr<class UMSTeamMemberWidget>> TeamMembers;
 
-	// ÇöÀç ¹ÙÀÎµùµÈ ASC (¼ÒÀ¯/»ı¸íÁÖ±â´Â PlayerState/PawnÀÌ °ü¸®)
+	// í˜„ì¬ ë°”ì¸ë”©ëœ ASC (ì†Œìœ /ìƒëª…ì£¼ê¸°ëŠ” PlayerState/Pawnì´ ê´€ë¦¬)
 	TWeakObjectPtr<class UAbilitySystemComponent> LocalASC;
 };

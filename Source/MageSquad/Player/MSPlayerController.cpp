@@ -10,6 +10,9 @@
 #include "Widgets/HUD/MSPlayerHUDWidget.h"
 #include "System/MSLevelManagerSubsystem.h"
 #include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
+#include "Widgets/Mission/MSMissionNotifyWidget.h"
+#include "Widgets/Mission/MSMissionTrackerWidget.h"
+#include "System/MSMissionDataSubsystem.h"
 
 void AMSPlayerController::BeginPlay()
 {
@@ -129,6 +132,10 @@ void AMSPlayerController::NotifyHUDReinitialize()
 	{
 		// 위젯 내부에서 Pawn/ASC 준비 여부를 체크하고, 준비가 안 됐으면 타이머로 재시도
 		HUDWidgetInstance->RequestReinitialize();
+		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+		{
+			GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::HandleMissionChanged);
+		}	
 	}
 }
 
@@ -224,5 +231,78 @@ void AMSPlayerController::ServerRPCReportReady_Implementation()
 	if (AMSGameMode* GM = GetWorld()->GetAuthGameMode<AMSGameMode>())
 	{
 		GM->TryStartGame();
+	}
+}
+
+void AMSPlayerController::HandleMissionChanged(int32 MissionID)
+{
+	UMSMissionDataSubsystem* MissionDataSubsystem =
+		GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+
+	if (!MissionDataSubsystem) return;
+
+	const FMSMissionRow* MissionData = MissionDataSubsystem->Find(MissionID);
+
+	if (!MissionData) return;
+
+	// UI 연출 시작
+	HandleMissionStarted(*MissionData);
+}
+
+
+void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
+{
+	if (!HUDWidgetInstance) return;
+
+	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
+	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
+	if (!Notify || !Tracker) return;
+
+	Notify->PlayNotify(FText::FromString(TEXT("새로운 미션")));
+
+	FTimerHandle TempShowMissionTitleTimerHandle;
+	GetWorldTimerManager().SetTimer(
+		TempShowMissionTitleTimerHandle,
+		FTimerDelegate::CreateUObject(
+			this,
+			&AMSPlayerController::ShowMissionTitle,
+			MissionData
+		),
+		1.0f,
+		false
+	);
+
+	FTimerHandle TempShowMissionTrackerTimerHandle;
+	GetWorldTimerManager().SetTimer(
+		TempShowMissionTrackerTimerHandle,
+		FTimerDelegate::CreateUObject(
+			this,
+			&AMSPlayerController::ShowMissionTracker,
+			MissionData
+		),
+		2.0f,
+		false
+	);
+}
+void AMSPlayerController::ShowMissionTitle(FMSMissionRow MissionData)
+{
+	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
+	if (!Notify) return;
+
+	Notify->PlayNotify(MissionData.Title);
+}
+
+void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
+{
+	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
+	if (!Tracker) return;
+
+	Tracker->SetMissionTitle(MissionData.Title);
+	Tracker->SetMissionMessage(MissionData.Description);
+	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+	{
+		const float EndTime = MissionData.TimeLimit + GS->GetServerTime();
+		Tracker->StartMissionTimer(GS,EndTime);
+		Tracker->SetVisibility(ESlateVisibility::Visible);
 	}
 }

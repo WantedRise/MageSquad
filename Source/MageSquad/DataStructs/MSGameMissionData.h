@@ -34,4 +34,10 @@ struct FMSMissionRow : public FTableRowBase
     //미션용 스크립트
     UPROPERTY(EditAnywhere)
     TSubclassOf<class UMSMissionScript> ScriptClass;
+
+    UPROPERTY(EditAnywhere)
+    FText Title;
+
+    UPROPERTY(EditAnywhere)
+    FText Description;
 };

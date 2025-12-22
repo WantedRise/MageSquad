@@ -25,6 +25,7 @@ class MAGESQUAD_API UMSGameFlowPvE : public UMSGameFlowBase
 	GENERATED_BODY()
 
 public:
+	virtual void BeginDestroy() override;
 	//PvE 전용 이벤트 및 초기 상태 설정
 	virtual void Initialize(class AMSGameState* InOwnerGameState, UDataTable* InTimelineTable) override;
 	//미션 시작, 보스 준비 등 트리거 처리

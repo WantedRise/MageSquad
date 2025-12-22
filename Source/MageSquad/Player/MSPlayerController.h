@@ -1,10 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "DataStructs/MSGameMissionData.h"
 #include "MSPlayerController.generated.h"
+
 
 /**
  * 작성자: 김준형
@@ -42,6 +44,16 @@ protected:
 	// Pawn이 준비된 시점에 HUD 바인딩(재시도 포함) 요청
 	void NotifyHUDReinitialize();
 
+	UFUNCTION()
+	void HandleMissionChanged(int32 MissionID);
+
+	// 미션이 시작된 시점에 미션 UI 타이밍 설정
+	void HandleMissionStarted(const FMSMissionRow& MissionData);
+
+	void ShowMissionTitle(FMSMissionRow MissionData);
+
+	// 미션 진행 UI 보이기
+	void ShowMissionTracker(FMSMissionRow MissionData);
 protected:
 	// HUD 위젯 인스턴스
 	UPROPERTY(Transient)
