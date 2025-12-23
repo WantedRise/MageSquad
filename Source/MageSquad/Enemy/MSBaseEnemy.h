@@ -37,6 +37,8 @@ protected:
 public:
 	// ~ Begin IAbilitySystemInterface Interface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	class UMSEnemyAttributeSet* GetAttributeSet() { return AttributeSet; }
+	
 	// ~ End IAbilitySystemInterface Interface
 	
 	// ~ Begin IMSHitReactableInterface Interface

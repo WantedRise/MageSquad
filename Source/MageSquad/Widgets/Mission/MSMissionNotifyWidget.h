@@ -17,11 +17,6 @@ public:
 	void SetMissionMessage(FText InMessage);
 	void PlayNotify(FText InMessage);
 	void PlayMissionResult(bool bSuccess);
-private:
-	UFUNCTION()
-	void OnNotifyFinished();
-	UFUNCTION()
-	void OnResultFinished();
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_MissionMessage;
@@ -31,5 +26,4 @@ public:
 	
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	class UWidgetAnimation* Anim_MissionResult;
-	
 };

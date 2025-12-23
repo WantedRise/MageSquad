@@ -43,6 +43,7 @@ void UGameProgressWidget::OnProgressUpdated(float Normalized)
 
 void UGameProgressWidget::HandleMissionChanged(int32 MissionID)
 {
+    UE_LOG(LogTemp, Error, TEXT("HandleMissionChanged"));
     TArray<UProgressEventMarkerWidget*> Slots =
     {
         WBP_ProgressIcon_Event_1,

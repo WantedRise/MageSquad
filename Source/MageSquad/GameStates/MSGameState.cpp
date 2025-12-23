@@ -51,6 +51,7 @@ void AMSGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AMSGameState, CurrentMissionID);
 	DOREPLIFETIME(AMSGameState, MissionProgress);
 	DOREPLIFETIME(AMSGameState, bMissionSuccess);
+	DOREPLIFETIME(AMSGameState, MissionFinishedCounter);
 
 	DOREPLIFETIME(AMSGameState, SharedLevel);
 	DOREPLIFETIME(AMSGameState, SharedCurrentXP);

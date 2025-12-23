@@ -12,6 +12,7 @@
 #include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
 #include "Widgets/Mission/MSMissionNotifyWidget.h"
 #include "Widgets/Mission/MSMissionTrackerWidget.h"
+#include "Widgets/HUD/GameProgressWidget.h"
 #include "System/MSMissionDataSubsystem.h"
 
 void AMSPlayerController::BeginPlay()
@@ -134,8 +135,12 @@ void AMSPlayerController::NotifyHUDReinitialize()
 		HUDWidgetInstance->RequestReinitialize();
 		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 		{
-			GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::OnMissionChanged);
-			GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
+			if(false == GS->OnMissionChanged.IsBoundToObject(this))
+				GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::OnMissionChanged);
+			if (false == GS->OnMissionFinished.IsBoundToObject(this))
+				GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
+			if (false == GS->OnMissionProgressChanged.IsBoundToObject(this))
+				GS->OnMissionProgressChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
 		}	
 	}
 }
@@ -237,16 +242,14 @@ void AMSPlayerController::ServerRPCReportReady_Implementation()
 
 void AMSPlayerController::OnMissionChanged(int32 MissionID)
 {
-	UMSMissionDataSubsystem* MissionDataSubsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (!IsLocalController()) return;
 
-	if (!MissionDataSubsystem) return;
-
-	const FMSMissionRow* MissionData = MissionDataSubsystem->Find(MissionID);
-
-	if (!MissionData) return;
-
-	// UI 연출 시작
-	HandleMissionStarted(*MissionData);
+	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+	{
+		// UI 연출 시작
+		HandleMissionStarted(*MissionData);
+	}
 }
 
 
@@ -258,19 +261,7 @@ void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
 	if (!Notify || !Tracker) return;
 
-	Notify->PlayNotify(FText::FromString(TEXT("새로운 미션")));
-
-	FTimerHandle TempShowMissionTitleTimerHandle;
-	GetWorldTimerManager().SetTimer(
-		TempShowMissionTitleTimerHandle,
-		FTimerDelegate::CreateUObject(
-			this,
-			&AMSPlayerController::ShowMissionTitle,
-			MissionData
-		),
-		1.0f,
-		false
-	);
+	ShowMissionTitle(MissionData);
 
 	FTimerHandle TempShowMissionTrackerTimerHandle;
 	GetWorldTimerManager().SetTimer(
@@ -295,8 +286,9 @@ void AMSPlayerController::ShowMissionTitle(FMSMissionRow MissionData)
 void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 {
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
-	if (!Tracker) return;
-
+	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
+	if (!Tracker || !Progress) return;
+	Progress->SetVisibility(ESlateVisibility::Hidden);
 	Tracker->SetMissionTitle(MissionData.Title);
 	Tracker->SetMissionMessage(MissionData.Description);
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
@@ -311,8 +303,25 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 	if (!HUDWidgetInstance) return;
 
 	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
+	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
+	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
+	if (!Notify || !Progress) return;
 
-	if (!Notify) return;
-
+	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+	{
+		if(MissionData->MissionType!=EMissionType::Boss)
+			Progress->SetVisibility(ESlateVisibility::Visible);
+	}
+	Tracker->SetVisibility(ESlateVisibility::Hidden);
 	Notify->PlayMissionResult(bSuccess);
+}
+
+void AMSPlayerController::OnMissionProgressChanged(float Normalized)
+{
+	if (!HUDWidgetInstance) return;
+
+	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
+	if (!Tracker) return;
+	Tracker->SetTargetHpProgress(Normalized);
 }
