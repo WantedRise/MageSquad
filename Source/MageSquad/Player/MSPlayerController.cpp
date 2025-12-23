@@ -133,6 +133,7 @@ void AMSPlayerController::NotifyHUDReinitialize()
 	{
 		// 위젯 내부에서 Pawn/ASC 준비 여부를 체크하고, 준비가 안 됐으면 타이머로 재시도
 		HUDWidgetInstance->RequestReinitialize();
+		// HUD 재초기화 시 미션 관련 이벤트 바인딩 처리
 		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 		{
 			if(false == GS->OnMissionChanged.IsBoundToObject(this))
@@ -226,7 +227,7 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 	}
 	ServerCursorDir = Dir;
 }
-
+// 서버에 UI 준비 완료를 알리는 RPC
 void AMSPlayerController::ServerRPCReportReady_Implementation()
 {
 	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
@@ -247,12 +248,12 @@ void AMSPlayerController::OnMissionChanged(int32 MissionID)
 	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
 	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
 	{
-		// UI 연출 시작
+		// 미션 시작 UI 연출 흐름 진입
 		HandleMissionStarted(*MissionData);
 	}
 }
 
-
+// 미션 시작 시 UI 연출 흐름을 관리
 void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
 {
 	if (!HUDWidgetInstance) return;
@@ -275,6 +276,8 @@ void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
 		false
 	);
 }
+
+// 미션 제목 알림 UI 출력
 void AMSPlayerController::ShowMissionTitle(FMSMissionRow MissionData)
 {
 	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
@@ -283,6 +286,7 @@ void AMSPlayerController::ShowMissionTitle(FMSMissionRow MissionData)
 	Notify->PlayNotify(MissionData.Title);
 }
 
+// 미션 설명, 타이머, 진행 상태 UI를 활성화
 void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 {
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
@@ -298,6 +302,7 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 	}
 }
 
+// 성공 / 실패 결과에 따른 UI 연출 수행
 void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 {
 	if (!HUDWidgetInstance) return;
@@ -307,15 +312,14 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
 	if (!Notify || !Progress) return;
 
-
-	//결과 연출 실행
 	Notify->PlayMissionResult(bSuccess);
+	// 성공 시 타이머 중단
 	if (bSuccess)
 	{
 		Tracker->StopMissionTimer();
 	}
 	
-
+	// 결과 연출 후 UI 전환을 위한 딜레이 처리
 	FTimerHandle TimerHandle;
 	float DelayTime = 1.0f;
 	GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateWeakLambda(this, [this, MissionID, Tracker, Progress]()
@@ -340,6 +344,7 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 	);
 }
 
+// 서버에서 계산된 정규화된 진행 값을 UI에 반영
 void AMSPlayerController::OnMissionProgressChanged(float Normalized)
 {
 	if (!HUDWidgetInstance) return;

@@ -23,8 +23,6 @@ void UMSMissionComponent::BeginPlay()
 	Super::BeginPlay();
 
     OwnerGameState = GetOwner<AMSGameState>();
-
-	// ...
     BindGameStateDelegates();
 }
 
@@ -42,7 +40,7 @@ void UMSMissionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UMSMissionComponent::FinishMission(bool bSuccess)
 {
     UE_LOG(LogTemp, Error, TEXT("FinishMission"));
-    // 타이머 해제
+    // 미션 타이머 정리
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(MissionTimerHandle);
@@ -55,7 +53,7 @@ void UMSMissionComponent::FinishMission(bool bSuccess)
         MissionScript = nullptr;
     }
 
-    // GameState 알림
+    // GameState에 종료 통보
     if (OwnerGameState)
     {
         OwnerGameState->NotifyMissionFinished(bSuccess);
@@ -66,8 +64,6 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
 {
     if (!IsServer())
         return;
-
-
 
     if (MissionScript)
     {
@@ -121,11 +117,14 @@ void UMSMissionComponent::BindGameStateDelegates()
     if (!OwnerGameState)
         return;
 
-    OwnerGameState->OnMissionChanged.AddUObject(
-        this,
-        &UMSMissionComponent::HandleMissionChanged
-    );
-
+    if (IsServer())
+    {
+        OwnerGameState->OnMissionChanged.AddUObject(
+            this,
+            &UMSMissionComponent::HandleMissionChanged
+        );
+    }
+    // Todo : HandleMissionProgressChanged OnMissionFinished 둘 다 안쓰이는 중
     OwnerGameState->OnMissionProgressChanged.AddUObject(
         this,
         &UMSMissionComponent::HandleMissionProgressChanged
@@ -139,9 +138,7 @@ void UMSMissionComponent::BindGameStateDelegates()
 
 void UMSMissionComponent::HandleMissionChanged(int32 MissionID)
 {
-    // Client:
-    // - MissionID → DataSubsystem 조회
-    // - UI 표시 / 연출
+    
     UMSMissionDataSubsystem* MissionDataSubsystem = OwnerGameState->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
 
     if (!MissionDataSubsystem) return;

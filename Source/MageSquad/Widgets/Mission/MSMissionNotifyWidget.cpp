@@ -16,16 +16,12 @@ void UMSMissionNotifyWidget::PlayNotify(FText InMessage)
 
     Text_MissionMessage->SetText(InMessage);
 
-    /*FWidgetAnimationDynamicEvent EndEvent;
-    EndEvent.BindDynamic(this, &UMSMissionNotifyWidget::OnNotifyFinished);
-    BindToAnimationFinished(Anim_ShowNotify, EndEvent);*/
-
     PlayAnimation(
         Anim_ShowNotify,
-        0.f,   // StartAtTime
-        1,     // NumLoops (반드시 1)
+        0.f,   
+        1,     
         EUMGSequencePlayMode::Forward,
-        1.f    // PlaybackSpeed
+        1.f   
     );
 }
 
@@ -40,16 +36,11 @@ void UMSMissionNotifyWidget::PlayMissionResult(bool bSuccess)
 
     Text_MissionMessage->SetText(ResultText);
 
-    // 애니메이션 종료 이벤트 바인딩
-    /*FWidgetAnimationDynamicEvent EndEvent;
-    EndEvent.BindDynamic(this, &UMSMissionNotifyWidget::OnResultFinished);
-    BindToAnimationFinished(Anim_MissionResult, EndEvent);*/
-
     PlayAnimation(
         Anim_MissionResult,
-        0.f,   // StartAtTime
-        1,     // NumLoops (반드시 1)
+        0.f, 
+        1,    
         EUMGSequencePlayMode::Forward,
-        1.f    // PlaybackSpeed
+        1.f    
     );
 }
