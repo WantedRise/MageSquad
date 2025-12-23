@@ -37,8 +37,9 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// Enemy 전용 콜리전으로 설정
+	// Player 전용 콜리전으로 설정
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSPlayer"));
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel1);
 
 	// 네트워크 설정
 	bReplicates = true;

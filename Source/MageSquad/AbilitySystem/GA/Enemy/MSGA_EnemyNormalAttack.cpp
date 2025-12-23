@@ -99,6 +99,7 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
 	const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
 	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
+	RuntimeData.DamageEffect = Owner->GetDamageEffectClass();
 	
 	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
 	
