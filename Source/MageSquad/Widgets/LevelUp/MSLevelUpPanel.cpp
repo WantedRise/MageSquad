@@ -70,8 +70,8 @@ void UMSLevelUpPanel::HandleChoiceClicked(const FMSLevelUpChoicePair& Picked)
 	// 서버와의 통신은 PlayerController가 담당
 	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(PC))
 	{
-		// Server RPC (PC에 구현돼 있어야 함)
-		// MSPC->Server_SelectSkillLevelUpChoice(SessionId, Picked);
+		// Server RPC
+		MSPC->Server_SelectSkillLevelUpChoice(SessionId, Picked);
 	}
 
 	ClosePanel();

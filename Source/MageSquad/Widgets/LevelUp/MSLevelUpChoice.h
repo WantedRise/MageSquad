@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayTagContainer.h"
-#include "Types/MageSquadTypes.h"     // FMSLevelUpChoicePair
+#include "Types/MageSquadTypes.h"
 #include "MSLevelUpChoice.generated.h"
 
 class UButton;
