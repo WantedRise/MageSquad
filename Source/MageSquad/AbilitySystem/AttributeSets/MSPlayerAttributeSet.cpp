@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "GameplayEffectExtension.h"
+#include "Player/MSPlayerCharacter.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -62,6 +63,18 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	// 현재 체력 갱신 (최대 체력까지 Clamp)
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		UAbilitySystemComponent* TargetASC = &Data.Target;
+		if (!TargetASC) return;
+
+		// 초기화중이면 체력 변경에 따른 이벤트 로직 스킵
+		if (TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_Init))
+		{
+			return;
+		}
+
+		/*
+		* 받은 피해량 출력 이벤트 전달 로직 (DamageFloater)
+		*/
 		{
 			// 현재 체력 및 받은 피해량 계산
 			const float NewHealth = GetHealth();
@@ -82,13 +95,28 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
 
 			// 받은 피해량 출력 이벤트 전달
-			UAbilitySystemComponent* TargetASC = &Data.Target;
 			TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+		}
+
+		/*
+		* 카메라 흔들림 수행 명령 로직
+		*/
+		{
+			// ASC와 AttributeSet은 PlayerState에서 가지고 있음.
+			// 따라서 ASC로 한 번 거쳐서 로컬 플레이어를 가져와야 함
+			AMSPlayerCharacter* MSOnwer = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor());
+			if (MSOnwer && MSOnwer->HasAuthority())
+			{
+				// 카메라 흔들림 강도 (경우에 따라 설정하기)
+				const float ShakeScale = 0.3f;
+
+				// 체력이 변경된 로컬 클라이언트에게 카메라 흔들림 수행하라고 명령
+				MSOnwer->ClientRPCPlayHealthShake(ShakeScale);
+			}
 		}
 
 		SetHealth(FMath::Clamp(GetHealth(), UE_KINDA_SMALL_NUMBER, GetMaxHealth()));
 	}
-
 	// 최대 체력 갱신
 	else if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
 	{
@@ -170,8 +198,6 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		// 새 획득 반경
 		float NewRangeMod = GetMoveSpeedMod();
 		SetPickupRangeMod(NewRangeMod);
-
-		// Todo: 김준형 | 경험치 시스템 구현 후, 획득 반경 속성 갱신 구현하기
 	}
 }
 

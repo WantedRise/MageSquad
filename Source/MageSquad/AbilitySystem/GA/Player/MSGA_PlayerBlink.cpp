@@ -279,12 +279,13 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 	if (!OwnerActor || !OwnerActor->HasAuthority()) return;
 
 	/*
-	* 파라미터(색/2점 세그먼트 등)를 안전하게 복제하기 위해 EffectContext에 기록
+	* 파라미터를 안전하게 복제하기 위해 EffectContext에 기록
 	* 프로젝트에서 AbilitySystemGlobals를 커스텀 컨텍스트로 세팅하지 않았다면,
-	* ASC->MakeEffectContext()는 기본(FGameplayEffectContext) 타입을 반환할 수 있음.
-	* 이 경우 무조건 static_cast 하면 메모리 오염/크래시로 이어질 수 있으므로
-	* (1) 타입 체크 후 캐스팅하거나, (2) 직접 파생 컨텍스트를 생성해 Handle에 넣는다.
+	* ASC->MakeEffectContext()는 기본(FGameplayEffectContext) 타입을 반환할 수 있음
+	* 이 경우 무조건 static_cast 하면 메모리 오염/크래시로 이어질 수 있음
 	*/
+
+	// #1: 타입 체크 후 캐스팅
 	FGameplayEffectContextHandle CtxHandle = ASC->MakeEffectContext();
 	
 	FMSGameplayEffectContext* MSCtx = nullptr;
@@ -296,7 +297,7 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 		}
 	}
 	
-	// 커스텀 컨텍스트가 아니라면, 파생 컨텍스트를 직접 생성해서 교체(안전)
+	// #2: 커스텀 컨텍스트가 아니라면, 직접 파생 컨텍스트를 생성해서 교체
 	if (!MSCtx)
 	{
 		FMSGameplayEffectContext* NewCtx = new FMSGameplayEffectContext();

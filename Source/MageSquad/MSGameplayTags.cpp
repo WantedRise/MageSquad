@@ -49,6 +49,7 @@ namespace MSGameplayTags
 	/* Shared Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_DrawDamageNumber, "Shared.Ability.DrawDamageNumber");
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Event_DrawDamageNumber, "Shared.Event.DrawDamageNumber");
+	UE_DEFINE_GAMEPLAY_TAG(Shared_State_Init, "Shared.State.Init");
 
 
 	/* TEST Tags */

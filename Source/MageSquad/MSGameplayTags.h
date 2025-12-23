@@ -60,6 +60,7 @@ namespace MSGameplayTags
 	/* Shared Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Ability_DrawDamageNumber);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_Event_DrawDamageNumber);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shared_State_Init);
 
 	/* TEST Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TEST_Ability_HpIncrease);

@@ -8,6 +8,7 @@
 #include "Engine/Texture2D.h"
 
 #include "Camera/CameraComponent.h"
+#include "Camera/CameraShakeBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 
@@ -170,9 +171,19 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 	BindCooldownReductionDelegate();
 	RebuildPassiveSkillTimers_Server();
 
-	// 시작 어빌리티/이펙트 부여
-	GivePlayerStartAbilities_Server();
-	ApplyPlayerStartEffects_Server();
+	/*
+	* 시작 어빌리티/이펙트 부여 로직
+	*/
+	{
+		// 초기화 시작 태그
+		AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Shared_State_Init);
+
+		GivePlayerStartAbilities_Server();
+		ApplyPlayerStartEffects_Server();
+
+		// 초기화 끝 태그
+		AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Shared_State_Init);
+	}
 
 	// State.Invincible 태그 변경 감지
 	if (AbilitySystemComponent != nullptr)
@@ -902,6 +913,18 @@ void AMSPlayerCharacter::SetInvincibleCollision(bool bInvincible)
 		// 일반: MSEnemy와 Overlap
 		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Overlap);
 		UE_LOG(LogTemp, Log, TEXT("Collision Profile: Player (Overlap MSEnemy)"));
+	}
+}
+
+void AMSPlayerCharacter::ClientRPCPlayHealthShake_Implementation(float Scale)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC || !PC->IsLocalController()) return;
+
+	// 서버로부터 카메라 흔들림을 수행하라는 명령이 떨어지면, 카메라 흔들림 수행
+	if (PC->PlayerCameraManager && CameraShakeClass)
+	{
+		PC->PlayerCameraManager->StartCameraShake(CameraShakeClass, Scale);
 	}
 }
 
