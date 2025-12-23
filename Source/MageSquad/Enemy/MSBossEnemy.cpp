@@ -8,11 +8,10 @@
 
 AMSBossEnemy::AMSBossEnemy()
 {	
-	// Character�� ���ø�����Ʈ
 	bReplicates = true;
-	ACharacter::SetReplicateMovement(true);  // Movement ���ø�����Ʈ (�⺻��)
+	ACharacter::SetReplicateMovement(true);
 	
-	// AI Controller ����
+	// AI Controller 
 	static ConstructorHelpers::FClassFinder<AMSBossAIController> NormalEnemyControllerRef(TEXT("/Game/Blueprints/Enemies/AI/Boss/BP_BossAIController.BP_BossAIController_C"));
 	if (NormalEnemyControllerRef.Succeeded())
 	{

@@ -84,7 +84,7 @@ protected:
 
 
 
-private:
+protected:
 	// 서버/클라 모두에서 Behavior 보장
 	void EnsureBehavior();
 
@@ -93,10 +93,8 @@ private:
 
 	// LifeTime 타이머 세팅 (서버)
 	void ArmLifeTimerIfNeeded(const FProjectileRuntimeData& EffectiveData);
-
 	
-private:
-	
+protected:
 	// 최종 RuntimeData
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileRuntimeData)
 	FProjectileRuntimeData ProjectileRuntimeData;

@@ -74,13 +74,12 @@ AMSBaseEnemy::AMSBaseEnemy()
 	
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMSBaseEnemy::OnCapsuleBeginOverlap);
 	
-	static ConstructorHelpers::FClassFinder<UGameplayEffect> CollisionDamageRef(TEXT("/Game/Blueprints/GAS/GE/BPGE_EnemyCollisionDamage.BPGE_EnemyCollisionDamage_C"));
+	static ConstructorHelpers::FClassFinder<UGameplayEffect> DamageEffectClassRef(TEXT("/Game/Blueprints/GAS/GE/BPGE_EnemyCollisionDamage.BPGE_EnemyCollisionDamage_C"));
 	
-	if (CollisionDamageRef.Succeeded())
+	if (DamageEffectClassRef.Succeeded())
 	{
-		CollisionDamage = CollisionDamageRef.Class;
+		DamageEffectClass = DamageEffectClassRef.Class;
 	}
-	
 }
 
 // Called when the game starts or when spawned
@@ -163,7 +162,7 @@ void AMSBaseEnemy::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		Context.AddHitResult(SweepResult);
 	
 		FGameplayEffectSpecHandle SpecHandle =
-			ASC->MakeOutgoingSpec(CollisionDamage, 1.f, Context);
+			ASC->MakeOutgoingSpec(DamageEffectClass, 1.f, Context);
 
 		if (!SpecHandle.IsValid())
 		{
