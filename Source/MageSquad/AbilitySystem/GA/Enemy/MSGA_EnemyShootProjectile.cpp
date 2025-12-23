@@ -17,11 +17,11 @@ void UMSGA_EnemyShootProjectile::ActivateAbility(const FGameplayAbilitySpecHandl
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	FProjectileRuntimeData RuntimeData;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
-	
-	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
-	
+	// FProjectileRuntimeData RuntimeData;
+	// RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	//
+	// AActor* CachedAvatar = GetAvatarActorFromActorInfo();
+	//
 	// UMSFunctionLibrary::LaunchProjectile(
 	// 	this,
 	// 	ProjectileDataClass,

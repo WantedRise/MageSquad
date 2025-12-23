@@ -2,8 +2,12 @@
 
 
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyNormalAttack.h"
+
+#include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/Tasks/MSAT_PlayMontageAndWaitForEvent.h"
+#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
 #include "Enemy/MSBaseEnemy.h"
 
 
@@ -32,10 +36,21 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 	
 	if (UAnimMontage* AttackMontage = Owner->GetAttackMontage())
 	{
-		UAbilityTask_PlayMontageAndWait* EnemyAttackTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("NormalAttack"), AttackMontage);
-		EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
-		EnemyAttackTask->ReadyForActivation();
+		// UAbilityTask_PlayMontageAndWait* EnemyAttackTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("NormalAttack"), AttackMontage);
+		// EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
+		// EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
+		// EnemyAttackTask->ReadyForActivation();
+		
+		FGameplayTagContainer Tags;
+		Tags.AddTag(FGameplayTag::RequestGameplayTag("Enemy.Event.NormalAttack"));
+
+		UMSAT_PlayMontageAndWaitForEvent* AttackTask = 
+			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, AttackMontage, Tags);
+
+		AttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback);
+		AttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback);
+		AttackTask->OnEventReceived.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnEventReceivedCallback);
+		AttackTask->ReadyForActivation();
 	}
 }
 
@@ -65,4 +80,28 @@ void UMSGA_EnemyNormalAttack::OnInterruptedCallback()
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = true;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData)
+{
+	// 서버가 아니면 리턴
+	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
+	
+	// 이벤트 처리 - 발사체 발사
+	
+	FProjectileRuntimeData RuntimeData;
+	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	
+	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
+	
+	UMSFunctionLibrary::LaunchProjectile(
+	this,
+	Owner->GetProjectileDataClass(),
+	RuntimeData,
+	GetAvatarActorFromActorInfo()->GetActorTransform(),
+	CachedAvatar,
+	Cast<APawn>(CachedAvatar));
 }

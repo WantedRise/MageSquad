@@ -152,6 +152,7 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		CachedData.AttackDamage = RowData->AttackDamage;
 		CachedData.AttackRange = RowData->AttackRange;
 		CachedData.bIsRanged = RowData->bIsRanged;
+		CachedData.ProjectileDataClass = RowData->ProjectileDataClass;
 		CachedData.DropExpValue = RowData->DropExpValue;
 		// GAS 데이터 복사
 		CachedData.StartAbilities = RowData->StartAbilities;
@@ -689,6 +690,12 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 				ASC->SetNumericAttributeBase(AttributeSet->GetAttackDamageAttribute(), Data->AttackDamage);
 				ASC->SetNumericAttributeBase(AttributeSet->GetAttackRangeAttribute(), Data->AttackRange);
 				ASC->SetNumericAttributeBase(AttributeSet->GetDropExpValueAttribute(), Data->DropExpValue);
+			}
+			
+			if (Data->bIsRanged)
+			{
+				// 원거리 몬스터면 스킬 데이터 세팅
+				Enemy->SetProjectileData(Data->ProjectileDataClass);
 			}
 
 			// 어빌리티 부여

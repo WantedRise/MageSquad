@@ -47,4 +47,7 @@ struct FMSEnemyStaticData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float DropExpValue;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 };
