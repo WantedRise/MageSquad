@@ -20,6 +20,7 @@ public:
 	void StartMissionTimer(class AMSGameState* InGameState,float InEndTime);
 	void UpdateRemainingTime();
 	void SetTargetHpProgress(float InNormalized);
+	void StopMissionTimer();
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_Timer;

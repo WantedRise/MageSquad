@@ -307,14 +307,37 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
 	if (!Notify || !Progress) return;
 
-	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
-	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
-	{
-		if(MissionData->MissionType!=EMissionType::Boss)
-			Progress->SetVisibility(ESlateVisibility::Visible);
-	}
-	Tracker->SetVisibility(ESlateVisibility::Hidden);
+
+	//결과 연출 실행
 	Notify->PlayMissionResult(bSuccess);
+	if (bSuccess)
+	{
+		Tracker->StopMissionTimer();
+	}
+	
+
+	FTimerHandle TimerHandle;
+	float DelayTime = 1.0f;
+	GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateWeakLambda(this, [this, MissionID, Tracker, Progress]()
+		{
+			// Tracker와 Progress가 유효한지 먼저 확인
+			if (Tracker && Tracker->IsValidLowLevel() && Progress && Progress->IsValidLowLevel())
+			{
+				// Tracker는 숨기기
+				Tracker->SetVisibility(ESlateVisibility::Hidden);
+
+				// 미션 타입에 따른 Progress 위젯 표시 여부 결정
+				auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+				if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+				{
+					if (MissionData->MissionType != EMissionType::Boss)
+					{
+						Progress->SetVisibility(ESlateVisibility::Visible);
+					}
+				}
+			}
+		}), DelayTime, false
+	);
 }
 
 void AMSPlayerController::OnMissionProgressChanged(float Normalized)

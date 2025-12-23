@@ -21,13 +21,6 @@ void UMSMissionTrackerWidget::SetMissionMessage(FText InMessage)
 	Text_MissionMessage->SetText(InMessage);
 }
 
-void UMSMissionTrackerWidget::UpdateRemainingTime(float RemainingSeconds)
-{
-	if (!Text_Timer) return;
-
-    
-}
-
 void UMSMissionTrackerWidget::StartMissionTimer(AMSGameState* InGameState, float InEndTime)
 {
     MissionEndTime = InEndTime - 0.5f;
@@ -54,9 +47,10 @@ void UMSMissionTrackerWidget::UpdateRemainingTime()
         GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);
         Text_Timer->SetText(FText::FromString(TEXT("00:00")));
         SetVisibility(ESlateVisibility::Collapsed);
+        return;
     }
-    // 0 미만 방지 및 올림 처리
-    int32 TotalSeconds = FMath::Max(0, FMath::CeilToInt(RemainingSeconds));
+
+    int32 TotalSeconds = FMath::Max(0, FMath::FloorToInt(RemainingSeconds));
 
     FTimespan Timespan = FTimespan::FromSeconds(TotalSeconds);
     // 00:00 형식으로 출력
@@ -68,4 +62,9 @@ void UMSMissionTrackerWidget::UpdateRemainingTime()
 void UMSMissionTrackerWidget::SetTargetHpProgress(float InNormalized)
 {
     Progress_TargetHp->SetPercent(InNormalized);
+}
+
+void UMSMissionTrackerWidget::StopMissionTimer()
+{
+    GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);
 }

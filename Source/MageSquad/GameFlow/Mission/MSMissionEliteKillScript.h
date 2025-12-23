@@ -19,7 +19,7 @@ public:
     virtual void Initialize(UWorld* World) override;
     virtual void Deinitialize() override;
     virtual float GetProgress() const override;
-
+    virtual bool IsCompleted() const { return GetProgress() <= 0.0f; }
 private:
     void SpawnElite(UWorld* World);
 

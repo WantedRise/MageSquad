@@ -64,6 +64,7 @@ void UMSMissionEliteKillScript::OnEliteHPChanged(const FOnAttributeChangeData& D
     float CurrentHP = Data.NewValue;
     
     Progress = FMath::Clamp((CurrentHP / MaxHP), 0.0f, 1.0f);
+    UE_LOG(LogTemp, Error, TEXT("OnEliteHPChanged CurrentHP %f"), CurrentHP);
 
     if (OwnerMissionComponent.IsValid())
     {
@@ -75,3 +76,5 @@ float UMSMissionEliteKillScript::GetProgress() const
 {
     return Progress;
 }
+
+
