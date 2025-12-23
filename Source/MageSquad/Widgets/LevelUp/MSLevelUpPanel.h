@@ -38,9 +38,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UPanelWidget* ChoiceContainer = nullptr;
 
-	UPROPERTY(meta = (BindWidgetOptional))
-	UButton* Button_Close = nullptr;
-
 	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
 	TSubclassOf<UMSLevelUpChoice> ChoiceWidgetClass;
 

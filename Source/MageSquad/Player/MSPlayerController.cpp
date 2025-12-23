@@ -13,6 +13,7 @@
 #include "Widgets/Mission/MSMissionNotifyWidget.h"
 #include "Widgets/Mission/MSMissionTrackerWidget.h"
 #include "System/MSMissionDataSubsystem.h"
+#include "Widgets/LevelUp/MSLevelUpPanel.h"
 
 void AMSPlayerController::BeginPlay()
 {
@@ -204,6 +205,50 @@ void AMSPlayerController::UpdateCursor()
 			ServerRPCSetCursorInfo(CursorWorldPos, Dir);
 		}
 	}
+}
+
+void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 SessionId,
+	const TArray<FMSLevelUpChoicePair>& Choices)
+{
+	// 로컬 컨트롤러에서만 UI를 띄움
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	if (!LevelUpPanelClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Client_ShowSkillLevelUpChoices] LevelUpPanelClass is NULL"));
+		return;
+	}
+
+	// 이미 떠있으면 제거 후 재생성(세션 꼬임 방지)
+	if (LevelUpPanelInstance)
+	{
+		LevelUpPanelInstance->RemoveFromParent();
+		LevelUpPanelInstance = nullptr;
+	}
+
+	LevelUpPanelInstance = CreateWidget<UMSLevelUpPanel>(this, LevelUpPanelClass);
+	if (!LevelUpPanelInstance)
+	{
+		return;
+	}
+
+	LevelUpPanelInstance->AddToViewport(200);
+	LevelUpPanelInstance->InitPanel(SessionId, Choices);
+}
+
+void AMSPlayerController::Server_SelectSkillLevelUpChoice_Implementation(int32 SessionId,
+	const FMSLevelUpChoicePair& Picked)
+{
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS)
+	{
+		return;
+	}
+	// Todo:
+	// PS->HandleSkillLevelUpChoice_Server(SessionId, Picked);
 }
 
 void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir)

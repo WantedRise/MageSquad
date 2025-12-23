@@ -2,6 +2,8 @@
 
 
 #include "Player/MSPlayerState.h"
+
+#include "Player/MSPlayerController.h"
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "Net/UnrealNetwork.h"
@@ -165,15 +167,14 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 	}
 
 	// 6) PlayerController에 UI 표시 요청
-	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	AMSPlayerController* PC = Cast<AMSPlayerController>(GetOwner());
 	if (!PC)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] PlayerController not found"));
 		return;
 	}
 
-	// TODO:
-	// PC->Client_ShowSkillLevelUpChoices(SessionId, CurrentSkillChoices);
+	PC->Client_ShowSkillLevelUpChoices(SessionId, CurrentSkillChoices);
 
 	UE_LOG(LogTemp, Log,
 		TEXT("[BeginSkillLevelUp] Session=%d | PairCandidates=%d | Picked=%d"),
