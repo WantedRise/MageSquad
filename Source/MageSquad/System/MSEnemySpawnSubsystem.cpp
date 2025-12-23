@@ -813,7 +813,8 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	
 	// Hidden 처리
 	Enemy->SetActorHiddenInGame(true);
-	Enemy->SetActorEnableCollision(false);
+	// 콜리전은 Dead Ability에서 몽타주 시작과 동시에 처리
+	//Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
 
 	// Movement 정리
