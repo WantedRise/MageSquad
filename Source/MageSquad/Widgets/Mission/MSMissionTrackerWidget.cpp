@@ -3,6 +3,7 @@
 
 #include "Widgets/Mission/MSMissionTrackerWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 #include "Animation/WidgetAnimation.h"
 #include "GameStates/MSGameState.h"
 
@@ -29,7 +30,7 @@ void UMSMissionTrackerWidget::UpdateRemainingTime(float RemainingSeconds)
 
 void UMSMissionTrackerWidget::StartMissionTimer(AMSGameState* InGameState, float InEndTime)
 {
-    MissionEndTime = InEndTime;
+    MissionEndTime = InEndTime - 0.5f;
     GameState = InGameState;
 
     UpdateRemainingTime();
@@ -47,6 +48,13 @@ void UMSMissionTrackerWidget::UpdateRemainingTime()
 {
     const float ServerTime = GameState->GetServerTime();
     const float RemainingSeconds = FMath::Max(0.f, MissionEndTime - ServerTime);
+
+    if (RemainingSeconds < 0.f)
+    {
+        GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);
+        Text_Timer->SetText(FText::FromString(TEXT("00:00")));
+        SetVisibility(ESlateVisibility::Collapsed);
+    }
     // 0 미만 방지 및 올림 처리
     int32 TotalSeconds = FMath::Max(0, FMath::CeilToInt(RemainingSeconds));
 
@@ -55,11 +63,9 @@ void UMSMissionTrackerWidget::UpdateRemainingTime()
     FText FormattedTime = FText::AsTimespan(Timespan);
 
     Text_Timer->SetText(FormattedTime);
+}
 
-    if (RemainingSeconds <= 0.f)
-    {
-        GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);
-        Text_Timer->SetText(FText::FromString(TEXT("00:00")));
-        SetVisibility(ESlateVisibility::Collapsed);
-    }
+void UMSMissionTrackerWidget::SetTargetHpProgress(float InNormalized)
+{
+    Progress_TargetHp->SetPercent(InNormalized);
 }

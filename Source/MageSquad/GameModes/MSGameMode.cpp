@@ -84,15 +84,18 @@ void AMSGameMode::TryStartGame()
 		}
 	}
 
-	SetupGameFlow();
+	if (nullptr == GameFlow)
+	{
+		SetupGameFlow();
 
-	if (GameFlow)
-	{
-		GameFlow->Start();
-	}
-	else
-	{
-		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("GameFlow == null"));
+		if (GameFlow)
+		{
+			GameFlow->Start();
+		}
+		else
+		{
+			MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("GameFlow == null"));
+		}
 	}
 }
 

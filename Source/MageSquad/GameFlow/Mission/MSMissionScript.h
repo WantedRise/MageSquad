@@ -21,4 +21,7 @@ public:
     virtual void OnMissionEnd();
     virtual float GetProgress() const { return 0.f; }
     virtual bool IsCompleted() const { return GetProgress() >= 1.f; }
+    void SetOwnerMissionComponent(class UMSMissionComponent* InOwner);
+protected:
+    TWeakObjectPtr<class UMSMissionComponent> OwnerMissionComponent;
 };

@@ -23,12 +23,9 @@ void UMSMissionComponent::BeginPlay()
 	Super::BeginPlay();
 
     OwnerGameState = GetOwner<AMSGameState>();
-    BindGameStateDelegates();
+
 	// ...
-    if (!IsServer())
-    {
-        BindGameStateDelegates();
-    }
+    BindGameStateDelegates();
 }
 
 void UMSMissionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -44,6 +41,7 @@ void UMSMissionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UMSMissionComponent::FinishMission(bool bSuccess)
 {
+    UE_LOG(LogTemp, Error, TEXT("FinishMission"));
     // 타이머 해제
     if (GetWorld())
     {
@@ -78,6 +76,7 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
     }
 
     MissionScript = NewObject<UMSMissionScript>(this,MissionRow.ScriptClass);
+    MissionScript->SetOwnerMissionComponent(this);
     MissionScript->Initialize(GetWorld());
 
     const float ServerTime = OwnerGameState->GetServerTime();
@@ -130,10 +129,10 @@ void UMSMissionComponent::BindGameStateDelegates()
         &UMSMissionComponent::HandleMissionProgressChanged
     );
 
-    //OwnerGameState->OnMissionFinished.AddUObject(
-    //    this,
-    //    &UMSMissionComponent::OnMissionFinished
-    //);
+    OwnerGameState->OnMissionFinished.AddUObject(
+        this,
+        &UMSMissionComponent::OnMissionFinished
+    );
 }
 
 void UMSMissionComponent::HandleMissionChanged(int32 MissionID)
@@ -174,7 +173,7 @@ void UMSMissionComponent::OnMissionTimeExpired()
     if (OwnerGameState)
     {
         UE_LOG(LogTemp, Log, TEXT("OnMissionTimeExpired"));
-        OwnerGameState->NotifyMissionFinished(false);
+        FinishMission(false);
     }
     else
     {

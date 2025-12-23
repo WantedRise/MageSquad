@@ -50,6 +50,9 @@ private: /* 미션 */
 	// 현재 진행 중인 미션이 종료(성공/실패)되었을 때 호출되는 콜백 함수
 	UFUNCTION()
 	void OnMissionFinished(int32 MissionId, bool bSuccess);
+	//
+	UFUNCTION()
+	void OnMissionProgressChanged(float Normalized);
 
 	// 미션 UI의 표시 타이밍과 초기 설정을 처리
 	void HandleMissionStarted(const FMSMissionRow& MissionData);

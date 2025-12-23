@@ -73,6 +73,6 @@ void UMSGameProgressComponent::TickProgress()
 
     if (1.0f <= Normalized)
     {
-        StopProgress();
+        //StopProgress();
     }
 }
