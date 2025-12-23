@@ -88,7 +88,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	ExperiencePickupCollision->InitSphereRadius(BaseExperiencePickupRange);
 	ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ExperiencePickupCollision->SetGenerateOverlapEvents(false);
-	ExperiencePickupCollision->SetCollisionProfileName(TEXT("MSPlayer"));
+	ExperiencePickupCollision->SetCollisionProfileName(TEXT("MSPlayerPickUp"));
 
 	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
 
