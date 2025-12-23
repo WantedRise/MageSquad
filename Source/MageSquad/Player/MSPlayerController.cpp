@@ -9,7 +9,7 @@
 #include "MSPlayerCharacter.h"
 #include "Widgets/HUD/MSPlayerHUDWidget.h"
 #include "System/MSLevelManagerSubsystem.h"
-#include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
+//#include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
 #include "Widgets/Mission/MSMissionNotifyWidget.h"
 #include "Widgets/Mission/MSMissionTrackerWidget.h"
 #include "System/MSMissionDataSubsystem.h"
@@ -55,10 +55,10 @@ void AMSPlayerController::BeginPlay()
 		}
 		
 		// ViewModel 생성
-		if (!PlayerViewModel)
-		{
-			PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
-		}
+		//if (!PlayerViewModel)
+		//{
+		//	PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
+		//}
 		
 		// if (UAbilitySystemComponent* ASC = Cast<AMSPlayerCharacter>(GetPawn())->GetAbilitySystemComponent())
 		// {

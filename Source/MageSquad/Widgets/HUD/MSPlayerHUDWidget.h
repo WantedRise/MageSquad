@@ -7,6 +7,9 @@
 #include "GameplayEffectTypes.h"
 #include "MSPlayerHUDWidget.generated.h"
 
+// 대미지를 받았을 때 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTakeDamaged);
+
 /**
  * 작성자: 김준형
  * 작성일: 25/12/17
@@ -52,7 +55,7 @@ protected:
 	void ClearTeamPollTimer();
 
 	// 체력 변경 UI 반영
-	void RefreshLocalHealthUI(float Health, float MaxHealth);
+	void RefreshLocalHealthUI(float Health, float MaxHealth, bool InbTakeDamage);
 
 	// AttributeSet 갱신 콜백 함수
 	void OnLocalHealthChanged(const FOnAttributeChangeData& Data);
@@ -74,6 +77,11 @@ protected:
 
 	// 공유 경험피/레벨 갱신 UI 반영 함수
 	void RefreshSharedExperienceUI();
+
+public:
+	// 대미지를 받았을 때 이벤트 델리게이트
+	UPROPERTY(BlueprintAssignable)
+	FOnTakeDamaged OnTakeDamaged;
 
 protected:
 	/* ======================== BindWidget ======================== */
@@ -97,11 +105,15 @@ protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UVerticalBox> TeamMembersBoxWidget;
 
+	// 화면 효과 이미지
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UImage> HitEffectImageWidget;
+
 	// 미션 알림 위젯 클래스
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UMSMissionNotifyWidget> MissionNotifyWidget;
 
-	//미션 진행 위젯 클래스
+	// 미션 진행 위젯 클래스
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UMSMissionTrackerWidget> MissionTrackerWidget;
 

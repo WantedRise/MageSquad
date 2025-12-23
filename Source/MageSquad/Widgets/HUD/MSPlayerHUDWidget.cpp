@@ -47,7 +47,7 @@ void UMSPlayerHUDWidget::InitializeHUD()
 	// 이미 바인딩 되어 있으면 그대로 유지(재진입 안전)
 	if (bBoundLocalASC && LocalASC.IsValid())
 	{
-		RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
+		RefreshLocalHealthUI(CachedHealth, CachedMaxHealth, false);
 		RefreshSharedExperienceUI();
 		return;
 	}
@@ -121,7 +121,7 @@ bool UMSPlayerHUDWidget::TryBindLocalHealth()
 	// 초기 값 반영
 	CachedHealth = FoundASC->GetNumericAttribute(UMSPlayerAttributeSet::GetHealthAttribute());
 	CachedMaxHealth = FoundASC->GetNumericAttribute(UMSPlayerAttributeSet::GetMaxHealthAttribute());
-	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
+	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth, false);
 
 	// 델리게이트 바인딩(핸들을 보관해 정확히 해제)
 	HealthChangedHandle = FoundASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetHealthAttribute())
@@ -243,8 +243,11 @@ void UMSPlayerHUDWidget::ClearTeamPollTimer()
 	TeamPollTimer.Invalidate();
 }
 
-void UMSPlayerHUDWidget::RefreshLocalHealthUI(const float Health, const float MaxHealth)
+void UMSPlayerHUDWidget::RefreshLocalHealthUI(const float Health, const float MaxHealth, bool InbTakeDamage)
 {
+	// 대미지 받았는지 여부
+	const bool bTakeDamage = InbTakeDamage;
+
 	// 현재 체력 비율 계산 (ex. 0.1 = 10%)
 	const float Pct = (MaxHealth > 0.f) ? FMath::Clamp(Health / MaxHealth, 0.f, 1.f) : 0.f;
 
@@ -262,20 +265,29 @@ void UMSPlayerHUDWidget::RefreshLocalHealthUI(const float Health, const float Ma
 		const FText Max = FText::AsNumber(FMath::RoundToInt(MaxHealth));
 		LocalHealthTextWidget->SetText(FText::Format(NSLOCTEXT("MSHUD", "LocalHealthFmt", "{0}/{1}"), Cur, Max));
 	}
+
+	// 대미지를 받은 경우, 대미지를 받았을 때 델리게이트 브로드캐스트
+	if (bTakeDamage)
+	{
+		OnTakeDamaged.Broadcast();
+	}
 }
 
 void UMSPlayerHUDWidget::OnLocalHealthChanged(const FOnAttributeChangeData& Data)
 {
+	// 피가 달았는지 회복되었는지 확인하는 플래그
+	const bool bTakeDamage = CachedHealth > Data.NewValue;
+
 	// 현재 체력 갱신 후 UI 업데이트
 	CachedHealth = Data.NewValue;
-	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
+	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth, bTakeDamage);
 }
 
 void UMSPlayerHUDWidget::OnLocalMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
 	// 최대 체력 갱신 후 UI 업데이트
 	CachedMaxHealth = Data.NewValue;
-	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth);
+	RefreshLocalHealthUI(CachedHealth, CachedMaxHealth, false);
 }
 
 void UMSPlayerHUDWidget::PollTeamMembers()
