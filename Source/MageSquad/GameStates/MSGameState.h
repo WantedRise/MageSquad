@@ -178,6 +178,9 @@ private:
 	// 서버: 레벨업 처리 함수
 	void ProcessLevelUps_Server();
 
+	// 서버: 모든 클라이언트에게 레벨업 효과를 처리하도록 알리는 함수
+	void BroadcastSharedLevelUp_ServerOnly();
+
 	// 서버: 레벨별 요구 경험치 조회 함수
 	float GetRequiredXPForLevel_Server(int32 Level, int32 PlayerCount) const;
 

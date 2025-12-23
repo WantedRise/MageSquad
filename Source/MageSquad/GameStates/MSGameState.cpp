@@ -19,6 +19,9 @@
 #include "Engine/DataTable.h"
 #include "DataStructs/MSSharedExperienceData.h"
 
+#include "Player/MSPlayerState.h"
+
+#include "GameplayTagsManager.h"
 #include "MSFunctionLibrary.h"
 
 AMSGameState::AMSGameState()
@@ -257,10 +260,48 @@ void AMSGameState::ProcessLevelUps_Server()
 		* 서버 측 레벨업 알림 지점
 		*/
 		OnSharedLevelUp.Broadcast(SharedLevel);
+
+		// 모든 클라이언트에게 레벨업 효과를 처리하도록 알림
+		BroadcastSharedLevelUp_ServerOnly();
 	}
 
 	// XP/요구XP/레벨이 바뀌었으니 브로드캐스트
 	BroadcastExperienceChanged();
+}
+
+void AMSGameState::BroadcastSharedLevelUp_ServerOnly()
+{
+	if (!HasAuthority()) return;
+
+	// 레벨업 플로터 GameplayCue 태그 지정
+	FGameplayTag Cue_LevelUpFloater;
+	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	Cue_LevelUpFloater = TagsManager.RequestGameplayTag(FName("GameplayCue.UI.LevelUpFloater"), false);
+
+	// 현재 플레이어들을 순회
+	for (APlayerState* PS : PlayerArray)
+	{
+		if (!PS) continue;
+
+		// MSPlayerState로 캐스팅
+		AMSPlayerState* MSPS = Cast<AMSPlayerState>(PS);
+		if (!MSPS) continue;
+
+		// ASC 가져오기
+		UAbilitySystemComponent* ASC = MSPS->GetAbilitySystemComponent();
+		if (!ASC) continue;
+
+		// 머리 위 UI를 띄울 대상 폰 가져오기
+		// 관전중인 경우 없을 수도 있음
+		APawn* Pawn = PS->GetPawn();
+
+		// Cue파라미터로 Pawn의 위치 전달
+		FGameplayCueParameters Params;
+		Params.Location = Pawn->GetActorLocation();
+
+		// 원샷(Execute)로 브로드캐스트
+		ASC->ExecuteGameplayCue(Cue_LevelUpFloater, Params);
+	}
 }
 
 float AMSGameState::GetRequiredXPForLevel_Server(int32 Level, int32 PlayerCount) const
@@ -337,7 +378,7 @@ void AMSGameState::OnRep_MissionProgress()
 
 void AMSGameState::OnRep_MissionFinished()
 {
-	OnMissionFinished.Broadcast(CurrentMissionID,bMissionSuccess);
+	OnMissionFinished.Broadcast(CurrentMissionID, bMissionSuccess);
 }
 
 void AMSGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
