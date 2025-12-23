@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -15,13 +14,13 @@
  */
 
 
- /**
-  * 작성자: 김준형
-  * 작성일: 25/12/15
-  *
-  * 플레이어 시작 스킬 데이터
-  * [스킬 어빌리티 / 스킬ID / 스킬 레벨]
-  */
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/15
+ *
+ * 플레이어 시작 스킬 데이터
+ * [스킬 어빌리티 / 스킬ID / 스킬 레벨]
+ */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FStartSkillData
 {
@@ -356,7 +355,7 @@ public:
 	}
 };
 
-template<>
+template <>
 struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTraitsBase2<FMSGameplayEffectContext>
 {
 	enum { WithNetSerializer = true, WithCopy = true };

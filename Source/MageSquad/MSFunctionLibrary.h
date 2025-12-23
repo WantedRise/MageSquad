@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Actors/Projectile/MSBaseProjectile.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Types/MageSquadTypes.h"
 #include "MSFunctionLibrary.generated.h"
@@ -41,7 +42,8 @@ public:
 		TSubclassOf<UProjectileStaticData> ProjectileDataClass,	// 발사체 원본 데이터 클래스
 		FTransform Transform,			// 위치 및 회전값
 		AActor* Owner,					// 발사체 소유자
-		APawn* Instigator				// 발사체를 발사한 객체
+		APawn* Instigator,				// 발사체를 발사한 객체
+		TSubclassOf<AMSBaseProjectile> ProjectileClass = nullptr// 발사체 클래스
 	);
 
 	// 발사체 발사 함수 (재정의 데이터)
@@ -52,6 +54,7 @@ public:
 		FProjectileRuntimeData RuntimeData,						// 발사체 재정의 데이터
 		FTransform Transform,			// 위치 및 회전값
 		AActor* Owner,					// 발사체 소유자
-		APawn* Instigator				// 발사체를 발사한 객체
+		APawn* Instigator,				// 발사체를 발사한 객체
+		TSubclassOf<AMSBaseProjectile> ProjectileClass = nullptr // 발사체 클래스
 	);
 };

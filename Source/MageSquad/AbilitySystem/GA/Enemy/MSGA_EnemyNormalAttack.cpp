@@ -3,10 +3,13 @@
 
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyNormalAttack.h"
 
+#include "AbilitySystemComponent.h"
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "AbilitySystem/Tasks/MSAT_PlayMontageAndWaitForEvent.h"
+#include "Actors/Projectile/MSEnemyProjectile.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
 #include "Enemy/MSBaseEnemy.h"
 
@@ -94,6 +97,8 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(Owner->GetProjectileDataClass());
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
+	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
 	
 	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
 	
@@ -103,5 +108,6 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	RuntimeData,
 	GetAvatarActorFromActorInfo()->GetActorTransform(),
 	CachedAvatar,
-	Cast<APawn>(CachedAvatar));
+	Cast<APawn>(CachedAvatar),
+	AMSEnemyProjectile::StaticClass());
 }

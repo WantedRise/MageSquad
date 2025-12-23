@@ -310,16 +310,20 @@ void AMSBaseProjectile::ArmLifeTimerIfNeeded(const FProjectileRuntimeData& Effec
 
 	if (UWorld* World = GetWorld())
 	{
+		TWeakObjectPtr<AMSBaseProjectile> WeakSelf(this);
 		World->GetTimerManager().ClearTimer(LifeTimerHandle);
 		World->GetTimerManager().SetTimer(
 			LifeTimerHandle,
-			FTimerDelegate::CreateLambda([this]()
+			FTimerDelegate::CreateLambda([WeakSelf]()
 				{
-					if (HasAuthority() && Behavior)
+					if (WeakSelf.IsValid())
 					{
-						Behavior->OnEnd();
+						if (WeakSelf->HasAuthority() && WeakSelf->Behavior)
+						{
+							WeakSelf->Behavior->OnEnd();
+						}
+						WeakSelf->Destroy();
 					}
-					Destroy();
 				}),
 			EffectiveData.LifeTime,
 			false
