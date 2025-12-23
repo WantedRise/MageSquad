@@ -17,32 +17,6 @@
 void AMSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 10초 뒤에 실행될 람다 함수나 별도의 함수를 예약합니다.
-	FTimerHandle SpawnDelayTimerHandle;
-	GetWorldTimerManager().SetTimer(SpawnDelayTimerHandle, [this]()
-		{
-			if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(GetWorld()))
-			{
-				// 오브젝트 풀링 시키기
-				SpawnSystem->InitializePool();
-
-				// 설정
-				SpawnSystem->SetSpawnInterval(2.0f);
-				SpawnSystem->SetMaxActiveMonsters(10);
-				SpawnSystem->SetSpawnRadius(1500.0f);
-				SpawnSystem->SetSpawnCountPerTick(10);
-
-				// 10초 뒤 스폰 시작
-				SpawnSystem->StartSpawning();
-
-				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
-				
-				// Test Boss Spawn 코드 입니다. 이 코드로 보스 스폰 가능합니다.
-				// SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_FEY, FVector(0.f, 0.f,400.f));
-			}
-		}, 10.0f, false); // 10.0f는 지연 시간(초), false는 반복 여부
-	
 }
 
 void AMSGameMode::SetupGameFlow()
@@ -64,7 +38,6 @@ TSubclassOf<UMSGameFlowBase> AMSGameMode::GetGameFlowClass() const
 {
 	return GameFlowClass;
 }
-
 
 
 void AMSGameMode::TryStartGame()
@@ -91,6 +64,26 @@ void AMSGameMode::TryStartGame()
 		if (GameFlow)
 		{
 			GameFlow->Start();
+
+			if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(GetWorld()))
+			{
+				// 오브젝트 풀링 시키기
+				SpawnSystem->InitializePool();
+
+				// 설정
+				SpawnSystem->SetSpawnInterval(2.0f);
+				SpawnSystem->SetMaxActiveMonsters(10);
+				SpawnSystem->SetSpawnRadius(1500.0f);
+				SpawnSystem->SetSpawnCountPerTick(10);
+
+				// 10초 뒤 스폰 시작
+				SpawnSystem->StartSpawning();
+
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
+
+				// Test Boss Spawn 코드 입니다. 이 코드로 보스 스폰 가능합니다.
+				// SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_FEY, FVector(0.f, 0.f,400.f));
+			}
 		}
 		else
 		{
@@ -98,5 +91,3 @@ void AMSGameMode::TryStartGame()
 		}
 	}
 }
-
-
