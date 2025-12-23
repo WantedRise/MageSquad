@@ -20,10 +20,17 @@ UBTService_UpdateTarget::UBTService_UpdateTarget()
 void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
-	
+
 	// 매 Interval마다 실행 - 타겟 검색 및 갱신
 	if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerComp.GetAIOwner()))
 	{
+			
+		if (OwnerComp.GetBlackboardComponent()->GetValueAsBool(AIController->GetIsDeadKey()))
+		{
+			OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
+			return;
+		}
+			
 		// 주변 적 탐지
 		// @Todo : 나중에 그냥 플레이 리스트 저장하도록 수정할 예정
 		TArray<AMSPlayerCharacter*> FoundActors;

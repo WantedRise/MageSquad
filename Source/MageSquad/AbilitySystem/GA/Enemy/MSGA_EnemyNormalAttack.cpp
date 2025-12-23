@@ -23,6 +23,8 @@ UMSGA_EnemyNormalAttack::UMSGA_EnemyNormalAttack()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Attack);
+	
+	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead)	;
 }
 
 void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -100,6 +102,7 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
 	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
 	RuntimeData.DamageEffect = Owner->GetDamageEffectClass();
+	RuntimeData.Radius = 3.f;
 	
 	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
 	
