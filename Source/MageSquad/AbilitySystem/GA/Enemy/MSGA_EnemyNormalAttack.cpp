@@ -92,7 +92,7 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	
 	// 이벤트 처리 - 발사체 발사
 	
-	FProjectileRuntimeData RuntimeData;
+	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(Owner->GetProjectileDataClass());
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
 	
 	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
