@@ -40,6 +40,7 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EnemyDeadTask->ReadyForActivation();
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		
+		Owner->SetActorEnableCollision(false);
 	}
 }
 
