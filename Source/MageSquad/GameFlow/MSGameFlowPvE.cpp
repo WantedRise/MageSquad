@@ -27,7 +27,7 @@ void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable
 {
 	Super::Initialize(InOwnerGameState, InTimelineTable);
 	UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE Initialize Begin"));
-	
+	GameState->OnMissionFinished.AddUObject(this, &UMSGameFlowPvE::OnMissionFinished);
 
 	static const FString Context(TEXT("PvEGameFlow"));
 	MissionTimelineTable->GetAllRows(Context, MissionTimelineRows);
@@ -119,12 +119,14 @@ void UMSGameFlowPvE::ScheduleMission(float TriggerTime, int32 MissionID)
 	MissionTimerHandles.Add(Handle);
 }
 
-void UMSGameFlowPvE::HandleMissionFinished(int32 MissionId, bool bSuccess)
+void UMSGameFlowPvE::OnMissionFinished(int32 MissionId, bool bSuccess)
 {
 	if (bSuccess)
 	{
 		//보상처리 및 SetState Play로 전환
+		UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE::OnMissionFinished mission success!! Give treasure"));
 	}
+	UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE::OnMissionFinished mission Fail!! Give treasure"));
 }
 
 void UMSGameFlowPvE::OnTimeCheckpoint()

@@ -23,6 +23,7 @@ void UMSMissionComponent::BeginPlay()
 	Super::BeginPlay();
 
     OwnerGameState = GetOwner<AMSGameState>();
+    BindGameStateDelegates();
 	// ...
     if (!IsServer())
     {
@@ -79,7 +80,16 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
     MissionScript = NewObject<UMSMissionScript>(this,MissionRow.ScriptClass);
     MissionScript->Initialize(GetWorld());
 
-    GetWorld()->GetTimerManager().SetTimer(MissionTimerHandle,this,&UMSMissionComponent::OnMissionTimeExpired,MissionRow.TimeLimit,false);
+    const float ServerTime = OwnerGameState->GetServerTime();
+    OwnerGameState->SetMissionEndTime(ServerTime + MissionRow.TimeLimit);
+
+    GetWorld()->GetTimerManager().SetTimer(
+        MissionTimerHandle,
+        this,
+        &UMSMissionComponent::OnMissionTimeExpired,
+        MissionRow.TimeLimit,
+        false
+    );
 }
 
 void UMSMissionComponent::UpdateMission()
@@ -120,10 +130,10 @@ void UMSMissionComponent::BindGameStateDelegates()
         &UMSMissionComponent::HandleMissionProgressChanged
     );
 
-    OwnerGameState->OnMissionFinished.AddUObject(
-        this,
-        &UMSMissionComponent::HandleMissionFinished
-    );
+    //OwnerGameState->OnMissionFinished.AddUObject(
+    //    this,
+    //    &UMSMissionComponent::OnMissionFinished
+    //);
 }
 
 void UMSMissionComponent::HandleMissionChanged(int32 MissionID)
@@ -149,18 +159,26 @@ void UMSMissionComponent::HandleMissionProgressChanged(float Progress)
 
 }
 
-void UMSMissionComponent::HandleMissionFinished(bool bSuccess)
+void UMSMissionComponent::OnMissionFinished(int32 MissionID, bool bSuccess)
 {
     // Client:
     // - 성공 / 실패 연출
+    if (bSuccess)
+    {
 
+    }
 }
 
 void UMSMissionComponent::OnMissionTimeExpired()
 {
     if (OwnerGameState)
     {
+        UE_LOG(LogTemp, Log, TEXT("OnMissionTimeExpired"));
         OwnerGameState->NotifyMissionFinished(false);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Log, TEXT("OnMissionTimeExpired no OwnerGameState"));
     }
 }
 

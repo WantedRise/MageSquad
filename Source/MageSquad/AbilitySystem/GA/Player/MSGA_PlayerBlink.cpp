@@ -114,10 +114,6 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 	// 점멸 시작 위치 / 점멸 도착 위치
 	const FVector StartLocation = Character->GetActorLocation();
 	const FVector DesiredLocation = ComputeDesiredLocation(Character);
-
-	// 시작 VFX 재생 (GameplayCue)
-	ExecuteCue(ASC, Cue_BlinkStart, StartLocation);
-
 	FVector FinalLocation = DesiredLocation;
 
 	// 점멸 가능한 위치 찾기
@@ -126,6 +122,10 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 		// 이동 불가 시 false 반환
 		return false;
 	}
+
+	// 시작 VFX 재생 (GameplayCue)
+	// - BlinkStart/BlinkEnd 2점을 EffectContext에 기록해서 Beam 등에 사용
+	ExecuteCue(ASC, Cue_BlinkStart, StartLocation, StartLocation, FinalLocation);
 
 	// 이동 방향 회전값
 	const FRotator FacingRot = DesiredLocation.ToOrientationRotator();
@@ -139,7 +139,7 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 	}
 
 	// 종료 VFX 재생 (GameplayCue)
-	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation);
+	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation, StartLocation, FinalLocation);
 	return true;
 }
 
@@ -270,25 +270,62 @@ bool UMSGA_PlayerBlink::CanTeleportTo(ACharacter* Character, const FVector& Loca
 	return Character->TeleportTo(Location, Rot, true, false);
 }
 
-void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& Location) const
+void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& CueLocation, const FVector& BlinkStart, const FVector& BlinkEnd) const
 {
 	if (!ASC || !CueTag.IsValid()) return;
 
 	// 서버에서만 Cue 실행
-	if (!ASC->GetOwner() || !ASC->GetOwner()->HasAuthority()) return;
+	AActor* OwnerActor = ASC->GetOwner();
+	if (!OwnerActor || !OwnerActor->HasAuthority()) return;
 
-	// FLinearColor를 넘기기 위해 이펙트 컨텍스트 핸들 생성
-	//FGameplayEffectContextHandle CtxHandle = ASC->MakeEffectContext();
-	//FMSGameplayEffectContext* Ctx = static_cast<FMSGameplayEffectContext*>(CtxHandle.Get());
-	//if (Ctx)
-	//{
-	//	Ctx->CueColor = BlinkColor;
-	//}
+	/*
+	* 파라미터를 안전하게 복제하기 위해 EffectContext에 기록
+	* 프로젝트에서 AbilitySystemGlobals를 커스텀 컨텍스트로 세팅하지 않았다면,
+	* ASC->MakeEffectContext()는 기본(FGameplayEffectContext) 타입을 반환할 수 있음
+	* 이 경우 무조건 static_cast 하면 메모리 오염/크래시로 이어질 수 있음
+	*/
 
-	// 큐 파라미터 설정 (재생할 위치, 파라미터들을 보내기 위함)
+	// #1: 타입 체크 후 캐스팅
+	FGameplayEffectContextHandle CtxHandle = ASC->MakeEffectContext();
+	
+	FMSGameplayEffectContext* MSCtx = nullptr;
+	if (FGameplayEffectContext* BaseCtx = CtxHandle.Get())
+	{
+		if (BaseCtx->GetScriptStruct() == FMSGameplayEffectContext::StaticStruct())
+		{
+			MSCtx = static_cast<FMSGameplayEffectContext*>(BaseCtx);
+		}
+	}
+	
+	// #2: 커스텀 컨텍스트가 아니라면, 직접 파생 컨텍스트를 생성해서 교체
+	if (!MSCtx)
+	{
+		FMSGameplayEffectContext* NewCtx = new FMSGameplayEffectContext();
+
+		if (FGameplayEffectContext* BaseCtx = CtxHandle.Get())
+		{
+			// Base 부분 복사 (Instigator/SourceObject/Ability/HitResult 등)
+			*static_cast<FGameplayEffectContext*>(NewCtx) = *BaseCtx;
+
+			// HitResult는 내부 포인터를 안전 복사
+			if (BaseCtx->GetHitResult())
+			{
+				NewCtx->AddHitResult(*BaseCtx->GetHitResult(), true);
+			}
+		}
+
+		CtxHandle = FGameplayEffectContextHandle(NewCtx);
+		MSCtx = NewCtx;
+	}
+
+	// 커스텀 데이터 기록
+	MSCtx->CueColor = BlinkColor;
+	MSCtx->SetBlinkSegment(BlinkStart, BlinkEnd);
+
+	// 큐 파라미터 설정
 	FGameplayCueParameters Params;
-	Params.Location = Location;
-	//Params.EffectContext = CtxHandle;
+	Params.Location = CueLocation;
+	Params.EffectContext = CtxHandle;
 
 	// Cue 실행
 	ASC->ExecuteGameplayCue(CueTag, Params);

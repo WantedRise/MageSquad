@@ -45,16 +45,21 @@ protected:
 
 	// Pawn이 준비된 시점에 HUD 바인딩(재시도 포함) 요청
 	void NotifyHUDReinitialize();
-
+private: /* 미션 */
+	// 새로운 미션으로 전환되었을 때 호출되는 콜백 함수
 	UFUNCTION()
-	void HandleMissionChanged(int32 MissionID);
+	void OnMissionChanged(int32 MissionID);
+	// 현재 진행 중인 미션이 종료(성공/실패)되었을 때 호출되는 콜백 함수
+	UFUNCTION()
+	void OnMissionFinished(int32 MissionId, bool bSuccess);
 
-	// 미션이 시작된 시점에 미션 UI 타이밍 설정
+	// 미션 UI의 표시 타이밍과 초기 설정을 처리
 	void HandleMissionStarted(const FMSMissionRow& MissionData);
 
+	// 미션 제목 및 시작 연출 UI를 출력
 	void ShowMissionTitle(FMSMissionRow MissionData);
 
-	// 미션 진행 UI 보이기
+	// 현재 미션의 진행 상황을 추적하는 UI를 표시
 	void ShowMissionTracker(FMSMissionRow MissionData);
 protected:
 	// HUD 위젯 인스턴스

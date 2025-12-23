@@ -326,7 +326,7 @@ struct MAGESQUAD_API FMSPlayerSkillSlotNet
  * 작성자: 김준형
  * 작성일: 25/12/15
  *
- * 나이아가라 전달용 게임플레이 이펙트 콘텍스트
+ * 블링크 전달용 게임플레이 이펙트 콘텍스트
  */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
@@ -334,10 +334,46 @@ struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
 	GENERATED_BODY()
 
 public:
+	// GameplayCue용 컬러 파라미터 (LinearColor)
 	UPROPERTY()
-	FLinearColor LinearColor = FLinearColor::White;
+	FLinearColor CueColor = FLinearColor::White;
+
+	// Blink(텔레포트) 세그먼트 시작/끝 (Beam 연출용)
+	UPROPERTY()
+	FVector BlinkStart = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector BlinkEnd = FVector::ZeroVector;
+
+	// BlinkStart/BlinkEnd 값이 유효한지 여부
+	UPROPERTY()
+	bool bHasBlinkSegment = false;
+
+	FORCEINLINE void SetBlinkSegment(const FVector& InStart, const FVector& InEnd)
+	{
+		BlinkStart = InStart;
+		BlinkEnd = InEnd;
+		bHasBlinkSegment = true;
+	}
+
+	FORCEINLINE bool HasBlinkSegment() const { return bHasBlinkSegment; }
 
 	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
+
+	/**
+	 * 컨텍스트 핸들 복제 시 파생 타입이 유지되도록 Duplicate 오버라이드
+	 * (HitResult 등 내부 포인터도 안전 복사)
+	 */
+	virtual FGameplayEffectContext* Duplicate() const override
+	{
+		FMSGameplayEffectContext* NewCtx = new FMSGameplayEffectContext();
+		*NewCtx = *this;
+		if (GetHitResult())
+		{
+			NewCtx->AddHitResult(*GetHitResult(), true);
+		}
+		return NewCtx;
+	}
 
 	// 복제/직렬화 지원
 	virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
@@ -351,7 +387,42 @@ public:
 			return false;
 		}
 
-		Ar << LinearColor;
+		// 추가 데이터는 최소화된 플래그 + 조건부 직렬화
+		uint8 Flags = 0;
+		if (Ar.IsSaving())
+		{
+			// 0x01: CueColor 포함
+			Flags |= 0x01;
+			// 0x02: Blink 세그먼트 포함
+			if (bHasBlinkSegment)
+			{
+				Flags |= 0x02;
+			}
+		}
+
+		Ar.SerializeBits(&Flags, 2);
+
+		if (Flags & 0x01)
+		{
+			Ar << CueColor;
+		}
+		else if (Ar.IsLoading())
+		{
+			CueColor = FLinearColor::White;
+		}
+
+		if (Flags & 0x02)
+		{
+			Ar << BlinkStart;
+			Ar << BlinkEnd;
+			bHasBlinkSegment = true;
+		}
+		else if (Ar.IsLoading())
+		{
+			BlinkStart = FVector::ZeroVector;
+			BlinkEnd = FVector::ZeroVector;
+			bHasBlinkSegment = false;
+		}
 		return true;
 	}
 };
