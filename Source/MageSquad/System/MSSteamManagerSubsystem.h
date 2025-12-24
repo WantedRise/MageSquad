@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
 #include "MSSteamManagerSubsystem.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMSOnCreateSessionCompleteDelegate, bool, bWasSuccessful);
 
 /*
 * 작성자: 이상준
@@ -35,6 +37,11 @@ public:
 	void TryInvitedJoinSession();
 	bool IsSteamConnected();
 	int32 GetMaxPlayer();
+	
+	FMSOnCreateSessionCompleteDelegate MSOnCreateSessionCompleteDelegate;
+
+	//세션의 소유자인지 확인하는 함수
+	bool IsPlayerHostingSession();
 protected:
 
 	void OnEndSessionComplete(FName SessionName, bool bWasSuccessful);
@@ -45,8 +52,7 @@ protected:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	//현재 세션을 파악하여 초대받은 세션으로 이동
 	void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
-	//세션의 소유자인지 확인하는 함수
-	bool IsPlayerHostingSession();
+
 	void OnFindSessionsComplete(bool bWasSuccessful);
 	void OnFindFriendSession(int32 LocalUserNum, bool bWasSuccessful,const TArray<FOnlineSessionSearchResult>& SessionResults);
 	
@@ -55,8 +61,9 @@ protected:
 protected:
 	IOnlineSessionPtr SessionInterface;
 	FOnlineSessionSearchResult AcceptedInviteResult;
+	
+
 	/*
-	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
 	FOnSessionUserInviteAcceptedDelegate OnSessionUserInviteAcceptedDelegate;
 	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
 	FOnSessionInviteReceivedDelegate OnSessionInviteReceivedDelegate;

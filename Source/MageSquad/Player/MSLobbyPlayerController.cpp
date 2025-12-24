@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSLobbyPlayerController.h"
@@ -10,6 +10,7 @@
 #include "Widgets/Lobby/MSLobbyMainWidget.h"
 #include "Widgets/Lobby/MSLobbyReadyWidget.h"
 #include "GameStates/MSLobbyGameState.h"
+#include <System/MSLevelManagerSubsystem.h>
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -44,6 +45,19 @@ void AMSLobbyPlayerController::BeginPlay()
 		}
 	
 		CreateLobbyUI();
+
+		// 맵 로딩을 위한 딜레이, 로딩창을 2초뒤 제거
+		if (UMSLevelManagerSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+		{
+			FTimerHandle MatchEntryDelayTimer;
+			GetWorldTimerManager().SetTimer(
+				MatchEntryDelayTimer,
+				Subsystem,
+				&UMSLevelManagerSubsystem::HideLoadingWidget,
+				2.0f,
+				false
+			);
+		}
 	}
 }
 

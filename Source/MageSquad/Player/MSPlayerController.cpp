@@ -353,3 +353,12 @@ void AMSPlayerController::OnMissionProgressChanged(float Normalized)
 	if (!Tracker) return;
 	Tracker->SetTargetHpProgress(Normalized);
 }
+
+void AMSPlayerController::ClientShowLoadingWidget_Implementation()
+{
+	UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
+	if (LevelManager)
+	{
+		LevelManager->ShowLoadingWidget();
+	}
+}

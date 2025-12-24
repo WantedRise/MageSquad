@@ -71,6 +71,10 @@ private: /* 미션 */
 
 	// 현재 미션의 진행 상황을 추적하는 UI를 표시
 	void ShowMissionTracker(FMSMissionRow MissionData);
+public:
+	// 로딩 표시
+	UFUNCTION(Client, Reliable)
+	void ClientShowLoadingWidget();
 protected:
 	// HUD 위젯 인스턴스
 	UPROPERTY(Transient)

@@ -35,6 +35,7 @@ public:
 	float GetTotalGameTime() const { return TotalGameTime; }
 	// 모든 플레이어가 UI가 준비되어있으면 게임시작
 	void TryStartGame();
+	void NotifyClientsShowLoadingWidget();
 private:
 	void SetupGameFlow();
 	void OnMissionFinished(int32 MissionId, bool bSuccess);
