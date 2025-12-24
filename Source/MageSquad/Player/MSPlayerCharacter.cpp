@@ -11,6 +11,7 @@
 #include "Camera/CameraShakeBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -25,6 +26,8 @@
 #include "MSGameplayTags.h"
 
 #include "Actors/Experience/MSExperienceOrb.h"
+
+#include "Widgets/HUD/MSOverheadNameWidget.h"
 
 #include "DataAssets/Player/DA_PlayerStartUpData.h"
 
@@ -91,6 +94,16 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	ExperiencePickupCollision->SetGenerateOverlapEvents(false);
 	ExperiencePickupCollision->SetCollisionProfileName(TEXT("MSPlayerPickUp"));
 
+	OverheadNameWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadNameWidgetComponent"));
+	OverheadNameWidgetComp->SetupAttachment(GetRootComponent());
+	OverheadNameWidgetComp->SetWidgetSpace(EWidgetSpace::Screen);
+	OverheadNameWidgetComp->SetDrawAtDesiredSize(true);
+	OverheadNameWidgetComp->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
+	OverheadNameWidgetComp->SetCollisionProfileName(TEXT("NoCollision"));
+	OverheadNameWidgetComp->SetGenerateOverlapEvents(false);
+	OverheadNameWidgetComp->SetTwoSided(false);
+	OverheadNameWidgetComp->SetHiddenInGame(true);
+
 	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
 
 	// 액터 태그 설정
@@ -130,6 +143,18 @@ void AMSPlayerCharacter::BeginPlay()
 		ExperiencePickupCollision->SetGenerateOverlapEvents(false);
 		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+
+	// 머리 위에 띄울 이름 위젯 클래스 설정
+	if (OverheadNameWidgetClass)
+	{
+		OverheadNameWidgetComp->SetWidgetClass(OverheadNameWidgetClass);
+	}
+
+	// 머리 위 이름 위젯을 초기화 + 바인딩 설정
+	// - 가시화: "자기 자신"만 숨김
+	// - 텍스트: HUDDataComponent 복제값(RepDisplayName)에 의해 갱신
+	RefreshOverheadVisibility();
+	BindOverheadNameToHUDData();
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -195,14 +220,19 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 		).AddUObject(this, &AMSPlayerCharacter::OnInvincibilityChanged);
 	}
 
-	// HUD 데이터 컴포넌트에 어빌리티 시스템 바인딩
+	// HUD 데이터 바인딩 및 초기화
 	if (HUDDataComponent && AbilitySystemComponent)
 	{
+		// HUD 데이터에 ASC 바인딩
 		HUDDataComponent->BindToASC_Server(AbilitySystemComponent);
-	}
 
-	// HUD 공개 데이터 초기화
-	InitPublicHUDData_Server();
+		// HUD 공개 데이터 초기화
+		InitPublicHUDData_Server();
+
+		// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
+		RefreshOverheadVisibility();
+		BindOverheadNameToHUDData();
+	}
 }
 
 void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -235,6 +265,10 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 
 	// 클라이언트에서도 슬롯 배열 크기만 보정(OwnerOnly 복제 수신 전 방어)
 	EnsureSkillSlotArrays();
+
+	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
+	RefreshOverheadVisibility();
+	BindOverheadNameToHUDData();
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
@@ -262,6 +296,10 @@ void AMSPlayerCharacter::PawnClientRestart()
 			}
 		}
 	}
+
+	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
+	RefreshOverheadVisibility();
+	BindOverheadNameToHUDData();
 }
 
 void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -882,6 +920,57 @@ void AMSPlayerCharacter::InitPublicHUDData_Server()
 		HUDDataComponent->BindDisplayName_Server(FText::FromString(PS->GetPlayerName()));
 	}
 	HUDDataComponent->BindPortraitIcon_Server(PortraitIcon);
+}
+
+void AMSPlayerCharacter::BindOverheadNameToHUDData()
+{
+	if (!HUDDataComponent) return;
+
+	// 중복 바인딩 방지
+	if (OverheadDisplayNameChangedHandle.IsValid())
+	{
+		HUDDataComponent->OnDisplayNameChanged.Remove(OverheadDisplayNameChangedHandle);
+		OverheadDisplayNameChangedHandle.Reset();
+	}
+
+	// DisplayName 변경 이벤트 델리게이트 바인딩
+	OverheadDisplayNameChangedHandle = HUDDataComponent->OnDisplayNameChanged
+		.AddUObject(this, &AMSPlayerCharacter::HandleOverheadDisplayNameChanged);
+
+	// 초기값(이미 복제 완료된 경우 포함) 반영
+	RefreshOverheadVisibility();
+	RefreshOverheadName(&HUDDataComponent->GetDisplayName());
+}
+
+void AMSPlayerCharacter::RefreshOverheadVisibility()
+{
+	if (!OverheadNameWidgetComp) return;
+
+	// 머리 위 이름을 자기 자신은 제외. 로컬에서만 숨김 처리
+	const bool bHideForLocal = IsLocallyControlled();
+	OverheadNameWidgetComp->SetHiddenInGame(bHideForLocal);
+}
+
+void AMSPlayerCharacter::RefreshOverheadName(const FText* OptionalName)
+{
+	// 숨겨져있으면 종료
+	auto bIsHidden = OverheadNameWidgetComp->bHiddenInGame;
+	if (!OverheadNameWidgetComp || bIsHidden) return;
+
+	UMSOverheadNameWidget* Widget = Cast<UMSOverheadNameWidget>(OverheadNameWidgetComp->GetUserWidgetObject());
+	if (!Widget) return;
+
+	const FText NameToSet =
+		OptionalName ? *OptionalName :
+		(HUDDataComponent ? HUDDataComponent->GetDisplayName() : FText::GetEmpty());
+
+	Widget->SetNameText(NameToSet);
+}
+
+void AMSPlayerCharacter::HandleOverheadDisplayNameChanged(const FText& NewName)
+{
+	RefreshOverheadVisibility();
+	RefreshOverheadName(&NewName);
 }
 
 void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, int32 NewCount)

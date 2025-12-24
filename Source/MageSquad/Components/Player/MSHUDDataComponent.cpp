@@ -113,6 +113,12 @@ void UMSHUDDataComponent::BroadcastHealth()
 	OnPublicHealthChanged.Broadcast(RepHealth, RepMaxHealth, Pct);
 }
 
+void UMSHUDDataComponent::BroadcastDisplayName()
+{
+	// DisplayName 변경 브로드캐스트
+	OnDisplayNameChanged.Broadcast(RepDisplayName);
+}
+
 void UMSHUDDataComponent::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
 	// 현재 체력 갱신 후 데이터 변경 브로드캐스트
@@ -131,4 +137,7 @@ void UMSHUDDataComponent::OnRep_PublicData()
 {
 	// UI 갱신 이벤트 호출
 	BroadcastHealth();
+
+	// DisplayName 갱신 이벤트 호출
+	BroadcastDisplayName();
 }
