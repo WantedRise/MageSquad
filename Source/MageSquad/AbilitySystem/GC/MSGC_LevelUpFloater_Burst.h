@@ -31,10 +31,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Cue")
 	float WorldZOffset = 50.f;
 
-	// 스크린에서 살짝 위에 뜨게 하는 오프셋(음수면 위)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Cue")
-	FVector2D ScreenOffset = FVector2D(0.f, -20.f);
-
 	// 레벨업 나이아가라
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	TObjectPtr<class UNiagaraSystem> LevelUpNiagara;

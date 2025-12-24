@@ -58,7 +58,7 @@ bool UMSGC_LevelUpFloater_Burst::OnExecute_Implementation(AActor* Target, const 
 		}
 
 		// 위젯 표시 시작
-		Widget->Start(ScreenPos + ScreenOffset);
+		Widget->Start(ScreenPos);
 	}
 
 	return true;
