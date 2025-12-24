@@ -36,8 +36,7 @@ public:
 	virtual void Start() override;
 	//
 	void ScheduleMission(float TriggerTime, int32 MissionID);
-	//미션컴포넌트 OnMissionFinished에 바인드할 함수
-	UFUNCTION()
+	//미션컴포넌트 OnMissionFinished에 바인딩
 	void OnMissionFinished(int32 MissionId, bool bSuccess);
 
 private:
