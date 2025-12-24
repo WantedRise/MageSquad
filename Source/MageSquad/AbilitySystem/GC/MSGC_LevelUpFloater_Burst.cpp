@@ -4,6 +4,7 @@
 #include "AbilitySystem/GC/MSGC_LevelUpFloater_Burst.h"
 
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameplayTagsManager.h"
 
@@ -35,11 +36,40 @@ bool UMSGC_LevelUpFloater_Burst::OnExecute_Implementation(AActor* Target, const 
 		// 나이아가라 스폰
 		if (LevelUpNiagara)
 		{
-			UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-				World,
+			AActor* InstigatorActor = Parameters.Instigator.Get();
+			if (!InstigatorActor) continue;
+
+			APawn* InstigatorPawn = Cast<APawn>(InstigatorActor);
+			if (!InstigatorPawn)
+			{
+				// Pawn이 아닌 Actor가 들어왔을 가능성까지 방어적으로 처리
+				InstigatorPawn = Cast<APawn>(InstigatorActor->GetOwner());
+			}
+			if (!InstigatorPawn) continue;
+
+			// 나이아가라를 부착시킬 SkeletalMeshComponent 찾기
+			USkeletalMeshComponent* SkelMeshComp = nullptr;
+
+			if (ACharacter* Character = Cast<ACharacter>(Parameters.Instigator.Get()))
+			{
+				SkelMeshComp = Character->GetMesh();
+			}
+			else
+			{
+				SkelMeshComp = InstigatorPawn->FindComponentByClass<USkeletalMeshComponent>();
+			}
+
+			if (!SkelMeshComp) continue;
+
+			// 레벨업 나이아가라 부착
+			UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAttached(
 				LevelUpNiagara,
-				Parameters.Location,
-				FRotator::ZeroRotator
+				SkelMeshComp,
+				NAME_None,
+				Parameters.Location + FVector(0.f, 0.f, -100.f),
+				FRotator::ZeroRotator,
+				EAttachLocation::KeepWorldPosition,
+				true
 			);
 		}
 
@@ -52,10 +82,7 @@ bool UMSGC_LevelUpFloater_Burst::OnExecute_Implementation(AActor* Target, const 
 
 		// 레벨업 플로터 위젯 풀링 or 생성
 		UMSLevelUpFloaterWidget* Widget = UMSLevelUpFloaterWidget::Acquire(PC, LevelUpFloaterWidget);
-		if (!Widget)
-		{
-			continue;
-		}
+		if (!Widget) continue;
 
 		// 위젯 표시 시작
 		Widget->Start(ScreenPos);

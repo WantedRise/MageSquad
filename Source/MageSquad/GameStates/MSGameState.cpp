@@ -299,6 +299,7 @@ void AMSGameState::BroadcastSharedLevelUp_ServerOnly()
 		// Cue파라미터로 Pawn의 위치 전달
 		FGameplayCueParameters Params;
 		Params.Location = Pawn->GetActorLocation();
+		Params.Instigator = Pawn;
 
 		// 원샷(Execute)로 브로드캐스트
 		ASC->ExecuteGameplayCue(Cue_LevelUpFloater, Params);
