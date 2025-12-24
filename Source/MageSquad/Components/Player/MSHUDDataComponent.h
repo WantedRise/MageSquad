@@ -10,6 +10,9 @@
 // 현재 체력 변경 델리게이트 (현재 체력 / 최대 체력 / 체력 비율)
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnPublicHealthChanged, float, float, float);
 
+// DisplayName 변경 이벤트 (변경된 이름)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDisplayNameChanged, const FText&);
+
 /**
  * 작성자: 김준형
  * 작성일: 25/12/18
@@ -38,7 +41,7 @@ public:
 	// 팀원 UI에서 읽기 위한 Getter 함수
 	float GetHealth() const { return RepHealth; }
 	float GetMaxHealth() const { return RepMaxHealth; }
-	FText GetDisplayName() const { return RepDisplayName; }
+	const FText& GetDisplayName() const { return RepDisplayName; }
 	UTexture2D* GetPortraitIcon() const { return RepPortraitIcon; }
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -57,6 +60,9 @@ private:
 	// 체력 변경 브로드캐스트 함수
 	void BroadcastHealth();
 
+	// DisplayName 변경 브로드캐스트 함수
+	void BroadcastDisplayName();
+
 	// AttributeSet 갱신 콜백 함수
 	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
 	void HandleMaxHealthChanged(const struct FOnAttributeChangeData& Data);
@@ -64,6 +70,9 @@ private:
 public:
 	// 복제된 값이 변경되면 호출되는 이벤트 (C++ 전용)
 	FOnPublicHealthChanged OnPublicHealthChanged;
+
+	// DisplayName 변경 이벤트 (C++ 전용)
+	FOnDisplayNameChanged OnDisplayNameChanged;
 
 protected:
 	// 현재 체력
