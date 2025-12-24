@@ -4,6 +4,8 @@
 #include "System/MSLevelManagerSubsystem.h"
 #include <Kismet/GameplayStatics.h>
 #include "Blueprint/UserWidget.h"
+#include "MSSteamManagerSubsystem.h"
+#include <GameModes/MSGameMode.h>
 
 UMSLevelManagerSubsystem::UMSLevelManagerSubsystem()
 {
@@ -21,7 +23,7 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Super::Initialize(Collection);
 
     LobbyLevelURL = TEXT("LobbyLevel");
-	GameLevelURL = TEXT("GameLevel?Listen");
+	GameLevelURL = TEXT("GameLevel");
     LoadingLevelURL = TEXT("LoadingLevel");
 }
 
@@ -43,42 +45,51 @@ void UMSLevelManagerSubsystem::TravelToGameLevel()
 
 void UMSLevelManagerSubsystem::HostGameAndTravelToLobby()
 {
-	FString TravelURL = LobbyLevelURL;
-
 	// 현재 NetMode 확인
 	ENetMode NetMode = GetWorld()->GetNetMode();
-
-	// 서버가 아니거나, 아직 Listen 서버가 아닌 경우
-	// (Standalone 또는 Client에서 Host 개념으로 쓰는 경우)
-	if (NetMode == NM_Standalone)
+	UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
+	if (SteamManager)
 	{
-		TravelURL += TEXT("?listen");
-		UE_LOG(LogTemp, Log, TEXT("TravelToLobby: Standalone -> Listen Server"));
-		UGameplayStatics::OpenLevel(GetWorld(), FName(TravelURL));
+		if (AMSGameMode* GM = Cast<AMSGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			GM->NotifyClientsShowLoadingWidget();
+		}
+		//로딩 위젯을 띄움
+		ShowLoadingWidget();
+		//세션 완료 델리게이트에 이동 함수 바인딩
+		SteamManager->MSOnCreateSessionCompleteDelegate.AddDynamic(this, &UMSLevelManagerSubsystem::OnSessionCreatedDelayTravel);
+		//세션 생성 시작
+		SteamManager->CreateSteamSession(true, 4);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("TravelToLobby: Already Listen Server"));
-	}
-
-	GetWorld()->ServerTravel(TravelURL);
-	
 
     //UGameplayStatics::OpenLevel(GetWorld(), FName(LobbyLevelURL));
 }
 
+void UMSLevelManagerSubsystem::OnSessionCreatedDelayTravel(bool bWasSuccessful)
+{
+	UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
+	if (SteamManager)
+	{
+		SteamManager->MSOnCreateSessionCompleteDelegate.RemoveDynamic(this, &UMSLevelManagerSubsystem::OnSessionCreatedDelayTravel);
+	}
+
+	GetWorld()->ServerTravel(LobbyLevelURL);
+}
+
 void UMSLevelManagerSubsystem::ShowLoadingWidget()
 {
+	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::Begin()"));
 	if (CurrentLoadingWidget || !LoadingWidgetClass) return;
-
+	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::if (CurrentLoadingWidget || !LoadingWidgetClass)()"));
 	UGameInstance* GI = GetGameInstance();
 	if (!GI) return;
-
+	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::GetGameInstance()"));
 	// 위젯 생성
 	CurrentLoadingWidget = CreateWidget<UUserWidget>(GI, LoadingWidgetClass);
 
 	if (CurrentLoadingWidget)
 	{
+		UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::CreateWidget<UUserWidget>(GI, LoadingWidgetClass);()"));
 		// Z-Order를 높게 설정하여 렌더링 최상단에 배치
 		CurrentLoadingWidget->AddToViewport(9999);
 	}

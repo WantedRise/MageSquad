@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Widgets/Mainmenu/MSMainmenuWidget.h"
@@ -28,15 +28,10 @@ void UMSMainmenuWidget::NativeConstruct()
 
 void UMSMainmenuWidget::CreateSessionAndTravalToLobby()
 {
-    UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
-    if (SteamManager)
-    {
-        SteamManager->CreateSteamSession(true, 4);
-    }
-
     UMSLevelManagerSubsystem* LevelManagerSubsystem = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
     if (LevelManagerSubsystem)
     {
         LevelManagerSubsystem->HostGameAndTravelToLobby();
     }
 }
+

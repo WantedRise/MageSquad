@@ -14,6 +14,7 @@
 #include "Utils/MSUtils.h"
 #include "System/MSLevelManagerSubsystem.h"
 #include "System/MSMissionDataSubsystem.h"
+#include <Player/MSPlayerController.h>
 
 
 AMSGameMode::AMSGameMode()
@@ -122,6 +123,18 @@ void AMSGameMode::TryStartGame()
 		else
 		{
 			MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("GameFlow == null"));
+		}
+	}
+}
+
+void AMSGameMode::NotifyClientsShowLoadingWidget()
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (AMSPlayerController* PC = Cast<AMSPlayerController>(It->Get()))
+		{
+			// 각 클라이언트에게 로딩 위젯을 띄우라고 전송
+			PC->ClientShowLoadingWidget();
 		}
 	}
 }

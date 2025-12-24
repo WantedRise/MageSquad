@@ -67,7 +67,7 @@ void UMSSteamManagerSubsystem::CreateSteamSession(bool bIsLAN, int32 MaxPlayers)
 		//현재 참여중
 		if (CurrentSession != nullptr)
 		{
-			
+			OnCreateSessionComplete(NAME_None, false);
 			UE_LOG(LogTemp, Log, TEXT("Player is already in the InviteResult session (ID: %s)."), *CurrentSession->GetSessionIdStr());
 			return;
 		}
@@ -93,6 +93,7 @@ void UMSSteamManagerSubsystem::OnCreateSessionComplete(FName SessionName, bool b
 	{
 		UE_LOG(LogMSNetwork, Warning, TEXT("%s Session  created successfully!"),*SessionName.ToString());
 	}
+	MSOnCreateSessionCompleteDelegate.Broadcast(bWasSuccessful);
 }
 
 void UMSSteamManagerSubsystem::OnFindSessionsComplete(bool bWasSuccessful)

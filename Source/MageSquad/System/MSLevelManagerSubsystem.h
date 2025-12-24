@@ -31,6 +31,8 @@ public:
     //서버에서 로비를 호스트하고 모든 클라이언트를 로비로 이동
     void HostGameAndTravelToLobby();
 
+    
+
     FString GetGameLevelURL() { return GameLevelURL; }
     //로딩 위젯 표시
     void ShowLoadingWidget();
@@ -38,6 +40,9 @@ public:
     void HideLoadingWidget();
     //월드 초기화 직 로딩 위젯을 Viewport에 추가
     void OnMapLoaded(UWorld* World, const UWorld::InitializationValues IVS);
+private:
+    UFUNCTION()
+    void OnSessionCreatedDelayTravel(bool bWasSuccessful);
 private:
     //로딩 화면으로 사용할 위젯 클래스
     UPROPERTY()
