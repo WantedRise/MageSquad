@@ -54,6 +54,7 @@ void UMSLevelManagerSubsystem::HostGameAndTravelToLobby()
 	{
 		TravelURL += TEXT("?listen");
 		UE_LOG(LogTemp, Log, TEXT("TravelToLobby: Standalone -> Listen Server"));
+		UGameplayStatics::OpenLevel(GetWorld(), FName(TravelURL));
 	}
 	else
 	{
