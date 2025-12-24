@@ -20,7 +20,7 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    LobbyLevelURL = TEXT("LobbyLevel?Listen");
+    LobbyLevelURL = TEXT("LobbyLevel");
 	GameLevelURL = TEXT("GameLevel?Listen");
     LoadingLevelURL = TEXT("LoadingLevel");
 }
@@ -43,11 +43,24 @@ void UMSLevelManagerSubsystem::TravelToGameLevel()
 
 void UMSLevelManagerSubsystem::HostGameAndTravelToLobby()
 {
-	UWorld* CurrentWorld = GetWorld();
-	if (CurrentWorld)
+	FString TravelURL = LobbyLevelURL;
+
+	// 현재 NetMode 확인
+	ENetMode NetMode = GetWorld()->GetNetMode();
+
+	// 서버가 아니거나, 아직 Listen 서버가 아닌 경우
+	// (Standalone 또는 Client에서 Host 개념으로 쓰는 경우)
+	if (NetMode == NM_Standalone)
 	{
-		CurrentWorld->ServerTravel(LobbyLevelURL);
+		TravelURL += TEXT("?listen");
+		UE_LOG(LogTemp, Log, TEXT("TravelToLobby: Standalone -> Listen Server"));
 	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("TravelToLobby: Already Listen Server"));
+	}
+
+	GetWorld()->ServerTravel(TravelURL);
 	
 
     //UGameplayStatics::OpenLevel(GetWorld(), FName(LobbyLevelURL));

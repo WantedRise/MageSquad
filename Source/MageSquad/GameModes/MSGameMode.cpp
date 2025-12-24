@@ -9,10 +9,11 @@
 #include "System/MSEnemySpawnSubsystem.h"
 #include "GameFlow/MSGameFlowBase.h"
 #include "GameStates/MSGameState.h"
-#include "System/MSSteamManagerSubsystem.h"
-#include <Player/MSPlayerState.h>
+#include "Player/MSPlayerState.h"
 #include "MageSquad.h"
 #include "Utils/MSUtils.h"
+#include "System/MSLevelManagerSubsystem.h"
+#include "System/MSMissionDataSubsystem.h"
 
 void AMSGameMode::BeginPlay()
 {
@@ -26,6 +27,7 @@ void AMSGameMode::SetupGameFlow()
 
 	AMSGameState* GS = GetGameState<AMSGameState>();
 	check(GS);
+	GS->OnMissionFinished.AddUObject(this, &AMSGameMode::OnMissionFinished);
 
 	//GameFlow 생성 (UObject, 서버 전용)
 	GameFlow = NewObject<UMSGameFlowBase>(this, GameFlowClass);
@@ -33,6 +35,32 @@ void AMSGameMode::SetupGameFlow()
 	//DataTable + GameState 주입
 	GameFlow->Initialize(GS, MissionTimelineTable);
 }
+
+void AMSGameMode::OnMissionFinished(int32 MissionID, bool bSuccess)
+{
+	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+	{
+		if (MissionData->MissionType != EMissionType::Boss)
+		{
+			return;
+		}
+		FTimerHandle TimerHandle;
+		FTimerDelegate TimerDelegate;
+
+		TimerDelegate.BindUObject(this, &AMSGameMode::ExecuteTravelToLobby);
+		GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, 3.0f, false);
+	}
+}
+
+void AMSGameMode::ExecuteTravelToLobby()
+{
+	if (auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	{
+		LevelManager->HostGameAndTravelToLobby();
+	}
+}
+
 
 TSubclassOf<UMSGameFlowBase> AMSGameMode::GetGameFlowClass() const
 {

@@ -36,6 +36,8 @@ public:
 	void TryStartGame();
 private:
 	void SetupGameFlow();
+	void OnMissionFinished(int32 MissionId, bool bSuccess);
+	void ExecuteTravelToLobby();
 protected:
 	//미션 타임라인 DataTable
 	UPROPERTY(EditDefaultsOnly, Category = "GameFlow")
