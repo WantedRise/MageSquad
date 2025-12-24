@@ -15,6 +15,12 @@
 #include "System/MSLevelManagerSubsystem.h"
 #include "System/MSMissionDataSubsystem.h"
 
+
+AMSGameMode::AMSGameMode()
+{
+	bUseSeamlessTravel = true;
+}
+
 void AMSGameMode::BeginPlay()
 {
 	Super::BeginPlay();

@@ -24,6 +24,7 @@ class MAGESQUAD_API AMSGameMode : public AGameMode
 	GENERATED_BODY()
 	
 public:
+	AMSGameMode();
 	virtual void BeginPlay() override;
 
 	
