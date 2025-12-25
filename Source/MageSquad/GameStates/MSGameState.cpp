@@ -177,31 +177,20 @@ float AMSGameState::GetSharedXPPct() const
 	return (SharedXPRequired > 0.f) ? FMath::Clamp(SharedCurrentXP / SharedXPRequired, 0.f, 1.f) : 0.f;
 }
 
-void AMSGameState::PollSkillLevelUpPhase()
-{
-	if (!HasAuthority() || !bSkillLevelUpPhaseActive)
-		return;
-
-	if (AreAllPlayersCompleted())
-	{
-		EndSkillLevelUpPhase(false);
-		return;
-	}
-
-	if (FPlatformTime::Seconds() >= SkillLevelUpExpireAtRealTime)
-	{
-		EndSkillLevelUpPhase(true);
-	}
-}
-
 void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 {
 	if (!HasAuthority() || !bSkillLevelUpPhaseActive)
 		return;
 
 	bSkillLevelUpPhaseActive = false;
-	GetWorldTimerManager().ClearTimer(SkillLevelUpPollTimer);
 
+	// Ticker 종료
+	if (SkillLevelUpTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpTickerHandle);
+		SkillLevelUpTickerHandle.Reset();
+	}
+	
 	const int32 SessionId = CurrentSkillLevelUpSessionId;
 
 	// 타임아웃이면: 미완료자 랜덤 선택 강제 적용
@@ -248,6 +237,26 @@ bool AMSGameState::AreAllPlayersCompleted() const
 	return (Valid > 0) && (CompletedPlayers.Num() >= Valid);
 }
 
+bool AMSGameState::TickSkillLevelUpPhase(float DeltaTime)
+{
+	if (!HasAuthority() || !bSkillLevelUpPhaseActive)
+		return false;
+
+	if (AreAllPlayersCompleted())
+	{
+		EndSkillLevelUpPhase(false);
+		return false;
+	}
+
+	if (FPlatformTime::Seconds() >= SkillLevelUpExpireAtRealTime)
+	{
+		EndSkillLevelUpPhase(true);
+		return false;
+	}
+
+	return true;
+}
+
 void AMSGameState::OnRep_SharedLevel()
 {
 	// 클라이언트에 레벨 변경 이벤트 브로드캐스트
@@ -270,14 +279,13 @@ void AMSGameState::OnRep_ActivePlayerCount()
 
 void AMSGameState::StartSkillLevelUpPhase()
 {
-	// 게임 일시정지 처리
-	// SetPause(true);
-
+	if (!HasAuthority()) return;
+	
 	// 레벨업 세션 ID 증가 (중복 클릭 방지용)
 	static int32 LevelUpSessionId = 0;
 	LevelUpSessionId++;
 
-	// ✅ 세션 상태 시작
+	// 세션 상태 시작
 	bSkillLevelUpPhaseActive = true;
 	CurrentSkillLevelUpSessionId = LevelUpSessionId;
 	CompletedPlayers.Reset();
@@ -302,13 +310,16 @@ void AMSGameState::StartSkillLevelUpPhase()
 		MSPS->BeginSkillLevelUp(LevelUpSessionId);
 	}
 
-	// 폴링 시작 (0.2초)
-	GetWorldTimerManager().SetTimer(
-		SkillLevelUpPollTimer,
-		this,
-		&AMSGameState::PollSkillLevelUpPhase,
-		0.2f,
-		true
+	// Ticker 시작 (Pause 영향 없음)
+	if (SkillLevelUpTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpTickerHandle);
+		SkillLevelUpTickerHandle.Reset();
+	}
+
+	SkillLevelUpTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateUObject(this, &AMSGameState::TickSkillLevelUpPhase),
+		0.1f
 	);
 }
 

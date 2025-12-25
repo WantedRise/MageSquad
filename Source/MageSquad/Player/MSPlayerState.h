@@ -60,6 +60,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	TArray<FMSSkillList> OwnedSkills;
 
+	// 태그로 가지고 있는 스킬 검색
+	static int32 FindOwnedSkillIndexByTag(const TArray<FMSSkillList>& OwnedSkills, const FGameplayTag& SkillTag);
+	
+	// DataTable에서 스킬 Row 찾기 (SkillEventTag로 매칭) ---
+	static const FMSSkillList* FindSkillRowByTag(UDataTable* SkillListDataTable, const FGameplayTag& SkillTag);
+	
+	// 스킬 업그레이드 적용
+	void ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplayTag& UpgradeTag);
+	
+	// 스킬 GA 부여
+	void GiveAbilityForSkillRow_Server(const FMSSkillList& Skill);
 private:
 	//게임 시작 체크를 위해
 	UPROPERTY(Replicated)

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+#include "Containers/Ticker.h"
 #include "MSGameState.generated.h"
 
 
@@ -172,15 +173,15 @@ private:
 	int32 CurrentSkillLevelUpSessionId = 0;
 	double SkillLevelUpExpireAtRealTime = 0.0;
 
-	FTimerHandle SkillLevelUpPollTimer;
-
 	UPROPERTY()
 	TSet<TObjectPtr<class AMSPlayerState>> CompletedPlayers;
 
-	void PollSkillLevelUpPhase();
 	void EndSkillLevelUpPhase(bool bByTimeout);
 	bool AreAllPlayersCompleted() const;
 	
+private:
+	FTSTicker::FDelegateHandle SkillLevelUpTickerHandle;
+	bool TickSkillLevelUpPhase(float DeltaTime);
 	
 protected:
 	// 현재 레벨 변동 OnRep 함수

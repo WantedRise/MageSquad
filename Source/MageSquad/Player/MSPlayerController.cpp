@@ -265,7 +265,6 @@ void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 Se
 	// 남은 시간 표시 시작
 	LevelUpPanelInstance->StartCountdown(RemainingSeconds);
 	
-	
 	SetPause(true);
 
 	// UI 입력 모드

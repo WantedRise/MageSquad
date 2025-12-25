@@ -7,6 +7,7 @@
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "GameStates/MSGameState.h"
+#include "Abilities/GameplayAbility.h"
 #include "Net/UnrealNetwork.h"
 
 AMSPlayerState::AMSPlayerState()
@@ -52,15 +53,107 @@ UMSPlayerAttributeSet* AMSPlayerState::GetAttributeSet() const
 	return AttributeSet;
 }
 
-void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
+int32 AMSPlayerState::FindOwnedSkillIndexByTag(const TArray<FMSSkillList>& OwnedSkills, const FGameplayTag& SkillTag)
 {
-	// 서버 전용
-	if (!HasAuthority())
+	for (int32 i = 0; i < OwnedSkills.Num(); ++i)
 	{
+		if (OwnedSkills[i].SkillEventTag == SkillTag)
+		{
+			return i;
+		}
+	}
+	return INDEX_NONE;
+}
+
+const FMSSkillList* AMSPlayerState::FindSkillRowByTag(UDataTable* SkillListDataTable, const FGameplayTag& SkillTag)
+{
+	if (!SkillListDataTable || !SkillTag.IsValid())
+		return nullptr;
+
+	static const FString Ctx(TEXT("FindSkillRowByTag"));
+	TArray<FMSSkillList*> AllRows;
+	SkillListDataTable->GetAllRows(Ctx, AllRows);
+
+	for (const FMSSkillList* Row : AllRows)
+	{
+		if (Row && Row->SkillEventTag == SkillTag)
+		{
+			return Row;
+		}
+	}
+	return nullptr;
+}
+
+void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplayTag& UpgradeTag)
+{
+	if (!UpgradeTag.IsValid())
+		return;
+
+	const FString TagStr = UpgradeTag.ToString();
+
+	// Skill.CoolTime, Skill.SkillDamage, Skill.ProjectileNumber, Skill.Range
+	if (TagStr.Contains(TEXT("Upgrade.Cooldown")))
+	{
+		Skill.CoolTime = FMath::Max(0.05f, Skill.CoolTime * 0.8f); // 20% 쿨감
+	}
+	else if (TagStr.Contains(TEXT("Upgrade.Damage")))
+	{
+		Skill.SkillDamage *= 1.3f; // 30% 증가
+	}
+	else if (TagStr.Contains(TEXT("Upgrade.Projectile")))
+	{
+		Skill.ProjectileNumber += 1;
+	}
+	else if (TagStr.Contains(TEXT("Upgrade.Range")))
+	{
+		Skill.Range *= 1.1f;
+	}
+	else if (TagStr.Contains(TEXT("Upgrade.Penetration")))
+	{
+		Skill.Penetration += 1;
+	}
+	
+}
+
+void AMSPlayerState::GiveAbilityForSkillRow_Server(const FMSSkillList& Skill)
+{
+	if (!HasAuthority() || !AbilitySystemComponent)
+		return;
+
+	if (!Skill.SkillAbility.IsValid())
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GiveAbility] SkillAbility is invalid. Skill=%s"),
+			*Skill.SkillEventTag.ToString());
 		return;
 	}
 
-	// 세션 초기화
+	// 소프트 로딩 (이미 로드돼 있으면 바로 반환)
+	TSubclassOf<UGameplayAbility> AbilityClass =
+		Skill.SkillAbility.LoadSynchronous();
+
+	if (!AbilityClass)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GiveAbility] Failed to load GA. Skill=%s"),
+			*Skill.SkillEventTag.ToString());
+		return;
+	}
+
+	FGameplayAbilitySpec Spec(AbilityClass, Skill.SkillLevel);
+	AbilitySystemComponent->GiveAbility(Spec);
+
+	UE_LOG(LogTemp, Log,
+		TEXT("[GiveAbility] GA granted. Skill=%s Level=%d"),
+		*Skill.SkillEventTag.ToString(),
+		Skill.SkillLevel);
+}
+
+void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
+{
+	if (!HasAuthority())
+		return;
+
 	CurrentLevelUpSessionId = SessionId;
 	bSkillLevelUpCompleted = false;
 	CurrentSkillChoices.Reset();
@@ -71,40 +164,30 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 		return;
 	}
 
-	// 스킬 전체 Row 가져오기
 	static const FString Context(TEXT("BeginSkillLevelUp"));
 	TArray<FMSSkillList*> AllRows;
 	SkillListDataTable->GetAllRows(Context, AllRows);
 
 	const bool bHasFreeSlot = (SkillNum < MaxSkillCount);
 
-	// (SkillTag, UpgradeTag) 후보 생성
-	TArray<FMSLevelUpChoicePair> PairCandidates;
-	PairCandidates.Reserve(AllRows.Num() * 4);
+	// ✅ 후보 풀 분리
+	TArray<FMSLevelUpChoicePair> AcquireCandidates; // 새 스킬 습득(UpgradeTag invalid)
+	TArray<FMSLevelUpChoicePair> UpgradeCandidates; // 기존 스킬 업그레이드
 
+	AcquireCandidates.Reserve(AllRows.Num());
+	UpgradeCandidates.Reserve(AllRows.Num() * 4);
+
+	// Owned lookup 최적화(선택): Set으로 만들어도 됨. 지금은 기존 방식 유지.
 	for (const FMSSkillList* Row : AllRows)
 	{
-		if (!Row)
-		{
-			continue;
-		}
+		if (!Row) continue;
 
 		const FGameplayTag SkillTag = Row->SkillEventTag;
-		if (!SkillTag.IsValid())
-		{
-			continue;
-		}
+		if (!SkillTag.IsValid()) continue;
 
-		// 이 스킬이 제공하는 업그레이드가 하나도 없으면 후보 제외
-		if (Row->AvailableUpgradeTags.Num() <= 0)
-		{
-			continue;
-		}
-
-		// 보유 여부 및 현재 레벨 조회
+		// 보유 여부/레벨 조회
 		bool bOwned = false;
 		int32 CurrentLevel = 0;
-
 		for (const FMSSkillList& Owned : OwnedSkills)
 		{
 			if (Owned.SkillEventTag == SkillTag)
@@ -115,59 +198,102 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 			}
 		}
 
-		// ---- 스킬 후보 규칙 ----
-		// 슬롯 여유 O  : 보유/미보유 상관없이 레벨 < Max
-		// 슬롯 여유 X  : 보유 중인 스킬만, 레벨 < Max
-		const bool bSkillAllowed =
-			(bHasFreeSlot && (CurrentLevel < MaxSkillLevel)) ||
-			(!bHasFreeSlot && bOwned && (CurrentLevel < MaxSkillLevel));
-
-		if (!bSkillAllowed)
+		// -----------------------
+		// 미보유 스킬 -> 습득 후보
+		// -----------------------
+		if (!bOwned)
 		{
-			continue;
+			// 슬롯이 없으면 습득 후보 자체를 만들지 않음
+			if (!bHasFreeSlot)
+				continue;
+
+			FMSLevelUpChoicePair Acquire;
+			Acquire.SkillTag = SkillTag;
+			Acquire.UpgradeTag = FGameplayTag(); // ✅ Invalid = Acquire로 해석
+			AcquireCandidates.Add(Acquire);
+			continue; // 미보유는 업그레이드 후보로 내려가지 않음
 		}
 
-		// 업그레이드 태그 펼치기
+		// -----------------------
+		// 2) 보유 스킬 -> 업그레이드 후보
+		// -----------------------
+		if (CurrentLevel >= MaxSkillLevel)
+			continue;
+
+		// 업그레이드 태그가 없으면 업그레이드 후보 제외 (원하면 "레벨업만" 후보로 넣을 수도 있음)
+		if (Row->AvailableUpgradeTags.Num() <= 0)
+			continue;
+
 		TArray<FGameplayTag> UpgradeTags;
 		Row->AvailableUpgradeTags.GetGameplayTagArray(UpgradeTags);
 
 		for (const FGameplayTag& UpgradeTag : UpgradeTags)
 		{
-			if (!UpgradeTag.IsValid())
-			{
-				continue;
-			}
+			if (!UpgradeTag.IsValid()) continue;
 
 			FMSLevelUpChoicePair Pair;
 			Pair.SkillTag = SkillTag;
 			Pair.UpgradeTag = UpgradeTag;
-			PairCandidates.Add(Pair);
+			UpgradeCandidates.Add(Pair);
 		}
 	}
 
-	if (PairCandidates.Num() == 0)
+	// 후보가 아예 없으면 종료
+	if (AcquireCandidates.Num() == 0 && UpgradeCandidates.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] No valid (Skill,Upgrade) candidates"));
+		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] No candidates"));
 		return;
 	}
 
-	// 4) 랜덤 셔플
+	// 셔플(세션 기반 시드 유지)
 	FRandomStream RandStream(CurrentLevelUpSessionId);
 
-	for (int32 i = PairCandidates.Num() - 1; i > 0; --i)
+	auto Shuffle = [&](TArray<FMSLevelUpChoicePair>& Arr)
 	{
-		const int32 Index = RandStream.RandRange(0, i);
-		PairCandidates.Swap(i, Index);
+		for (int32 i = Arr.Num() - 1; i > 0; --i)
+		{
+			const int32 Index = RandStream.RandRange(0, i);
+			Arr.Swap(i, Index);
+		}
+	};
+
+	Shuffle(AcquireCandidates);
+	Shuffle(UpgradeCandidates);
+
+	// ✅ 최종 3개 구성 규칙
+	// - 슬롯 여유 있으면 Acquire 1개 우선(가능할 때)
+	// - 나머지는 Upgrade로 채우되 부족하면 Acquire로 채움
+	auto PickOne = [&](TArray<FMSLevelUpChoicePair>& Pool)
+	{
+		if (Pool.Num() <= 0) return false;
+		CurrentSkillChoices.Add(Pool.Pop(EAllowShrinking::No)); // 뒤에서 하나
+		return true;
+	};
+
+	// 1) Acquire 1개(가능하면)
+	if (bHasFreeSlot && AcquireCandidates.Num() > 0 && CurrentSkillChoices.Num() < 3)
+	{
+		PickOne(AcquireCandidates);
 	}
 
-	// 5) 최대 3개 선택
-	const int32 PickCount = FMath::Min(3, PairCandidates.Num());
-	for (int32 i = 0; i < PickCount; ++i)
+	// 2) Upgrade로 채우기
+	while (CurrentSkillChoices.Num() < 3 && UpgradeCandidates.Num() > 0)
 	{
-		CurrentSkillChoices.Add(PairCandidates[i]);
+		PickOne(UpgradeCandidates);
 	}
 
-	// 6) PlayerController에 UI 표시 요청
+	// 3) 남으면 Acquire로 채우기
+	while (CurrentSkillChoices.Num() < 3 && AcquireCandidates.Num() > 0)
+	{
+		PickOne(AcquireCandidates);
+	}
+
+	if (CurrentSkillChoices.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] Picked is empty"));
+		return;
+	}
+
 	AMSPlayerController* PC = Cast<AMSPlayerController>(GetOwner());
 	if (!PC)
 	{
@@ -176,21 +302,20 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 	}
 
 	float RemainingSeconds = 30.f;
-	
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
 		RemainingSeconds = GS->GetSkillLevelUpRemainingSeconds_Server();
 	}
-	
+
 	PC->Client_ShowSkillLevelUpChoices(SessionId, CurrentSkillChoices, RemainingSeconds);
 
 	UE_LOG(LogTemp, Log,
-		TEXT("[BeginSkillLevelUp] Session=%d | PairCandidates=%d | Picked=%d"),
+		TEXT("[BeginSkillLevelUp] Session=%d | Acquire=%d | Upgrade=%d | Picked=%d"),
 		SessionId,
-		PairCandidates.Num(),
+		AcquireCandidates.Num(),
+		UpgradeCandidates.Num(),
 		CurrentSkillChoices.Num()
 	);
-	
 }
 
 void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLevelUpChoicePair& Picked)
@@ -200,7 +325,7 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 		return;
 	}
 
-	// 1) 세션 검증
+	// 세션 검증
 	if (SessionId != CurrentLevelUpSessionId)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -209,28 +334,89 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 		return;
 	}
 
-	// 2) 중복 방지
+	// 중복 방지
 	if (bSkillLevelUpCompleted)
 	{
 		return;
 	}
 
-	// =========================
-	// 3) 🔥 실제 선택 적용 로직
-	// =========================
+	const FGameplayTag SkillTag = Picked.SkillTag;
+	const FGameplayTag UpgradeTag = Picked.UpgradeTag;
 
-	// 예시 1) 스킬 레벨 증가
-	// SkillLevels[Picked.SkillId]++;
+	if (!SkillTag.IsValid())
+		return;
 
-	// 예시 2) GA 부여
-	// GiveAbility(Picked.GrantedAbility);
+	const bool bIsAcquire = !UpgradeTag.IsValid();
+	
+	if (bIsAcquire)
+	{
+		// 방어: 이미 가지고 있는 스킬이면 Acquire가 오면 안 되지만, 혹시 모르니 Upgrade로 처리
+		const int32 OwnedIdx = FindOwnedSkillIndexByTag(OwnedSkills, SkillTag);
+		if (OwnedIdx != INDEX_NONE)
+		{
+			// 이미 보유 → 그냥 레벨업 1회로 처리(혹은 return)
+			FMSSkillList& Skill = OwnedSkills[OwnedIdx];
+			if (Skill.SkillLevel < MaxSkillLevel)
+			{
+				Skill.SkillLevel += 1;
+			}
+			bSkillLevelUpCompleted = true;
+			return;
+		}
 
-	// 예시 3) PlayerState 데이터 갱신
-	// OwnedSkills.Add(Picked.SkillId);
+		// 슬롯 체크
+		if (SkillNum >= MaxSkillCount)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] No free slot. SkillNum=%d"), SkillNum);
+			return;
+		}
 
-	// =========================
+		// DataTable에서 해당 스킬 구조체 가져오기
+		const FMSSkillList* Row = FindSkillRowByTag(SkillListDataTable, SkillTag);
+		if (!Row)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] Skill row not found. Tag=%s"), *SkillTag.ToString());
+			return;
+		}
 
-	// 4) 완료 처리
+		FMSSkillList NewSkill = *Row;
+		NewSkill.SkillLevel = 1;
+
+		OwnedSkills.Add(NewSkill);
+		SkillNum = OwnedSkills.Num(); // 또는 SkillNum++
+		
+		// GA 부여 
+		GiveAbilityForSkillRow_Server(NewSkill);
+
+		bSkillLevelUpCompleted = true;
+
+		UE_LOG(LogTemp, Log, TEXT("[LevelUp][Acquire] Skill=%s Level=1"), *SkillTag.ToString());
+		return;
+	}
+
+	// ---------------------------------------
+	// 2) Upgrade: 기존 스킬 업그레이드
+	// ---------------------------------------
+	const int32 OwnedIdx = FindOwnedSkillIndexByTag(OwnedSkills, SkillTag);
+	if (OwnedIdx == INDEX_NONE)
+	{
+		// 방어: 업그레이드인데 미보유면 이상한 상태 → 무시하거나 Acquire로 처리
+		UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Upgrade] Not owned. Tag=%s"), *SkillTag.ToString());
+		return;
+	}
+
+	FMSSkillList& Skill = OwnedSkills[OwnedIdx];
+
+	// 레벨 +1
+	if (Skill.SkillLevel < MaxSkillLevel)
+	{
+		Skill.SkillLevel += 1;
+	}
+
+	// 업그레이드 태그 효과 적용
+	ApplyUpgradeTagToSkill(Skill, UpgradeTag);
+
+	// 완료 처리
 	bSkillLevelUpCompleted = true;
 
 	UE_LOG(LogTemp, Log,

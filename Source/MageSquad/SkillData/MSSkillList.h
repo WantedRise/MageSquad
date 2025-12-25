@@ -10,6 +10,9 @@
 /**
  * 
  */
+
+class UGameplayAbility;
+
 USTRUCT(BlueprintType)
 struct FMSSkillList : public FTableRowBase
 {
@@ -39,6 +42,10 @@ public:
 	// 스킬 아이콘 (소프트 레퍼런스)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> SkillIcon;
+	
+	// 스킬 GA (소프트 레퍼런스)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftClassPtr<UGameplayAbility> SkillAbility;
 
 	// 스킬 레벨
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
