@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "SkillData/MSSkillDataRow.h"
+#include "SkillData/MSSkillList.h"
 #include "MSGA_SkillBase.generated.h"
 
 /**
@@ -29,13 +29,9 @@ public:
 		const FGameplayEventData* TriggerEventData) override;
 	
 protected:
-	// 스킬 레벨별 데이터를 읽기 위한 테이블
+	// 스킬 데이터
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")
-	UDataTable* SkillDataTable;
-	
-	// 데이터 테이블에서 읽은 데이터
-	UPROPERTY(EditDefaultsOnly, Category="SkillData")
-	FMSSkillDataRow SkillDataRow;
+	FMSSkillList SkillListRow;
 	
 	// 스킬 ID
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")

@@ -29,13 +29,13 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	SkillID = CurrentSkillID;
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	SkillDamage = SkillDataRow.SkillDamage;
-	CoolTime = SkillDataRow.CoolTime;
-	ProjectileNumber = SkillDataRow.ProjectileNumber;
-	Penetration = SkillDataRow.Penetration;
+	SkillDamage = SkillListRow.SkillDamage;
+	CoolTime = SkillListRow.CoolTime;
+	ProjectileNumber = SkillListRow.ProjectileNumber;
+	Penetration = SkillListRow.Penetration;
 	
 	UE_LOG(LogTemp, Log,
-			TEXT("SkillID : %d, Skill Level : %d, Skill Name : %s"), SkillDataRow.SkillID, SkillDataRow.SkillLevel, *SkillDataRow.SkillName);
+			TEXT("SkillID : %d, Skill Level : %d, Skill Name : %s"), SkillListRow.SkillID, SkillListRow.SkillLevel, *SkillListRow.SkillName);
 	
 	// 가장 가까운 몬스터 찾기
 	UWorld* World = GetWorld();

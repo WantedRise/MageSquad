@@ -85,6 +85,12 @@ public:
 	
 	// 랜덤 스킬 레벨업 적용
 	void ApplyRandomSkillLevelUpChoice_Server();
+	
+	// 전체 스킬 목록 반환
+	const TArray<FMSSkillList>& GetOwnedSkills() const;
+	
+	// SkillID로 단일 스킬 찾기
+	const FMSSkillList* GetOwnedSkillByID(int32 InSkillID) const;
 public:
 	const TArray<FMSLevelUpChoicePair>& GetCurrentSkillChoices() const { return CurrentSkillChoices; }
 	bool IsSkillLevelUpCompleted() const { return bSkillLevelUpCompleted; }
