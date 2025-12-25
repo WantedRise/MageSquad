@@ -26,4 +26,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
 	TObjectPtr<UAnimMontage> SpawnAnim;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim|Montage")
+	TObjectPtr<UAnimMontage> GroggyAnim;
 };

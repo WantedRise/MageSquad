@@ -155,8 +155,10 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		CachedData.ProjectileDataClass = RowData->ProjectileDataClass;
 		CachedData.DropExpValue = RowData->DropExpValue;
 		// GAS 데이터 복사
-		CachedData.StartAbilities = RowData->StartAbilities;
-		CachedData.StartEffects = RowData->StartEffects;
+		if (!RowData->EnemyAbilities.IsNull())
+		{
+			CachedData.EnemyAbilities = RowData->EnemyAbilities.LoadSynchronous();
+		}
 
 		// 풀 매핑
 		AssignMonsterToPool(RowName);
@@ -700,28 +702,12 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 			// 어빌리티 부여
 			ASC->ClearAllAbilities();
-			for (const TSubclassOf<UGameplayAbility>& AbilityClass : Data->StartAbilities)
+			for (const TSubclassOf<UGameplayAbility>& AbilityClass : Data->EnemyAbilities->EnemyAbilities)
 			{
 				if (AbilityClass)
 				{
 					FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, Enemy);
 					ASC->GiveAbility(Spec);
-				}
-			}
-
-			// GameplayEffect 적용
-			for (const TSubclassOf<UGameplayEffect>& EffectClass : Data->StartEffects)
-			{
-				if (EffectClass)
-				{
-					FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-					EffectContext.AddSourceObject(Enemy);
-
-					FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EffectClass, 1, EffectContext);
-					if (SpecHandle.IsValid())
-					{
-						ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-					}
 				}
 			}
 		}
