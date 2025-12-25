@@ -61,7 +61,7 @@ protected:
 
 	// 치명타 색상
 	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI | Color")
-	FSlateColor CriticalColor = FSlateColor(FLinearColor(0.823f, 0.152f, 0.024f, 1.0f));
+	FSlateColor CriticalColor = FSlateColor(FLinearColor(1.0f, 0.1602f, 0.0f, 1.0f));
 
 private:
 	float Amount = 0.f;			// 대미지 수치

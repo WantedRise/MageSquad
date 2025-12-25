@@ -115,7 +115,7 @@ void UMSGameFlowPvE::ScheduleMission(float TriggerTime, int32 MissionID)
 	FTimerDelegate MissionDelegate;
 	MissionDelegate.BindUFunction(GameState, FName("SetCurrentMissionID"), MissionID);
 	GameState->GetWorldTimerManager().SetTimer(Handle, MissionDelegate, TriggerTime, false);
-
+	UE_LOG(LogTemp, Error, TEXT("ScheduleMission %f "), TriggerTime);
 	MissionTimerHandles.Add(Handle);
 }
 

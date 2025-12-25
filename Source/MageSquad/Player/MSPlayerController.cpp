@@ -9,9 +9,10 @@
 #include "MSPlayerCharacter.h"
 #include "Widgets/HUD/MSPlayerHUDWidget.h"
 #include "System/MSLevelManagerSubsystem.h"
-#include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
+//#include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
 #include "Widgets/Mission/MSMissionNotifyWidget.h"
 #include "Widgets/Mission/MSMissionTrackerWidget.h"
+#include "Widgets/HUD/GameProgressWidget.h"
 #include "System/MSMissionDataSubsystem.h"
 #include "Widgets/LevelUp/MSLevelUpPanel.h"
 
@@ -56,10 +57,10 @@ void AMSPlayerController::BeginPlay()
 		}
 		
 		// ViewModel 생성
-		if (!PlayerViewModel)
-		{
-			PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
-		}
+		//if (!PlayerViewModel)
+		//{
+		//	PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
+		//}
 		
 		// if (UAbilitySystemComponent* ASC = Cast<AMSPlayerCharacter>(GetPawn())->GetAbilitySystemComponent())
 		// {
@@ -133,10 +134,15 @@ void AMSPlayerController::NotifyHUDReinitialize()
 	{
 		// 위젯 내부에서 Pawn/ASC 준비 여부를 체크하고, 준비가 안 됐으면 타이머로 재시도
 		HUDWidgetInstance->RequestReinitialize();
+		// HUD 재초기화 시 미션 관련 이벤트 바인딩 처리
 		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 		{
-			GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::OnMissionChanged);
-			GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
+			if(false == GS->OnMissionChanged.IsBoundToObject(this))
+				GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::OnMissionChanged);
+			if (false == GS->OnMissionFinished.IsBoundToObject(this))
+				GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
+			if (false == GS->OnMissionProgressChanged.IsBoundToObject(this))
+				GS->OnMissionProgressChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
 		}	
 	}
 }
@@ -302,7 +308,7 @@ void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_Ne
 	}
 	ServerCursorDir = Dir;
 }
-
+// 서버에 UI 준비 완료를 알리는 RPC
 void AMSPlayerController::ServerRPCReportReady_Implementation()
 {
 	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
@@ -318,19 +324,17 @@ void AMSPlayerController::ServerRPCReportReady_Implementation()
 
 void AMSPlayerController::OnMissionChanged(int32 MissionID)
 {
-	UMSMissionDataSubsystem* MissionDataSubsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (!IsLocalController()) return;
 
-	if (!MissionDataSubsystem) return;
-
-	const FMSMissionRow* MissionData = MissionDataSubsystem->Find(MissionID);
-
-	if (!MissionData) return;
-
-	// UI 연출 시작
-	HandleMissionStarted(*MissionData);
+	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+	{
+		// 미션 시작 UI 연출 흐름 진입
+		HandleMissionStarted(*MissionData);
+	}
 }
 
-
+// 미션 시작 시 UI 연출 흐름을 관리
 void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
 {
 	if (!HUDWidgetInstance) return;
@@ -339,19 +343,7 @@ void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
 	if (!Notify || !Tracker) return;
 
-	Notify->PlayNotify(FText::FromString(TEXT("새로운 미션")));
-
-	FTimerHandle TempShowMissionTitleTimerHandle;
-	GetWorldTimerManager().SetTimer(
-		TempShowMissionTitleTimerHandle,
-		FTimerDelegate::CreateUObject(
-			this,
-			&AMSPlayerController::ShowMissionTitle,
-			MissionData
-		),
-		1.0f,
-		false
-	);
+	ShowMissionTitle(MissionData);
 
 	FTimerHandle TempShowMissionTrackerTimerHandle;
 	GetWorldTimerManager().SetTimer(
@@ -365,6 +357,8 @@ void AMSPlayerController::HandleMissionStarted(const FMSMissionRow& MissionData)
 		false
 	);
 }
+
+// 미션 제목 알림 UI 출력
 void AMSPlayerController::ShowMissionTitle(FMSMissionRow MissionData)
 {
 	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
@@ -373,11 +367,13 @@ void AMSPlayerController::ShowMissionTitle(FMSMissionRow MissionData)
 	Notify->PlayNotify(MissionData.Title);
 }
 
+// 미션 설명, 타이머, 진행 상태 UI를 활성화
 void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 {
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
-	if (!Tracker) return;
-
+	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
+	if (!Tracker || !Progress) return;
+	Progress->SetVisibility(ESlateVisibility::Hidden);
 	Tracker->SetMissionTitle(MissionData.Title);
 	Tracker->SetMissionMessage(MissionData.Description);
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
@@ -387,13 +383,63 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 	}
 }
 
+// 성공 / 실패 결과에 따른 UI 연출 수행
 void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 {
 	if (!HUDWidgetInstance) return;
 
 	auto* Notify = HUDWidgetInstance->GetMissionNotifyWidget();
-
-	if (!Notify) return;
+	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
+	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
+	if (!Notify || !Progress) return;
 
 	Notify->PlayMissionResult(bSuccess);
+	// 성공 시 타이머 중단
+	if (bSuccess)
+	{
+		Tracker->StopMissionTimer();
+	}
+	
+	// 결과 연출 후 UI 전환을 위한 딜레이 처리
+	FTimerHandle TimerHandle;
+	float DelayTime = 1.0f;
+	GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateWeakLambda(this, [this, MissionID, Tracker, Progress]()
+		{
+			// Tracker와 Progress가 유효한지 먼저 확인
+			if (Tracker && Tracker->IsValidLowLevel() && Progress && Progress->IsValidLowLevel())
+			{
+				// Tracker는 숨기기
+				Tracker->SetVisibility(ESlateVisibility::Hidden);
+
+				// 미션 타입에 따른 Progress 위젯 표시 여부 결정
+				auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+				if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+				{
+					if (MissionData->MissionType != EMissionType::Boss)
+					{
+						Progress->SetVisibility(ESlateVisibility::Visible);
+					}
+				}
+			}
+		}), DelayTime, false
+	);
+}
+
+// 서버에서 계산된 정규화된 진행 값을 UI에 반영
+void AMSPlayerController::OnMissionProgressChanged(float Normalized)
+{
+	if (!HUDWidgetInstance) return;
+
+	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
+	if (!Tracker) return;
+	Tracker->SetTargetHpProgress(Normalized);
+}
+
+void AMSPlayerController::ClientShowLoadingWidget_Implementation()
+{
+	UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
+	if (LevelManager)
+	{
+		LevelManager->ShowLoadingWidget();
+	}
 }

@@ -14,6 +14,7 @@
 #include "Player/MSPlayerState.h"
 
 #include "MSGameplayTags.h"
+#include "Actors/Projectile/MSEnemyProjectile.h"
 
 UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySystemComponentFromActor(AActor* InActor)
 {
@@ -83,16 +84,23 @@ FProjectileRuntimeData UMSFunctionLibrary::MakeProjectileRuntimeData(TSubclassOf
 	return Data;
 }
 
-AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator)
+AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator, TSubclassOf<AMSBaseProjectile> ProjectileClass )
 {
 	// 발사한 객체의 월드 가져오기
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
+	
+	TSubclassOf<UProjectileStaticData> SpawnProjectileClass{ProjectileClass};
+	
+	if (SpawnProjectileClass == nullptr)
+	{
+		SpawnProjectileClass = AMSBaseProjectile::StaticClass();	
+	}
 
 	// 서버에서만 로직을 수행하도록 검사
 	if (World && World->GetNetMode() < ENetMode::NM_Client)
 	{
 		// SpawnActorDeferred 함수를 통해, 발사체 지연 생성
-		if (AMSBaseProjectile* Projectile = World->SpawnActorDeferred<AMSBaseProjectile>(AMSBaseProjectile::StaticClass(), Transform, Owner, Instigator, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn))
+		if (AMSBaseProjectile* Projectile = World->SpawnActorDeferred<AMSBaseProjectile>(SpawnProjectileClass, Transform, Owner, Instigator, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn))
 		{
 			// 발사체 정적 데이터 클래스를 초기화
 			Projectile->ProjectileDataClass = ProjectileDataClass;
@@ -106,16 +114,23 @@ AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldCont
 	return nullptr;
 }
 
-AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectile(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FProjectileRuntimeData RuntimeData, FTransform Transform, AActor* Owner, APawn* Instigator)
+AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectile(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FProjectileRuntimeData RuntimeData, FTransform Transform, AActor* Owner, APawn* Instigator, TSubclassOf<AMSBaseProjectile> ProjectileClass)
 {
 	// 발사한 객체의 월드 가져오기
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
+	
+	TSubclassOf<AMSBaseProjectile> SpawnProjectileClass{ProjectileClass};
+	
+	if (SpawnProjectileClass == nullptr)
+	{
+		SpawnProjectileClass = AMSBaseProjectile::StaticClass();	
+	}
 
 	// 서버에서만 로직을 수행하도록 검사
 	if (World && World->GetNetMode() < ENetMode::NM_Client)
 	{
 		// SpawnActorDeferred 함수를 통해, 발사체 지연 생성
-		if (AMSBaseProjectile* Projectile = World->SpawnActorDeferred<AMSBaseProjectile>(AMSBaseProjectile::StaticClass(), Transform, Owner, Instigator, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn))
+		if (AMSBaseProjectile* Projectile = World->SpawnActorDeferred<AMSBaseProjectile>(SpawnProjectileClass, Transform, Owner, Instigator, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn))
 		{
 			// 발사체 정적 데이터 클래스를 초기화
 			Projectile->ProjectileDataClass = ProjectileDataClass;

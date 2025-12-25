@@ -80,7 +80,10 @@ struct FMSCachedEnemyData
 	float AttackRange = 200.0f;
 	bool bIsRanged = false;
 	float DropExpValue = 10.f;
-
+	
+	// 투사체 관련
+	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
+	
 	// GAS 관련
 	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
 	TArray<TSubclassOf<UGameplayEffect>> StartEffects;

@@ -31,33 +31,41 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void PostInitializeComponents() override;
-	
+
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 public:
 	// ~ Begin IAbilitySystemInterface Interface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	// ~ End IAbilitySystemInterface Interface
+	class UMSEnemyAttributeSet* GetAttributeSet() { return AttributeSet; }
 	
+	// ~ End IAbilitySystemInterface Interface
+
 	// ~ Begin IMSHitReactableInterface Interface
 	//virtual void OnHitByAttack_Implementation(const FHitResult& HitResult, AActor* InInstigator) override;
 	// ~ End IMSHitReactableInterface Interface
-	
+
 	UFUNCTION()
-	virtual void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
-	virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
+	virtual void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                                   UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	                                   const FHitResult& SweepResult);
+
+	virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget,
+	                              const FVector& SrcLocation) const override;
+
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
-	
+
 	// 풀링 모드 제어
 	virtual void SetPoolingMode(bool bInPooling);
-	
-public:
-	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AnimData->AttackAnim;}
-	FORCEINLINE UAnimMontage* GetDeadMontage() const {return AnimData->DeadAnim;}
-	
+
+public: /*Getter*/
+	FORCEINLINE UAnimMontage* GetAttackMontage() const { return AnimData->AttackAnim; }
+	FORCEINLINE UAnimMontage* GetDeadMontage() const { return AnimData->DeadAnim; }
+	FORCEINLINE TSubclassOf<class UGameplayEffect> GetDamageEffectClass() const { return DamageEffectClass; }
+	FORCEINLINE TSubclassOf<class UProjectileStaticData> GetProjectileDataClass() const { return ProjectileDataClass; }
+
 protected:
 	UFUNCTION()
 	void OnRep_MonsterID();
@@ -65,21 +73,32 @@ protected:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UMSEnemyAbilitySystemComponent> ASC;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UMSEnemyAttributeSet> AttributeSet;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<class UGameplayAbility>> StartAbilities;
-	
+
 	UPROPERTY(ReplicatedUsing = OnRep_MonsterID)
 	FName CurrentMonsterID = "";
-	
+
 	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAnimationSet> AnimData;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Attack")
-	TSubclassOf<class UGameplayEffect> CollisionDamage;
-	
+	TSubclassOf<class UGameplayEffect> DamageEffectClass;
+
 	bool bIsInPool = false;
+
+public: /*Setter*/
+	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass)
+	{
+		ProjectileDataClass = InProjectileDataClass;
+	}
+
+private:
+	// 발사체 원본 데이터 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 };

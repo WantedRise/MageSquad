@@ -9,40 +9,22 @@
 #include "System/MSEnemySpawnSubsystem.h"
 #include "GameFlow/MSGameFlowBase.h"
 #include "GameStates/MSGameState.h"
-#include "System/MSSteamManagerSubsystem.h"
-#include <Player/MSPlayerState.h>
+#include "Player/MSPlayerState.h"
 #include "MageSquad.h"
 #include "Utils/MSUtils.h"
+#include "System/MSLevelManagerSubsystem.h"
+#include "System/MSMissionDataSubsystem.h"
+#include <Player/MSPlayerController.h>
+
+
+AMSGameMode::AMSGameMode()
+{
+	bUseSeamlessTravel = true;
+}
 
 void AMSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 10초 뒤에 실행될 람다 함수나 별도의 함수를 예약합니다.
-	FTimerHandle SpawnDelayTimerHandle;
-	GetWorldTimerManager().SetTimer(SpawnDelayTimerHandle, [this]()
-		{
-			if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(GetWorld()))
-			{
-				// 오브젝트 풀링 시키기
-				SpawnSystem->InitializePool();
-
-				// 설정
-				SpawnSystem->SetSpawnInterval(2.0f);
-				SpawnSystem->SetMaxActiveMonsters(10);
-				SpawnSystem->SetSpawnRadius(1500.0f);
-				SpawnSystem->SetSpawnCountPerTick(10);
-
-				// 10초 뒤 스폰 시작
-				SpawnSystem->StartSpawning();
-
-				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
-				
-				// Test Boss Spawn 코드 입니다. 이 코드로 보스 스폰 가능합니다.
-				SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_FEY, FVector(0.f, 0.f,400.f));
-			}
-		}, 10.0f, false); // 10.0f는 지연 시간(초), false는 반복 여부
-	
 }
 
 void AMSGameMode::SetupGameFlow()
@@ -52,6 +34,7 @@ void AMSGameMode::SetupGameFlow()
 
 	AMSGameState* GS = GetGameState<AMSGameState>();
 	check(GS);
+	GS->OnMissionFinished.AddUObject(this, &AMSGameMode::OnMissionFinished);
 
 	//GameFlow 생성 (UObject, 서버 전용)
 	GameFlow = NewObject<UMSGameFlowBase>(this, GameFlowClass);
@@ -60,11 +43,36 @@ void AMSGameMode::SetupGameFlow()
 	GameFlow->Initialize(GS, MissionTimelineTable);
 }
 
+void AMSGameMode::OnMissionFinished(int32 MissionID, bool bSuccess)
+{
+	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr)
+	{
+		if (MissionData->MissionType != EMissionType::Boss)
+		{
+			return;
+		}
+		FTimerHandle TimerHandle;
+		FTimerDelegate TimerDelegate;
+
+		TimerDelegate.BindUObject(this, &AMSGameMode::ExecuteTravelToLobby);
+		GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, 3.0f, false);
+	}
+}
+
+void AMSGameMode::ExecuteTravelToLobby()
+{
+	if (auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	{
+		LevelManager->HostGameAndTravelToLobby();
+	}
+}
+
+
 TSubclassOf<UMSGameFlowBase> AMSGameMode::GetGameFlowClass() const
 {
 	return GameFlowClass;
 }
-
 
 
 void AMSGameMode::TryStartGame()
@@ -84,16 +92,49 @@ void AMSGameMode::TryStartGame()
 		}
 	}
 
-	SetupGameFlow();
+	if (nullptr == GameFlow)
+	{
+		SetupGameFlow();
 
-	if (GameFlow)
-	{
-		GameFlow->Start();
-	}
-	else
-	{
-		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("GameFlow == null"));
+		if (GameFlow)
+		{
+			GameFlow->Start();
+
+			if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(GetWorld()))
+			{
+				// 오브젝트 풀링 시키기
+				SpawnSystem->InitializePool();
+
+				// 설정
+				SpawnSystem->SetSpawnInterval(2.0f);
+				SpawnSystem->SetMaxActiveMonsters(10);
+				SpawnSystem->SetSpawnRadius(1500.0f);
+				SpawnSystem->SetSpawnCountPerTick(10);
+
+				// 10초 뒤 스폰 시작
+				SpawnSystem->StartSpawning();
+
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
+
+				// Test Boss Spawn 코드 입니다. 이 코드로 보스 스폰 가능합니다.
+				// SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_FEY, FVector(0.f, 0.f,400.f));
+			}
+		}
+		else
+		{
+			MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("GameFlow == null"));
+		}
 	}
 }
 
-
+void AMSGameMode::NotifyClientsShowLoadingWidget()
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (AMSPlayerController* PC = Cast<AMSPlayerController>(It->Get()))
+		{
+			// 각 클라이언트에게 로딩 위젯을 띄우라고 전송
+			PC->ClientShowLoadingWidget();
+		}
+	}
+}

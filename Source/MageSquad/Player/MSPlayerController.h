@@ -18,6 +18,15 @@ class UMSLevelUpPanel;
  * 로컬 HUD 생성/표시 (네트워크 동기화는 HUD 위젯 내부에서 처리)
  * 각 컨트롤러의 커서 위치를 서버에게 알림
  */
+
+ /**
+  * 작성자: 이상준
+  * 작성일: 25/12/23
+  *
+  * 미션 시작 / 진행 / 종료에 따른 UI 연출 흐름 제어
+  * GameState의 미션 이벤트에 미션 UI 바인딩 
+  * 맵 로딩을 위한 딜레이, 로딩창을 2초뒤 제거
+  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerController : public APlayerController
 {
@@ -52,6 +61,9 @@ private: /* 미션 */
 	// 현재 진행 중인 미션이 종료(성공/실패)되었을 때 호출되는 콜백 함수
 	UFUNCTION()
 	void OnMissionFinished(int32 MissionId, bool bSuccess);
+	// 미션 진행도 변경 시 호출되는 콜백
+	UFUNCTION()
+	void OnMissionProgressChanged(float Normalized);
 
 	// 미션 UI의 표시 타이밍과 초기 설정을 처리
 	void HandleMissionStarted(const FMSMissionRow& MissionData);
@@ -61,6 +73,10 @@ private: /* 미션 */
 
 	// 현재 미션의 진행 상황을 추적하는 UI를 표시
 	void ShowMissionTracker(FMSMissionRow MissionData);
+public:
+	// 로딩 표시
+	UFUNCTION(Client, Reliable)
+	void ClientShowLoadingWidget();
 protected:
 	// HUD 위젯 인스턴스
 	UPROPERTY(Transient)
@@ -86,6 +102,7 @@ private:
 	UFUNCTION(Server, Unreliable)
 	void ServerRPCSetCursorInfo(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir);
 
+	// UI 준비 완료 서버에 보고
 	UFUNCTION(Server, Reliable)
 	void ServerRPCReportReady();
 private:

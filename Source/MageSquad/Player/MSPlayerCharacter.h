@@ -364,14 +364,37 @@ protected:
 	// HUD 공개 데이터 초기화 함수 (서버 전용)
 	void InitPublicHUDData_Server();
 
+	// DisplayName 변경 이벤트 바인딩 함수
+	void BindOverheadNameToHUDData();
+
+	// 머리 위 이름 텍스트 재가시화 함수
+	void RefreshOverheadVisibility();
+
+	// 머리 위 이름 텍스트 재초기화 함수
+	void RefreshOverheadName(const FText* OptionalName = nullptr);
+
+	// DisplayName 변경 이벤트 콜백 함수
+	void HandleOverheadDisplayNameChanged(const FText& NewName);
+
 protected:
+	// 서버에서 받는 최소 HUD 공개 데이터 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | UI")
+	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent = nullptr;
+
 	// 플레이어 아이콘 (팀원에게만 표시)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
 	TObjectPtr<UTexture2D> PortraitIcon = nullptr;
 
-	// 서버에서 받는 최소 HUD 공개 데이터 컴포넌트
+	// 캐릭터 머리 위에 띄울 플레이어 이름 (팀원에게만 표시)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | UI")
-	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent = nullptr;
+	TObjectPtr<class UWidgetComponent> OverheadNameWidgetComp = nullptr;
+
+	// 머리 위 이름 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
+	TSubclassOf<class UMSOverheadNameWidget> OverheadNameWidgetClass;
+
+	// HUDDataComponent DisplayName 변경 델리게이트 핸들(중복 바인딩/해제 목적)
+	FDelegateHandle OverheadDisplayNameChangedHandle;
 
 
 

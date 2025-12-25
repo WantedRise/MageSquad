@@ -76,26 +76,26 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		* 받은 피해량 출력 이벤트 전달 로직 (DamageFloater)
 		*/
 		{
-			// 현재 체력 및 받은 피해량 계산
-			const float NewHealth = GetHealth();
-			const float DeltaHealth = NewHealth - CachedOldHealth;
+			//// 현재 체력 및 받은 피해량 계산
+			//const float NewHealth = GetHealth();
+			//const float DeltaHealth = NewHealth - CachedOldHealth;
 
-			// 이벤트 데이터에 이벤트 태그 + 최종 피해량 저장
-			FGameplayEventData Payload;
-			Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
-			Payload.EventMagnitude = DeltaHealth;
+			//// 이벤트 데이터에 이벤트 태그 + 최종 피해량 저장
+			//FGameplayEventData Payload;
+			//Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
+			//Payload.EventMagnitude = DeltaHealth;
 
-			// 치명타 포함 추가 태그 확인
-			// EffectSpec에서 모든 태그를 가져와서 이벤트 데이터에 넘김
-			FGameplayTagContainer SpecAssetTags;
-			Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
-			Payload.InstigatorTags = SpecAssetTags;
+			//// 치명타 포함 추가 태그 확인
+			//// EffectSpec에서 모든 태그를 가져와서 이벤트 데이터에 넘김
+			//FGameplayTagContainer SpecAssetTags;
+			//Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
+			//Payload.InstigatorTags = SpecAssetTags;
 
-			// EffectContext도 함께 전달(가해자/히트 결과 등 확장 가능)
-			Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
+			//// EffectContext도 함께 전달(가해자/히트 결과 등 확장 가능)
+			//Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
 
-			// 받은 피해량 출력 이벤트 전달
-			TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+			//// 받은 피해량 출력 이벤트 전달
+			//TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
 		}
 
 		/*

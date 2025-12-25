@@ -22,5 +22,13 @@ public:
 	virtual void BeginPlay() override;	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void PostInitializeComponents() override;	
+// 	
+// public: /*Setter*/
+// 	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass) { ProjectileDataClass = InProjectileDataClass;}
+// 	
+// private:
+// 	// 발사체 원본 데이터 클래스
+// 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", meta = (AllowPrivateAccess = "true"))
+// 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 
 };

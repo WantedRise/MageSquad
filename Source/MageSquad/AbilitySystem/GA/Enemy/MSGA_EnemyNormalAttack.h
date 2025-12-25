@@ -44,4 +44,6 @@ private:
 	void OnCompleteCallback();
 	UFUNCTION()
 	void OnInterruptedCallback();
+	UFUNCTION()
+	void OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData);
 };

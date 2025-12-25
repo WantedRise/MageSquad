@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFlow/Mission/MSMissionScript.h"
+#include "GameplayEffectTypes.h"
 #include "MSMissionEliteKillScript.generated.h"
 
 /**
@@ -18,14 +19,15 @@ public:
     virtual void Initialize(UWorld* World) override;
     virtual void Deinitialize() override;
     virtual float GetProgress() const override;
-
+    virtual bool IsCompleted() const { return GetProgress() <= 0.0f; }
 private:
     void SpawnElite(UWorld* World);
-    UFUNCTION()
-    void OnEliteHPChanged(float CurrentHP, float MaxHP);
+
+    void OnEliteHPChanged(const FOnAttributeChangeData& Data);
 
 private:
-    TWeakObjectPtr<class AActor> EliteMonster;
+    TWeakObjectPtr<class AMSBaseEnemy> EliteMonster;
     float Progress = 0.f;
     float TimeLimit = -1.f;
+    float MaxHP;
 };

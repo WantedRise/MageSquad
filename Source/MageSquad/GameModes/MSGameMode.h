@@ -24,6 +24,7 @@ class MAGESQUAD_API AMSGameMode : public AGameMode
 	GENERATED_BODY()
 	
 public:
+	AMSGameMode();
 	virtual void BeginPlay() override;
 
 	
@@ -34,8 +35,11 @@ public:
 	float GetTotalGameTime() const { return TotalGameTime; }
 	// 모든 플레이어가 UI가 준비되어있으면 게임시작
 	void TryStartGame();
+	void NotifyClientsShowLoadingWidget();
 private:
 	void SetupGameFlow();
+	void OnMissionFinished(int32 MissionId, bool bSuccess);
+	void ExecuteTravelToLobby();
 protected:
 	//미션 타임라인 DataTable
 	UPROPERTY(EditDefaultsOnly, Category = "GameFlow")

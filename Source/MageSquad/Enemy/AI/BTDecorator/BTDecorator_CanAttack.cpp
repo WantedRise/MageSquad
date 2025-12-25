@@ -58,10 +58,7 @@ bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& 
 	float AttackRange = AttributeSet->GetAttackRange();
 	UE_LOG(LogTemp, Log, TEXT("AttackRange : %f"), AttackRange);
     
-	// 거리 체크 (제곱 거리로 비교하여 Sqrt 연산 회피)
-	//float DistanceSquared = FVector::DistSquared(OwnerAI->GetActorLocation(), TargetActor->GetActorLocation());
 	float Distance = OwnerComp.GetBlackboardComponent()->GetValueAsFloat(TargetDistanceKey.SelectedKeyName);
-	//float AttackRange = AttackRange;
 
 	return Distance <= AttackRange;
 }
