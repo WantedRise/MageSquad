@@ -208,8 +208,25 @@ void AMSPlayerController::UpdateCursor()
 	}
 }
 
+void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId)
+{
+	if (!IsLocalController()) return;
+
+	if (LevelUpPanelInstance)
+	{
+		LevelUpPanelInstance->RemoveFromParent();
+		LevelUpPanelInstance = nullptr;
+	}
+
+	SetPause(false);
+
+	FInputModeGameOnly Mode;
+	SetInputMode(Mode);
+	bShowMouseCursor = false;
+}
+
 void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 SessionId,
-	const TArray<FMSLevelUpChoicePair>& Choices)
+                                                                        const TArray<FMSLevelUpChoicePair>& Choices, float RemainingSeconds)
 {
 	// 로컬 컨트롤러에서만 UI를 띄움
 	if (!IsLocalController())
@@ -238,6 +255,19 @@ void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 Se
 
 	LevelUpPanelInstance->AddToViewport(200);
 	LevelUpPanelInstance->InitPanel(SessionId, Choices);
+	
+	// 남은 시간 표시 시작
+	LevelUpPanelInstance->StartCountdown(RemainingSeconds);
+	
+	
+	SetPause(true);
+
+	// UI 입력 모드
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(LevelUpPanelInstance->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
 }
 
 void AMSPlayerController::Server_SelectSkillLevelUpChoice_Implementation(int32 SessionId,
@@ -248,8 +278,14 @@ void AMSPlayerController::Server_SelectSkillLevelUpChoice_Implementation(int32 S
 	{
 		return;
 	}
-	// Todo:
-	// PS->HandleSkillLevelUpChoice_Server(SessionId, Picked);
+	
+	PS->ApplySkillLevelUpChoice_Server(SessionId, Picked);
+	
+	// 완료 보고 (전원 완료 판단은 GameState)
+	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+	{
+		GS->NotifySkillLevelUpCompleted(PS);
+	}
 }
 
 void AMSPlayerController::ServerRPCSetCursorInfo_Implementation(const FVector_NetQuantize& InPos, const FVector_NetQuantizeNormal& InDir)

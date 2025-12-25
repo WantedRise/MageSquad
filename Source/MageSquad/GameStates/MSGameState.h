@@ -57,6 +57,7 @@ public:
 public:
 	//GameFlow 인스턴스 생성 및 초기 설정
 	void SetupGameFlow();
+	
 
 	//게임 진행률 변경 시 알림 델리게이트
 	FOnProgressUpdated OnProgressUpdated;
@@ -162,7 +163,25 @@ public:
 	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
 	UFUNCTION(BlueprintCallable)
 	void StartSkillLevelUpPhase();
+	
+	void NotifySkillLevelUpCompleted(class AMSPlayerState* PS);
+	
+	float GetSkillLevelUpRemainingSeconds_Server() const;
+private:
+	bool bSkillLevelUpPhaseActive = false;
+	int32 CurrentSkillLevelUpSessionId = 0;
+	double SkillLevelUpExpireAtRealTime = 0.0;
 
+	FTimerHandle SkillLevelUpPollTimer;
+
+	UPROPERTY()
+	TSet<TObjectPtr<class AMSPlayerState>> CompletedPlayers;
+
+	void PollSkillLevelUpPhase();
+	void EndSkillLevelUpPhase(bool bByTimeout);
+	bool AreAllPlayersCompleted() const;
+	
+	
 protected:
 	// 현재 레벨 변동 OnRep 함수
 	UFUNCTION()

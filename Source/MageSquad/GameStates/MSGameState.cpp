@@ -20,6 +20,7 @@
 #include "DataStructs/MSSharedExperienceData.h"
 
 #include "MSFunctionLibrary.h"
+#include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
 
 AMSGameState::AMSGameState()
@@ -172,6 +173,77 @@ float AMSGameState::GetSharedXPPct() const
 	return (SharedXPRequired > 0.f) ? FMath::Clamp(SharedCurrentXP / SharedXPRequired, 0.f, 1.f) : 0.f;
 }
 
+void AMSGameState::PollSkillLevelUpPhase()
+{
+	if (!HasAuthority() || !bSkillLevelUpPhaseActive)
+		return;
+
+	if (AreAllPlayersCompleted())
+	{
+		EndSkillLevelUpPhase(false);
+		return;
+	}
+
+	if (FPlatformTime::Seconds() >= SkillLevelUpExpireAtRealTime)
+	{
+		EndSkillLevelUpPhase(true);
+	}
+}
+
+void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
+{
+	if (!HasAuthority() || !bSkillLevelUpPhaseActive)
+		return;
+
+	bSkillLevelUpPhaseActive = false;
+	GetWorldTimerManager().ClearTimer(SkillLevelUpPollTimer);
+
+	const int32 SessionId = CurrentSkillLevelUpSessionId;
+
+	// 타임아웃이면: 미완료자 랜덤 선택 강제 적용
+	if (bByTimeout)
+	{
+		for (APlayerState* PSBase : PlayerArray)
+		{
+			AMSPlayerState* PS = Cast<AMSPlayerState>(PSBase);
+			if (!PS) continue;
+
+			if (CompletedPlayers.Contains(PS))
+				continue;
+
+			PS->ApplyRandomSkillLevelUpChoice_Server();
+
+			CompletedPlayers.Add(PS);
+		}
+	}
+
+	// 전원 UI 닫기 (클라 Pause 해제 포함)
+	for (APlayerState* PSBase : PlayerArray)
+	{
+		AMSPlayerState* PS = Cast<AMSPlayerState>(PSBase);
+		if (!PS) continue;
+
+		if (AController* C = PS->GetOwner<AController>())
+		{
+			if (AMSPlayerController* PC = Cast<AMSPlayerController>(C))
+			{
+				PC->Client_CloseSkillLevelUpChoices(SessionId);
+			}
+		}
+	}
+}
+
+bool AMSGameState::AreAllPlayersCompleted() const
+{
+	int32 Valid = 0;
+	for (APlayerState* PS : PlayerArray)
+	{
+		if (Cast<AMSPlayerState>(PS))
+			++Valid;
+	}
+	return (Valid > 0) && (CompletedPlayers.Num() >= Valid);
+}
+
 void AMSGameState::OnRep_SharedLevel()
 {
 	// 클라이언트에 레벨 변경 이벤트 브로드캐스트
@@ -201,11 +273,19 @@ void AMSGameState::StartSkillLevelUpPhase()
 	static int32 LevelUpSessionId = 0;
 	LevelUpSessionId++;
 
+	// ✅ 세션 상태 시작
+	bSkillLevelUpPhaseActive = true;
+	CurrentSkillLevelUpSessionId = LevelUpSessionId;
+	CompletedPlayers.Reset();
+	
+	// 30초 리얼타임 마감
+	SkillLevelUpExpireAtRealTime = FPlatformTime::Seconds() + 30.0;
+	
 	UE_LOG(LogTemp, Log,
-		TEXT("[GameState] Start Skill LevelUp Phase. SessionId=%d"),
-		LevelUpSessionId
-	);
-
+			TEXT("[GameState] Start Skill LevelUp Phase. SessionId=%d"),
+			LevelUpSessionId
+		);
+	
 	// 모든 PlayerState에 레벨업 시작 알림
 	for (APlayerState* PS : PlayerArray)
 	{
@@ -215,15 +295,36 @@ void AMSGameState::StartSkillLevelUpPhase()
 			continue;
 		}
 
-		// PlayerState :
-		// - 보유 스킬 확인
-		// - 후보 생성
-		// - 랜덤 3개 선택
-		// - PlayerController에 UI 띄우기(Client RPC)
 		MSPS->BeginSkillLevelUp(LevelUpSessionId);
 	}
 
-	// GameState는 여기서 "누가 완료했는지" 집계만 하면 됨
+	// 폴링 시작 (0.2초)
+	GetWorldTimerManager().SetTimer(
+		SkillLevelUpPollTimer,
+		this,
+		&AMSGameState::PollSkillLevelUpPhase,
+		0.2f,
+		true
+	);
+}
+
+void AMSGameState::NotifySkillLevelUpCompleted(class AMSPlayerState* PS)
+{
+	if (!HasAuthority() || !bSkillLevelUpPhaseActive || !PS)
+		return;
+
+	CompletedPlayers.Add(PS);
+
+	if (AreAllPlayersCompleted())
+	{
+		EndSkillLevelUpPhase(false);
+	}
+}
+
+float AMSGameState::GetSkillLevelUpRemainingSeconds_Server() const
+{
+	if (!bSkillLevelUpPhaseActive) return 0.f;
+	return (float)FMath::Max(0.0, SkillLevelUpExpireAtRealTime - FPlatformTime::Seconds());
 }
 
 int32 AMSGameState::ComputeActivePlayerCount_Server() const

@@ -43,8 +43,6 @@ public:
 	// PlayerState가 소유한 AttributeSet을 반환하는 함수
 	class UMSPlayerAttributeSet* GetAttributeSet() const;
 
-	// 스킬 레벨업 시작
-	void BeginSkillLevelUp(int32 SessionId);
 protected:
 	// 플레이어의 ASC
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | GAS", meta = (AllowPrivateAccess = "true"))
@@ -62,11 +60,24 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	TArray<FMSSkillList> OwnedSkills;
 
-
 private:
 	//게임 시작 체크를 위해
 	UPROPERTY(Replicated)
 	uint8 bUIReady : 1;
+	
+public:
+	// 스킬 레벨업 시작
+	void BeginSkillLevelUp(int32 SessionId);
+	
+	// 스킬 레벨업 적용
+	void ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLevelUpChoicePair& Picked);
+	
+	// 랜덤 스킬 레벨업 적용
+	void ApplyRandomSkillLevelUpChoice_Server();
+public:
+	const TArray<FMSLevelUpChoicePair>& GetCurrentSkillChoices() const { return CurrentSkillChoices; }
+	bool IsSkillLevelUpCompleted() const { return bSkillLevelUpCompleted; }
+	int32 GetCurrentLevelUpSessionId() const { return CurrentLevelUpSessionId; }
 
 protected:
 	// 현재 진행 중인 레벨업 세션 ID

@@ -109,8 +109,11 @@ private:
 public:
 	/** 서버 -> 클라: 레벨업 선택지 UI 띄우기 */
 	UFUNCTION(Client, Reliable)
-	void Client_ShowSkillLevelUpChoices(int32 SessionId, const TArray<FMSLevelUpChoicePair>& Choices);
+	void Client_ShowSkillLevelUpChoices(int32 SessionId, const TArray<FMSLevelUpChoicePair>& Choices, float RemainingSeconds);
 
+	UFUNCTION(Client, Reliable)
+	void Client_CloseSkillLevelUpChoices(int32 SessionId);
+	
 	/** 클라 -> 서버: 선택 결과 전달 (Panel에서 호출) */
 	UFUNCTION(Server, Reliable)
 	void Server_SelectSkillLevelUpChoice(int32 SessionId, const FMSLevelUpChoicePair& Picked);
@@ -120,7 +123,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI|LevelUp")
 	TSubclassOf<UMSLevelUpPanel> LevelUpPanelClass;
 	
-private:
+public:
 	/** 현재 떠있는 패널 인스턴스 */
 	UPROPERTY(Transient)
 	TObjectPtr<UMSLevelUpPanel> LevelUpPanelInstance = nullptr;

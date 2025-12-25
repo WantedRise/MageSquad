@@ -6,6 +6,7 @@
 #include "Player/MSPlayerController.h"
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
+#include "GameStates/MSGameState.h"
 #include "Net/UnrealNetwork.h"
 
 AMSPlayerState::AMSPlayerState()
@@ -174,7 +175,14 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 		return;
 	}
 
-	PC->Client_ShowSkillLevelUpChoices(SessionId, CurrentSkillChoices);
+	float RemainingSeconds = 30.f;
+	
+	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+	{
+		RemainingSeconds = GS->GetSkillLevelUpRemainingSeconds_Server();
+	}
+	
+	PC->Client_ShowSkillLevelUpChoices(SessionId, CurrentSkillChoices, RemainingSeconds);
 
 	UE_LOG(LogTemp, Log,
 		TEXT("[BeginSkillLevelUp] Session=%d | PairCandidates=%d | Picked=%d"),
@@ -182,4 +190,68 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 		PairCandidates.Num(),
 		CurrentSkillChoices.Num()
 	);
+	
+}
+
+void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLevelUpChoicePair& Picked)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// 1) 세션 검증
+	if (SessionId != CurrentLevelUpSessionId)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[LevelUp] Invalid Session. PS=%s Given=%d Current=%d"),
+			*GetName(), SessionId, CurrentLevelUpSessionId);
+		return;
+	}
+
+	// 2) 중복 방지
+	if (bSkillLevelUpCompleted)
+	{
+		return;
+	}
+
+	// =========================
+	// 3) 🔥 실제 선택 적용 로직
+	// =========================
+
+	// 예시 1) 스킬 레벨 증가
+	// SkillLevels[Picked.SkillId]++;
+
+	// 예시 2) GA 부여
+	// GiveAbility(Picked.GrantedAbility);
+
+	// 예시 3) PlayerState 데이터 갱신
+	// OwnedSkills.Add(Picked.SkillId);
+
+	// =========================
+
+	// 4) 완료 처리
+	bSkillLevelUpCompleted = true;
+
+	UE_LOG(LogTemp, Log,
+		TEXT("[LevelUp] Choice applied. PS=%s Session=%d"),
+		*GetName(), SessionId
+	);
+}
+
+void AMSPlayerState::ApplyRandomSkillLevelUpChoice_Server()
+{
+	if (!HasAuthority())
+		return;
+
+	if (bSkillLevelUpCompleted)
+		return;
+
+	if (CurrentSkillChoices.Num() == 0)
+		return;
+
+	const int32 Index = FMath::RandRange(0, CurrentSkillChoices.Num() - 1);
+	const FMSLevelUpChoicePair& Picked = CurrentSkillChoices[Index];
+
+	ApplySkillLevelUpChoice_Server(CurrentLevelUpSessionId, Picked);
 }

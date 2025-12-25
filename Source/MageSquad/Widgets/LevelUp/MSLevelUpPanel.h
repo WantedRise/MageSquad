@@ -7,6 +7,7 @@
 #include "Components/Button.h"
 #include "Types/MageSquadTypes.h"
 #include "Widgets/LevelUp/MSLevelUpChoice.h"
+#include "Containers/Ticker.h"
 #include "MSLevelUpPanel.generated.h"
 
 /**
@@ -41,7 +42,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
 	TSubclassOf<UMSLevelUpChoice> ChoiceWidgetClass;
 
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* RemainingTimeText = nullptr;
+	
+public:
+	void StartCountdown(float RemainingSeconds);
+
 private:
+	double CountdownEndPlatformSeconds = 0.0;
+	FTSTicker::FDelegateHandle CountdownTickerHandle;
+	bool TickCountdown(float DeltaTime);
+	
+	
 	int32 SessionId = 0;
 	bool bHasPicked = false;
 
