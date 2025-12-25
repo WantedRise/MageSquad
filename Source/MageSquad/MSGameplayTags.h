@@ -24,6 +24,8 @@ namespace MSGameplayTags
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Attack);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Dead);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Spawn);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Groggy);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Phase2);
 	
 	/*Enemy Ability Tags*/
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_NormalAttack);
@@ -38,6 +40,7 @@ namespace MSGameplayTags
 	/*Enemy Event Tags*/
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_NormalAttack);
 #pragma  endregion
+	
 	/* Skill Ability Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Ability_IceSpear);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Ability_Explosion);

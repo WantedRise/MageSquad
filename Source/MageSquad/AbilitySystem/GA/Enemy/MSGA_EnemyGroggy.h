@@ -3,20 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
-#include "MSGA_EnemyShootProjectile.generated.h"
+#include "MSGA_EnemyBossBaseAbility.h"
+#include "MSGA_EnemyGroggy.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/25
+ * 보스의 페이즈 전환 시 Groggy 상태를 나타낼 때 발동할 Ability
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_EnemyShootProjectile : public UMSGA_EnemyBaseAbility
+class MAGESQUAD_API UMSGA_EnemyGroggy : public UMSGA_EnemyBossBaseAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_EnemyShootProjectile();
-	
+	UMSGA_EnemyGroggy();
+
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, 
@@ -42,14 +44,6 @@ private:
 	void OnCompleteCallback();
 	UFUNCTION()
 	void OnInterruptedCallback();
-	
-private:
-	// 발사체 원본 데이터 클래스
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
-	
-	// 데미지 전달 GE
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<UGameplayEffect> DamageEffect;
-	
+	UFUNCTION()
+	void OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData);
 };
