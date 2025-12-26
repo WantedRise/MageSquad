@@ -10,6 +10,7 @@ namespace MSGameplayTags
 	
 	/* Player State Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Invincible);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Dead);
 
 	/* Player Event Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_DefaultAttack);

@@ -9,6 +9,7 @@ namespace MSGameplayTags
 	
 	/*Pleyer State Tahgs*/
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Invincible, "Player.State.Invincible");
+	UE_DEFINE_GAMEPLAY_TAG(Player_State_Dead, "Player.State.Dead");
 	
 	/* Player Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_DefaultAttack, "Player.Event.DefaultAttack");

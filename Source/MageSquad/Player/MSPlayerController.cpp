@@ -16,6 +16,8 @@
 #include "System/MSMissionDataSubsystem.h"
 #include "Widgets/LevelUp/MSLevelUpPanel.h"
 
+#include "EngineUtils.h"
+
 void AMSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -55,13 +57,13 @@ void AMSPlayerController::BeginPlay()
 				false
 			);
 		}
-		
+
 		// ViewModel 생성
 		//if (!PlayerViewModel)
 		//{
 		//	PlayerViewModel = NewObject<UMSMVVM_PlayerViewModel>(this);
 		//}
-		
+
 		// if (UAbilitySystemComponent* ASC = Cast<AMSPlayerCharacter>(GetPawn())->GetAbilitySystemComponent())
 		// {
 		// 	PlayerViewModel->InitializeWithASC(ASC);
@@ -137,13 +139,13 @@ void AMSPlayerController::NotifyHUDReinitialize()
 		// HUD 재초기화 시 미션 관련 이벤트 바인딩 처리
 		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 		{
-			if(false == GS->OnMissionChanged.IsBoundToObject(this))
+			if (false == GS->OnMissionChanged.IsBoundToObject(this))
 				GS->OnMissionChanged.AddUObject(this, &AMSPlayerController::OnMissionChanged);
 			if (false == GS->OnMissionFinished.IsBoundToObject(this))
 				GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
 			if (false == GS->OnMissionProgressChanged.IsBoundToObject(this))
 				GS->OnMissionProgressChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
-		}	
+		}
 	}
 }
 
@@ -214,6 +216,52 @@ void AMSPlayerController::UpdateCursor()
 	}
 }
 
+void AMSPlayerController::CycleSpectateTarget(int32 Direction)
+{
+	// 관전 상태에서만 동작
+	AMSPlayerCharacter* OwningChar = Cast<AMSPlayerCharacter>(GetPawn());
+	if (!OwningChar || !OwningChar->GetSpectating()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 생존 중인 팀원 목록
+	TArray<AMSPlayerCharacter*> AliveCharacters;
+
+	// 월드 내 PlayerContoller 탐색
+	for (APlayerController* PC : TActorRange<APlayerController>(GetWorld()))
+	{
+		AMSPlayerCharacter* Char = PC ? Cast<AMSPlayerCharacter>(PC->GetPawn()) : nullptr;
+		if (Char && Char != OwningChar && !Char->GetIsDead())
+		{
+			// 생존 중인 팀원 목록에 추가
+			AliveCharacters.Add(Char);
+		}
+	}
+
+	// 생존 중인 팀원 목록이 없으면 종료
+	if (AliveCharacters.Num() == 0) return;
+
+	// 현재 관전 대상의 인덱스 찾기
+	AActor* CurrentViewTarget = GetViewTarget();
+	int32 CurrentIndex = AliveCharacters.IndexOfByKey(CurrentViewTarget);
+
+	int32 NewIndex;
+	// 유효하지 않은 인덱스면 제외
+	if (CurrentIndex == INDEX_NONE)
+	{
+		NewIndex = 0;
+	}
+	// 현재 관전 대상 인덱스부터 시작해서 모듈러 연산을 통해 관전 대상 순환
+	else
+	{
+		NewIndex = (CurrentIndex + Direction + AliveCharacters.Num()) % AliveCharacters.Num();
+	}
+
+	// 관전 대상 변경
+	SetViewTarget(AliveCharacters[NewIndex]);
+}
+
 void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId)
 {
 	if (!IsLocalController()) return;
@@ -232,7 +280,7 @@ void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 S
 }
 
 void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 SessionId,
-                                                                        const TArray<FMSLevelUpChoicePair>& Choices, float RemainingSeconds)
+	const TArray<FMSLevelUpChoicePair>& Choices, float RemainingSeconds)
 {
 	// 로컬 컨트롤러에서만 UI를 띄움
 	if (!IsLocalController())
@@ -261,10 +309,10 @@ void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 Se
 
 	LevelUpPanelInstance->AddToViewport(200);
 	LevelUpPanelInstance->InitPanel(SessionId, Choices);
-	
+
 	// 남은 시간 표시 시작
 	LevelUpPanelInstance->StartCountdown(RemainingSeconds);
-	
+
 	SetPause(true);
 
 	// UI 입력 모드
@@ -283,9 +331,9 @@ void AMSPlayerController::Server_SelectSkillLevelUpChoice_Implementation(int32 S
 	{
 		return;
 	}
-	
+
 	PS->ApplySkillLevelUpChoice_Server(SessionId, Picked);
-	
+
 	// 완료 보고 (전원 완료 판단은 GameState)
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
@@ -383,7 +431,7 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 }
 
 // 성공 / 실패 결과에 따른 UI 연출 수행
-void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
+void AMSPlayerController::OnMissionFinished(int32 MissionID, bool bSuccess)
 {
 	if (!HUDWidgetInstance) return;
 
@@ -398,7 +446,7 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID,bool bSuccess)
 	{
 		Tracker->StopMissionTimer();
 	}
-	
+
 	// 결과 연출 후 UI 전환을 위한 딜레이 처리
 	FTimerHandle TimerHandle;
 	float DelayTime = 1.0f;

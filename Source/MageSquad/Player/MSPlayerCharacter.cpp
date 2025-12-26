@@ -1030,21 +1030,14 @@ void AMSPlayerCharacter::HandleOutOfHealth()
 	// 사망 상태 설정
 	bIsDead = true;
 
+	// 사망 상태 태그 부여
+	AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+
 	// 현재 위치를 사망 지점으로 저장
 	const FVector DeathLocation = GetActorLocation();
 
-	// GameState로부터 공유 목숨 가져오기
 	UWorld* World = GetWorld();
 	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
-	//if (GS && GS->GetSharedLives() > 0)
-	//{
-	//	// 공유 목숨이 남아 있으면 하나 소모하고 즉시 부활
-	//	GS->ConsumeLife();
-	//	ResetCharacterOnRespawn();
-	//	SetActorLocation(DeathLocation);
-	//	bIsDead = false;
-	//	return;
-	//}
 
 	// 공유 목숨이 없는 경우, 팀원 부활 가능 여부 검사
 	bool bHasAliveTeammate = false;
@@ -1075,12 +1068,12 @@ void AMSPlayerCharacter::HandleOutOfHealth()
 		if (World && !PendingReviveActor)
 		{
 			FActorSpawnParameters Params;
-			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			FVector SpawnLoc = DeathLocation;
 			FRotator SpawnRot = FRotator::ZeroRotator;
 
 			// 부활용 액터를 스폰
-			PendingReviveActor = World->SpawnActor<AMSTeamReviveActor>(AMSTeamReviveActor::StaticClass(), SpawnLoc, SpawnRot, Params);
+			PendingReviveActor = World->SpawnActor<AMSTeamReviveActor>(PendingReviveActorClass, SpawnLoc, SpawnRot, Params);
 			if (PendingReviveActor)
 			{
 				// 부활용 액터 초기화 및 부활 진행 시간 설정
@@ -1093,10 +1086,25 @@ void AMSPlayerCharacter::HandleOutOfHealth()
 	}
 	else
 	{
+		// GameState로부터 공유 목숨 가져오기
+		if (GS && GS->GetSharedLives() > 0)
+		{
+			// 공유 목숨이 남아 있으면 하나 소모하고 즉시 부활
+			GS->ConsumeLife_Server();
+			ResetCharacterOnRespawn();
+			SetActorLocation(DeathLocation);
+
+			bIsDead = false;
+			// 사망 상태 태그 제거
+			AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+
+			return;
+		}
+
 		// 팀 전명 또는 1인 플레이인 경우, 게임 종료를 알림
 		if (GS)
 		{
-			//GS->OnSharedLivesDepleted.Broadcast();
+			GS->OnSharedLivesDepleted.Broadcast();
 		}
 	}
 }
@@ -1105,8 +1113,17 @@ void AMSPlayerCharacter::ServerFinishRevive()
 {
 	if (!HasAuthority()) return;
 
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+
+	GS->ConsumeLife_Server();
+
 	// 부활이 끝나면 상태 초기화 후 캐릭터 리셋
 	bIsDead = false;
+
+	// 사망 상태 태그 제거
+	AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+
 	bIsSpectating = false;
 	PendingReviveActor = nullptr;
 	ResetCharacterOnRespawn();
@@ -1144,10 +1161,10 @@ void AMSPlayerCharacter::BeginSpectate_Server()
 	if (!PC) return;
 
 	// 월드 내 PlayerContoller 탐색
-	for (APlayerController* PC : TActorRange<APlayerController>(GetWorld()))
+	for (APlayerController* OtherPC : TActorRange<APlayerController>(GetWorld()))
 	{
 		// 관전 대상이 있는지 확인 후 최초 대상 설정. 해당 대상으로 ViewTarget 설정
-		AMSPlayerCharacter* OtherChar = PC ? Cast<AMSPlayerCharacter>(PC->GetPawn()) : nullptr;
+		AMSPlayerCharacter* OtherChar = OtherPC ? Cast<AMSPlayerCharacter>(OtherPC->GetPawn()) : nullptr;
 		if (OtherChar && OtherChar != this && !OtherChar->bIsDead)
 		{
 			PC->SetViewTarget(OtherChar);

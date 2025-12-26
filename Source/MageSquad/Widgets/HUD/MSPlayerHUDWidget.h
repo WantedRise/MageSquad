@@ -44,14 +44,14 @@ public:
 protected:
 	// 바인딩 시도 함수 (바인딩 성공 여부에 따라 결괏값 반환)
 	bool TryBindLocalHealth();
-	bool TryBindSharedExperience();
+	bool TryBindSharedData();
 
 	// 팀 데이터 갱신 시작 함수
 	void StartTeamPoll();
 
 	// 바인딩된 델리게이트/타이머 정리 함수
 	void UnbindLocalHealth();
-	void UnbindSharedExperience();
+	void UnbindSharedData();
 	void ClearRebindTimer();
 	void ClearTeamPollTimer();
 
@@ -79,6 +79,9 @@ protected:
 	// 공유 경험피/레벨 갱신 UI 반영 함수
 	void RefreshSharedExperienceUI();
 
+	// 공유 목숨 변경 콜백 함수
+	void OnSharedLivesChanged(int32 NewLives);
+
 public:
 	// 대미지를 받았을 때 이벤트 델리게이트
 	UPROPERTY(BlueprintAssignable)
@@ -105,6 +108,10 @@ protected:
 	// 팀 멤버 목록 위젯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UVerticalBox> TeamMembersBoxWidget;
+
+	// 남은 공유 목숨 텍스트 위젯
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UTextBlock> SharedLivesTextWidget;
 
 	// 화면 효과 이미지
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
@@ -153,6 +160,9 @@ private:
 	// 공유 경험치/레벨 바인딩 델리게이트 핸들(중복 바인딩/정확한 해제 목적)
 	FDelegateHandle SharedExpChangedHandle;
 	FDelegateHandle SharedLevelUpHandle;
+
+	// 공유 목숨 변경 이벤트 델리게이트 핸들
+	FDelegateHandle SharedLivesChangedHandle;
 	/* ======================== Delegate Handles ======================== */
 
 	// 현재 바인딩 상태

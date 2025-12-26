@@ -36,7 +36,7 @@ void UMSPlayerHUDWidget::NativeDestruct()
 	// 바인딩된 델리게이트/타이머 정리
 	ClearRebindTimer();
 	UnbindLocalHealth();
-	UnbindSharedExperience();
+	UnbindSharedData();
 	ClearTeamPollTimer();
 
 	Super::NativeDestruct();
@@ -54,9 +54,9 @@ void UMSPlayerHUDWidget::InitializeHUD()
 
 	// 바인딩 시도
 	const bool bLocalHealthOk = TryBindLocalHealth();
-	const bool bSharedExperienceOk = TryBindSharedExperience();
+	const bool bSharedDataOk = TryBindSharedData();
 
-	if (bLocalHealthOk && bSharedExperienceOk)
+	if (bLocalHealthOk && bSharedDataOk)
 	{
 		// 바인딩 재시도 타이머 종료
 		ClearRebindTimer();
@@ -136,27 +136,34 @@ bool UMSPlayerHUDWidget::TryBindLocalHealth()
 	return true;
 }
 
-bool UMSPlayerHUDWidget::TryBindSharedExperience()
+bool UMSPlayerHUDWidget::TryBindSharedData()
 {
 	CachedGameState = nullptr;
 
 	if (!GetWorld()) return false;
 
+	// GameState 가져오기
 	AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>();
 	if (!GS) return false;
 
 	// 기존 바인딩 정리 후 새 GameState로 바인딩
-	UnbindSharedExperience();
+	UnbindSharedData();
 
 	// 게임 스테이트 초기화
 	CachedGameState = GS;
 
 	// 델리게이트 바인딩(핸들을 보관해 정확히 해제)
+	// 공유 경험치 변경 바인딩
 	SharedExpChangedHandle = CachedGameState->OnSharedExperienceChanged.AddUObject(
 		this, &UMSPlayerHUDWidget::OnSharedExperienceChanged);
 
+	// 공유 레벨 변경 바인딩
 	SharedLevelUpHandle = CachedGameState->OnSharedLevelUp.AddUObject(
 		this, &UMSPlayerHUDWidget::OnSharedLevelUp);
+
+	// 공유 목숨 변경 바인딩
+	SharedLivesChangedHandle = CachedGameState->OnSharedLivesChanged.AddUObject(
+		this, &UMSPlayerHUDWidget::OnSharedLivesChanged);
 
 	return true;
 }
@@ -201,21 +208,30 @@ void UMSPlayerHUDWidget::UnbindLocalHealth()
 	LocalASC.Reset();
 }
 
-void UMSPlayerHUDWidget::UnbindSharedExperience()
+void UMSPlayerHUDWidget::UnbindSharedData()
 {
 	// 바인딩한 델리게이트 언바인드
 	if (CachedGameState)
 	{
+		// 공유 경험치 변경 델리게이트 언바인딩
 		if (SharedExpChangedHandle.IsValid())
 		{
 			CachedGameState->OnSharedExperienceChanged.Remove(SharedExpChangedHandle);
 			SharedExpChangedHandle.Reset();
 		}
 
+		// 공유 레벨 변경 델리게이트 언바인딩
 		if (SharedLevelUpHandle.IsValid())
 		{
 			CachedGameState->OnSharedLevelUp.Remove(SharedLevelUpHandle);
 			SharedLevelUpHandle.Reset();
+		}
+
+		// 공유 목숨 변경 델리게이트 언바인딩
+		if (SharedLivesChangedHandle.IsValid())
+		{
+			CachedGameState->OnSharedLivesChanged.Remove(SharedLivesChangedHandle);
+			SharedLivesChangedHandle.Reset();
 		}
 	}
 
@@ -396,9 +412,9 @@ void UMSPlayerHUDWidget::TickRebind()
 
 	// 바인딩 시도
 	const bool bLocalHealthOk = TryBindLocalHealth();
-	const bool bSharedExperienceOk = TryBindSharedExperience();
+	const bool bSharedDataOk = TryBindSharedData();
 
-	if (bLocalHealthOk && bSharedExperienceOk)
+	if (bLocalHealthOk && bSharedDataOk)
 	{
 		// 바인딩 재시도 타이머 종료
 		ClearRebindTimer();
@@ -435,9 +451,18 @@ void UMSPlayerHUDWidget::RefreshSharedExperienceUI()
 		SharedExpBarWidget->SetPercent(Pct);
 	}
 
-	// 공유 레벨 텍스트 바 갱신
+	// 공유 레벨 텍스트 갱신
 	if (SharedLevelTextWidget)
 	{
 		SharedLevelTextWidget->SetText(FText::AsNumber(Level));
+	}
+}
+
+void UMSPlayerHUDWidget::OnSharedLivesChanged(int32 NewLives)
+{
+	// 공유 목숨 텍스트 갱신
+	if (SharedLivesTextWidget)
+	{
+		SharedLivesTextWidget->SetText(FText::AsNumber(NewLives));
 	}
 }

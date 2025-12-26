@@ -24,7 +24,7 @@ class UMSLevelUpPanel;
   * 작성일: 25/12/23
   *
   * 미션 시작 / 진행 / 종료에 따른 UI 연출 흐름 제어
-  * GameState의 미션 이벤트에 미션 UI 바인딩 
+  * GameState의 미션 이벤트에 미션 UI 바인딩
   * 맵 로딩을 위한 딜레이, 로딩창을 2초뒤 제거
   */
 UCLASS()
@@ -116,10 +116,22 @@ private:
 	// 마우스 커서 방향
 	UPROPERTY()
 	FVector_NetQuantize ServerCursorDir = FVector(1.f, 0.f, 0.f);
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UMSMVVM_PlayerViewModel> PlayerViewModel;
-	
+
+
+
+	/*****************************************************
+	* Spectator Section
+	*****************************************************/
+protected:
+	// 관전 대상 변경 함수
+	UFUNCTION(BlueprintCallable, Category = "Custom | Spectate")
+	void CycleSpectateTarget(int32 Direction);
+
+
+
 	/*****************************************************
 	* Skill Level Up Section
 	*****************************************************/
@@ -130,16 +142,16 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_CloseSkillLevelUpChoices(int32 SessionId);
-	
+
 	/** 클라 -> 서버: 선택 결과 전달 (Panel에서 호출) */
 	UFUNCTION(Server, Reliable)
 	void Server_SelectSkillLevelUpChoice(int32 SessionId, const FMSLevelUpChoicePair& Picked);
-	
+
 protected:
 	/** BP에서 WBP_LevelUpPanel 지정 */
-	UPROPERTY(EditDefaultsOnly, Category="UI|LevelUp")
+	UPROPERTY(EditDefaultsOnly, Category = "UI|LevelUp")
 	TSubclassOf<UMSLevelUpPanel> LevelUpPanelClass;
-	
+
 public:
 	/** 현재 떠있는 패널 인스턴스 */
 	UPROPERTY(Transient)

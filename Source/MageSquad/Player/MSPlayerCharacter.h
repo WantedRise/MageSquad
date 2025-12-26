@@ -425,6 +425,10 @@ public:
 	// 서버에서 부활 처리가 완료되었을 때 호출되는 함수
 	void ServerFinishRevive();
 
+	// 사망, 관전 상태 Getter
+	FORCEINLINE const bool GetIsDead() const { return bIsDead; }
+	FORCEINLINE const bool GetSpectating() const { return bIsSpectating; }
+
 protected:
 	// 공유 목숨이 남아있어 즉시 부활하는 경우, 캐릭터를 리셋하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")
@@ -443,6 +447,10 @@ protected:
 	bool bIsSpectating = false;
 
 	// 팀 부활용 액터. 서버만 소유
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Respawn")
+	TSubclassOf<class AMSTeamReviveActor> PendingReviveActorClass;
+
+private:
 	UPROPERTY(Transient)
 	TObjectPtr<class AMSTeamReviveActor> PendingReviveActor;
 };
