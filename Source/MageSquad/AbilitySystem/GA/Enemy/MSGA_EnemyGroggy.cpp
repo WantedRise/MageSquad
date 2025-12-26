@@ -3,8 +3,19 @@
 
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyGroggy.h"
 
+#include "MSGameplayTags.h"
+
 UMSGA_EnemyGroggy::UMSGA_EnemyGroggy()
 {
+	// 어빌리티 식별 Tag
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
+	SetAssetTags(TagContainer);
+
+	// 활성화 시 Owner에게 부여되는 Tag
+	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Groggy);
+	
+	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead)	;
 }
 
 void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -12,6 +23,8 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
+	
 }
 
 void UMSGA_EnemyGroggy::CancelAbility(const FGameplayAbilitySpecHandle Handle,

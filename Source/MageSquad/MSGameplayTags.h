@@ -32,6 +32,7 @@ namespace MSGameplayTags
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_NormalAttack);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Dead);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Spawn);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Groggy);
 	
 	/*Enemy Tier Tags*/
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Tier_Normal);
@@ -42,7 +43,7 @@ namespace MSGameplayTags
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_NormalAttack);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_HealthDepleted);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_Death);         
-	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_PhaseChanged);  
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_PhaseChanged);
 #pragma  endregion
 	
 	/* Skill Ability Tags */

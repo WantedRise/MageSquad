@@ -3,6 +3,8 @@
 
 #include "Enemy/MSBossEnemy.h"
 
+#include "MSGameplayTags.h"
+#include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AIController/MSBossAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -25,6 +27,8 @@ void AMSBossEnemy::BeginPlay()
 	Super::BeginPlay();
 	
 	SetActorScale3D(FVector(3.f, 3.f, 3.f));	
+	
+	ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_Tier_Boss);
 }
 
 void AMSBossEnemy::SetPoolingMode(bool bInPooling)

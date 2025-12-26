@@ -23,6 +23,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_NormalAttack, "Enemy.Ability.NormalAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dead, "Enemy.Ability.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Spawn, "Enemy.Ability.Spawn");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Groggy, "Enemy.Ability.Groggy");
 	
 	/*Enemy State Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Chase, "Enemy.State.Chase");

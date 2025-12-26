@@ -1,9 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "Enemy/MSNormalEnemy.h"
+#include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AIController/MSNormalAIController.h"
-#include "Components/CapsuleComponent.h"
+#include "MSGameplayTags.h"
 
 AMSNormalEnemy::AMSNormalEnemy()
 {
@@ -28,6 +30,7 @@ void AMSNormalEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_Tier_Normal);
 }
 
 void AMSNormalEnemy::PossessedBy(AController* NewController)

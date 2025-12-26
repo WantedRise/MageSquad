@@ -111,10 +111,11 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 		{
 			if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))
 			{
-				if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerEnemy->GetController()))
-				{	
-					AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
-				}
+				// HP소모 이벤트 호출
+				FGameplayEventData Payload;
+				Payload.EventTag = MSGameplayTags::Enemy_Event_HealthDepleted;
+				UAbilitySystemComponent* TargetASC = &Data.Target;
+				TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
 			}
 		}
 	}
