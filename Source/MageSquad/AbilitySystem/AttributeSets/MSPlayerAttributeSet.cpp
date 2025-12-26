@@ -115,6 +115,22 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			}
 		}
 
+		/*
+		* 부활/관전 로직
+		*/
+		{
+			const float NewHealth = GetHealth();
+			if (NewHealth <= 0.f)
+			{
+				// 서버에서만 사망 처리
+				if (AMSPlayerCharacter* OwnerChar = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor()))
+				{
+					// 캐릭터의 사망 처리 함수 호출
+					OwnerChar->HandleOutOfHealth();
+				}
+			}
+		}
+
 		SetHealth(FMath::Clamp(GetHealth(), UE_KINDA_SMALL_NUMBER, GetMaxHealth()));
 	}
 	// 최대 체력 갱신

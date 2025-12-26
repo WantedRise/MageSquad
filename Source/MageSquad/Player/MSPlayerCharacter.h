@@ -412,4 +412,37 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Damaged")
 	TSubclassOf<class UCameraShakeBase> CameraShakeClass;
+
+
+
+	/*****************************************************
+	* Death & Respawn Section
+	*****************************************************/
+public:
+	// 현재 체력이 0 이하로 떨어졌을 때 호출되는 함수
+	void HandleOutOfHealth();
+
+	// 서버에서 부활 처리가 완료되었을 때 호출되는 함수
+	void ServerFinishRevive();
+
+protected:
+	// 공유 목숨이 남아있어 즉시 부활하는 경우, 캐릭터를 리셋하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")
+	virtual void ResetCharacterOnRespawn();
+
+	// 서버: 관전 모드 진입 함수
+	void BeginSpectate_Server();
+
+protected:
+	// 사망 상태 여부
+	UPROPERTY(Replicated)
+	bool bIsDead = false;
+
+	// 관전 상태 여부
+	UPROPERTY(Replicated)
+	bool bIsSpectating = false;
+
+	// 팀 부활용 액터. 서버만 소유
+	UPROPERTY(Transient)
+	TObjectPtr<class AMSTeamReviveActor> PendingReviveActor;
 };

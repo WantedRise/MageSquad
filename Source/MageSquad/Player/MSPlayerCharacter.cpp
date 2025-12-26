@@ -26,11 +26,15 @@
 #include "MSGameplayTags.h"
 
 #include "Actors/Experience/MSExperienceOrb.h"
+#include "Actors/Revival/MSTeamReviveActor.h"
 
 #include "Widgets/HUD/MSOverheadNameWidget.h"
 
 #include "DataAssets/Player/DA_PlayerStartUpData.h"
 
+#include "GameStates/MSGameState.h"
+
+#include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 
 AMSPlayerCharacter::AMSPlayerCharacter()
@@ -1017,6 +1021,142 @@ void AMSPlayerCharacter::ClientRPCPlayHealthShake_Implementation(float Scale)
 		PC->PlayerCameraManager->StartCameraShake(CameraShakeClass, Scale);
 	}
 }
+
+void AMSPlayerCharacter::HandleOutOfHealth()
+{
+	// 서버가 아니거나 이미 사망 상태인 경우 종료
+	if (!HasAuthority() || bIsDead) return;
+
+	// 사망 상태 설정
+	bIsDead = true;
+
+	// 현재 위치를 사망 지점으로 저장
+	const FVector DeathLocation = GetActorLocation();
+
+	// GameState로부터 공유 목숨 가져오기
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+	//if (GS && GS->GetSharedLives() > 0)
+	//{
+	//	// 공유 목숨이 남아 있으면 하나 소모하고 즉시 부활
+	//	GS->ConsumeLife();
+	//	ResetCharacterOnRespawn();
+	//	SetActorLocation(DeathLocation);
+	//	bIsDead = false;
+	//	return;
+	//}
+
+	// 공유 목숨이 없는 경우, 팀원 부활 가능 여부 검사
+	bool bHasAliveTeammate = false;
+	if (World)
+	{
+		// 월드 내 PlayerContoller 탐색
+		for (APlayerController* PC : TActorRange<APlayerController>(GetWorld()))
+		{
+			if (!PC) continue;
+
+			// 살아있는 팀원이 있는 경우 팀원 부활 가능 판정
+			AMSPlayerCharacter* OtherChar = Cast<AMSPlayerCharacter>(PC->GetPawn());
+			if (OtherChar && OtherChar != this && !OtherChar->bIsDead)
+			{
+				bHasAliveTeammate = true;
+				break;
+			}
+		}
+	}
+
+	// 팀원 부활이 가능한 경우
+	if (bHasAliveTeammate)
+	{
+		// 관전 상태로 전환
+		bIsSpectating = true;
+
+		// 부활용 액터를 스폰
+		if (World && !PendingReviveActor)
+		{
+			FActorSpawnParameters Params;
+			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			FVector SpawnLoc = DeathLocation;
+			FRotator SpawnRot = FRotator::ZeroRotator;
+
+			// 부활용 액터를 스폰
+			PendingReviveActor = World->SpawnActor<AMSTeamReviveActor>(AMSTeamReviveActor::StaticClass(), SpawnLoc, SpawnRot, Params);
+			if (PendingReviveActor)
+			{
+				// 부활용 액터 초기화 및 부활 진행 시간 설정
+				PendingReviveActor->Initialize(this, 2.5f);
+			}
+		}
+
+		// 관전 모드로 진입
+		BeginSpectate_Server();
+	}
+	else
+	{
+		// 팀 전명 또는 1인 플레이인 경우, 게임 종료를 알림
+		if (GS)
+		{
+			//GS->OnSharedLivesDepleted.Broadcast();
+		}
+	}
+}
+
+void AMSPlayerCharacter::ServerFinishRevive()
+{
+	if (!HasAuthority()) return;
+
+	// 부활이 끝나면 상태 초기화 후 캐릭터 리셋
+	bIsDead = false;
+	bIsSpectating = false;
+	PendingReviveActor = nullptr;
+	ResetCharacterOnRespawn();
+
+	// 카메라를 다시 자신의 폰으로 돌림
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->SetViewTarget(this);
+	}
+}
+
+void AMSPlayerCharacter::ResetCharacterOnRespawn()
+{
+	// 체력을 최대값으로 회복
+	if (AttributeSet)
+	{
+		AttributeSet->SetHealth(AttributeSet->GetMaxHealth());
+	}
+
+	// 모든 어빌리티 쿨타임 초기화
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAllAbilities(nullptr);
+	}
+}
+
+void AMSPlayerCharacter::BeginSpectate_Server()
+{
+	if (!HasAuthority()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	// 월드 내 PlayerContoller 탐색
+	for (APlayerController* PC : TActorRange<APlayerController>(GetWorld()))
+	{
+		// 관전 대상이 있는지 확인 후 최초 대상 설정. 해당 대상으로 ViewTarget 설정
+		AMSPlayerCharacter* OtherChar = PC ? Cast<AMSPlayerCharacter>(PC->GetPawn()) : nullptr;
+		if (OtherChar && OtherChar != this && !OtherChar->bIsDead)
+		{
+			PC->SetViewTarget(OtherChar);
+			break;
+		}
+	}
+}
+
+
 
 
 
