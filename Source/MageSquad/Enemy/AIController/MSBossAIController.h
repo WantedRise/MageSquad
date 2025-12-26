@@ -13,5 +13,12 @@ UCLASS()
 class MAGESQUAD_API AMSBossAIController : public AMSBaseAIController
 {
 	GENERATED_BODY()
-	
+
+public:
+	FORCEINLINE const FName& GetIsSpawndKey() const { return IsSpawndKey; }
+
+private:
+	// Blackboard Keys
+	UPROPERTY(EditDefaultsOnly, Category = "AI|BlackboardKeys")
+	FName IsSpawndKey = "IsSpawnd";
 };

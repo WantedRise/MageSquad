@@ -33,6 +33,6 @@ void AMSBossEnemy::SetPoolingMode(bool bInPooling)
 	
 	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(GetController()))
 	{
-		AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsSpawnd"), !bInPooling);		
+		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsSpawndKey(), !bInPooling);		
 	}
 }

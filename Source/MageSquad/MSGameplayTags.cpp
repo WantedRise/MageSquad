@@ -38,6 +38,9 @@ namespace MSGameplayTags
 	
 	/*Enemy Event Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_NormalAttack, "Enemy.Event.NormalAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_HealthDepleted, "Enemy.Event.HealthDepleted");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Death,"Enemy.Event.Death");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_PhaseChanged,"Enemy.Event.PhaseChanged");
 #pragma  endregion
 
 	/* Skill Ability Tags */

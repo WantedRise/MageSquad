@@ -39,6 +39,9 @@ namespace MSGameplayTags
 	
 	/*Enemy Event Tags*/
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_NormalAttack);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_HealthDepleted);
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_Death);         
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Event_PhaseChanged);  
 #pragma  endregion
 	
 	/* Skill Ability Tags */
