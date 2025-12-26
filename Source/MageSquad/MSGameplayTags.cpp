@@ -8,7 +8,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Ability_Blink, "Player.Ability.Blink");
 	
 	/*Pleyer State Tahgs*/
-	UE_DEFINE_GAMEPLAY_TAG(Player_State_Invincible, "Player.State.Invincible");
+	UE_DEFINE_GAMEPLAY_TAG(Player_State_Invincible, "Player.State.Invincible"); // 무적 상태
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Dead, "Player.State.Dead");
 	
 	/* Player Event Tags */

@@ -3,6 +3,7 @@
 
 #include "Enemy/AI/BTService/BTService_UpdateTarget.h"
 #include "EngineUtils.h"
+#include "MSGameplayTags.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
@@ -21,7 +22,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
-	// 매 Interval마다 실행 - 타겟 검색 및 갱신
+	// 타겟 검색 및 갱신
 	if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerComp.GetAIOwner()))
 	{
 			
@@ -31,17 +32,15 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 			
-		// 주변 적 탐지
 		// @Todo : 나중에 그냥 플레이 리스트 저장하도록 수정할 예정
 		TArray<AMSPlayerCharacter*> FoundActors;
+		
 		// 월드에 있는 Player 액터를 검색해서 배열에 추가
 		for (AMSPlayerCharacter* Player : TActorRange<AMSPlayerCharacter>(GetWorld()))
 		{
-			// 배열에 추가
 			FoundActors.Add(Player);	
 		}
 		
-		// Owner Pawn 가져오기
 		AMSBaseEnemy* OwnerPawn = Cast<AMSBaseEnemy>(OwnerComp.GetAIOwner()->GetPawn());
 		if (!OwnerPawn)
 		{
@@ -55,8 +54,13 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 
 		for (AMSPlayerCharacter* Player : FoundActors)
 		{
-			if (Player)
+			if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
 			{
+				if (ASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead))
+				{
+					continue;
+				}
+				
 				float DistanceSq = FVector::DistSquared(MyLocation, Player->GetActorLocation());
 				if (DistanceSq < ClosestDistanceSq)
 				{
