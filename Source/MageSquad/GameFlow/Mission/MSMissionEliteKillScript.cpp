@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Components/MSMissionComponent.h"
+#include "Utils/MSUtils.h"
 
 // UMSMission_EliteKillScript.cpp
 void UMSMissionEliteKillScript::Initialize(UWorld* World)
@@ -49,8 +50,7 @@ void UMSMissionEliteKillScript::SpawnElite(UWorld* World)
 {
     if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(World))
     {
-        
-        EliteMonster = SpawnSystem->SpawnMonsterByID(FName(TEXT("Boss_Fey")), FVector(0, 0, 0));
+        EliteMonster = SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_SEVAROG, FVector(0, 0, 0));
         UE_LOG(LogTemp, Error, TEXT("%s"), EliteMonster!=nullptr ? TEXT("EliteMonster Spawn") : TEXT("EliteMonster Not Spawn"));
     }
 

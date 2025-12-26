@@ -85,8 +85,8 @@ struct FMSCachedEnemyData
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 	
 	// GAS 관련
-	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
-	TArray<TSubclassOf<UGameplayEffect>> StartEffects;
+	UPROPERTY()
+	TObjectPtr<class UDA_EnemyAbilityData> EnemyAbilities;
 };
 
 /**

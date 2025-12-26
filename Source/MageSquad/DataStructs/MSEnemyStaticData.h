@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "DataAssets/Enemy/DA_EnemyAbilityData.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "MSEnemyStaticData.generated.h"
 
@@ -37,10 +38,7 @@ struct FMSEnemyStaticData : public FTableRowBase
 	float AttackRange;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<UGameplayAbility>> StartAbilities;
-    
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<UGameplayEffect>> StartEffects;
+	TSoftObjectPtr<UDA_EnemyAbilityData> EnemyAbilities;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bIsRanged;

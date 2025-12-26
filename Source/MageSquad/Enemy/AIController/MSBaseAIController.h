@@ -25,11 +25,11 @@ public:
 	virtual void StopAI();
 
 public:
-	FORCEINLINE FName GetTargetActorKey() const { return TargetActorKey; }
-	FORCEINLINE FName GetTargetLocationKey() const { return TargetLocationKey; }
-	FORCEINLINE FName GetTargetDistanceKey() const { return TargetDistanceKey; }
-	FORCEINLINE FName GetCanAttackKey() const { return CanAttackKey; }
-	FORCEINLINE FName GetIsDeadKey() const { return IsDeadKey; }	
+	FORCEINLINE const FName& GetTargetActorKey() const { return TargetActorKey; }
+	FORCEINLINE const FName& GetTargetLocationKey() const { return TargetLocationKey; }
+	FORCEINLINE const FName& GetTargetDistanceKey() const { return TargetDistanceKey; }
+	FORCEINLINE const FName& GetCanAttackKey() const { return CanAttackKey; }
+	FORCEINLINE const FName& GetIsDeadKey() const { return IsDeadKey; }	
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
