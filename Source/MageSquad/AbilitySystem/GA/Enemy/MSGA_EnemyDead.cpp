@@ -36,7 +36,6 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Dead"), DeadMontage);
 		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
 		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
-		//EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 추가
 		EnemyDeadTask->ReadyForActivation();
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		

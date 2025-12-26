@@ -10,7 +10,7 @@ UMSAT_PlayMontageAndWaitForEvent::UMSAT_PlayMontageAndWaitForEvent()
 }
 
 UMSAT_PlayMontageAndWaitForEvent* UMSAT_PlayMontageAndWaitForEvent::CreateTask(UGameplayAbility* OwningAbility,
-	UAnimMontage* Montage, FGameplayTagContainer EventTags, float Rate)
+	UAnimMontage* Montage, FGameplayTagContainer EventTags, float Rate, const FName& StartSectionName)
 {
 	UMSAT_PlayMontageAndWaitForEvent* Task = 
 	NewAbilityTask<UMSAT_PlayMontageAndWaitForEvent>(OwningAbility);
@@ -18,6 +18,7 @@ UMSAT_PlayMontageAndWaitForEvent* UMSAT_PlayMontageAndWaitForEvent::CreateTask(U
 	Task->Montage = Montage;
 	Task->EventTags = EventTags;
 	Task->Rate = Rate;
+	Task->StartSectionName = StartSectionName;
 
 	return Task;
 }
@@ -40,7 +41,7 @@ void UMSAT_PlayMontageAndWaitForEvent::Activate()
 			this, &ThisClass::OnGameplayEvent));
 
 	// 몽타주 재생
-	if (ASC->PlayMontage(Ability, Ability->GetCurrentActivationInfo(), Montage, Rate) > 0.0f)
+	if (ASC->PlayMontage(Ability, Ability->GetCurrentActivationInfo(), Montage, Rate, StartSectionName) > 0.0f)
 	{
 		FOnMontageEnded EndDelegate;
 		EndDelegate.BindUObject(this, &ThisClass::OnMontageEnded);

@@ -35,7 +35,8 @@ public:
 		UGameplayAbility* OwningAbility,
 		UAnimMontage* Montage,
 		FGameplayTagContainer EventTags,
-		float Rate = 1.0f);
+		float Rate = 1.0f,
+		const FName& StartSectionName = NAME_None);
 
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
@@ -61,4 +62,5 @@ private:
 	FGameplayTagContainer EventTags;
 	float Rate;
 	FDelegateHandle EventHandle;
+	FName StartSectionName;
 };

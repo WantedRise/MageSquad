@@ -26,5 +26,5 @@ public:
 	
 public:
 	FORCEINLINE UAnimMontage* GetSpawnMontage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->SpawnAnim;}
-	
+	FORCEINLINE UAnimMontage* GetGroggyMontage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->GroggyAnim;}
 };

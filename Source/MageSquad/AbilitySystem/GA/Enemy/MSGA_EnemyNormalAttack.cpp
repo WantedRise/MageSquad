@@ -41,16 +41,18 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 	
 	if (UAnimMontage* AttackMontage = Owner->GetAttackMontage())
 	{
-		// UAbilityTask_PlayMontageAndWait* EnemyAttackTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("NormalAttack"), AttackMontage);
-		// EnemyAttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		// EnemyAttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
-		// EnemyAttackTask->ReadyForActivation();
-		
 		FGameplayTagContainer Tags;
 		Tags.AddTag(FGameplayTag::RequestGameplayTag("Enemy.Event.NormalAttack"));
+		
+		// Todo : 추후에 페이즈 전환 관련 델리게이트로 빼서 관리할 예정
+		FName StartSectionName = NAME_None;
+		if (Owner->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
+		{
+			StartSectionName = TEXT("Phase2");
+		}
 
 		UMSAT_PlayMontageAndWaitForEvent* AttackTask = 
-			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, AttackMontage, Tags);
+			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, AttackMontage, Tags, 1.f, StartSectionName);
 
 		AttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnCompleteCallback);
 		AttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnInterruptedCallback);

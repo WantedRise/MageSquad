@@ -3,22 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MSGA_EnemyBossBaseAbility.h"
-#include "MSGA_EnemyGroggy.generated.h"
+#include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
+#include "MSGA_EnemyIdle.generated.h"
 
 /**
- * 작성자 : 임희섭
- * 작성일 : 2025/12/25
- * 보스의 페이즈 전환 시 Groggy 상태를 나타낼 때 발동할 Ability
+ * 
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_EnemyGroggy : public UMSGA_EnemyBossBaseAbility
+class MAGESQUAD_API UMSGA_EnemyIdle : public UMSGA_EnemyBaseAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_EnemyGroggy();
-
+	UMSGA_EnemyIdle();
+	
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, 
@@ -44,10 +42,5 @@ private:
 	void OnCompleteCallback();
 	UFUNCTION()
 	void OnInterruptedCallback();
-	UFUNCTION()
-	void OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData);
 	
-private:
-	UPROPERTY()
-	uint32 GroggyCountAcc = 0;
 };

@@ -63,6 +63,7 @@ public:
 public: /*Getter*/
 	FORCEINLINE UAnimMontage* GetAttackMontage() const { return AnimData->AttackAnim; }
 	FORCEINLINE UAnimMontage* GetDeadMontage() const { return AnimData->DeadAnim; }
+	FORCEINLINE UAnimMontage* GetIdleMontage() const { return AnimData->IdleAnim; }	
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetDamageEffectClass() const { return DamageEffectClass; }
 	FORCEINLINE TSubclassOf<class UProjectileStaticData> GetProjectileDataClass() const { return ProjectileDataClass; }
 

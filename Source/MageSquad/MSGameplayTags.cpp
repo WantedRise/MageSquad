@@ -24,8 +24,10 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Dead, "Enemy.Ability.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Spawn, "Enemy.Ability.Spawn");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Groggy, "Enemy.Ability.Groggy");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Idle, "Enemy.Ability.Idle");
 	
 	/*Enemy State Tags*/
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Idle, "Enemy.State.Idle");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Chase, "Enemy.State.Chase");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Attack, "Enemy.State.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Dead, "Enemy.State.Dead");
@@ -42,7 +44,9 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_NormalAttack, "Enemy.Event.NormalAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_HealthDepleted, "Enemy.Event.HealthDepleted");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Death,"Enemy.Event.Death");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Groggy,"Enemy.Event.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_PhaseChanged,"Enemy.Event.PhaseChanged");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Event_Idle, "Enemy.Event.Idle");
 #pragma  endregion
 
 	/* Skill Ability Tags */

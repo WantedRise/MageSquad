@@ -56,7 +56,7 @@ void UMSGA_EnemySpawn::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 	
 	if (AMSBossAIController* BossAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
-		BossAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsSpawnd"), false);
+		BossAIController->GetBlackboardComponent()->SetValueAsBool(BossAIController->GetIsSpawndKey(), false);
 	}
 }
 

@@ -70,6 +70,20 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			}
 		}
 		
+		// 유효한 타겟이 없는 경우
+		if (!CurrentTarget)
+		{
+			if (OwnerPawn->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Idle))
+			{
+				return;
+			}
+			
+			OwnerComp.GetBlackboardComponent()->ClearValue(AIController->GetTargetActorKey());
+			OwnerComp.GetBlackboardComponent()->ClearValue(AIController->GetTargetLocationKey());
+			OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
+			return;
+		}
+		
 		// AttributeSet에서 Range 가져오기
 		const UMSEnemyAttributeSet* AttributeSet = Cast<const UMSEnemyAttributeSet>(OwnerPawn->GetAbilitySystemComponent()->GetAttributeSet(
 			UMSEnemyAttributeSet::StaticClass()));
