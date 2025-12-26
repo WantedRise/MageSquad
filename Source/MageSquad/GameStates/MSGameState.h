@@ -11,8 +11,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnProgressUpdated, float/* Normalized */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionChanged, int32/* MissionID */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionProgressChanged, float);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnMissionFinished, int32/* MissionID */,bool/* Result*/ );
-
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnMissionFinished, int32/* MissionID */, bool/* Result*/);
 
 // 현재 레벨 내 공유 경험치 값 변동 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnSharedExperienceChangedNative);
@@ -22,6 +21,12 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnSharedLevelUpNative, int32 /*NewLevel*/);
 
 // 플레이 인원 변동 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActivePlayerCountChangedNative, int32 /*NewCount*/);
+
+// 공유 목숨이 변경될 때 호출되는 델리게이트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSharedLivesChanged, int32 /*NewLives*/);
+
+// 공유 목숨이 0이 되어 팀이 전멸했을 때 호출되는 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnSharedLivesDepleted);
 
 /*
 * 작성자: 이상준
@@ -35,7 +40,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnActivePlayerCountChangedNative, int32 /*N
 * 공유 경험치/레벨 시스템 추가
 * - 경험치/레벨은 모든 플레이어가 공유 (누가 먹어도 모두 동일하게 증가)
 * - 플레이 인원(1~4)에 따라 레벨별 필요 경험치가 달라지며, 인원 변동 시 유동적으로 재계산
-* 
+*
 * 수정자: 박세찬
 * 수정일: 25/12/22
 * 레벨업 시 스킬 레벨업 선택지 호출 함수 추가
@@ -58,7 +63,7 @@ public:
 public:
 	//GameFlow 인스턴스 생성 및 초기 설정
 	void SetupGameFlow();
-	
+
 
 	//게임 진행률 변경 시 알림 델리게이트
 	FOnProgressUpdated OnProgressUpdated;
@@ -86,7 +91,7 @@ public:
 public:
 	/* ===== Server Only ===== */
 	//현재 게임 진행률(0~1)을 설정
-	void SetProgressNormalized(float InPercent, float InServerTime) { ProgressNormalized = InPercent; CurrentServerTime = InServerTime;  };
+	void SetProgressNormalized(float InPercent, float InServerTime) { ProgressNormalized = InPercent; CurrentServerTime = InServerTime; };
 	//현재 미션ID를 설정
 	UFUNCTION()
 	void SetCurrentMissionID(int32 InMissionID);
@@ -164,9 +169,9 @@ public:
 	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
 	UFUNCTION(BlueprintCallable)
 	void StartSkillLevelUpPhase();
-	
+
 	void NotifySkillLevelUpCompleted(class AMSPlayerState* PS);
-	
+
 	float GetSkillLevelUpRemainingSeconds_Server() const;
 private:
 	bool bSkillLevelUpPhaseActive = false;
@@ -178,11 +183,11 @@ private:
 
 	void EndSkillLevelUpPhase(bool bByTimeout);
 	bool AreAllPlayersCompleted() const;
-	
+
 private:
 	FTSTicker::FDelegateHandle SkillLevelUpTickerHandle;
 	bool TickSkillLevelUpPhase(float DeltaTime);
-	
+
 protected:
 	// 현재 레벨 변동 OnRep 함수
 	UFUNCTION()
@@ -195,8 +200,6 @@ protected:
 	// 현재 플레이 인원 변동 OnRep 함수
 	UFUNCTION()
 	void OnRep_ActivePlayerCount();
-
-	
 
 private:
 	// 서버: PlayerArray 기반 유효 인원 계산 함수
@@ -257,4 +260,40 @@ protected:
 	// 현재 플레이 인원(1~4인, 서버 계산 후 복제)
 	UPROPERTY(ReplicatedUsing = OnRep_ActivePlayerCount, VisibleInstanceOnly, Category = "Custom | Experience")
 	int32 ActivePlayerCount = 1;
+
+
+
+	/*****************************************************
+	* Shared Lives Section
+	*****************************************************/
+public:
+	// 현재 공유 목숨 수 Getter
+	UFUNCTION(BlueprintPure, Category = "Custom | Lives")
+	int32 GetSharedLives() const { return SharedLives; }
+
+	// 서버: 공유 목숨 설정 함수
+	void InitializeSharedLives_Server(int32 InLives);
+
+	// 서버: 공유 목숨 소모 함수 (부활)
+	void ConsumeLife_Server();
+
+	// 서버: 공유 목숨 증가 함수 (확장 염두)
+	void AddLives_Server(int32 Count);
+
+protected:
+	// 공유 목숨 수 변경 OnRep 함수
+	UFUNCTION()
+	void OnRep_SharedLives();
+
+public:
+	// 공유 목숨 변경 이벤트 델리게이트
+	FOnSharedLivesChanged OnSharedLivesChanged;
+
+	// 공유 목숨이 0 + 팀 전멸 이벤트 델리게이트
+	FOnSharedLivesDepleted OnSharedLivesDepleted;
+
+protected:
+	// 공유 목숨 수. 서버에서 관리하며 클라이언트에 복제
+	UPROPERTY(ReplicatedUsing = OnRep_SharedLives)
+	int32 SharedLives = 0;
 };

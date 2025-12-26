@@ -19,8 +19,6 @@
 #include "Engine/DataTable.h"
 #include "DataStructs/MSSharedExperienceData.h"
 
-#include "Player/MSPlayerState.h"
-
 #include "GameplayTagsManager.h"
 #include "MSFunctionLibrary.h"
 #include "Player/MSPlayerController.h"
@@ -46,6 +44,8 @@ void AMSGameState::BeginPlay()
 
 		// 현재 레벨의 요구 경험치 재계산
 		RecalculateRequiredXP_Server(false);
+
+		InitializeSharedLives_Server(5);
 	}
 }
 void AMSGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -190,7 +190,7 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpTickerHandle);
 		SkillLevelUpTickerHandle.Reset();
 	}
-	
+
 	const int32 SessionId = CurrentSkillLevelUpSessionId;
 
 	// 타임아웃이면: 미완료자 랜덤 선택 강제 적용
@@ -280,7 +280,7 @@ void AMSGameState::OnRep_ActivePlayerCount()
 void AMSGameState::StartSkillLevelUpPhase()
 {
 	if (!HasAuthority()) return;
-	
+
 	// 레벨업 세션 ID 증가 (중복 클릭 방지용)
 	static int32 LevelUpSessionId = 0;
 	LevelUpSessionId++;
@@ -289,15 +289,15 @@ void AMSGameState::StartSkillLevelUpPhase()
 	bSkillLevelUpPhaseActive = true;
 	CurrentSkillLevelUpSessionId = LevelUpSessionId;
 	CompletedPlayers.Reset();
-	
+
 	// 30초 리얼타임 마감
 	SkillLevelUpExpireAtRealTime = FPlatformTime::Seconds() + 30.0;
-	
+
 	UE_LOG(LogTemp, Log,
-			TEXT("[GameState] Start Skill LevelUp Phase. SessionId=%d"),
-			LevelUpSessionId
-		);
-	
+		TEXT("[GameState] Start Skill LevelUp Phase. SessionId=%d"),
+		LevelUpSessionId
+	);
+
 	// 모든 PlayerState에 레벨업 시작 알림
 	for (APlayerState* PS : PlayerArray)
 	{
@@ -540,4 +540,64 @@ void AMSGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	OnMissionProgressChanged.Clear();
 	OnMissionFinished.Clear();
 	Super::EndPlay(EndPlayReason);
+}
+
+void AMSGameState::InitializeSharedLives_Server(int32 InLives)
+{
+	if (!HasAuthority()) return;
+
+	// 공유 목숨 설정 + 공유 목숨 변경 이벤트 브로드캐스트
+	SharedLives = FMath::Max(0, InLives);
+	OnSharedLivesChanged.Broadcast(SharedLives);
+
+	// 공유 목숨이 0보다 작게 설정되면 전멸 이벤트 브로드캐스트
+	if (SharedLives <= 0)
+	{
+		OnSharedLivesDepleted.Broadcast();
+	}
+}
+
+void AMSGameState::ConsumeLife_Server()
+{
+	if (!HasAuthority()) return;
+
+	// 공유 목숨이 남아있을 때만 감소
+	if (SharedLives > 0)
+	{
+		// 공유 목숨을 감소시키고 공유 목숨 변경 이벤트 브로드캐스트
+		SharedLives--;
+		OnSharedLivesChanged.Broadcast(SharedLives);
+
+		if (SharedLives <= 0)
+		{
+			// 공유 목숨이 0이 되면 전멸 이벤트 브로드캐스트
+			OnSharedLivesDepleted.Broadcast();
+		}
+	}
+	else if (SharedLives <= 0)
+	{
+		// 공유 목숨이 0이 되면 전멸 이벤트 브로드캐스트
+		OnSharedLivesDepleted.Broadcast();
+	}
+}
+
+void AMSGameState::AddLives_Server(int32 Count)
+{
+	if (!HasAuthority()) return;
+
+	// 공유 목숨 증가 + 공유 목숨 변경 이벤트 브로드캐스트
+	SharedLives = FMath::Max(0, SharedLives + Count);
+	OnSharedLivesChanged.Broadcast(SharedLives);
+}
+
+void AMSGameState::OnRep_SharedLives()
+{
+	// 공유 목숨 변경 이벤트 브로드캐스트
+	OnSharedLivesChanged.Broadcast(SharedLives);
+
+	if (SharedLives <= 0)
+	{
+		// 공유 목숨이 0이 되면 전멸 이벤트 브로드캐스트
+		OnSharedLivesDepleted.Broadcast();
+	}
 }
