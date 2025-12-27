@@ -12,7 +12,7 @@
 //#include "Widgets/MVVM/MSMVVM_PlayerViewModel.h"
 #include "Widgets/Mission/MSMissionNotifyWidget.h"
 #include "Widgets/Mission/MSMissionTrackerWidget.h"
-#include "Widgets/HUD/GameProgressWidget.h"
+#include "Widgets/GameProgress/MSGameProgressWidget.h"
 #include "System/MSMissionDataSubsystem.h"
 #include "Widgets/LevelUp/MSLevelUpPanel.h"
 
@@ -423,6 +423,17 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 	Progress->SetVisibility(ESlateVisibility::Hidden);
 	Tracker->SetMissionTitle(MissionData.Title);
 	Tracker->SetMissionMessage(MissionData.Description);
+	switch (MissionData.MissionType)
+	{
+	case EMissionType::Boss:
+		Tracker->ShowBossProgress();
+		Tracker->SetTargetHpProgress(1.0f);
+		break;
+	default:
+		Tracker->ShowDefaultProgress();
+		break;
+	}
+	
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
 		Tracker->StartMissionTimer(GS, GS->GetMissionEndTime());
@@ -479,6 +490,7 @@ void AMSPlayerController::OnMissionProgressChanged(float Normalized)
 
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
 	if (!Tracker) return;
+
 	Tracker->SetTargetHpProgress(Normalized);
 }
 

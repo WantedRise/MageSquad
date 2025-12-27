@@ -40,7 +40,7 @@ public:
 
 	class UMSMissionNotifyWidget* GetMissionNotifyWidget() const { return MissionNotifyWidget; }
 	class UMSMissionTrackerWidget* GetMissionTrackerWidget() const { return MissionTrackerWidget; }
-	class UGameProgressWidget* GetGameProgressWidget() const { return GameProgressWidget; }
+	class UMSGameProgressWidget* GetGameProgressWidget() const { return GameProgressWidget; }
 protected:
 	// 바인딩 시도 함수 (바인딩 성공 여부에 따라 결괏값 반환)
 	bool TryBindLocalHealth();
@@ -127,7 +127,7 @@ protected:
 
 	//게임 진행도 위젯 클래스
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UGameProgressWidget> GameProgressWidget;
+	TObjectPtr<class UMSGameProgressWidget> GameProgressWidget;
 	/* ======================== BindWidget ======================== */
 
 	// 팀 멤버 데이터 위젯 클래스

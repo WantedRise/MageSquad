@@ -1,20 +1,27 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Widgets/HUD/ProgressEventMarkerWidget.h"
+#include "Widgets/GameProgress/MSMissionEventMarker.h"
 #include "Components/Image.h"
 #include "Engine/AssetManager.h"
 #include <System/MSMissionDataSubsystem.h>
+#include "Animation/WidgetAnimation.h"
 
-void UProgressEventMarkerWidget::SetMissionID(int32 InMissionID)
+void UMSMissionEventMarker::SetMissionID(int32 InMissionID)
 {
     MissionID = InMissionID;
     LoadMissionIcon();
+
+    
+    PlayAnimation(
+        Anim_Move
+    );
 }
 
-void UProgressEventMarkerWidget::LoadMissionIcon()
+void UMSMissionEventMarker::LoadMissionIcon()
 {
-    if (!Image_Icon || MissionID == INDEX_NONE)
+    UE_LOG(LogTemp, Error, TEXT("LoadMissionIcon"));
+    if (!Image_Marker || MissionID == INDEX_NONE)
         return;
 
     UGameInstance* GI = GetWorld()->GetGameInstance();
@@ -24,23 +31,24 @@ void UProgressEventMarkerWidget::LoadMissionIcon()
     UMSMissionDataSubsystem* MissionData = GI->GetSubsystem<UMSMissionDataSubsystem>();
     if (!MissionData)
         return;
-
+    UE_LOG(LogTemp, Error, TEXT("MissionData"));
     const FMSMissionRow* Row = MissionData->Find(MissionID);
     if (!Row)
         return;
-
+    UE_LOG(LogTemp, Error, TEXT("MissionData Find"));
     const TSoftObjectPtr<UTexture2D>& IconPtr = Row->MissionIcon;
 
     if (IconPtr.IsNull())
     {
-        Image_Icon->SetBrushFromTexture(nullptr);
+        Image_Marker->SetBrushFromTexture(nullptr);
         return;
     }
 
     if (IconPtr.IsValid())
     {
-        Image_Icon->SetBrushFromTexture(IconPtr.Get());
-        SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+        Image_Marker->SetBrushFromTexture(IconPtr.Get());
+        //SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+        UE_LOG(LogTemp, Error, TEXT("IconPtr.IsValid()"));
         return;
     }
 
@@ -53,19 +61,21 @@ void UProgressEventMarkerWidget::LoadMissionIcon()
             this,
             [this, IconPtr]()
             {
-                if (Image_Icon && IconPtr.IsValid())
+                if (Image_Marker && IconPtr.IsValid())
                 {
-                    Image_Icon->SetBrushFromTexture(IconPtr.Get());
+                    Image_Marker->SetBrushFromTexture(IconPtr.Get());
                     SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+                    UE_LOG(LogTemp, Error, TEXT("Image_Marker success"));
                 }
             }
         )
     );
 }
 
-void UProgressEventMarkerWidget::NativeDestruct()
+void UMSMissionEventMarker::NativeDestruct()
 {
     MissionID = INDEX_NONE;
-    SetVisibility(ESlateVisibility::Collapsed);
+    //SetVisibility(ESlateVisibility::Collapsed);
     Super::NativeDestruct();
 }
+
