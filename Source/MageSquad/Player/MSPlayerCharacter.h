@@ -419,27 +419,38 @@ protected:
 	* Death & Respawn Section
 	*****************************************************/
 public:
-	// 현재 체력이 0 이하로 떨어졌을 때 호출되는 함수
-	void HandleOutOfHealth();
+	// 캐릭터 사망 처리 함수. 현재 체력이 0 이하로 떨어졌을 때 호출됨
+	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")
+	virtual void SetCharacterOnDead();
 
-	// 서버에서 부활 처리가 완료되었을 때 호출되는 함수
-	void ServerFinishRevive();
+	// 캐릭터 부활 처리 함수. 서버에서 부활 처리가 완료되었을 때 호출됨
+	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")
+	virtual void ResetCharacterOnRespawn();
 
 	// 사망, 관전 상태 Getter
 	FORCEINLINE const bool GetIsDead() const { return bIsDead; }
 	FORCEINLINE const bool GetSpectating() const { return bIsSpectating; }
 
 protected:
-	// 공유 목숨이 남아있어 즉시 부활하는 경우, 캐릭터를 리셋하는 함수
-	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")
-	virtual void ResetCharacterOnRespawn();
-
 	// 서버: 관전 모드 진입 함수
 	void BeginSpectate_Server();
 
+	// 서버: 사망 진입 시, 충돌/이동/입력/스킬 등을 비활성화하는 함수
+	void OnDeathEnter_Server();
+
+	// 서버: 부활 완료 시, 사망 진입에서 끈 요소들을 복구하는 함수
+	void OnRespawnExit_Server();
+
+	// 사망 상태가 변경되었을 때 로컬 클라이언트에서 입력/카메라/UI 등을 처리하는 함수
+	void ApplyLocalDeathState(bool bNowDead);
+
+	// 사망 상태 변경 OnRep 함수
+	UFUNCTION()
+	void OnRep_IsDead();
+
 protected:
 	// 사망 상태 여부
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_IsDead)
 	bool bIsDead = false;
 
 	// 관전 상태 여부
@@ -453,4 +464,24 @@ protected:
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<class AMSTeamReviveActor> PendingReviveActor;
+
+	/* ======================== Cached Data ======================== */
+	UPROPERTY(Transient)
+	TEnumAsByte<ECollisionEnabled::Type> CachedCapsuleCollision = ECollisionEnabled::QueryAndPhysics;
+
+	UPROPERTY(Transient)
+	FName CachedCapsuleProfileName;
+
+	UPROPERTY(Transient)
+	bool bCachedCapsuleOverlap = true;
+
+	UPROPERTY(Transient)
+	TEnumAsByte<ECollisionEnabled::Type> CachedPickupCollision = ECollisionEnabled::NoCollision;
+
+	UPROPERTY(Transient)
+	bool bCachedPickupOverlap = false;
+
+	UPROPERTY(Transient)
+	TEnumAsByte<EMovementMode> CachedMovementMode = MOVE_Walking;
+	/* ======================== Cached Data ======================== */
 };

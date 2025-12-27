@@ -1022,24 +1022,24 @@ void AMSPlayerCharacter::ClientRPCPlayHealthShake_Implementation(float Scale)
 	}
 }
 
-void AMSPlayerCharacter::HandleOutOfHealth()
+void AMSPlayerCharacter::SetCharacterOnDead()
 {
 	// 서버가 아니거나 이미 사망 상태인 경우 종료
 	if (!HasAuthority() || bIsDead) return;
 
-	// 사망 상태 설정
-	bIsDead = true;
-
-	// 사망 상태 태그 부여
-	AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+	// 사망한 캐릭터의 월드 및 GameState 가져오기
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
 
 	// 현재 위치를 사망 지점으로 저장
 	const FVector DeathLocation = GetActorLocation();
 
-	UWorld* World = GetWorld();
-	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
 
-	// 공유 목숨이 없는 경우, 팀원 부활 가능 여부 검사
+	// #1: 사망 상태 설정
+	OnDeathEnter_Server();
+
+
+	// #2: 나를 살릴 팀원이 있는지 검사 (+멀티인지 검사)
 	bool bHasAliveTeammate = false;
 	if (World)
 	{
@@ -1058,7 +1058,8 @@ void AMSPlayerCharacter::HandleOutOfHealth()
 		}
 	}
 
-	// 팀원 부활이 가능한 경우
+
+	// #3: 나를 살릴 팀원이 있는 경우 (+멀티인 경우)
 	if (bHasAliveTeammate)
 	{
 		// 관전 상태로 전환
@@ -1069,10 +1070,9 @@ void AMSPlayerCharacter::HandleOutOfHealth()
 		{
 			FActorSpawnParameters Params;
 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-			FVector SpawnLoc = DeathLocation;
+			FVector SpawnLoc = DeathLocation + FVector(0.f, 0.f, -100.f);
 			FRotator SpawnRot = FRotator::ZeroRotator;
 
-			// 부활용 액터를 스폰
 			PendingReviveActor = World->SpawnActor<AMSTeamReviveActor>(PendingReviveActorClass, SpawnLoc, SpawnRot, Params);
 			if (PendingReviveActor)
 			{
@@ -1083,67 +1083,60 @@ void AMSPlayerCharacter::HandleOutOfHealth()
 
 		// 관전 모드로 진입
 		BeginSpectate_Server();
+		return;
 	}
-	else
+
+
+	// #4: 나를 살릴 팀원이 없는 경우 (+1인 플레이인 경우)
+	// GameState로부터 공유 목숨 가져오기
+	if (GS && GS->GetSharedLives() > 0)
 	{
-		// GameState로부터 공유 목숨 가져오기
-		if (GS && GS->GetSharedLives() > 0)
-		{
-			// 공유 목숨이 남아 있으면 하나 소모하고 즉시 부활
-			GS->ConsumeLife_Server();
-			ResetCharacterOnRespawn();
-			SetActorLocation(DeathLocation);
+		// 공유 목숨이 남아 있으면 즉시 부활
+		ResetCharacterOnRespawn();
+		SetActorLocation(DeathLocation);
 
-			bIsDead = false;
-			// 사망 상태 태그 제거
-			AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+		// 사망 상태 재설정 + 사망 상태 태그 제거
+		bIsDead = false;
+		AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
 
-			return;
-		}
-
-		// 팀 전명 또는 1인 플레이인 경우, 게임 종료를 알림
-		if (GS)
-		{
-			GS->OnSharedLivesDepleted.Broadcast();
-		}
+		return;
 	}
-}
 
-void AMSPlayerCharacter::ServerFinishRevive()
-{
-	if (!HasAuthority()) return;
-
-	UWorld* World = GetWorld();
-	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
-
-	GS->ConsumeLife_Server();
-
-	// 부활이 끝나면 상태 초기화 후 캐릭터 리셋
-	bIsDead = false;
-
-	// 사망 상태 태그 제거
-	AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
-
-	bIsSpectating = false;
-	PendingReviveActor = nullptr;
-	ResetCharacterOnRespawn();
-
-	// 카메라를 다시 자신의 폰으로 돌림
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	// 팀 전멸 또는 1인 플레이인 경우, 게임 종료를 알림
+	if (GS)
 	{
-		PC->SetViewTarget(this);
+		GS->OnSharedLivesDepleted.Broadcast();
 	}
 }
 
 void AMSPlayerCharacter::ResetCharacterOnRespawn()
 {
-	// 체력을 최대값으로 회복
+	if (!HasAuthority()) return;
+
+	// 사망한 캐릭터의 월드 및 GameState 가져오기
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+
+	// 공유 목숨 차감
+	GS->ConsumeLife_Server();
+
+	// #1: 부활 설정
+	OnRespawnExit_Server();
+
+
+	// #2: 카메라를 다시 자신의 폰으로 돌림
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->SetViewTarget(this);
+	}
+
+	// #3: 체력을 최대값으로 회복
 	if (AttributeSet)
 	{
 		AttributeSet->SetHealth(AttributeSet->GetMaxHealth());
 	}
 
-	// 모든 어빌리티 쿨타임 초기화
+	// #4: 모든 어빌리티 쿨타임 초기화
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->CancelAllAbilities(nullptr);
@@ -1171,6 +1164,119 @@ void AMSPlayerCharacter::BeginSpectate_Server()
 			break;
 		}
 	}
+}
+
+void AMSPlayerCharacter::OnDeathEnter_Server()
+{
+	if (!HasAuthority()) return;
+
+	bIsDead = true;
+
+	SetActorHiddenInGame(true);
+
+	// 원본 복구용 현재 상태 캐시 저장
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		CachedCapsuleCollision = Capsule->GetCollisionEnabled();
+		CachedCapsuleProfileName = Capsule->GetCollisionProfileName();
+		bCachedCapsuleOverlap = Capsule->GetGenerateOverlapEvents();
+
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Capsule->SetGenerateOverlapEvents(false);
+	}
+
+	// 경험치 픽업 오버랩 비활성화
+	// (서버 권한에서만 오버랩을 쓰고 있으므로 서버에서 끄는 게 핵심)
+	if (ExperiencePickupCollision)
+	{
+		CachedPickupCollision = ExperiencePickupCollision->GetCollisionEnabled();
+		bCachedPickupOverlap = ExperiencePickupCollision->GetGenerateOverlapEvents();
+		ExperiencePickupCollision->SetGenerateOverlapEvents(false);
+		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	// 이동 정지
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		CachedMovementMode = MoveComp->MovementMode;
+		MoveComp->StopMovementImmediately();
+		MoveComp->DisableMovement();
+	}
+
+	// 스킬/지속기 정리 및 사망 태그 부여
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAllAbilities(nullptr);
+		AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+	}
+
+	// 리슨 서버(호스트) 같은 경우 서버에서 바로 로컬 입력도 차단
+	ApplyLocalDeathState(true);
+
+	ForceNetUpdate();
+}
+
+void AMSPlayerCharacter::OnRespawnExit_Server()
+{
+	if (!HasAuthority()) return;
+
+	bIsDead = false;
+	bIsSpectating = false;
+	PendingReviveActor = nullptr;
+
+	SetActorHiddenInGame(false);
+
+	// 원본 복구
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		if (!CachedCapsuleProfileName.IsNone())
+		{
+			Capsule->SetCollisionProfileName(CachedCapsuleProfileName);
+		}
+		Capsule->SetCollisionEnabled(CachedCapsuleCollision);
+		Capsule->SetGenerateOverlapEvents(bCachedCapsuleOverlap);
+	}
+
+	// 경험치 픽업 오버랩 복구
+	if (ExperiencePickupCollision)
+	{
+		ExperiencePickupCollision->SetCollisionEnabled(CachedPickupCollision);
+		ExperiencePickupCollision->SetGenerateOverlapEvents(bCachedPickupOverlap);
+	}
+
+	// 이동 복구
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->SetMovementMode(CachedMovementMode);
+	}
+
+	// 사망 상태 태그 제거
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
+	}
+
+	// 로컬 입력 복구
+	ApplyLocalDeathState(false);
+
+	ForceNetUpdate();
+}
+
+void AMSPlayerCharacter::ApplyLocalDeathState(bool bNowDead)
+{
+	if (!IsLocallyControlled()) return;
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	// MOVE/LOOK 입력만 막는다(Q/E 관전 전환 같은 별도 입력은 유지)
+	PC->SetIgnoreMoveInput(bNowDead);
+	PC->SetIgnoreLookInput(bNowDead);
+}
+
+void AMSPlayerCharacter::OnRep_IsDead()
+{
+	ApplyLocalDeathState(bIsDead);
 }
 
 
