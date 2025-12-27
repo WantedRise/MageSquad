@@ -88,9 +88,18 @@ void AMSSpawnTileMap::GenerateTileMap()
 	if (bRequireNavMesh)
 	{
 		NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+		
+		// 에디터에서는 다른 방식으로 시도
 		if (!NavSystem)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[SpawnTileMap] NavSystem not found but bRequireNavMesh is true!"));
+			NavSystem = UNavigationSystemV1::GetNavigationSystem(World);
+		}
+		
+		if (!NavSystem)
+		{
+			UE_LOG(LogTemp, Error, TEXT("[SpawnTileMap] NavSystem not found! Make sure NavMesh is built in this level."));
+			UE_LOG(LogTemp, Error, TEXT("[SpawnTileMap] Aborting generation because bRequireNavMesh is true."));
+			return;
 		}
 	}
 
@@ -136,7 +145,25 @@ void AMSSpawnTileMap::GenerateTileMap()
 				if (bRequireNavMesh && NavSystem)
 				{
 					FNavLocation NavLoc;
-					bOnNavMesh = NavSystem->ProjectPointToNavigation(FinalLocation, NavLoc, NavMeshQueryExtent);
+					
+					// NavMeshQueryExtent가 0이면 작은 범위로 체크
+					FVector QueryExtent = NavMeshQueryExtent;
+					if (QueryExtent.IsNearlyZero())
+					{
+						QueryExtent = FVector(10.f, 10.f, 100.f);
+					}
+					
+					bOnNavMesh = NavSystem->ProjectPointToNavigation(FinalLocation, NavLoc, QueryExtent);
+					
+					// 추가 검증: 투영된 위치가 원래 위치와 XY 기준으로 너무 멀면 실패
+					if (bOnNavMesh)
+					{
+						float DistXY = FVector::DistXY(FinalLocation, NavLoc.Location);
+						if (DistXY > TileSize * 0.25f) // 타일 크기의 25% 이상 떨어져 있으면 실패
+						{
+							bOnNavMesh = false;
+						}
+					}
 				}
 
 				if (!bOnNavMesh)
