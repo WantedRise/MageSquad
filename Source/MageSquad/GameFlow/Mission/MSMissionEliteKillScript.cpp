@@ -13,7 +13,7 @@
 // UMSMission_EliteKillScript.cpp
 void UMSMissionEliteKillScript::Initialize(UWorld* World)
 {
-    Progress = 0.f;
+    Progress = 1.f;
 
     SpawnElite(World);
    
@@ -28,12 +28,15 @@ void UMSMissionEliteKillScript::Initialize(UWorld* World)
     if (!AttributeSet)
         return;
 
-    UE_LOG(LogTemp, Error, TEXT("UAbilitySystemComponent UMSEnemyAttributeSet"));
+    
     // 🔥 GAS Attribute 변경 델리게이트 바인딩
     MaxHP = AttributeSet->GetMaxHealth();
     ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(this,&UMSMissionEliteKillScript::OnEliteHPChanged);
    
-    UE_LOG(LogTemp, Error, TEXT("UAbilitySystemComponent UMSEnemyAttributeSet %f"), MaxHP);
+    if (OwnerMissionComponent.IsValid())
+    {
+        OwnerMissionComponent->UpdateMission();
+    }
 }
 
 void UMSMissionEliteKillScript::Deinitialize()
@@ -53,18 +56,13 @@ void UMSMissionEliteKillScript::SpawnElite(UWorld* World)
         EliteMonster = SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_SEVAROG, FVector(0, 0, 0));
         UE_LOG(LogTemp, Error, TEXT("%s"), EliteMonster!=nullptr ? TEXT("EliteMonster Spawn") : TEXT("EliteMonster Not Spawn"));
     }
-
-    // SpawnActor<AEliteMonster>(...)
 }
 
 void UMSMissionEliteKillScript::OnEliteHPChanged(const FOnAttributeChangeData& Data)
 {
-    UE_LOG(LogTemp, Error, TEXT("OnEliteHPChanged"));
-    
     float CurrentHP = Data.NewValue;
     
     Progress = FMath::Clamp((CurrentHP / MaxHP), 0.0f, 1.0f);
-    UE_LOG(LogTemp, Error, TEXT("OnEliteHPChanged CurrentHP %f"), CurrentHP);
 
     if (OwnerMissionComponent.IsValid())
     {

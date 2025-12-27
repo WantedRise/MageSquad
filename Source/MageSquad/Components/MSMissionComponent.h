@@ -33,6 +33,7 @@ public:
 	// GameState 참조 획득 및 이벤트 바인딩
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 public: /* ===== Server Only ===== */
 	// 새로운 미션 시작
 	void StartMission(const FMSMissionRow& MissionRow);
@@ -50,8 +51,9 @@ private:
 	void HandleMissionChanged(int32 MissionID);
 	// 미션 종료 공통 처리
 	void FinishMission(bool bSuccess);
+	void RequestMissionScriptDestroy();
 	/* ====================== */
-
+	
 	void HandleMissionProgressChanged(float Progress);
 	void OnMissionFinished(int32 MissionID,bool bSuccess);
 private:

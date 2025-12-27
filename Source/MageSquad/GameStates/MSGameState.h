@@ -108,7 +108,7 @@ protected:
 	int32 CurrentMissionID = INDEX_NONE;
 	//미션 진행도
 	UPROPERTY(ReplicatedUsing = OnRep_MissionProgress)
-	float MissionProgress = 0.f;
+	float MissionProgress = 0.001f;
 	//끝난 미션 카운트
 	UPROPERTY(ReplicatedUsing = OnRep_MissionFinished)
 	uint8 MissionFinishedCounter = 0;

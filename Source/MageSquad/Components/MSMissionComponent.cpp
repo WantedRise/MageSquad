@@ -28,6 +28,12 @@ void UMSMissionComponent::BeginPlay()
 
 void UMSMissionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    // 미션 타이머 정리
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(MissionTimerHandle);
+    }
+
     if (IsServer() && MissionScript)
     {
         MissionScript->Deinitialize();
@@ -37,9 +43,17 @@ void UMSMissionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+void UMSMissionComponent::RequestMissionScriptDestroy()
+{
+    if (IsServer() && MissionScript)
+    {
+        MissionScript->Deinitialize();
+        MissionScript = nullptr;
+    }
+}
+
 void UMSMissionComponent::FinishMission(bool bSuccess)
 {
-    UE_LOG(LogTemp, Error, TEXT("FinishMission"));
     // 미션 타이머 정리
     if (GetWorld())
     {
@@ -49,8 +63,10 @@ void UMSMissionComponent::FinishMission(bool bSuccess)
     // 미션 스크립트 정리
     if (MissionScript)
     {
-        MissionScript->Deinitialize();
-        MissionScript = nullptr;
+        GetWorld()->GetTimerManager().SetTimerForNextTick(
+            this,
+            &UMSMissionComponent::RequestMissionScriptDestroy
+        );
     }
 
     // GameState에 종료 통보
