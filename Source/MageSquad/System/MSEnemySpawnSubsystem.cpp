@@ -24,6 +24,7 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 	
 	// Commandlet(패키징, 데이터 처리 등) 환경이면 초기화 중단
+	// 패키징 에러 처리
 	if (IsRunningCommandlet())
 	{
 		return;
@@ -34,6 +35,7 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		return;
 	}
 	
+	// DataTable 로드 및 에셋 사전 로딩
 	LoadMonsterDataTable();
 }
 
@@ -97,10 +99,7 @@ void UMSEnemySpawnSubsystem::InitializePool()
 
 	// NavSystem 참조 획득
 	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-
-	// DataTable 로드 및 에셋 사전 로딩
-	// LoadMonsterDataTable();
-
+	
 	// 풀 사전 생성 -> 서버에서만
 	if (HasAuthority())
 	{
@@ -132,6 +131,7 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		{
 			continue;
 		}
+		
 		// 캐시된 데이터 생성 (값 복사)
 		FMSCachedEnemyData& CachedData = CachedMonsterData.Add(RowName);
 
@@ -238,19 +238,6 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		{
 			//  풀링 모드 설정 (AI Controller 생성 방지)
 			Enemy->SetPoolingMode(true);
-
-			//Enemy->SetNetDormancy(DORM_Initial);  // 완전 휴면
-			// UE_LOG(LogTemp, Warning,
-			//        TEXT(
-			// 	       "[PrewarmPool] %s | bReplicates: %d | bNetLoadOnClient: %d | bAlwaysRelevant: %d | NetDormancy: %d | Flags: %u"
-			//        ),
-			//        *Enemy->GetName(),
-			//        Enemy->GetIsReplicated(),
-			//        Enemy->bNetLoadOnClient,
-			//        Enemy->bAlwaysRelevant,
-			//        (int32)Enemy->NetDormancy,
-			//        (uint32)Enemy->GetFlags()
-			// );
 			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
@@ -737,12 +724,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->SetActorHiddenInGame(false);
 	Enemy->SetActorEnableCollision(true);
 
-	//  AI Controller 생성 (수동)
-	// if (!Enemy->GetController())
-	// {
-	// 	Enemy->SpawnDefaultController();
-	// }
-
 	// 네트워크 업데이트 강제
 	Enemy->ForceNetUpdate();
 
@@ -827,7 +808,6 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(Controller))
 		{
 			AIController->StopAI();
-			//AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), false);
 		}
 	}
 
