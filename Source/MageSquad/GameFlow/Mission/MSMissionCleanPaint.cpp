@@ -4,10 +4,20 @@
 #include "GameFlow/Mission/MSMissionCleanPaint.h"
 #include "Actors/Mission/MSInkAreaActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavigationSystem.h"
+#include "Components/MSMissionComponent.h"
+
+UMSMissionCleanPaint::UMSMissionCleanPaint()
+{
+    static ConstructorHelpers::FClassFinder<AMSInkAreaActor> BP_Class(TEXT("/Game/Blueprints/Actors/Mission/BP_InkArea.BP_InkArea_C"));
+
+    if (BP_Class.Succeeded())
+    {
+        MissionActorClass = BP_Class.Class;
+    }
+}
 void UMSMissionCleanPaint::Initialize(UWorld* World)
 {
-    Progress = 1.f;
-
     if (!World)
         return;
 
@@ -15,84 +25,83 @@ void UMSMissionCleanPaint::Initialize(UWorld* World)
     if (!World->GetAuthGameMode())
         return;
 
-    BindInkAreas(World);
 
+
+    UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+    if (!NavSystem)
+    {
+        return;
+    }
+    FNavLocation NavLoc;
+    FVector OutLocation;
+    if (NavSystem->ProjectPointToNavigation(FVector(0,0,0), NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
+    {
+        OutLocation = NavLoc.Location;
+        OutLocation.Z = 10.f;
+    }
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    AMSInkAreaActor* SpawnedActor = World->SpawnActor<AMSInkAreaActor>(
+        MissionActorClass,
+        OutLocation,
+        FRotator::ZeroRotator,
+        SpawnParams
+    );
+
+    SpawnedActor->OnProgressChanged.AddUObject(
+        this,
+        &UMSMissionCleanPaint::OnAreaProgressChanged
+    );
+
+    InkAreas.Add(SpawnedActor);
+
+    //BindInkAreas(World);
     // 초기 상태 1회 계산
-    OnInkAreaUpdated();
+    OnAreaProgressChanged(GetProgress());
 }
 
 void UMSMissionCleanPaint::Deinitialize()
 {
+    for (TWeakObjectPtr<class AMSInkAreaActor> Area : InkAreas)
+    {
+        if (Area.IsValid())
+        {
+            Area->OnProgressChanged.RemoveAll(this);
+            Area->Destroy();
+        }
+    }
     InkAreas.Empty();
+
+    Super::Deinitialize();
 }
 
-void UMSMissionCleanPaint::BindInkAreas(UWorld* World)
+void UMSMissionCleanPaint::OnAreaProgressChanged(float)
 {
-    TArray<AActor*> FoundActors;
-    UGameplayStatics::GetAllActorsOfClass(
-        World,
-        AMSInkAreaActor::StaticClass(),
-        FoundActors
-    );
-
-    for (AActor* Actor : FoundActors)
+    if (OwnerMissionComponent.IsValid())
     {
-        AMSInkAreaActor* Area = Cast<AMSInkAreaActor>(Actor);
-        if (!Area)
-            continue;
-
-        InkAreas.Add(Area);
-
-        // 🔥 EliteKillScript의 GAS Delegate와 동일한 역할
-        //Area->OnInkLogicUpdated.AddUObject(
-        //    this,
-        //    &UMSMissionCleanPaint::OnInkAreaUpdated
-        //);
+        OwnerMissionComponent->UpdateMission();
     }
-
-    UE_LOG(LogTemp, Log, TEXT("UMSMissionCleanPaint: Bound %d InkAreas"), InkAreas.Num());
-}
-
-void UMSMissionCleanPaint::OnInkAreaUpdated()
-{
-    float SumRemainingRatio = 0.f;
-    int32 ValidCount = 0;
-
-    for (const TWeakObjectPtr<AMSInkAreaActor>& AreaPtr : InkAreas)
-    {
-        if (!AreaPtr.IsValid())
-            continue;
-
-        // GetCleanRatio() = 0~1 (1 = 깨끗)
-        const float CleanRatio = AreaPtr->GetCleanRatio();
-
-        // Progress는 "남은 오염 비율"
-        const float RemainingDirtyRatio = 1.f - CleanRatio;
-
-        SumRemainingRatio += RemainingDirtyRatio;
-        ++ValidCount;
-    }
-
-    if (ValidCount > 0)
-    {
-        Progress = FMath::Clamp(
-            SumRemainingRatio / ValidCount,
-            0.f,
-            1.f
-        );
-    }
-    else
-    {
-        Progress = 0.f;
-    }
-
-    UE_LOG(LogTemp, Verbose,
-        TEXT("UMSMissionCleanPaint::OnInkAreaUpdated Progress = %.3f"),
-        Progress
-    );
 }
 
 float UMSMissionCleanPaint::GetProgress() const
 {
-    return Progress;
+    if (InkAreas.Num() == 0)
+        return 1.f;
+
+    float Total = 0.f;
+
+    for (const TWeakObjectPtr<AMSInkAreaActor>& Area : InkAreas)
+    {
+        if (!Area.IsValid())
+            continue;
+
+        const float Ratio = Area->GetCleanRatio();
+        //보정 
+
+        Total += (Ratio >= AreaCompleteThreshold) ? 1.f : Ratio;
+    }
+
+    return Total / InkAreas.Num();
 }

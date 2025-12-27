@@ -6,6 +6,19 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "MSInkAreaActor.generated.h"
 
+UENUM()
+enum class EInkGridState : uint8
+{
+    Dirty,     // 아직 안 지워짐
+    Clean,     // 지워짐
+    Blocked    // 돌/오브젝트로 막힘 (절대 지워지지 않음)
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(
+    FOnInkAreaProgressChanged,
+    float /* NewRatio */
+);
+
 UCLASS()
 class MAGESQUAD_API AMSInkAreaActor : public AActor
 {
@@ -23,6 +36,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Ink")
     float GetCleanRatio() const;
 
+    FOnInkAreaProgressChanged OnProgressChanged;
 protected:
     bool WorldPosToUV(const FVector& WorldPos, float& OutU, float& OutV) const;
 
@@ -31,6 +45,8 @@ protected:
 
     /** Grid 판정(내부) */
     void InitGrid();
+    void BakeBlockedCells();
+    FVector GetCellWorldCenter(int32 X, int32 Y) const;
     void CleanGridAtUV(float U, float V, float RadiusUV);
 
 protected:
@@ -78,8 +94,9 @@ protected:
 
 private:
     // Grid 상태
-    TArray<uint8> InkGrid; // 1=Dirty, 0=Clean
-    int32 DirtyCount = 0;
+    TArray<EInkGridState> InkGrid; // 1=Dirty, 0=Clean
+    int32 CurrentDirtyCount = 0;
+    int32 TotalPlayableCells = 0;
 
     // RT 2장 (핑퐁)
     UPROPERTY()

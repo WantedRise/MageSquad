@@ -20,8 +20,28 @@ class MAGESQUAD_API UMSInkCleanerComponent : public UActorComponent
 public:
     UMSInkCleanerComponent();
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     //virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+protected:
+    UFUNCTION()
+    void OnBeginOverlap(
+        UPrimitiveComponent* OverlappedComponent,
+        AActor* OtherActor,
+        UPrimitiveComponent* OtherComp,
+        int32 OtherBodyIndex,
+        bool bFromSweep,
+        const FHitResult& SweepResult
+    );
 
+    UFUNCTION()
+    void OnEndOverlap(
+        UPrimitiveComponent* OverlappedComponent,
+        AActor* OtherActor,
+        UPrimitiveComponent* OtherComp,
+        int32 OtherBodyIndex
+    );
+private:
+    void ApplyClean();
 protected:
     UPROPERTY(EditAnywhere, Category = "Ink")
     float CleanRadiusCm = 60.f;
@@ -29,8 +49,11 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Ink")
     float CleanInterval = 0.05f;
 
+    UPROPERTY()
+    UPrimitiveComponent* OwnerCollision = nullptr;
+
+    UPROPERTY()
+    TArray<TWeakObjectPtr<AMSInkAreaActor>> OverlappingAreas;
 private:
     FTimerHandle CleanTimer;
-
-    void ApplyClean();
 };

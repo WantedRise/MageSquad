@@ -3,10 +3,11 @@
 #include "Kismet/KismetRenderingLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 
+
 AMSInkAreaActor::AMSInkAreaActor()
 {
     PrimaryActorTick.bCanEverTick = false;
-
+    bReplicates = true;
     AreaMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AreaMesh"));
     RootComponent = AreaMesh;
 }
@@ -44,15 +45,113 @@ void AMSInkAreaActor::BeginPlay()
 
 void AMSInkAreaActor::InitGrid()
 {
+    if (!HasAuthority()) return;
+
     InkGrid.SetNum(GridSize * GridSize);
-    for (uint8& C : InkGrid) C = 1;
-    DirtyCount = InkGrid.Num();
+    //for (uint8& C : InkGrid) C = 1;
+    //DirtyCount = InkGrid.Num();
+    BakeBlockedCells();
+}
+
+void AMSInkAreaActor::BakeBlockedCells()
+{
+    UWorld* World = GetWorld();
+    if (!World || InkGrid.Num() == 0) return;
+
+    // 변수 초기화
+    TotalPlayableCells = 0;
+    CurrentDirtyCount = 0;
+
+  
+
+    for (int32 y = 0; y < GridSize; ++y)
+    {
+        for (int32 x = 0; x < GridSize; ++x)
+        {
+            int32 Index = y * GridSize + x;
+            FVector Start = GetCellWorldCenter(x, y) + FVector(0, 0, 5.f);
+            FVector End = Start + FVector(0, 0, 300.f);
+
+            FHitResult Hit;
+            FCollisionQueryParams Params;
+            Params.AddIgnoredActor(this);
+
+            bool bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldStatic, Params);
+            
+            if (bHit && Hit.GetComponent() != AreaMesh)
+            {
+                // 1. 장애물 영역 처리
+                InkGrid[Index] = EInkGridState::Blocked;
+            }
+            else
+            {
+                // 2. 실제 플레이 가능한 영역 처리
+                InkGrid[Index] = EInkGridState::Dirty; // 초기 상태는 더러움
+                TotalPlayableCells++;
+                CurrentDirtyCount++;
+            }
+
+            //const FBoxSphereBounds B = AreaMesh->CalcBounds(FTransform::Identity);
+            //// 그리드 한 칸의 절반 크기 (박스 크기용)
+            //FVector CellExtent = FVector(B.BoxExtent.X / GridSize, B.BoxExtent.Y / GridSize, 5.f);
+
+            //FColor DebugColor;
+            //if (InkGrid[Index] == EInkGridState::Blocked)
+            //{
+            //    DebugColor = FColor::Red; // 장애물 영역 (비율 계산 제외)
+            //}
+            //else if (InkGrid[Index] == EInkGridState::Dirty)
+            //{
+            //    DebugColor = FColor::Yellow; // 청소해야 할 영역
+            //}
+            //else
+            //{
+            //    DebugColor = FColor::Green; // 청소 완료 영역
+            //}
+      
+            //FVector Center = GetCellWorldCenter(x, y);
+            //
+            //// 월드에 박스 그리기 (10초 동안 유지)
+            //DrawDebugBox(World, Center, CellExtent, DebugColor, false, 10.f, 0, 2.f);
+        }
+    }
+}
+
+FVector AMSInkAreaActor::GetCellWorldCenter(int32 X, int32 Y) const
+{
+    if (!AreaMesh || GridSize <= 0)
+    {
+        return FVector::ZeroVector;
+    }
+
+    // 1️⃣ Grid index → UV 중심 좌표
+    const float U = (X + 0.5f) / GridSize;
+    const float V = (Y + 0.5f) / GridSize;
+
+    const FBoxSphereBounds LocalBounds = AreaMesh->CalcBounds(FTransform::Identity);
+
+    // 2️⃣ AreaMesh 로컬 공간에서의 크기
+    // (Plane 기준: -Half ~ +Half)
+    const FVector BoundsExtent = LocalBounds.BoxExtent;
+    // 3️⃣ UV(0~1) → Local Position
+    FVector LocalPos;
+    LocalPos.X = (U - 0.5f) * 2.f * BoundsExtent.X;
+    LocalPos.Y = (V - 0.5f) * 2.f * BoundsExtent.Y;
+    LocalPos.Z = 0.f;
+
+    // 4️⃣ Local → World
+    return AreaMesh->GetComponentTransform().TransformPosition(LocalPos);
 }
 
 float AMSInkAreaActor::GetCleanRatio() const
 {
-    if (InkGrid.Num() == 0) return 0.f;
-    return 1.f - (float)DirtyCount / (float)InkGrid.Num();
+    if (TotalPlayableCells <= 0) return 1.f;
+
+    // (전체 칸 - 남은 칸) / 전체 칸 = 청소된 비율
+    float Ratio = (float)(TotalPlayableCells - CurrentDirtyCount) / (float)TotalPlayableCells;
+
+    // 정밀도 문제로 인한 오버플로우 방지 (0.0 ~ 1.0 사이로 클램프)
+    return FMath::Clamp(Ratio, 0.f, 1.f);
 }
 
 void AMSInkAreaActor::CleanAtWorldPos(const FVector& WorldPos, float RadiusCm)
@@ -60,13 +159,18 @@ void AMSInkAreaActor::CleanAtWorldPos(const FVector& WorldPos, float RadiusCm)
     float U, V;
     if (!WorldPosToUV(WorldPos, U, V))
         return;
+    // 스케일 1.0 기준의 순수 로컬 크기를 가져옴
+    const FBoxSphereBounds LocalBounds = AreaMesh->CalcBounds(FTransform::Identity);
+    // 여기에 현재 액터의 X 스케일을 곱해 실제 월드 너비(cm)를 구함
+    const float RealWorldWidth = LocalBounds.BoxExtent.X * 2.0f * GetActorScale3D().X;
+    // 이제 스케일과 회전에 상관없이 정확한 UV 반경이 계산됨
+    const float RadiusUV = RadiusCm / FMath::Max(RealWorldWidth, 1.f);
+    //const float RadiusUV = RadiusCm / AreaWidthCm;
 
-    const float RadiusUV = RadiusCm / AreaWidthCm;
-
-    // 1) RT에 “지나간 길” 기록 (누적)
+    // RT에 “지나간 길” 기록 (누적)
     PaintRT(U, V, RadiusUV);
 
-    // 2) Grid 판정 (지나간 영역 기록)
+    // Grid 판정 (지나간 영역 기록)
     CleanGridAtUV(U, V, RadiusUV); 
 }
 
@@ -118,7 +222,7 @@ void AMSInkAreaActor::PaintRT(float U, float V, float RadiusUV)
 
 void AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
 {
-    if (GridSize <= 0) return;
+    if (GridSize <= 0 || !HasAuthority()) return;
 
     const int32 CX = FMath::RoundToInt(U * (GridSize - 1));
     const int32 CY = FMath::RoundToInt(V * (GridSize - 1));
@@ -139,10 +243,12 @@ void AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
             if (dx * dx + dy * dy > R2) continue;
 
             const int32 Idx = y * GridSize + x;
-            if (InkGrid[Idx] == 1)
+
+            if (InkGrid[Idx] == EInkGridState::Dirty)
             {
-                InkGrid[Idx] = 0;
-                DirtyCount = FMath::Max(0, DirtyCount - 1);
+                InkGrid[Idx] = EInkGridState::Clean;
+                CurrentDirtyCount = FMath::Max(0, CurrentDirtyCount - 1); // 지워질 때만 카운트 감소
+                OnProgressChanged.Broadcast(GetCleanRatio());
             }
         }
     }

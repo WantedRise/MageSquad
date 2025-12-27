@@ -15,6 +15,7 @@ class MAGESQUAD_API UMSMissionCleanPaint : public UMSMissionScript
     GENERATED_BODY()
 
 public:
+    UMSMissionCleanPaint();
     virtual void Initialize(UWorld* World) override;
     virtual void Deinitialize() override;
 
@@ -23,20 +24,20 @@ public:
 
     virtual bool IsCompleted() const override
     {
-        return GetProgress() <= 0.0f;
+        return GetProgress() >= 1.0f;
     }
 
 private:
-    void BindInkAreas(UWorld* World);
-    void OnInkAreaUpdated();
+    void OnAreaProgressChanged(float);
 
 private:
+    UPROPERTY()
+    TSubclassOf<class AMSInkAreaActor> MissionActorClass;
+
     // 정화 대상 영역들
+    UPROPERTY()
     TArray<TWeakObjectPtr<class AMSInkAreaActor>> InkAreas;
 
-    // 캐시된 진행도
-    float Progress = 1.f;
-
-    // (선택) 타임 리밋
-    float TimeLimit = -1.f;
+    UPROPERTY(EditDefaultsOnly, Category = "Mission|CleanPaint")
+    float AreaCompleteThreshold = 0.94f;
 };
