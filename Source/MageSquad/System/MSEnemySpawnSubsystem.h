@@ -99,18 +99,10 @@ class MAGESQUAD_API UMSEnemySpawnSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	//~=============================================================================
-	// Subsystem Lifecycle
-	//~=============================================================================
-	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	
 	void InitializePool();
-
-	//~=============================================================================
-	// Spawn Control (Blueprint Callable)
-	//~=============================================================================
 	
 	/** 자동 스폰 시작 (서버에서만 동작) */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
@@ -128,6 +120,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
 	AMSBaseEnemy* SpawnMonsterByID(const FName& MonsterID, const FVector& Location);
 	
+	// 스케일링된 최대 몬스터 수 반환
+	int32 GetScaledMaxActiveMonsters() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnInterval(float NewInterval);
@@ -182,8 +176,8 @@ private:
 	/** 내부 스폰 로직 (풀에서 가져오거나 새로 생성) */
 	AMSBaseEnemy* SpawnMonsterInternal(const FName& MonsterID, const FVector& Location);
 	
-	/** NavMesh 기반 랜덤 스폰 위치 검색 */
-	bool GetRandomSpawnLocation(FVector& OutLocation);
+	/** TileMap 기반 랜덤 스폰 위치 검색 */
+	bool GetRandomSpawnLocation(APlayerController* TargetPlayer, FVector& OutLocation);
 
 	/** 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
 	bool IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location);

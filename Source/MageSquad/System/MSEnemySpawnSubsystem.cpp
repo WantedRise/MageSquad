@@ -349,42 +349,88 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterByID(const FName& MonsterID, c
 	return SpawnMonsterInternal(MonsterID, Location);
 }
 
+int32 UMSEnemySpawnSubsystem::GetScaledMaxActiveMonsters() const
+{
+	int32 PlayerCount = 0;
+
+	if (UWorld* World = GetWorld())
+	{
+		for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (It->Get())
+			{
+				++PlayerCount;
+			}
+		}
+	}
+
+	// 최소 1명
+	PlayerCount = FMath::Max(1, PlayerCount);
+
+	return MaxActiveMonsters * PlayerCount;
+}
+
 void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 {
-	// 서버 권한 체크 (타이머가 클라이언트에서 실행될 수 없지만 안전장치)
+	// 서버 권한 체크
 	if (!HasAuthority())
 	{
 		return;
 	}
 
-	// 최대 수량 체크
-	if (CurrentActiveCount >= MaxActiveMonsters)
+	TArray<APlayerController*> AllPlayers = GetAllPlayerControllers();
+	if (AllPlayers.Num() == 0)
 	{
 		return;
 	}
-	for (int i = 0; i < SpawnCountPerTick; ++i)
+
+	// 인원수에 따른 최대 몬스터 수 스케일링
+	const int32 ScaledMaxMonsters = GetScaledMaxActiveMonsters();
+
+	// 최대 수량 체크
+	if (CurrentActiveCount >= ScaledMaxMonsters)
 	{
-		// 랜덤 몬스터 타입 선택
-		TArray<FName> AllMonsterTypes;
-		//CachedMonsterData.GetKeys(AllMonsterTypes);
-		CachedNormalMonsterData.GetKeys(AllMonsterTypes);
-		
-		if (AllMonsterTypes.Num() == 0)
+		return;
+	}
+
+	// 각 플레이어별로 스폰
+	for (APlayerController* PC : AllPlayers)
+	{
+		if (!PC || !PC->GetPawn())
 		{
-			return;
+			continue;
 		}
 
-		const FName SelectedMonsterID = AllMonsterTypes[FMath::RandRange(0, AllMonsterTypes.Num() - 1)];
-
-		// 랜덤 위치 검색
-		FVector SpawnLocation;
-		if (!GetRandomSpawnLocation(SpawnLocation))
+		// 플레이어당 SpawnCountPerTick만큼 스폰
+		for (int32 i = 0; i < SpawnCountPerTick; ++i)
 		{
-			return;
-		}
+			// 최대 수량 재체크
+			if (CurrentActiveCount >= ScaledMaxMonsters)
+			{
+				return;
+			}
 
-		// 스폰
-		SpawnMonsterInternal(SelectedMonsterID, SpawnLocation);
+			// 랜덤 몬스터 타입 선택
+			TArray<FName> AllMonsterTypes;
+			CachedNormalMonsterData.GetKeys(AllMonsterTypes);
+
+			if (AllMonsterTypes.Num() == 0)
+			{
+				return;
+			}
+
+			const FName SelectedMonsterID = AllMonsterTypes[FMath::RandRange(0, AllMonsterTypes.Num() - 1)];
+
+			// 해당 플레이어 기준으로 스폰 위치 검색
+			FVector SpawnLocation;
+			if (!GetRandomSpawnLocation(PC, SpawnLocation))
+			{
+				continue; // 이 플레이어는 스킵하고 다음 플레이어 진행
+			}
+
+			// 스폰
+			SpawnMonsterInternal(SelectedMonsterID, SpawnLocation);
+		}
 	}
 }
 
@@ -466,17 +512,23 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	return Enemy;
 }
 
-bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
+bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPlayer, FVector& OutLocation)
 {
+	if (!TargetPlayer)
+	{
+		return false;
+	}
+
+	APawn* PlayerPawn = TargetPlayer->GetPawn();
+	if (!PlayerPawn)
+	{
+		return false;
+	}
+
 	// 타일맵 시도
 	if (AMSSpawnTileMap* TileMap = GetSpawnTileMap())
 	{
 		TArray<APlayerController*> AllPlayers = GetAllPlayerControllers();
-		if (AllPlayers.Num() == 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No players found"));
-			return false;
-		}
 
 		// 모든 플레이어에게 안 보이는 타일들 가져오기
 		TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
@@ -487,68 +539,65 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 			return false;
 		}
 
-		// 기준 플레이어 (첫 번째 플레이어)
-		APawn* PlayerPawn = AllPlayers[0]->GetPawn();
-		if (!PlayerPawn)
-		{
-			return false;
-		}
-
 		const FVector PlayerLocation = PlayerPawn->GetActorLocation();
-		const float MinDistSq = MinSpawnDistance * MinSpawnDistance;
-		const float MaxDistSq = SpawnRadius * SpawnRadius;
 
-		// 거리 조건에 맞는 타일 필터링
-		TArray<FMSSpawnTile> ValidTiles;
+		// 사방에서 스폰되도록 4방향으로 분류
+		TArray<FMSSpawnTile> NorthTiles;  // +Y
+		TArray<FMSSpawnTile> SouthTiles;  // -Y
+		TArray<FMSSpawnTile> EastTiles;   // +X
+		TArray<FMSSpawnTile> WestTiles;   // -X
+
 		for (const FMSSpawnTile& Tile : InvisibleTiles)
 		{
-			float DistSq = FVector::DistSquared2D(PlayerLocation, Tile.Location);
-			if (DistSq >= MinDistSq && DistSq <= MaxDistSq)
+			FVector ToTile = Tile.Location - PlayerLocation;
+			
+			// 주요 방향 판별
+			if (FMath::Abs(ToTile.X) > FMath::Abs(ToTile.Y))
 			{
-				ValidTiles.Add(Tile);
-			}
-		}
-
-		// 유효한 타일이 없으면 거리 조건 완화 (최소 거리만 충족)
-		if (ValidTiles.Num() == 0)
-		{
-			for (const FMSSpawnTile& Tile : InvisibleTiles)
-			{
-				float DistSq = FVector::DistSquared2D(PlayerLocation, Tile.Location);
-				if (DistSq >= MinDistSq)
+				// 동서 방향
+				if (ToTile.X > 0)
 				{
-					ValidTiles.Add(Tile);
+					EastTiles.Add(Tile);
+				}
+				else
+				{
+					WestTiles.Add(Tile);
+				}
+			}
+			else
+			{
+				// 남북 방향
+				if (ToTile.Y > 0)
+				{
+					NorthTiles.Add(Tile);
+				}
+				else
+				{
+					SouthTiles.Add(Tile);
 				}
 			}
 		}
 
-		if (ValidTiles.Num() == 0)
+		// 비어있지 않은 방향들 수집
+		TArray<TArray<FMSSpawnTile>*> ValidDirections;
+		if (NorthTiles.Num() > 0) ValidDirections.Add(&NorthTiles);
+		if (SouthTiles.Num() > 0) ValidDirections.Add(&SouthTiles);
+		if (EastTiles.Num() > 0) ValidDirections.Add(&EastTiles);
+		if (WestTiles.Num() > 0) ValidDirections.Add(&WestTiles);
+
+		if (ValidDirections.Num() == 0)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No tiles within distance range"));
+			UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No valid directions"));
 			return false;
 		}
 
-		// 가장 가까운 타일 찾기
-		float BestDistSq = FLT_MAX;
-		int32 BestIndex = -1;
+		// 랜덤 방향 선택
+		TArray<FMSSpawnTile>* SelectedDirection = ValidDirections[FMath::RandRange(0, ValidDirections.Num() - 1)];
 
-		for (int32 i = 0; i < ValidTiles.Num(); ++i)
-		{
-			float DistSq = FVector::DistSquared2D(PlayerLocation, ValidTiles[i].Location);
-			if (DistSq < BestDistSq)
-			{
-				BestDistSq = DistSq;
-				BestIndex = i;
-			}
-		}
-
-		if (BestIndex >= 0)
-		{
-			OutLocation = ValidTiles[BestIndex].Location;
-			return true;
-		}
-
-		return false;
+		// 선택된 방향에서 랜덤 타일 선택
+		int32 RandomIndex = FMath::RandRange(0, SelectedDirection->Num() - 1);
+		OutLocation = (*SelectedDirection)[RandomIndex].Location;
+		return true;
 	}
 
 	// ============================================================
@@ -564,39 +613,28 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
 		}
 	}
 
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (!PlayerPawn)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No player pawn found"));
-		return false;
-	}
-
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (!PC)
-	{
-		return false;
-	}
-
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
 	int32 ViewportSizeX, ViewportSizeY;
-	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	TargetPlayer->GetViewportSize(ViewportSizeX, ViewportSizeY);
 
 	constexpr int32 MaxAttempts = 30;
-	constexpr float OffScreenMargin = 1000.f;
 
 	for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
 	{
+		constexpr float OffScreenMargin = 1000.f;
 		FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
 
 		FVector WorldLocation, WorldDirection;
-		if (PC->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
+		if (TargetPlayer->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
 		{
 			const float SpawnDistance = FMath::FRandRange(4000.0f, 5000.0f);
 			FVector CandidateLocation = WorldLocation + WorldDirection * SpawnDistance;
 			CandidateLocation.Z = PlayerPawn->GetActorLocation().Z;
+
+			// 다른 플레이어에게도 안 보이는지 체크
+			if (IsLocationVisibleToAnyPlayer(CandidateLocation))
+			{
+				continue;
+			}
 
 			FNavLocation NavLoc;
 			if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
