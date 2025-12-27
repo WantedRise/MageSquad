@@ -22,7 +22,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
-	// Å¸°Ù °Ë»ö ¹× °»½Å
+	// íƒ€ê²Ÿ ê²€ìƒ‰ ë° ê°±ì‹ 
 	if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerComp.GetAIOwner()))
 	{
 			
@@ -32,10 +32,10 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 			
-		// @Todo : ³ªÁß¿¡ ±×³É ÇÃ·¹ÀÌ ¸®½ºÆ® ÀúÀåÇÏµµ·Ï ¼öÁ¤ÇÒ ¿¹Á¤
+		// @Todo : ë‚˜ì¤‘ì— ê·¸ëƒ¥ í”Œë ˆì´ ë¦¬ìŠ¤íŠ¸ ì €ì¥í•˜ë„ë¡ ìˆ˜ì •í•  ì˜ˆì •
 		TArray<AMSPlayerCharacter*> FoundActors;
 		
-		// ¿ùµå¿¡ ÀÖ´Â Player ¾×ÅÍ¸¦ °Ë»öÇØ¼­ ¹è¿­¿¡ Ãß°¡
+		// ì›”ë“œì— ìˆëŠ” Player ì•¡í„°ë¥¼ ê²€ìƒ‰í•´ì„œ ë°°ì—´ì— ì¶”ê°€
 		for (AMSPlayerCharacter* Player : TActorRange<AMSPlayerCharacter>(GetWorld()))
 		{
 			FoundActors.Add(Player);	
@@ -47,7 +47,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 		
-		// °¡Àå °¡±î¿î ÇÃ·¹ÀÌ¾î Ã£±â
+		// ê°€ì¥ ê°€ê¹Œìš´ í”Œë ˆì´ì–´ ì°¾ê¸°
 		AActor* CurrentTarget = nullptr;
 		float ClosestDistanceSq = FLT_MAX;
 		FVector MyLocation = OwnerPawn->GetActorLocation();
@@ -70,7 +70,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			}
 		}
 		
-		// À¯È¿ÇÑ Å¸°ÙÀÌ ¾ø´Â °æ¿ì
+		// ìœ íš¨í•œ íƒ€ê²Ÿì´ ì—†ëŠ” ê²½ìš°
 		if (!CurrentTarget)
 		{
 			if (OwnerPawn->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Idle))
@@ -84,7 +84,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 		
-		// AttributeSet¿¡¼­ Range °¡Á®¿À±â
+		// AttributeSetì—ì„œ Range ê°€ì ¸ì˜¤ê¸°
 		const UMSEnemyAttributeSet* AttributeSet = Cast<const UMSEnemyAttributeSet>(OwnerPawn->GetAbilitySystemComponent()->GetAttributeSet(
 			UMSEnemyAttributeSet::StaticClass()));
     

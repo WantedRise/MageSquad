@@ -30,6 +30,7 @@
 // Forward declarations
 class AMSBaseEnemy;
 class UNavigationSystemV1;
+class AMSSpawnTileMap;
 struct FMSEnemyStaticData;
 
 /**
@@ -227,6 +228,12 @@ private:
 	
 	/** 서버 권한 체크 */
 	bool HasAuthority() const;
+	
+	// 타일맵 찾기 및 캐싱
+	AMSSpawnTileMap* GetSpawnTileMap();
+
+	// 모든 플레이어 컨트롤러 수집
+	TArray<APlayerController*> GetAllPlayerControllers() const;
 
 private:
 	
@@ -317,4 +324,8 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UNavigationSystemV1> NavSystem;
+	
+	// 타일맵 레퍼런스
+	UPROPERTY()
+	TWeakObjectPtr<AMSSpawnTileMap> SpawnTileMap;
 };
