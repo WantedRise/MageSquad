@@ -294,6 +294,6 @@ public:
 
 protected:
 	// 공유 목숨 수. 서버에서 관리하며 클라이언트에 복제
-	UPROPERTY(ReplicatedUsing = OnRep_SharedLives)
-	int32 SharedLives = 0;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Lives", ReplicatedUsing = OnRep_SharedLives)
+	int32 SharedLives = 5;
 };

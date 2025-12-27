@@ -45,7 +45,7 @@ void AMSGameState::BeginPlay()
 		// 현재 레벨의 요구 경험치 재계산
 		RecalculateRequiredXP_Server(false);
 
-		InitializeSharedLives_Server(5);
+		InitializeSharedLives_Server(SharedLives);
 	}
 }
 void AMSGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -551,7 +551,7 @@ void AMSGameState::InitializeSharedLives_Server(int32 InLives)
 	OnSharedLivesChanged.Broadcast(SharedLives);
 
 	// 공유 목숨이 0보다 작게 설정되면 전멸 이벤트 브로드캐스트
-	if (SharedLives <= 0)
+	if (SharedLives < 0)
 	{
 		OnSharedLivesDepleted.Broadcast();
 	}
@@ -567,17 +567,6 @@ void AMSGameState::ConsumeLife_Server()
 		// 공유 목숨을 감소시키고 공유 목숨 변경 이벤트 브로드캐스트
 		SharedLives--;
 		OnSharedLivesChanged.Broadcast(SharedLives);
-
-		if (SharedLives <= 0)
-		{
-			// 공유 목숨이 0이 되면 전멸 이벤트 브로드캐스트
-			OnSharedLivesDepleted.Broadcast();
-		}
-	}
-	else if (SharedLives <= 0)
-	{
-		// 공유 목숨이 0이 되면 전멸 이벤트 브로드캐스트
-		OnSharedLivesDepleted.Broadcast();
 	}
 }
 
@@ -594,10 +583,4 @@ void AMSGameState::OnRep_SharedLives()
 {
 	// 공유 목숨 변경 이벤트 브로드캐스트
 	OnSharedLivesChanged.Broadcast(SharedLives);
-
-	if (SharedLives <= 0)
-	{
-		// 공유 목숨이 0이 되면 전멸 이벤트 브로드캐스트
-		OnSharedLivesDepleted.Broadcast();
-	}
 }

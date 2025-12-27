@@ -25,6 +25,14 @@ AMSGameMode::AMSGameMode()
 void AMSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 공유 목숨이 0 + 팀 전멸 이벤트에 로비 이동 함수 바인딩
+	GetGameState<AMSGameState>()->OnSharedLivesDepleted.AddLambda(
+		[&]()
+		{
+			ExecuteTravelToLobby();
+		}
+	);
 }
 
 void AMSGameMode::SetupGameFlow()
