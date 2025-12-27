@@ -6,6 +6,7 @@
 #include "Components/ProgressBar.h"
 #include "Animation/WidgetAnimation.h"
 #include "GameStates/MSGameState.h"
+#include "Components/SizeBox.h"
 
 void UMSMissionTrackerWidget::SetMissionTitle(FText InTitle)
 {
@@ -61,7 +62,48 @@ void UMSMissionTrackerWidget::UpdateRemainingTime()
 
 void UMSMissionTrackerWidget::SetTargetHpProgress(float InNormalized)
 {
-    Progress_TargetHp->SetPercent(InNormalized);
+    if (SizeBox_Other->GetVisibility() == ESlateVisibility::Visible)
+    {
+        Progress_TargetHp->SetPercent(InNormalized);
+    }
+    else if(SizeBox_Boss->GetVisibility() == ESlateVisibility::Visible)
+    {
+        Progress_BossHp->SetPercent(InNormalized);
+        SetTextBossHp(InNormalized);
+    }
+}
+
+void UMSMissionTrackerWidget::SetBossHpProgress(float InNormalized)
+{
+    Progress_BossHp->SetPercent(InNormalized);
+}
+void UMSMissionTrackerWidget::ShowDefaultProgress()
+{
+    SizeBox_Boss->SetVisibility(ESlateVisibility::Collapsed);
+    SizeBox_Other->SetVisibility(ESlateVisibility::Visible);
+}
+void UMSMissionTrackerWidget::ShowBossProgress()
+{
+    SizeBox_Boss->SetVisibility(ESlateVisibility::Visible);
+    SizeBox_Other->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UMSMissionTrackerWidget::SetTextBossHp(float InNormalized)
+{
+    if (!Text_BossHp) return;
+
+    // 정수형(int32)으로 변환하여 출력
+    int32 Current = FMath::FloorToInt(50000.0 * InNormalized);
+    int32 Max = FMath::FloorToInt(50000.0);
+
+    // {0} / {1} 형태로 포맷 생성
+    FText HpText = FText::Format(
+        NSLOCTEXT("UI", "BossHpFormat", "{0}/{1}"),
+        FText::AsNumber(Current),
+        FText::AsNumber(Max)
+    );
+
+    Text_BossHp->SetText(HpText);
 }
 
 void UMSMissionTrackerWidget::StopMissionTimer()

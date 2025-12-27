@@ -16,12 +16,23 @@ class MAGESQUAD_API UMSMissionTrackerWidget : public UUserWidget
 public:
 	void SetMissionTitle(FText InTitle);
 	void SetMissionMessage(FText Desc);
-	void UpdateRemainingTime(float RemainingSeconds);
 	void StartMissionTimer(class AMSGameState* InGameState,float InEndTime);
 	void UpdateRemainingTime();
 	void SetTargetHpProgress(float InNormalized);
+	void SetBossHpProgress(float InNormalized);
+	void SetTextBossHp(float InNormalized);
+	void ShowDefaultProgress();
+	void ShowBossProgress();
 	void StopMissionTimer();
 public:
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* SizeBox_Other;
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* SizeBox_Boss;
+	UPROPERTY(meta = (BindWidget))
+	class UProgressBar* Progress_BossHp;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Text_BossHp;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_Timer;
 	UPROPERTY(meta = (BindWidget))

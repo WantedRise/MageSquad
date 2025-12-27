@@ -4,15 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "ProgressEventMarkerWidget.generated.h"
+#include "MSMissionEventMarker.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MAGESQUAD_API UProgressEventMarkerWidget : public UUserWidget
+class MAGESQUAD_API UMSMissionEventMarker : public UUserWidget
 {
 	GENERATED_BODY()
+
 public:
 	void SetMissionID(int32 InMissionID);
 protected:
@@ -21,12 +22,12 @@ private:
 	void LoadMissionIcon();
 private:
 	UPROPERTY(meta = (BindWidget))
-	class UImage* Image_Background;
+	class UImage* Image_Point;
 	UPROPERTY(meta = (BindWidget))
-	class UImage* Image_Border;
-	UPROPERTY(meta = (BindWidget))
-	class UImage* Image_Icon;
+	class UImage* Image_Marker;
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* Anim_Move;
+	
 
 	int32 MissionID = INDEX_NONE;
 };
-
