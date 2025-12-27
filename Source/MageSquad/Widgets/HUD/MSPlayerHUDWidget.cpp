@@ -165,6 +165,9 @@ bool UMSPlayerHUDWidget::TryBindSharedData()
 	SharedLivesChangedHandle = CachedGameState->OnSharedLivesChanged.AddUObject(
 		this, &UMSPlayerHUDWidget::OnSharedLivesChanged);
 
+	// 한 번 갱신
+	RefreshSharedExperienceUI();
+
 	return true;
 }
 
@@ -439,11 +442,12 @@ void UMSPlayerHUDWidget::RefreshSharedExperienceUI()
 {
 	if (!CachedGameState) return;
 
-	// GameState로부터 공유 레벨 및 경험치 모두 가져오기
+	// GameState로부터 공유 데이터 모두 가져오기
 	const int32 Level = CachedGameState->GetSharedLevel();
 	const float Cur = CachedGameState->GetSharedCurrentXP();
 	const float Req = CachedGameState->GetSharedXPRequired();
 	const float Pct = CachedGameState->GetSharedXPPct();
+	const int32 Lives = CachedGameState->GetSharedLives();
 
 	// 공유 경험치 바 갱신
 	if (SharedExpBarWidget)
@@ -455,6 +459,12 @@ void UMSPlayerHUDWidget::RefreshSharedExperienceUI()
 	if (SharedLevelTextWidget)
 	{
 		SharedLevelTextWidget->SetText(FText::AsNumber(Level));
+	}
+
+	// 공유 목숨 텍스트 갱신
+	if (SharedLivesTextWidget)
+	{
+		SharedLivesTextWidget->SetText(FText::AsNumber(Lives));
 	}
 }
 

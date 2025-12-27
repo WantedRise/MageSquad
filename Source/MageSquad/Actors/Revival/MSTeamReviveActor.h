@@ -115,13 +115,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Revive")
 	TObjectPtr<class UStaticMeshComponent> RingComp;
 
+	// 장판 Area 메시2 (범위 확인용)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Revive")
+	TObjectPtr<class UStaticMeshComponent> RingComp2;
+
 	// 마커 상승 높이(월드/로컬 Z)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Revive")
 	float MarkerRiseHeight = 1000.f;
 
 	// Area 스케일(Progress=1일 때)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Revive")
-	float AreaMinScale = 0.15f;
+	float AreaMinScale = 0.02f;
 
 	// Area 스케일(Progress=0일 때)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Revive")
@@ -143,8 +147,12 @@ protected:
 	/* ======================== Replication ======================== */
 
 private:
-	// 시각화 캐시 데이터
+	// 시각화 진행 여부
 	bool bVisualInitialized = false;
+
+	// 부활용 액터의 기본 Z값
 	float MarkerBaseZ = 0.f;
+
+	// 부활 Area의 기본 스케일 값
 	FVector RingBaseScale = FVector(1.f);
 };

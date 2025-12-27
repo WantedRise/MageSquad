@@ -9,8 +9,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameStateBase.h"
 
-#include "Materials/MaterialInstanceDynamic.h"
-
+#include "GameStates/MSGameState.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -48,6 +47,12 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 	RingComp->SetGenerateOverlapEvents(false);
 	RingComp->SetIsReplicated(false);
 
+	RingComp2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingComp2"));
+	RingComp2->SetupAttachment(Root);
+	RingComp2->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RingComp2->SetGenerateOverlapEvents(false);
+	RingComp2->SetIsReplicated(false);
+
 	// 초기 RepState
 	RepState.Progress = 0.f;
 	RepState.bIncreasing = false;
@@ -81,9 +86,6 @@ void AMSTeamReviveActor::BeginPlay()
 
 void AMSTeamReviveActor::Tick(float DeltaSeconds)
 {
-	Super::Tick(DeltaSeconds);
-
-
 	Super::Tick(DeltaSeconds);
 
 	if (HasAuthority())
@@ -213,7 +215,7 @@ void AMSTeamReviveActor::TickUpdate_Server(float DeltaSeconds)
 		// 사망(다운)한 캐릭터의 부활 진행
 		if (DownedCharacter.IsValid())
 		{
-			DownedCharacter->ServerFinishRevive();
+			DownedCharacter->ResetCharacterOnRespawn();
 		}
 
 		Destroy();
@@ -230,8 +232,10 @@ float AMSTeamReviveActor::ComputeProgressAtServerTime(float ServerTimeSeconds) c
 	const float Delta = (ServerTimeSeconds - RepState.ServerTimeStamp) / Duration;
 
 	// 부활 진행률 증가/감소
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
 	float Pct = RepState.Progress;
-	if (RepState.bIncreasing)
+	if (RepState.bIncreasing && (GS && GS->GetSharedLives() > 0))
 	{
 		Pct += Delta;
 	}

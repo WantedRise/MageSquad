@@ -76,7 +76,7 @@ protected:
 	void OnSharedExperienceChanged();
 	void OnSharedLevelUp(int32 NewLevel);
 
-	// 공유 경험피/레벨 갱신 UI 반영 함수
+	// 공유 경험치/레벨 갱신 UI 반영 함수
 	void RefreshSharedExperienceUI();
 
 	// 공유 목숨 변경 콜백 함수
@@ -128,7 +128,6 @@ protected:
 	//게임 진행도 위젯 클래스
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UGameProgressWidget> GameProgressWidget;
-
 	/* ======================== BindWidget ======================== */
 
 	// 팀 멤버 데이터 위젯 클래스
