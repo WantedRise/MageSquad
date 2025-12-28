@@ -419,9 +419,9 @@ protected:
 	* Death & Respawn Section
 	*****************************************************/
 public:
-	// 캐릭터 사망 처리 함수. 현재 체력이 0 이하로 떨어졌을 때 호출됨
+	// 서버: 사망 처리 함수. 현재 체력이 0 이하로 떨어졌을 때 호출됨
 	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")
-	virtual void SetCharacterOnDead();
+	virtual void SetCharacterOnDead_Server();
 
 	// 캐릭터 부활 처리 함수. 서버에서 부활 처리가 완료되었을 때 호출됨
 	UFUNCTION(BlueprintCallable, Category = "Custom | Respawn")

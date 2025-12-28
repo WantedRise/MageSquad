@@ -3,6 +3,7 @@
 
 #include "Player/MSPlayerCharacter.h"
 #include "Player/MSPlayerState.h"
+#include "Player/MSPlayerController.h"
 
 #include "Components/Player/MSHUDDataComponent.h"
 #include "Engine/Texture2D.h"
@@ -1022,24 +1023,28 @@ void AMSPlayerCharacter::ClientRPCPlayHealthShake_Implementation(float Scale)
 	}
 }
 
-void AMSPlayerCharacter::SetCharacterOnDead()
+void AMSPlayerCharacter::SetCharacterOnDead_Server()
 {
-	// 서버가 아니거나 이미 사망 상태인 경우 종료
+	// 서버 전용 + 중복 방지
 	if (!HasAuthority() || bIsDead) return;
 
-	// 사망한 캐릭터의 월드 및 GameState 가져오기
+	// 월드, GS, 사망 지점 가져오기
 	UWorld* World = GetWorld();
 	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
-
-	// 현재 위치를 사망 지점으로 저장
 	const FVector DeathLocation = GetActorLocation();
 
-
-	// #1: 사망 상태 설정
+	// ============================================================
+	// #1: 사망 진입(서버): 충돌/이동/스킬/입력 차단 + Dead 태그 부여
+	// ============================================================
 	OnDeathEnter_Server();
 
 
-	// #2: 나를 살릴 팀원이 있는지 검사 (+멀티인지 검사)
+	// ============================================================
+	// #2: 현재 세션이 1인인지/멀티인지, 그리고 살아있는 팀원이 있는지 판단
+	//    - 멀티(2인 이상): 부활용 액터를 통한 부활 로직을 통해 부활
+	//    - 1인(혼자): 부활 로직 수행이 불가능하므로 공유 목숨을 소비하고 즉시 부활
+	// ============================================================
+	int32 PlayerCountWithPawn = 0;
 	bool bHasAliveTeammate = false;
 	if (World)
 	{
@@ -1048,32 +1053,59 @@ void AMSPlayerCharacter::SetCharacterOnDead()
 		{
 			if (!PC) continue;
 
-			// 살아있는 팀원이 있는 경우 팀원 부활 가능 판정
+			// 팀원 카운트 증가
 			AMSPlayerCharacter* OtherChar = Cast<AMSPlayerCharacter>(PC->GetPawn());
-			if (OtherChar && OtherChar != this && !OtherChar->bIsDead)
+			if (!OtherChar) continue;
+			++PlayerCountWithPawn;
+
+			// 살아있는 팀원 플래그 활성화
+			if (OtherChar != this && !OtherChar->GetIsDead())
 			{
 				bHasAliveTeammate = true;
-				break;
 			}
 		}
 	}
 
+	// 멀티 플레이인지 플래그로 저장
+	const bool bIsMultiplayer = (PlayerCountWithPawn >= 2);
 
-	// #3: 나를 살릴 팀원이 있는 경우 (+멀티인 경우)
-	if (bHasAliveTeammate)
+
+	// ============================================================
+	// #3: 멀티 플레이(2인 이상)
+	//    - 살아있는 팀원이 없으면: 팀 전멸 -> 게임 패배 처리
+	//    - 살아있는 팀원이 있으면: 관전 진입
+	//    - 부활 로직을 위한 부활용 액터 스폰
+	// ============================================================
+	if (bIsMultiplayer)
 	{
-		// 관전 상태로 전환
+		// 살아있는 팀원이 없는 경우 -> 팀 전멸 처리
+		if (!bHasAliveTeammate)
+		{
+			if (GS)
+			{
+				GS->OnSharedLivesDepleted.Broadcast();
+			}
+			return;
+		}
+
+		// 관전 진입	(부활 가능/불가와 무관하게 사망자는 항상 관전)
 		bIsSpectating = true;
 
+		// 리슨 서버(호스트)는 OnRep가 안 타므로 즉시 입력/IMC 갱신
+		ApplyLocalDeathState(true);
+
 		// 부활용 액터를 스폰
-		if (World && !PendingReviveActor)
+		if (World && !PendingReviveActor && PendingReviveActorClass)
 		{
+			// 스폰 파라미터 설정
 			FActorSpawnParameters Params;
 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-			FVector SpawnLoc = DeathLocation + FVector(0.f, 0.f, -100.f);
-			FRotator SpawnRot = FRotator::ZeroRotator;
 
-			PendingReviveActor = World->SpawnActor<AMSTeamReviveActor>(PendingReviveActorClass, SpawnLoc, SpawnRot, Params);
+			// 사망 지점에 마커가 살짝 깔리도록 -Z 오프셋
+			FVector SpawnLoc = DeathLocation + FVector(0.f, 0.f, -100.f);
+
+			// 부활용 액터 스폰 후 저장
+			PendingReviveActor = World->SpawnActor<AMSTeamReviveActor>(PendingReviveActorClass, SpawnLoc, FRotator::ZeroRotator, Params);
 			if (PendingReviveActor)
 			{
 				// 부활용 액터 초기화 및 부활 진행 시간 설정
@@ -1081,28 +1113,27 @@ void AMSPlayerCharacter::SetCharacterOnDead()
 			}
 		}
 
-		// 관전 모드로 진입
+		// 관전 대상으로 카메라 전환
 		BeginSpectate_Server();
 		return;
 	}
 
 
-	// #4: 나를 살릴 팀원이 없는 경우 (+1인 플레이인 경우)
+	// ============================================================
+	// 4) 1인 플레이(혼자)
+	//    - 공유 목숨이 남아 있으면 즉시 소비하고 사망 지점에서 부활
+	//    - 공유 목숨이 0이면 게임 패배 처리
+	// ============================================================
 	// GameState로부터 공유 목숨 가져오기
 	if (GS && GS->GetSharedLives() > 0)
 	{
-		// 공유 목숨이 남아 있으면 즉시 부활
+		// 즉시 부활
 		ResetCharacterOnRespawn();
 		SetActorLocation(DeathLocation);
-
-		// 사망 상태 재설정 + 사망 상태 태그 제거
-		bIsDead = false;
-		AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Dead);
-
 		return;
 	}
 
-	// 팀 전멸 또는 1인 플레이인 경우, 게임 종료를 알림
+	// 남은 목숨 없음 -> 게임 패배 처리
 	if (GS)
 	{
 		GS->OnSharedLivesDepleted.Broadcast();
@@ -1116,27 +1147,35 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 	// 사망한 캐릭터의 월드 및 GameState 가져오기
 	UWorld* World = GetWorld();
 	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+	if (!GS) return;
 
-	// 공유 목숨 차감
+	// #1: 공유 목숨 소비
 	GS->ConsumeLife_Server();
 
-	// #1: 부활 설정
+	// #2: 서버: 사망에서 꺼둔 요소들 복구
 	OnRespawnExit_Server();
 
-
-	// #2: 카메라를 다시 자신의 폰으로 돌림
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	// #3: 카메라를 다시 내 캐릭터로 복귀
+	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(GetController()))
 	{
-		PC->SetViewTarget(this);
+		MSPC->SetSpectateViewTarget(this);
+	}
+	else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->SetViewTargetWithBlend(this, 0.35f, VTBlend_Cubic, 1.5f, false);
 	}
 
-	// #3: 체력을 최대값으로 회복
+
+	// ============================================================
+	// #4: ASC 관련 초기화 로직
+	// ============================================================
+	// 체력을 최대값으로 회복
 	if (AttributeSet)
 	{
 		AttributeSet->SetHealth(AttributeSet->GetMaxHealth());
 	}
 
-	// #4: 모든 어빌리티 쿨타임 초기화
+	// 모든 어빌리티 쿨타임 초기화
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->CancelAllAbilities(nullptr);
@@ -1152,6 +1191,8 @@ void AMSPlayerCharacter::BeginSpectate_Server()
 
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC) return;
+	AMSPlayerController* MSPC = Cast<AMSPlayerController>(PC);
+	if (!MSPC) return;
 
 	// 월드 내 PlayerContoller 탐색
 	for (APlayerController* OtherPC : TActorRange<APlayerController>(GetWorld()))
@@ -1160,7 +1201,15 @@ void AMSPlayerCharacter::BeginSpectate_Server()
 		AMSPlayerCharacter* OtherChar = OtherPC ? Cast<AMSPlayerCharacter>(OtherPC->GetPawn()) : nullptr;
 		if (OtherChar && OtherChar != this && !OtherChar->bIsDead)
 		{
-			PC->SetViewTarget(OtherChar);
+			// 관전 카메라 전환은 PlayerController에서 블렌드 파라미터로 통일
+			if (MSPC)
+			{
+				MSPC->SetSpectateViewTarget(OtherChar);
+			}
+			else
+			{
+				PC->SetViewTargetWithBlend(this, 0.35f, VTBlend_Cubic, 1.5f, false);
+			}
 			break;
 		}
 	}
@@ -1186,7 +1235,6 @@ void AMSPlayerCharacter::OnDeathEnter_Server()
 	}
 
 	// 경험치 픽업 오버랩 비활성화
-	// (서버 권한에서만 오버랩을 쓰고 있으므로 서버에서 끄는 게 핵심)
 	if (ExperiencePickupCollision)
 	{
 		CachedPickupCollision = ExperiencePickupCollision->GetCollisionEnabled();
@@ -1266,12 +1314,12 @@ void AMSPlayerCharacter::ApplyLocalDeathState(bool bNowDead)
 {
 	if (!IsLocallyControlled()) return;
 
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC) return;
-
-	// MOVE/LOOK 입력만 막는다(Q/E 관전 전환 같은 별도 입력은 유지)
-	PC->SetIgnoreMoveInput(bNowDead);
-	PC->SetIgnoreLookInput(bNowDead);
+	// IMC 교체
+	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(GetController()))
+	{
+		MSPC->ApplyLocalInputState(bNowDead);
+		return;
+	}
 }
 
 void AMSPlayerCharacter::OnRep_IsDead()
