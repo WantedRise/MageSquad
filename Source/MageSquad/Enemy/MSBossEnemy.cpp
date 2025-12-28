@@ -99,10 +99,21 @@ void AMSBossEnemy::NetMulticast_TransitionToPhase2_Implementation()
 
 void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] Multicast_PlaySpawnCutscene_Implementation"));
+	if (AMSGameState* GS = Cast<AMSGameState>(GetWorld()->GetGameState()))
+	{
+		// 서버에서는 이 호출로 NormalAIController들이 반응함 (AI 정지)
+		// 클라이언트에서는 이 호출로 카메라 매니저나 UI가 반응함 (연출 시작)
+		GS->OnBossSpawnCutsceneStateChanged.Broadcast(bStart);
+		
+		 UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlaySpawnCutscene_Implementation"),
+		        HasAuthority() ? TEXT("Server") : TEXT("Client"));
+	}
 	
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (!PC || !PC->IsLocalController()) return;
+	if (!PC || !PC->IsLocalController())
+	{
+		return;
+	}
 
 	if (bStart)
 	{
@@ -117,13 +128,6 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 		{
 			PC->SetViewTargetWithBlend(OriginalViewTarget, 1.0f, VTBlend_Cubic);
 		}
-	}
-	
-	if (AMSGameState* GS = Cast<AMSGameState>(GetWorld()->GetGameState()))
-	{
-		// 서버에서는 이 호출로 NormalAIController들이 반응함 (AI 정지)
-		// 클라이언트에서는 이 호출로 카메라 매니저나 UI가 반응함 (연출 시작)
-		GS->OnBossSpawnCutsceneStateChanged.Broadcast(bStart);
 	}
 }
 

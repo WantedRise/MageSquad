@@ -122,10 +122,23 @@ void AMSGameMode::TryStartGame()
 				// 10초 뒤 스폰 시작
 				SpawnSystem->StartSpawning();
 
-				UE_LOG(LogTemp, Log, TEXT("[GameMode] 10 seconds delay finished. Spawning started!"));
-
-				// Test Boss Spawn 코드 입니다. 이 코드로 보스 스폰 가능합니다.
-				SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_SEVAROG, FVector(0.f, 0.f,400.f));
+				// TWeakObjectPtr<UMSEnemySpawnSubsystem> WeakSpawnSystem(SpawnSystem);
+				//
+				// FTimerHandle TimerHandle;
+				// GetWorld()->GetTimerManager().SetTimer(
+				// 	TimerHandle, 
+				// 	[WeakSpawnSystem]() // WeakPtr 캡처
+				// 	{
+				// 		// 2. 실행 시점에 유효성 검사
+				// 		if (WeakSpawnSystem.IsValid())
+				// 		{
+				// 			WeakSpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_SEVAROG, FVector(0.f, 0.f, 400.f));
+				// 			UE_LOG(LogTemp, Log, TEXT("Timer Fired: Boss Spawned Successfully."));
+				// 		}
+				// 	}, 
+				// 	5.0f, // 딜레이
+				// 	false // 반복 여부
+				// );
 			}
 		}
 		else
