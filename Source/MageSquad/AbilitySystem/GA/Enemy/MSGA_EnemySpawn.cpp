@@ -22,41 +22,51 @@ UMSGA_EnemySpawn::UMSGA_EnemySpawn()
 }
 
 void UMSGA_EnemySpawn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+                                       const FGameplayAbilityActorInfo* ActorInfo,
+                                       const FGameplayAbilityActivationInfo ActivationInfo,
+                                       const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	
+
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
+
 	if (UAnimMontage* SpawnMontage = Owner->GetSpawnMontage())
 	{
-		UAbilityTask_PlayMontageAndWait* EnemySpawnTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Spawn"), SpawnMontage);
+		UAbilityTask_PlayMontageAndWait* EnemySpawnTask =
+			UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Spawn"), SpawnMontage);
 		EnemySpawnTask->OnCompleted.AddDynamic(this, &UMSGA_EnemySpawn::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
 		EnemySpawnTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemySpawn::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		EnemySpawnTask->ReadyForActivation();
+
+		Owner->Multicast_PlaySpawnCutscene(true);
+
+		// UE_LOG(LogTemp, Warning, TEXT("[%s] SpawnStart"),
+		//        HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"));
 	}
 }
 
 void UMSGA_EnemySpawn::CancelAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateCancelAbility)
+                                     const FGameplayAbilityActorInfo* ActorInfo,
+                                     const FGameplayAbilityActivationInfo ActivationInfo,
+                                     bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
 void UMSGA_EnemySpawn::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+                                  const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
+                                  bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
+
 	if (AMSBossAIController* BossAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
 		BossAIController->GetBlackboardComponent()->SetValueAsBool(BossAIController->GetIsSpawndKey(), false);
+		Owner->Multicast_PlaySpawnCutscene(false);
 	}
 }
 

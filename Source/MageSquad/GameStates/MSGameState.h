@@ -28,6 +28,9 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnSharedLivesChanged, int32 /*NewLives*/);
 // 공유 목숨이 0이 되어 팀이 전멸했을 때 호출되는 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnSharedLivesDepleted);
 
+// 파라미터로 연출 시작(true)인지 종료(false)인지를 넘김 - 임희섭
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossSpawnCutsceneStateChanged, bool, bIsStart);
+
 /*
 * 작성자: 이상준
 * 작성일: 2025-12-20
@@ -73,6 +76,9 @@ public:
 	FOnMissionProgressChanged OnMissionProgressChanged;
 	//미션 종료 알림 델리게이트
 	FOnMissionFinished OnMissionFinished;
+	
+	// 전역에서 구독할 델리게이트
+	FOnBossSpawnCutsceneStateChanged OnBossSpawnCutsceneStateChanged;
 public:
 	//OnProgressUpdated 델리게이트 브로드캐스트
 	UFUNCTION()

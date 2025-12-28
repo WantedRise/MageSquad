@@ -20,8 +20,13 @@ public:
 	AMSNormalAIController();
 	
 public:
+	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void RunAI() override;
 	virtual void StopAI() override;
+	
+private:
+	UFUNCTION()
+	void HandleGlobalFreeze(bool bGlobalFreeze);
 	
 };
