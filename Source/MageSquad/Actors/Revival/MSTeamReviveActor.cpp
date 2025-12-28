@@ -6,8 +6,6 @@
 #include "Components/StaticMeshComponent.h"
 
 #include "Player/MSPlayerCharacter.h"
-#include "GameFramework/PlayerState.h"
-#include "GameFramework/GameStateBase.h"
 
 #include "GameStates/MSGameState.h"
 
@@ -16,14 +14,18 @@
 AMSTeamReviveActor::AMSTeamReviveActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	SetActorTickInterval(0.01f);
+	SetActorTickInterval(0.05f);
+
 	bReplicates = true;
 	SetReplicateMovement(false);
+
+	// 부활 진행도만 복제하면 되므로 네트워크 주기를 아낌
+	SetNetUpdateFrequency(5.f);
+	SetMinNetUpdateFrequency(2.f);
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
-	// 오버랩 영역 (서버 판정용)
 	AreaComp = CreateDefaultSubobject<USphereComponent>(TEXT("ReviveAreaComponent"));
 	AreaComp->SetupAttachment(Root);
 	AreaComp->InitSphereRadius(1000.f);
@@ -33,51 +35,49 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 	AreaComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 	AreaComp->SetGenerateOverlapEvents(true);
 
-	// 시각화: 마커(상승)
-	MarkerComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
+	MarkerComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Marker"));
 	MarkerComp->SetupAttachment(Root);
 	MarkerComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MarkerComp->SetGenerateOverlapEvents(false);
 	MarkerComp->SetIsReplicated(false);
 
-	// 시각화: 링(축소)
-	RingComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingMesh"));
+	RingComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingAnimation"));
 	RingComp->SetupAttachment(Root);
 	RingComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RingComp->SetGenerateOverlapEvents(false);
 	RingComp->SetIsReplicated(false);
 
-	RingComp2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingComp2"));
-	RingComp2->SetupAttachment(Root);
-	RingComp2->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	RingComp2->SetGenerateOverlapEvents(false);
-	RingComp2->SetIsReplicated(false);
+	RingOriginComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingOrigin"));
+	RingOriginComp->SetupAttachment(Root);
+	RingOriginComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RingOriginComp->SetGenerateOverlapEvents(false);
+	RingOriginComp->SetIsReplicated(false);
 
-	// 초기 RepState
-	RepState.Progress = 0.f;
-	RepState.bIncreasing = false;
-	RepState.Duration = 2.5f;
-	RepState.ServerTimeStamp = 0.f;
-	RepState.Reviver = nullptr;
+	// 초기값
+	ServerProgress = 0.f;
+	RepProgressByte = 0;
+	CurrentReviver = nullptr;
+	ReviveDuration = 2.5f;
 }
 
 void AMSTeamReviveActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 서버에서만 오버랩 설정
+	// 서버에서만 오버랩 이벤트로 Reviver 후보를 받음
 	if (HasAuthority() && AreaComp)
 	{
 		AreaComp->OnComponentBeginOverlap.AddDynamic(this, &AMSTeamReviveActor::OnAreaBeginOverlap);
 		AreaComp->OnComponentEndOverlap.AddDynamic(this, &AMSTeamReviveActor::OnAreaEndOverlap);
 	}
 
-	// 시각화 캐시/머티리얼 설정
+	// 로컬에서 시각화용 기본값 캐시
 	if (GetNetMode() != NM_DedicatedServer)
 	{
 		// 위치/크기 초기화
 		MarkerBaseZ = MarkerComp ? MarkerComp->GetRelativeLocation().Z : 0.f;
 		RingBaseScale = RingComp ? RingComp->GetRelativeScale3D() : FVector(1.f);
+		bVisualInitialized = true;
 
 		// 시각화 시작 플래그 설정
 		bVisualInitialized = true;
@@ -90,21 +90,14 @@ void AMSTeamReviveActor::Tick(float DeltaSeconds)
 
 	if (HasAuthority())
 	{
-		// 서버에서 부활 진행/완료 처리 시작
-		TickUpdate_Server(DeltaSeconds);
+		// 서버에서 부활 진행/승계/완료 로직 수행
+		Tick_Server(DeltaSeconds);
 	}
 
-	// 로컬 클라이언트 시각화 (Tick 로컬 연출, 복제 X)
 	if (GetNetMode() != NM_DedicatedServer)
 	{
-		// 부활 진행/완료 시간 가져오기
-		const float NowServer = GetServerTimeSecondsForVisual();
-
-		// 서버 시간 기준 부활 진행률 계산
-		const float Pct = ComputeProgressAtServerTime(NowServer);
-
-		// 시각화 갱신
-		UpdateVisuals(Pct);
+		// 클라는 복제된 Progress로만 연출
+		UpdateVisuals(static_cast<float>(RepProgressByte) / 255.f);
 	}
 }
 
@@ -113,8 +106,9 @@ void AMSTeamReviveActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMSTeamReviveActor, DownedCharacter);
-	DOREPLIFETIME(AMSTeamReviveActor, RepState);
+	DOREPLIFETIME(AMSTeamReviveActor, CurrentReviver);
 	DOREPLIFETIME(AMSTeamReviveActor, ReviveDuration);
+	DOREPLIFETIME(AMSTeamReviveActor, RepProgressByte);
 }
 
 void AMSTeamReviveActor::Initialize(AMSPlayerCharacter* InDownedCharacter, float InReviveDuration)
@@ -125,13 +119,11 @@ void AMSTeamReviveActor::Initialize(AMSPlayerCharacter* InDownedCharacter, float
 	DownedCharacter = InDownedCharacter;
 	ReviveDuration = FMath::Max(0.01f, InReviveDuration);
 
-	// 부활 진행 상태 스냅샷 초기화
-	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
-	RepState.ServerTimeStamp = Now;
-	RepState.Progress = 0.f;
-	RepState.Duration = ReviveDuration;
-	RepState.bIncreasing = false;
-	RepState.Reviver = nullptr;
+	// 부활 진행 상태 초기화
+	ServerProgress = 0.f;
+	RepProgressByte = 0;
+	CurrentReviver = nullptr;
+
 	ForceNetUpdate();
 }
 
@@ -141,12 +133,19 @@ void AMSTeamReviveActor::OnAreaBeginOverlap(UPrimitiveComponent* OverlappedCompo
 
 	APawn* Pawn = Cast<APawn>(OtherActor);
 	if (!Pawn) return;
+	if (Pawn == DownedCharacter) return;
 
-	// 이미 부활 진행자가 있으면 무시
-	if (RepState.Reviver != nullptr) return;
+	// 이미 진행자가 있으면(첫 1명만 인정) 무시
+	if (CurrentReviver) return;
 
-	// 부활 진행 시작
-	SetState_Server(true, Pawn);
+	// 공유 목숨이 0이면 진행 자체가 불가하므로 진행자도 세팅하지 않음
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+	if (!GS || GS->GetSharedLives() <= 0) return;
+
+	// 부활 진행자 초기화
+	CurrentReviver = Pawn;
+	ForceNetUpdate();
 }
 
 void AMSTeamReviveActor::OnAreaEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -156,151 +155,129 @@ void AMSTeamReviveActor::OnAreaEndOverlap(UPrimitiveComponent* OverlappedCompone
 	APawn* Pawn = Cast<APawn>(OtherActor);
 	if (!Pawn) return;
 
-	// 오버랩 종료된 폰이 부활 진행자인 경우
-	if (Pawn == RepState.Reviver)
+	// 현재 진행자가 나갔을 때는 진행자를 비워둠
+	// 부활 진행 승계는 Tick에서 일관되게 처리
+	if (Pawn == CurrentReviver)
 	{
-		// 부활 진행을 승계할 Area 안의 다른 Pawn 탐색
-		if (APawn* Candidate = FindFirstOverlappingPawn_Server(Pawn))
-		{
-			// Area 안에 부활 진행을 승계할 다른 Pawn이 있는 경우
-			// 진행 지속(승계)
-			SetState_Server(true, Candidate);
-		}
-		else
-		{
-			// Area 안에 부활 진행을 승계할 다른 Pawn이 없는 경우
-			// 진행자 없음 -> 부활 진행률 감소 시작
-			SetState_Server(false, nullptr);
-		}
+		CurrentReviver = nullptr;
+		ForceNetUpdate();
 	}
 }
 
-void AMSTeamReviveActor::OnRep_ReviveState()
+void AMSTeamReviveActor::OnRep_ProgressByte()
 {
 	if (GetNetMode() == NM_DedicatedServer) return;
 
-	// 로컬 클라이언트: RepState가 갱신되는 순간, 즉시 시각화 반영(이후 Tick에서 지속 보간)
-	// 부활 진행/완료 시간 가져오기
-	const float NowServer = GetServerTimeSecondsForVisual();
-
-	// 서버 시간 기준 부활 진행률 계산
-	const float Pct = ComputeProgressAtServerTime(NowServer);
-
-	// 시각화 갱신
-	UpdateVisuals(Pct);
+	// 복제된 진행률을 즉시 반영 (이후 Tick에서도 동일 값으로 계속 갱신)
+	UpdateVisuals(static_cast<float>(RepProgressByte) / 255.f);
 }
 
-void AMSTeamReviveActor::TickUpdate_Server(float DeltaSeconds)
+void AMSTeamReviveActor::Tick_Server(float DeltaSeconds)
 {
-	if (!DownedCharacter.IsValid())
+	// 부활 대상이 없어지면 자동 소멸
+	if (!DownedCharacter)
 	{
 		Destroy();
 		return;
 	}
 
-	// 서버 시간을 가져와 서버 시간 기준 부활 진행률 계산
-	const float Now = GetWorld()->GetTimeSeconds();
-	const float Pct = ComputeProgressAtServerTime(Now);
+	// 부활 진행자 유효 검사 및 승계 처리
+	ResolveReviver_Server();
 
-	// 완료 조건
-	if (Pct >= 1.f)
+	// 부활 진행률을 증가시켜야 하는지 감소시켜야 하는지 검사
+	const bool bIncrease = CanIncrease_Server();
+
+	// 부활 진행률 증가/감소 처리
+	UpdateProgress_Server(DeltaSeconds, bIncrease);
+
+	// 부활 진행률 업데이트 (클라이언트 처리용)
+	const uint8 NewByte = static_cast<uint8>(FMath::RoundToInt(ServerProgress * 255.f));
+	if (NewByte != RepProgressByte)
 	{
-		// 최종 스냅샷 한 번만 갱신
-		RepState.Progress = 1.f;
-		RepState.ServerTimeStamp = Now;
-		RepState.bIncreasing = false;
-		RepState.Reviver = nullptr;
-		ForceNetUpdate();
+		RepProgressByte = NewByte;
+	}
 
-		// 사망(다운)한 캐릭터의 부활 진행
-		if (DownedCharacter.IsValid())
+	// 부활(완료) 시도
+	TryComplete_Server();
+}
+
+void AMSTeamReviveActor::ResolveReviver_Server()
+{
+	if (!AreaComp) return;
+
+	// 현재 부활 진행자가 유효하고 아직 영역 안에 있으면 유지
+	if (CurrentReviver)
+	{
+		// 부활 진행자가 영역 안에 있는지 검사
+		if (!AreaComp->IsOverlappingActor(CurrentReviver) || CurrentReviver == DownedCharacter)
 		{
-			DownedCharacter->ResetCharacterOnRespawn();
+			CurrentReviver = nullptr;
+			ForceNetUpdate();
 		}
+	}
 
-		Destroy();
-		return;
+	// 현재 부활 진행자가 없으면, 공유 목숨이 0인 경우에만 영역 내 후보를 찾아 즉시 승계
+	if (!CurrentReviver)
+	{
+		UWorld* World = GetWorld();
+		AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+		if (GS && GS->GetSharedLives() > 0)
+		{
+			// 장판에 오버랩 된 다른 생존자를 찾아 부활 진행 승계
+			if (APawn* Candidate = FindFirstOverlappingPawn_Server(nullptr))
+			{
+				CurrentReviver = Candidate;
+				ForceNetUpdate();
+			}
+		}
 	}
 }
 
-float AMSTeamReviveActor::ComputeProgressAtServerTime(float ServerTimeSeconds) const
+bool AMSTeamReviveActor::CanIncrease_Server() const
 {
-	// 총 부활 진행 시간 가져오기
-	const float Duration = FMath::Max(0.01f, RepState.Duration);
+	if (!DownedCharacter || !CurrentReviver) return false;
 
-	// 지난 업데이트로부터 현재 업데이트 시간을 통해 보간값 계산
-	const float Delta = (ServerTimeSeconds - RepState.ServerTimeStamp) / Duration;
-
-	// 부활 진행률 증가/감소
 	UWorld* World = GetWorld();
 	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
-	float Pct = RepState.Progress;
-	if (RepState.bIncreasing && (GS && GS->GetSharedLives() > 0))
-	{
-		Pct += Delta;
-	}
-	else
-	{
-		Pct -= Delta;
-	}
+	if (!GS) return false;
 
-	return FMath::Clamp(Pct, 0.f, 1.f);
+	// 공유 목숨이 1개 이상인지 확인
+	return GS->GetSharedLives() > 0;
 }
 
-float AMSTeamReviveActor::GetServerTimeSecondsForVisual() const
+void AMSTeamReviveActor::UpdateProgress_Server(float DeltaSeconds, bool bIncrease)
 {
-	// 현재 서버 시간을 가져와 반환
-	if (UWorld* World = GetWorld())
-	{
-		if (AGameStateBase* GS = World->GetGameState())
-		{
-			return GS->GetServerWorldTimeSeconds();
-		}
-		return World->GetTimeSeconds();
-	}
-	return 0.f;
+	// 현재 부활 진행률 계산
+	const float Duration = FMath::Max(0.01f, ReviveDuration);
+	const float Step = (DeltaSeconds / Duration);
+
+	// 부활 진행률 증가/감소 처리
+	ServerProgress = bIncrease ? (ServerProgress + Step) : (ServerProgress - Step);
+	ServerProgress = FMath::Clamp(ServerProgress, 0.f, 1.f);
 }
 
-void AMSTeamReviveActor::UpdateVisuals(float InProgress)
+void AMSTeamReviveActor::TryComplete_Server()
 {
-	if (!bVisualInitialized) return;
+	// 부활 진행이 덜 됐으면 종료
+	if (ServerProgress < 1.f) return;
 
-	// 부활 로직이 진행중인지 확인
-	const bool bActive = (RepState.bIncreasing && RepState.Reviver != nullptr);
+	// 완료 판정은 증가 가능한 상태에서만 수행
+	if (!CanIncrease_Server()) return;
 
-	// 부활용 액터 Z값 업데이트
-	if (MarkerComp)
+	UWorld* World = GetWorld();
+	AMSGameState* GS = World ? World->GetGameState<AMSGameState>() : nullptr;
+	if (!GS) return;
+
+	// 목숨이 이미 0이 됨 -> 다음 Tick부터 감소로 전환
+	if (GS->GetSharedLives() <= 0) return;
+
+	// 캐릭터 부활 진행
+	if (DownedCharacter)
 	{
-		FVector Loc = MarkerComp->GetRelativeLocation();
-		Loc.Z = MarkerBaseZ + (InProgress * MarkerRiseHeight);
-		MarkerComp->SetRelativeLocation(Loc);
+		DownedCharacter->ResetCharacterOnRespawn();
 	}
 
-	// 장판 Area의 스케일 업데이트
-	if (RingComp)
-	{
-		// 선형 보간으로 부드럽게 업데이트
-		const float ScaleAlpha = FMath::Lerp(AreaMaxScale, AreaMinScale, InProgress);
-		RingComp->SetRelativeScale3D(RingBaseScale * ScaleAlpha);
-	}
-}
-
-void AMSTeamReviveActor::SetState_Server(bool bInIncreasing, APawn* NewReviver)
-{
-	check(HasAuthority());
-
-	// 서버 시간을 가져와 서버 시간 기준 부활 진행률 계산
-	const float Now = GetWorld()->GetTimeSeconds();
-	const float CurrentPct = ComputeProgressAtServerTime(Now);
-
-	// 부활 상태 스냅샷 업데이트 
-	RepState.Progress = CurrentPct;
-	RepState.ServerTimeStamp = Now;
-	RepState.Duration = ReviveDuration;
-	RepState.bIncreasing = bInIncreasing;
-	RepState.Reviver = NewReviver;
-
-	ForceNetUpdate();
+	Destroy();
 }
 
 APawn* AMSTeamReviveActor::FindFirstOverlappingPawn_Server(APawn* Excluded) const
@@ -320,4 +297,24 @@ APawn* AMSTeamReviveActor::FindFirstOverlappingPawn_Server(APawn* Excluded) cons
 	}
 
 	return nullptr;
+}
+
+void AMSTeamReviveActor::UpdateVisuals(float InProgress)
+{
+	if (!bVisualInitialized) return;
+
+	// 마커: 진행률 기반 Z 이동 (증가/감소 모두 동일 수식)
+	if (MarkerComp)
+	{
+		FVector Loc = MarkerComp->GetRelativeLocation();
+		Loc.Z = MarkerBaseZ + (InProgress * MarkerRiseHeight);
+		MarkerComp->SetRelativeLocation(Loc);
+	}
+
+	// 장판: 진행률 기반 스케일 축소/확대
+	if (RingComp)
+	{
+		const float ScaleAlpha = FMath::Lerp(AreaMaxScale, AreaMinScale, InProgress);
+		RingComp->SetRelativeScale3D(RingBaseScale * ScaleAlpha);
+	}
 }
