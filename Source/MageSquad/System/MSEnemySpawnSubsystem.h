@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayEffect.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
@@ -70,6 +69,8 @@ struct FMSCachedEnemyData
 	// 사전 로드된 에셋들
 	UPROPERTY()
 	TObjectPtr<USkeletalMesh> SkeletalMesh;
+	UPROPERTY()
+	TObjectPtr<USkeletalMesh> Phase2SkeletalMesh;
 
 	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAnimationSet> AnimationSet;
@@ -180,7 +181,7 @@ private:
 	bool GetRandomSpawnLocation(APlayerController* TargetPlayer, FVector& OutLocation);
 
 	/** 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
-	bool IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location);
+	bool IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location);
 	
 	/** 멀티 고려 - 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
 	bool IsLocationVisibleToAnyPlayer(const FVector& Location);

@@ -48,4 +48,7 @@ struct FMSEnemyStaticData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<USkeletalMesh> Phase2SkeletalMesh;
 };

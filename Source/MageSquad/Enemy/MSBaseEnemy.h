@@ -56,6 +56,7 @@ public:
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
+	virtual void SetPhase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh) {};
 
 	// 풀링 모드 제어
 	virtual void SetPoolingMode(bool bInPooling);

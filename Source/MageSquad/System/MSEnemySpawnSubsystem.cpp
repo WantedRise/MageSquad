@@ -140,6 +140,11 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		if (!RowData->SkeletalMesh.IsNull())
 		{
 			CachedData.SkeletalMesh = RowData->SkeletalMesh.LoadSynchronous();
+			
+			if (!RowData->Phase2SkeletalMesh.IsNull())
+			{
+				CachedData.Phase2SkeletalMesh = RowData->Phase2SkeletalMesh.LoadSynchronous();
+			}
 		}
 
 		if (!RowData->AnimationSet.IsNull())
@@ -718,7 +723,7 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 // 	return false;
 // }
 
-bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location)
+bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location)
 {
 	if (!PC)
 	{
@@ -795,6 +800,9 @@ FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, 
 		ScreenPoint.X = ViewportSizeX + Margin;
 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
 		break;
+		
+	default:
+		break;
 	}
 
 	return ScreenPoint;
@@ -824,6 +832,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		}
 
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
+		Enemy->SetPhase2SkeletalMesh(Data->Phase2SkeletalMesh);
 		
 		// 이전 스켈레탈메시의 머테리얼 정보가 남아있어 머테리얼이 이상하게 나타나던 현상 방지 코드
 		const TArray<FSkeletalMaterial>& MeshMaterials = Data->SkeletalMesh->GetMaterials();

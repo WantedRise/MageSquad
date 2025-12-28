@@ -21,24 +21,25 @@ UMSGA_EnemyGroggy::UMSGA_EnemyGroggy()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Groggy);
-	
-	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead)	;
+
+	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
 
 void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+                                        const FGameplayAbilityActorInfo* ActorInfo,
+                                        const FGameplayAbilityActivationInfo ActivationInfo,
+                                        const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	
+
 	GroggyCountAcc = 0;
-	
+
 	if (UAnimMontage* GroggyMontage = Owner->GetGroggyMontage())
 	{
 		FGameplayTagContainer Tags;
 		Tags.AddTag(FGameplayTag::RequestGameplayTag("Enemy.Event.Groggy"));
 
-		UMSAT_PlayMontageAndWaitForEvent* AttackTask = 
+		UMSAT_PlayMontageAndWaitForEvent* AttackTask =
 			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, GroggyMontage, Tags);
 
 		AttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
@@ -46,27 +47,49 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		AttackTask->OnEventReceived.AddDynamic(this, &UMSGA_EnemyGroggy::OnEventReceivedCallback);
 		AttackTask->ReadyForActivation();
 	}
-	
+
 	Owner->SetActorEnableCollision(false);
 }
-	
+
 void UMSGA_EnemyGroggy::CancelAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateCancelAbility)
+                                      const FGameplayAbilityActorInfo* ActorInfo,
+                                      const FGameplayAbilityActivationInfo ActivationInfo,
+                                      bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
 void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+                                   const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
+                                   bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
+
 	if (AMSBossAIController* EnemyAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetIsGroggyKey(), false);
 		Owner->GetAbilitySystemComponent()->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
 		Owner->SetActorEnableCollision(true);
+
+		// 람다를 사용해 다음 프레임에 실행되도록 예약
+		GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+		{
+			if (!IsValid(this) || !Owner || !Owner->GetMesh()) return;
+
+			if (USkeletalMesh* NewMeshAsset = Owner->GetPhase2SkeletalMesh())
+			{
+				Owner->NetMulticast_TransitionToPhase2();
+			}
+			
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Phase2SkeletalMesh is NOT assigned in Blueprint!"));
+			}
+		});
+		
+		UE_LOG(LogTemp, Warning, TEXT("[%s] TargetMesh: %s"), 
+			HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"), 
+			Owner->GetMesh() ? *Owner->GetMesh()->GetName() : TEXT("NULL"));
 	}
 }
 
@@ -91,9 +114,9 @@ void UMSGA_EnemyGroggy::OnEventReceivedCallback(FGameplayTag EventTag, FGameplay
 		UAnimInstance* AnimInstance = Owner->GetMesh()->GetAnimInstance();
 		AnimInstance->Montage_JumpToSection(FName(TEXT("End")), AnimInstance->GetCurrentActiveMontage());
 	}
-	
+
 	else
 	{
 		++GroggyCountAcc;
-	}	
+	}
 }
