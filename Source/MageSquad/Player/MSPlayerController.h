@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "DataStructs/MSGameMissionData.h"
 #include "Types/MageSquadTypes.h"
+#include "InputActionValue.h"
 #include "MSPlayerController.generated.h"
 
 
@@ -34,6 +35,7 @@ class MAGESQUAD_API AMSPlayerController : public APlayerController
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_Pawn() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -125,10 +127,54 @@ private:
 	/*****************************************************
 	* Spectator Section
 	*****************************************************/
-protected:
-	// 관전 대상 변경 함수
+public:
+	// 생존 중인 팀원 탐색 후 관전 사이클을 돌리는 함수
 	UFUNCTION(BlueprintCallable, Category = "Custom | Spectate")
 	void CycleSpectateTarget(int32 Direction);
+
+	// 관전 대상 변경 함수
+	void SetSpectateViewTarget(AActor* NewTarget);
+
+	// 사망 상태에 따른 관전 입력 적용 함수
+	void ApplyLocalInputState(bool bDead);
+
+private:
+	// 관전 대상 변경 입력 콜백 함수
+	void OnSpectatePrevAction(const FInputActionValue& Value);
+	void OnSpectateNextAction(const FInputActionValue& Value);
+
+protected:
+	/* ================== Spectate Camera Blend Option ================== */
+	// 관전 카메라 전환 블랜딩 시간
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Camera")
+	float SpectateBlendTime = 0.35f;
+
+	// 관전 카메라 전환 블랜딩 함수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Camera")
+	TEnumAsByte<EViewTargetBlendFunction> SpectateBlendFunction = VTBlend_Cubic;
+	/* ================== Spectate Camera Blend Option ================== */
+
+
+	/* ================== Spectate Input Option ================== */
+	// 기본 게임 플레이 IMC (플레이어 캐릭터의 기본 IMC)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Input")
+	TObjectPtr<class UInputMappingContext> DefaultIMC;
+
+	// 관전 전용 IMC
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Input")
+	TObjectPtr<class UInputMappingContext> SpectateIMC;
+
+	// 관전 대상 변경(이전) 입력 액션
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Input")
+	TObjectPtr<class UInputAction> SpectatePrevAction;
+
+	// 관전 대상 변경(다음) 입력 액션
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Input")
+	TObjectPtr<class UInputAction> SpectateNextAction;
+
+private:
+	// 중복 Add/Remove 방지용 캐시
+	//bool bCachedDeadInput = false;
 
 
 

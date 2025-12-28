@@ -16,6 +16,9 @@
 #include "System/MSMissionDataSubsystem.h"
 #include "Widgets/LevelUp/MSLevelUpPanel.h"
 
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+
 #include "EngineUtils.h"
 
 void AMSPlayerController::BeginPlay()
@@ -68,6 +71,27 @@ void AMSPlayerController::BeginPlay()
 		// {
 		// 	PlayerViewModel->InitializeWithASC(ASC);
 		// }
+	}
+}
+
+void AMSPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (!IsLocalController()) return;
+
+	// 관전 입력 액션 바인딩
+	UEnhancedInputComponent* Subsystem = Cast<UEnhancedInputComponent>(InputComponent);
+	if (!Subsystem) return;
+
+	if (SpectatePrevAction)
+	{
+		Subsystem->BindAction(SpectatePrevAction, ETriggerEvent::Started, this, &AMSPlayerController::OnSpectatePrevAction);
+	}
+
+	if (SpectateNextAction)
+	{
+		Subsystem->BindAction(SpectateNextAction, ETriggerEvent::Started, this, &AMSPlayerController::OnSpectateNextAction);
 	}
 }
 
@@ -259,7 +283,72 @@ void AMSPlayerController::CycleSpectateTarget(int32 Direction)
 	}
 
 	// 관전 대상 변경
-	SetViewTarget(AliveCharacters[NewIndex]);
+	SetSpectateViewTarget(AliveCharacters[NewIndex]);
+}
+
+void AMSPlayerController::SetSpectateViewTarget(AActor* NewTarget)
+{
+	if (!NewTarget) return;
+
+	// 관전 전용 전환 연출
+	SetViewTargetWithBlend(NewTarget, SpectateBlendTime, SpectateBlendFunction, 1.5f, false);
+}
+
+void AMSPlayerController::ApplyLocalInputState(bool bDead)
+{
+	if (!IsLocalController()) return;
+
+	ULocalPlayer* LP = GetLocalPlayer();
+	if (!LP) return;
+
+	// 향상된 입력 시스템 가져오기
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	if (!Subsystem) return;
+
+	// 사망했으면 관전 IMC로 교체
+	if (bDead)
+	{
+		// 기본 게임 플레이 IMC 제거
+		if (DefaultIMC)
+		{
+			Subsystem->RemoveMappingContext(DefaultIMC);
+		}
+
+		// 관전 전용 IMC 추가
+		if (SpectateIMC)
+		{
+			Subsystem->AddMappingContext(SpectateIMC, 10);
+		}
+	}
+	// 부활했으면 관전 IMC 제거 및 기존 IMC 할당
+	else
+	{
+		// 관전 전용 IMC 제거
+		if (SpectateIMC)
+		{
+			Subsystem->RemoveMappingContext(SpectateIMC);
+		}
+
+		// 기본 게임 플레이 IMC 추가
+		if (DefaultIMC)
+		{
+			Subsystem->AddMappingContext(DefaultIMC, 0);
+		}
+	}
+}
+
+void AMSPlayerController::OnSpectatePrevAction(const FInputActionValue& Value)
+{
+	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
+	if (!MyChar || !MyChar->GetSpectating()) return;
+	CycleSpectateTarget(-1);
+}
+
+void AMSPlayerController::OnSpectateNextAction(const FInputActionValue& Value)
+{
+	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
+	if (!MyChar || !MyChar->GetSpectating()) return;
+	CycleSpectateTarget(+1);
 }
 
 void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId)

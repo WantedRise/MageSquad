@@ -126,8 +126,7 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 				if (AMSPlayerCharacter* OwnerChar = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor()))
 				{
 					// 캐릭터의 사망 처리 함수 호출
-					// Test를 위한 주석 처리 - 임희섭
-					// OwnerChar->SetCharacterOnDead();
+					OwnerChar->SetCharacterOnDead_Server();
 				}
 			}
 		}
