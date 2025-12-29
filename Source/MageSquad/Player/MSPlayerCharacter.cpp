@@ -266,6 +266,14 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	{
 		// GAS의 액터 정보를 소유자는 PlayerState로, 아바타는 자신으로 초기화
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+		if (AbilitySystemComponent != nullptr)
+		{
+			AbilitySystemComponent->RegisterGameplayTagEvent(
+				MSGameplayTags::Player_State_Invincible,
+				EGameplayTagEventType::NewOrRemoved
+			).AddUObject(this, &AMSPlayerCharacter::OnInvincibilityChanged);
+		}
 	}
 
 	// 클라이언트에서도 슬롯 배열 크기만 보정(OwnerOnly 복제 수신 전 방어)
@@ -976,6 +984,8 @@ void AMSPlayerCharacter::HandleOverheadDisplayNameChanged(const FText& NewName)
 
 void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
+	if (!IsLocallyControlled()) return;
+
 	bool bIsInvincible = (NewCount > 0);
 
 	UE_LOG(LogTemp, Warning, TEXT("Invincibility changed: %s"),
@@ -986,11 +996,24 @@ void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, 
 
 void AMSPlayerCharacter::SetInvincibleCollision(bool bInvincible)
 {
-	UCapsuleComponent* Capsule = GetCapsuleComponent();
-	if (!Capsule)
+	if (!IsLocallyControlled()) return;
+
+	if (HasAuthority())
 	{
-		return;
+		// 서버는 바로 처리
+		HandleSetInvincibleCollision_Server(bInvincible);
 	}
+	else
+	{
+		// 클라이언트는 서버에게 콜리전 설정 요청
+		ServerRPCHandleSetInvincibleCollision(bInvincible);
+	}
+}
+
+void AMSPlayerCharacter::HandleSetInvincibleCollision_Server(bool bInvincible)
+{
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule) return;
 
 	if (bInvincible)
 	{
@@ -1005,6 +1028,13 @@ void AMSPlayerCharacter::SetInvincibleCollision(bool bInvincible)
 		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Overlap);
 		UE_LOG(LogTemp, Log, TEXT("Collision Profile: Player (Overlap MSEnemy)"));
 	}
+}
+
+void AMSPlayerCharacter::ServerRPCHandleSetInvincibleCollision_Implementation(bool bInvincible)
+{
+	if (!HasAuthority()) return;
+
+	HandleSetInvincibleCollision_Server(bInvincible);
 }
 
 void AMSPlayerCharacter::ClientRPCPlayHealthShake_Implementation(float Scale)
@@ -1156,9 +1186,9 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 	{
 		MSPC->SetSpectateViewTarget(this);
 	}
-	else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	else
 	{
-		PC->SetViewTargetWithBlend(this, 0.35f, VTBlend_Cubic, 1.5f, false);
+		UE_LOG(LogTemp, Warning, TEXT("[Player-Spectate] Non AMSPlayerController."));
 	}
 
 
@@ -1204,7 +1234,7 @@ void AMSPlayerCharacter::BeginSpectate_Server()
 			}
 			else
 			{
-				PC->SetViewTargetWithBlend(this, 0.35f, VTBlend_Cubic, 1.5f, false);
+				UE_LOG(LogTemp, Warning, TEXT("[Player-Spectate] Non AMSPlayerController."));
 			}
 			break;
 		}

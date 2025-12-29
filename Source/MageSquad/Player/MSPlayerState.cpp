@@ -514,3 +514,10 @@ void AMSPlayerState::ApplyRandomSkillLevelUpChoice_Server()
 	ApplySkillLevelUpChoice_Server(CurrentLevelUpSessionId, Picked);
 }
 
+void AMSPlayerState::SetAliveState_Server(bool bInAlive)
+{
+}
+
+void AMSPlayerState::OnRep_IsAlive()
+{
+}

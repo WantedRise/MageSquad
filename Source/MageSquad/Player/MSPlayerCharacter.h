@@ -399,6 +399,11 @@ public:
 	void OnInvincibilityChanged(const FGameplayTag CallbackTag, int32 NewCount);
 	void SetInvincibleCollision(bool bInvincible);
 
+	void HandleSetInvincibleCollision_Server(bool bInvincible);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPCHandleSetInvincibleCollision(bool bInvincible);
+
 	// 로컬 클라이언트에 카메라 흔들림 수행용 ClientRPC (흔들림은 Unreliable로 충분)
 	UFUNCTION(Client, Unreliable)
 	void ClientRPCPlayHealthShake(float Scale);

@@ -291,7 +291,7 @@ void AMSPlayerController::SetSpectateViewTarget(AActor* NewTarget)
 	if (!NewTarget) return;
 
 	// 관전 전용 전환 연출
-	SetViewTargetWithBlend(NewTarget, SpectateBlendTime, SpectateBlendFunction, 1.5f, false);
+	SetViewTargetWithBlend(NewTarget, SpectateBlendTime, SpectateBlendFunction);
 }
 
 void AMSPlayerController::ApplyLocalInputState(bool bDead)

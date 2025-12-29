@@ -9,20 +9,21 @@
 #include "Types/MageSquadTypes.h"
 #include "MSPlayerState.generated.h"
 
+// 생존 상태 변경 델리게이트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnAliveStateChangedNative, bool /*bIsAlive*/);
+
 /**
  * 작성자: 김준형
  * 작성일: 25/12/08
  *
  * 플레이어의 ASC, AttributeSet을 관리하는 PlayerState
  * 폰의 사망 및 리스폰 후에도 유지되며 모든 클라이언트에 복제된다.
- * 
+ *
  * 수정자: 박세찬
  * 수정일: 25/12/22
- * 
+ *
  * 플레이어 스킬 레벨업 로직 추가
  */
-
-
 UCLASS()
 class MAGESQUAD_API AMSPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -59,40 +60,40 @@ protected:
 	// 플레이어가 보유 중인 스킬 목록
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	TArray<FMSSkillList> OwnedSkills;
-	
+
 	// 스킬 업그레이드 적용
 	void ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplayTag& UpgradeTag);
-	
+
 	// 스킬 GA 부여
 	void GiveAbilityForSkillRow_Server(const FMSSkillList& Skill);
-	
+
 public:
 	// 태그로 가지고 있는 스킬 검색
 	static int32 FindOwnedSkillIndexByTag(const TArray<FMSSkillList>& OwnedSkills, const FGameplayTag& SkillTag);
-	
+
 	// SkillID로 가지고 있는 스킬 검색
 	const FMSSkillList* GetOwnedSkillByID(int32 SkillID) const;
-	
+
 	// DataTable에서 스킬 Row 찾기 (SkillEventTag로 매칭) ---
 	static const FMSSkillList* FindSkillRowByTag(UDataTable* SkillListDataTable, const FGameplayTag& SkillTag);
-	
+
 	// DataTable에서 스킬 Row 찾고 가지고 있는 스킬 리스트에 추가
 	void FindSkillRowBySkillIDAndAdd(const int32 SkillID);
 private:
 	//게임 시작 체크를 위해
 	UPROPERTY(Replicated)
 	uint8 bUIReady : 1;
-	
+
 public:
 	// 스킬 레벨업 시작
 	void BeginSkillLevelUp(int32 SessionId);
-	
+
 	// 스킬 레벨업 적용
 	void ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLevelUpChoicePair& Picked);
-	
+
 	// 랜덤 스킬 레벨업 적용
 	void ApplyRandomSkillLevelUpChoice_Server();
-	
+
 public:
 	const TArray<FMSLevelUpChoicePair>& GetCurrentSkillChoices() const { return CurrentSkillChoices; }
 	bool IsSkillLevelUpCompleted() const { return bSkillLevelUpCompleted; }
@@ -119,4 +120,30 @@ protected:
 	// 스킬 최대 레벨
 	UPROPERTY(EditDefaultsOnly, Category = "Skill")
 	int32 MaxSkillLevel = 10;
+
+
+
+	/*****************************************************
+	* Death & Respawn Section
+	*****************************************************/
+public:
+	/** 서버 전용: 살아있음 상태 변경 */
+	void SetAliveState_Server(bool bInAlive);
+
+	/** 현재 살아있는 상태인지 */
+	bool IsAlive() const { return bIsAlive; }
+
+private:
+	// 생존 상태 변경 OnRep 함수
+	UFUNCTION()
+	void OnRep_IsAlive();
+
+public:
+	// 생존 상태 변경 이벤트 델리게이트
+	FOnAliveStateChangedNative OnAliveStateChanged;
+
+private:
+	// 살아있는 상태 (관전 대상 자동 전환/필터링 용)
+	UPROPERTY(ReplicatedUsing = OnRep_IsAlive)
+	bool bIsAlive = true;
 };

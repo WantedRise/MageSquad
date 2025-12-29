@@ -20,7 +20,7 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 	SetReplicateMovement(false);
 
 	// 부활 진행도만 복제하면 되므로 네트워크 주기를 아낌
-	SetNetUpdateFrequency(5.f);
+	SetNetUpdateFrequency(30.f);
 	SetMinNetUpdateFrequency(2.f);
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
@@ -293,6 +293,10 @@ APawn* AMSTeamReviveActor::FindFirstOverlappingPawn_Server(APawn* Excluded) cons
 	{
 		APawn* P = Cast<APawn>(A);
 		if (!P || P == Excluded || P == DownedCharacter) continue;
+		if (AMSPlayerCharacter* Player = Cast<AMSPlayerCharacter>(P))
+		{
+			if (Player->GetIsDead()) continue;
+		}
 		return P;
 	}
 

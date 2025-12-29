@@ -147,7 +147,7 @@ protected:
 	/* ================== Spectate Camera Blend Option ================== */
 	// 관전 카메라 전환 블랜딩 시간
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Camera")
-	float SpectateBlendTime = 0.35f;
+	float SpectateBlendTime = 0.5f;
 
 	// 관전 카메라 전환 블랜딩 함수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Camera")
