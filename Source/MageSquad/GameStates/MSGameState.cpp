@@ -408,7 +408,7 @@ void AMSGameState::ProcessLevelUps_Server()
 		* 서버 측 레벨업 알림 지점
 		*/
 		OnSharedLevelUp.Broadcast(SharedLevel);
-
+		StartSkillLevelUpPhase();
 		// 모든 클라이언트에게 레벨업 효과를 처리하도록 알림
 		BroadcastSharedLevelUp_ServerOnly();
 	}
