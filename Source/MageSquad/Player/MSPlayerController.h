@@ -143,6 +143,16 @@ private:
 	void OnSpectatePrevAction(const FInputActionValue& Value);
 	void OnSpectateNextAction(const FInputActionValue& Value);
 
+	// 관전 대상 변경 요청 함수
+	void RequestChangeSpectate(int32 Direction);
+
+	// 서버: 관전 대상 변경 함수
+	void HandleChangeSpectate_Server(int32 Direction);
+
+	// 서버에게 관전 대상 변경을 요청하는 함수 ServerRPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPCChangeSpectate(int32 Direction);
+
 protected:
 	/* ================== Spectate Camera Blend Option ================== */
 	// 관전 카메라 전환 블랜딩 시간
