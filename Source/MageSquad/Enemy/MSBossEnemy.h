@@ -46,6 +46,8 @@ public:
 	FORCEINLINE USkeletalMesh* GetPhase2SkeletalMesh() const {return Phase2SkeletalMesh;}
 	FORCEINLINE class UCameraComponent* GetBossCamera() const { return Camera; }
 	
+private:
+	void TrySetMesh(USkeletalMesh* NewSkeletalMesh);
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnBossCutsceneStateChanged OnBossCutsceneStateChanged;
