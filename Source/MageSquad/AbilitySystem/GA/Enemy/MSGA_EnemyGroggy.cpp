@@ -79,33 +79,43 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 		// 람다를 사용해 다음 프레임에 실행되도록 예약
 		GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
 		{
-			if (!IsValid(this) || !Owner || !Owner->GetMesh()) return;
-
+			if (!IsValid(this) || !Owner || !Owner->GetMesh())
+			{
+				return;
+			}
+			
 			if (USkeletalMesh* NewMeshAsset = Owner->GetPhase2SkeletalMesh())
 			{
 				Owner->NetMulticast_TransitionToPhase2();
 				
-				if (RecoveryEffectClass == nullptr)
+				if (HasAuthorityOrPredictionKey(CurrentActorInfo, &CurrentActivationInfo))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("RecoveryEffectClass is nullptr!"));
-					return;
-				}
+					if (RecoveryEffectClass == nullptr)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("RecoveryEffectClass is nullptr!"));
+						return;
+					}
 				
-				UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent();
-				// GameplayEffectSpec 생성
-				FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-				Context.AddSourceObject(this);
+					UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent();
+					// GameplayEffectSpec 생성
+					FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+					Context.AddSourceObject(this);
 
-				FGameplayEffectSpecHandle SpecHandle =
-					ASC->MakeOutgoingSpec(RecoveryEffectClass, 1.f, Context);
+					FGameplayEffectSpecHandle SpecHandle =
+						ASC->MakeOutgoingSpec(RecoveryEffectClass, 1.f, Context);
 
-				if (!SpecHandle.IsValid())
-				{
-					return;
-				}
+					if (!SpecHandle.IsValid())
+					{
+						return;
+					}
 				
-				// GameplayEffect 적용
-				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+					// GameplayEffect 적용
+					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+					
+					
+					UE_LOG(LogTemp, Warning, TEXT("[%s] ApplyGameplayEffectSpecToSelf"),
+						   HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"));
+				}
 			}
 
 			else

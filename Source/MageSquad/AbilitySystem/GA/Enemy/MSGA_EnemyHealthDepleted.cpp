@@ -31,22 +31,22 @@ void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle
 	const bool bIsBoss = ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_Tier_Boss);
 	const bool bIsPhase2 = ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2);
 
-	// if (!bIsBoss || bIsPhase2)
-	// {
+	if (!bIsBoss || bIsPhase2)
+	{
 		if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(Owner->GetController()))
 		{
 			AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
 		}
 		//HandleDeath();
-	//}
-	// else
-	// {
-	// 	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(Owner->GetController()))
-	// 	{
-	// 		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsGroggyKey(), true);
-	// 	}
-	// 	//HandleBossPhaseTransition(ASC);
-	// }
+	}
+	 else
+	 {
+	 	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(Owner->GetController()))
+	 	{
+	 		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsGroggyKey(), true);
+	 	}
+	 	//HandleBossPhaseTransition(ASC);
+	 }
 
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
