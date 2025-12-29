@@ -22,7 +22,7 @@ void UMSMainmenuWidget::NativeConstruct()
     UMSSteamManagerSubsystem* SteamManager = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>();
     if (SteamManager)
     {
-        SteamManager->TryInvitedJoinSession();
+        //SteamManager->TryInvitedJoinSession();
     }
 }
 

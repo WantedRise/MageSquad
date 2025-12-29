@@ -22,7 +22,7 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    LobbyLevelURL = TEXT("LobbyLevel");
+    LobbyLevelURL = TEXT("LobbyLevel?listen");
 	GameLevelURL = TEXT("GameLevel");
     LoadingLevelURL = TEXT("LoadingLevel");
 }

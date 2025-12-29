@@ -133,6 +133,13 @@ void UMSSteamManagerSubsystem::DestroySteamSession()
 void UMSSteamManagerSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
 	UE_LOG(LogMSNetwork, Warning, TEXT("Session '%s' OnDestroySessionComplete! %s"), *SessionName.ToString(),bWasSuccessful?TEXT("true"):TEXT("false"));
+	if (bWasSuccessful && AcceptedInviteResult.IsValid())
+	{
+		// 여기서 메인메뉴로 가지 말고 바로 Join
+		SessionInterface->JoinSession(0, SESSION_NAME_GAME, AcceptedInviteResult);
+		return;
+	}
+
 	UGameplayStatics::OpenLevel(GetWorld(), TEXT("MainmenuLevel"));
 }
 
