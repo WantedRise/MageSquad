@@ -12,6 +12,7 @@
 #include "Actors/Projectile/MSBaseProjectile.h"
 
 #include "Player/MSPlayerState.h"
+#include "Player/MSPlayerCharacter.h"
 
 #include "MSGameplayTags.h"
 #include "Actors/Projectile/MSEnemyProjectile.h"
@@ -49,7 +50,7 @@ UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySyste
 	{
 		return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
 	}
-	
+
 	return nullptr;
 }
 
@@ -84,16 +85,16 @@ FProjectileRuntimeData UMSFunctionLibrary::MakeProjectileRuntimeData(TSubclassOf
 	return Data;
 }
 
-AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator, TSubclassOf<AMSBaseProjectile> ProjectileClass )
+AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectileNative(UObject* WorldContextObject, TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator, TSubclassOf<AMSBaseProjectile> ProjectileClass)
 {
 	// 발사한 객체의 월드 가져오기
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
-	
-	TSubclassOf<UProjectileStaticData> SpawnProjectileClass{ProjectileClass};
-	
+
+	TSubclassOf<UProjectileStaticData> SpawnProjectileClass{ ProjectileClass };
+
 	if (SpawnProjectileClass == nullptr)
 	{
-		SpawnProjectileClass = AMSBaseProjectile::StaticClass();	
+		SpawnProjectileClass = AMSBaseProjectile::StaticClass();
 	}
 
 	// 서버에서만 로직을 수행하도록 검사
@@ -118,12 +119,12 @@ AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectile(UObject* WorldContextObj
 {
 	// 발사한 객체의 월드 가져오기
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
-	
-	TSubclassOf<AMSBaseProjectile> SpawnProjectileClass{ProjectileClass};
-	
+
+	TSubclassOf<AMSBaseProjectile> SpawnProjectileClass{ ProjectileClass };
+
 	if (SpawnProjectileClass == nullptr)
 	{
-		SpawnProjectileClass = AMSBaseProjectile::StaticClass();	
+		SpawnProjectileClass = AMSBaseProjectile::StaticClass();
 	}
 
 	// 서버에서만 로직을 수행하도록 검사
@@ -141,4 +142,13 @@ AMSBaseProjectile* UMSFunctionLibrary::LaunchProjectile(UObject* WorldContextObj
 	}
 
 	return nullptr;
+}
+
+bool UMSFunctionLibrary::IsValidSpectateTargetActor(const AActor* Candidate)
+{
+	// 관전하려는 액터를 플레이어 캐릭터로 캐스팅
+	const AMSPlayerCharacter* Char = Candidate ? Cast<AMSPlayerCharacter>(Candidate) : nullptr;
+
+	// 이 플레이어가 생존해있으면 관전 대상으로 합격
+	return (Char && !Char->GetIsDead() && !Char->IsPendingKillPending());
 }

@@ -508,7 +508,7 @@ void AMSPlayerCharacter::ServerRPCAcquireSkill_Implementation(int32 SkillID)
 		UE_LOG(LogTemp, Warning, TEXT("[Skill] ServerRPCAcquireSkill: PlayerState is null"));
 		return;
 	}
-	
+
 	// 스킬 데이터
 	const FMSSkillList* FoundSkill = PS->GetOwnedSkillByID(SkillID);
 	if (!FoundSkill)
@@ -841,9 +841,9 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 			// PlayerState 가져오기
 			AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 			if (!PS) return;
-			
+
 			PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
-			
+
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));
 			AcquireSkill(StartSkillData.SkillId);
 		}
@@ -1064,6 +1064,23 @@ void AMSPlayerCharacter::SetCharacterOnDead_Server()
 	// ============================================================
 	OnDeathEnter_Server();
 
+	// 관전 중인 다른 플레이어들이 나를 관전 중이라면, 즉시 다른 생존 대상으로 전환
+	if (World)
+	{
+		for (APlayerController* PC : TActorRange<APlayerController>(World))
+		{
+			AMSPlayerController* MSPC = PC ? Cast<AMSPlayerController>(PC) : nullptr;
+			if (!MSPC) continue;
+
+			// 관전 중인 다른 플레이어들이 나를 관전 중인 경우
+			if (MSPC->GetSpectateTargetActor() == this)
+			{
+				// 즉시 다른 생존 대상으로 전환
+				MSPC->EnsureValidSpectateTarget_Server();
+			}
+		}
+	}
+
 
 	// ============================================================
 	// #2: 현재 세션이 1인인지/멀티인지, 그리고 살아있는 팀원이 있는지 판단
@@ -1184,7 +1201,8 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 	// #3: 카메라를 다시 내 캐릭터로 복귀
 	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(GetController()))
 	{
-		MSPC->SetSpectateViewTarget(this);
+		// 관전 상태 종료. 관전 대상 초기화
+		MSPC->SetSpectateTarget_Server(nullptr);
 	}
 	else
 	{
@@ -1227,10 +1245,10 @@ void AMSPlayerCharacter::BeginSpectate_Server()
 		AMSPlayerCharacter* OtherChar = OtherPC ? Cast<AMSPlayerCharacter>(OtherPC->GetPawn()) : nullptr;
 		if (OtherChar && OtherChar != this && !OtherChar->bIsDead)
 		{
-			// 관전 카메라 전환은 PlayerController에서 블렌드 파라미터로 통일
+			// 관전 대상 전환
 			if (MSPC)
 			{
-				MSPC->SetSpectateViewTarget(OtherChar);
+				MSPC->SetSpectateTarget_Server(OtherChar);
 			}
 			else
 			{
