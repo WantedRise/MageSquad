@@ -307,8 +307,9 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 		return;
 	}
 
-	// 셔플(세션 기반 시드 유지)
-	FRandomStream RandStream(CurrentLevelUpSessionId);
+	// 셔플
+	const int32 PlayerSeed = HashCombine(CurrentLevelUpSessionId, GetPlayerId());
+	FRandomStream RandStream(PlayerSeed);
 
 	auto Shuffle = [&](TArray<FMSLevelUpChoicePair>& Arr)
 	{
