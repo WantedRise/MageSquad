@@ -80,10 +80,10 @@ bool UMSMissionEliteKillScript::IsCompleted() const
 {
     if (UAbilitySystemComponent* ASC = EliteMonster->GetAbilitySystemComponent())
     {
-        if (!ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
-        {
-            return false;
-        }
+        // if (!ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
+        // {
+           // return false;
+        //}
     }
 
     return GetProgress() <= 0.0f;

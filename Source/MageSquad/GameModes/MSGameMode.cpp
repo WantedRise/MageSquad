@@ -114,7 +114,7 @@ void AMSGameMode::TryStartGame()
 				SpawnSystem->InitializePool();
 
 				// 설정
-				SpawnSystem->SetSpawnInterval(2.0f);
+				SpawnSystem->SetSpawnInterval(5.0f);
 				SpawnSystem->SetMaxActiveMonsters(10);
 				SpawnSystem->SetSpawnRadius(1500.0f);
 				SpawnSystem->SetSpawnCountPerTick(10);

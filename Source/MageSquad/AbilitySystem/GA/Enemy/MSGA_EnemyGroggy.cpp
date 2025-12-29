@@ -58,7 +58,7 @@ void UMSGA_EnemyGroggy::CancelAbility(const FGameplayAbilitySpecHandle Handle,
                                       bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
-	
+
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = true;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
@@ -84,20 +84,39 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 			if (USkeletalMesh* NewMeshAsset = Owner->GetPhase2SkeletalMesh())
 			{
 				Owner->NetMulticast_TransitionToPhase2();
-				UMSEnemyAttributeSet* Atbs = const_cast<UMSEnemyAttributeSet*>(Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())));
+				
+				if (RecoveryEffectClass == nullptr)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("RecoveryEffectClass is nullptr!"));
+					return;
+				}
+				
+				UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent();
+				// GameplayEffectSpec 생성
+				FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+				Context.AddSourceObject(this);
 
-				Atbs->SetCurrentHealth(Atbs->GetMaxHealth());
+				FGameplayEffectSpecHandle SpecHandle =
+					ASC->MakeOutgoingSpec(RecoveryEffectClass, 1.f, Context);
+
+				if (!SpecHandle.IsValid())
+				{
+					return;
+				}
+				
+				// GameplayEffect 적용
+				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 			}
-			
+
 			else
 			{
 				UE_LOG(LogTemp, Error, TEXT("Phase2SkeletalMesh is NOT assigned in Blueprint!"));
 			}
 		});
-		
-		UE_LOG(LogTemp, Warning, TEXT("[%s] TargetMesh: %s"), 
-			HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"), 
-			Owner->GetMesh() ? *Owner->GetMesh()->GetName() : TEXT("NULL"));
+
+		UE_LOG(LogTemp, Warning, TEXT("[%s] TargetMesh: %s"),
+		       HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"),
+		       Owner->GetMesh() ? *Owner->GetMesh()->GetName() : TEXT("NULL"));
 	}
 }
 
