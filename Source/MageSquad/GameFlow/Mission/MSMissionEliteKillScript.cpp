@@ -9,6 +9,7 @@
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Components/MSMissionComponent.h"
 #include "Utils/MSUtils.h"
+#include "MSGameplayTags.h"
 
 // UMSMission_EliteKillScript.cpp
 void UMSMissionEliteKillScript::Initialize(UWorld* World)
@@ -73,6 +74,19 @@ void UMSMissionEliteKillScript::OnEliteHPChanged(const FOnAttributeChangeData& D
 float UMSMissionEliteKillScript::GetProgress() const
 {
     return Progress;
+}
+
+bool UMSMissionEliteKillScript::IsCompleted() const
+{
+    if (UAbilitySystemComponent* ASC = EliteMonster->GetAbilitySystemComponent())
+    {
+        if (!ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
+        {
+            return false;
+        }
+    }
+
+    return GetProgress() <= 0.0f;
 }
 
 

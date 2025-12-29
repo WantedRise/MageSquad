@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Enemy/MSBossEnemy.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Enemy/AIController/MSBossAIController.h"
 
 
@@ -79,6 +80,9 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 			if (USkeletalMesh* NewMeshAsset = Owner->GetPhase2SkeletalMesh())
 			{
 				Owner->NetMulticast_TransitionToPhase2();
+				UMSEnemyAttributeSet* Atbs = const_cast<UMSEnemyAttributeSet*>(Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass())));
+
+				Atbs->SetCurrentHealth(Atbs->GetMaxHealth());
 			}
 			
 			else
