@@ -113,7 +113,7 @@ void UMSGA_EnemyGroggy::OnInterruptedCallback()
 
 void UMSGA_EnemyGroggy::OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData)
 {
-	if (GroggyCountAcc >= 5)
+	if (GroggyCountAcc >= 2)
 	{
 		UAnimInstance* AnimInstance = Owner->GetMesh()->GetAnimInstance();
 		AnimInstance->Montage_JumpToSection(FName(TEXT("End")), AnimInstance->GetCurrentActiveMontage());
