@@ -39,7 +39,11 @@ public:
 	//미션컴포넌트 OnMissionFinished에 바인딩
 	void OnMissionFinished(int32 MissionId, bool bSuccess);
 
+	
+
 private:
+	void GiveMissionReward(int32 MissionId);
+	void StartSkillLevelUpPhaseDelayed();
 	UFUNCTION()
 	void OnTimeCheckpoint();
 	int32 SelectRandomMissionId();
@@ -51,4 +55,5 @@ private:
 	TArray<const FMissionTimelineRow*> MissionTimelineRows;
 	int32 CurrentMissionIndex = 0;
 	float MissionTriggerTime = 0;
+	FTimerHandle SkillLevelUpDelayTimerHandle;
 };

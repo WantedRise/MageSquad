@@ -8,18 +8,21 @@
 #include "System/MSLevelManagerSubsystem.h"
 #include "GameModes/MSGameMode.h"
 #include "TimerManager.h"
+#include <System/MSMissionDataSubsystem.h>
 
 void UMSGameFlowPvE::BeginDestroy()
 {
 	Super::BeginDestroy();
 
-	if (UWorld* World = GetWorld())
+	if (!GameState) return;
+	if (UWorld* World = GameState->GetWorld())
 	{
 		// 타이머 해제 로직
 		for (auto Handle : MissionTimerHandles)
 		{
-			GetWorld()->GetTimerManager().ClearTimer(Handle);
+			World->GetTimerManager().ClearTimer(Handle);
 		}
+		World->GetTimerManager().ClearTimer(SkillLevelUpDelayTimerHandle);
 	}
 }
 
@@ -123,11 +126,72 @@ void UMSGameFlowPvE::OnMissionFinished(int32 MissionId, bool bSuccess)
 {
 	if (bSuccess)
 	{
+		UMSMissionDataSubsystem* MissionDataSubsystem = GameState->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+		if (!MissionDataSubsystem) return;
+		const FMSMissionRow* MissionData = MissionDataSubsystem->Find(MissionId);
+		if (!MissionData) return;
+		if (MissionData->MissionType == EMissionType::Boss) return;
+
+		GiveMissionReward(MissionId);
+		
 		//보상처리 및 SetState Play로 전환
 		UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE::OnMissionFinished mission success!! Give treasure"));
 	}
 	UE_LOG(LogMSNetwork, Log, TEXT("UMSGameFlowPvE::OnMissionFinished mission Fail!! Give treasure"));
 }
+void UMSGameFlowPvE::GiveMissionReward(int32 MissionId)
+{
+	if (!GameState || !GameState->HasAuthority())
+		return;
+
+	UMSMissionDataSubsystem* MissionDataSubsystem =
+		GameState->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	if (!MissionDataSubsystem)
+		return;
+
+	const FMSMissionRow* MissionData = MissionDataSubsystem->Find(MissionId);
+	if (!MissionData)
+		return;
+
+	// 보스 미션은 레벨업 페이즈 없음
+	if (MissionData->MissionType == EMissionType::Boss)
+	{
+		UE_LOG(LogMSNetwork, Log,
+			TEXT("Mission %d is Boss. Skip Skill Level Up Phase"), MissionId);
+		return;
+	}
+
+	UE_LOG(LogMSNetwork, Log,
+		TEXT("Mission %d success. Give reward & enter Skill Level Up Phase"),
+		MissionId);
+
+	// TODO: 골드, 아이템, 포인트 등 보상 처리 위치
+	// GiveGold(MissionData->RewardGold);
+	// GiveItem(MissionData->RewardItemId);
+
+		// 중복 예약 방지
+	if (GameState->GetWorld()->GetTimerManager().IsTimerActive(SkillLevelUpDelayTimerHandle))
+		return;
+
+	GameState->GetWorld()->GetTimerManager().SetTimer(
+		SkillLevelUpDelayTimerHandle,
+		this,
+		&UMSGameFlowPvE::StartSkillLevelUpPhaseDelayed,
+		1.5f,
+		false
+	);
+}
+
+void UMSGameFlowPvE::StartSkillLevelUpPhaseDelayed()
+{
+	if (!GameState || !GameState->HasAuthority())
+		return;
+
+
+
+	GameState->StartSkillLevelUpPhase();
+}
+
 
 void UMSGameFlowPvE::OnTimeCheckpoint()
 {

@@ -65,7 +65,8 @@ void AMSBossEnemy::SetPoolingMode(const bool bInPooling)
 void AMSBossEnemy::SetPhase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh)
 {
 	Super::SetPhase2SkeletalMesh(NewSkeletalMesh);
-	
+
+	// 바인딩 시도 함수 호출
 	Phase2SkeletalMesh = NewSkeletalMesh;
 	
 	UE_LOG(LogTemp, Log, TEXT("Set Phase2 SkeletalMesh"));
@@ -81,6 +82,13 @@ void AMSBossEnemy::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 void AMSBossEnemy::NetMulticast_TransitionToPhase2_Implementation()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("[CLIENT] Client_TransitionToPhase2_Implementation"));
+	
+	if (Phase2SkeletalMesh == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Phase2SkeletalMesh is NULL! Check Blueprint settings."));
+		return;
+	}
+	
 	GetMesh()->SetSkeletalMesh(Phase2SkeletalMesh);
 	
 	// 머티리얼 정보 설정
@@ -135,6 +143,27 @@ void AMSBossEnemy::OnRep_Phase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_Phase2SkeletalMesh: %s"), *Phase2SkeletalMesh.GetName());
 	
-	Phase2SkeletalMesh = NewSkeletalMesh;
+	if (Phase2SkeletalMesh == nullptr)
+	{
+		Phase2SkeletalMesh = NewSkeletalMesh;
+		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_Phase2SkeletalMesh: %s"), *Phase2SkeletalMesh.GetName());
+		TrySetMesh(NewSkeletalMesh);
+	}
+}
+
+void AMSBossEnemy::TrySetMesh(USkeletalMesh* NewSkeletalMesh)
+{	
+	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] TrySetMesh: %s"), *Phase2SkeletalMesh.GetName());
 	
+	Phase2SkeletalMesh = NewSkeletalMesh;
+	if (Phase2SkeletalMesh == nullptr)
+	{
+		// 아직 GameState가 NULL이면 다음 프레임에 다시 시도 (성공할 때까지)
+		GetWorld()->GetTimerManager().SetTimerForNextTick(
+		FTimerDelegate::CreateWeakLambda(this, [this, NewSkeletalMesh]()
+		{
+			TrySetMesh(NewSkeletalMesh);
+		})
+	);
+	}
 }

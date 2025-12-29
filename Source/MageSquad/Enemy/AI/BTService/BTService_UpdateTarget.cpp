@@ -8,6 +8,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
 #include "Enemy/AIController/MSBaseAIController.h"
+#include "Enemy/AIController/MSBossAIController.h"
 #include "Player/MSPlayerCharacter.h"
 
 UBTService_UpdateTarget::UBTService_UpdateTarget()
@@ -25,11 +26,19 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	// 타겟 검색 및 갱신
 	if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(OwnerComp.GetAIOwner()))
 	{
-			
 		if (OwnerComp.GetBlackboardComponent()->GetValueAsBool(AIController->GetIsDeadKey()))
 		{
 			OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
 			return;
+		}
+		
+		if (AMSBossAIController* BossAIController = Cast<AMSBossAIController>(AIController))
+		{
+			if (OwnerComp.GetBlackboardComponent()->GetValueAsBool(BossAIController->GetIsGroggyKey()))
+			{
+				OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
+				return;
+			}
 		}
 			
 		// @Todo : 나중에 그냥 플레이 리스트 저장하도록 수정할 예정

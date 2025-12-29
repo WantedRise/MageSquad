@@ -23,5 +23,5 @@ protected:
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "GAS", meta = (AllowPrivateAccess = "true", Categories = "Enemy.State"))
-	FGameplayTag GameplayTags;
+	FGameplayTagContainer GameplayTags;
 };
