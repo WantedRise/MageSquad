@@ -59,7 +59,7 @@ void UMSMissionCleanPaint::Initialize(UWorld* World)
 
     //BindInkAreas(World);
     // 초기 상태 1회 계산
-    OnAreaProgressChanged(GetProgress());
+    OnAreaProgressChanged(0.0f);
 }
 
 void UMSMissionCleanPaint::Deinitialize()
