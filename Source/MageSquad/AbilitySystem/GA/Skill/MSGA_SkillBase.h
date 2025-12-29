@@ -31,7 +31,7 @@ public:
 protected:
 	// 플레이어 스테이트에서 읽은 데이터
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")
-	FMSSkillList SkillDataRow;
+	FMSSkillList SkillListRow;
 	
 	// 스킬 ID
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")

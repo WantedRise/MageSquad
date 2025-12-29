@@ -39,5 +39,5 @@ void UMSGA_SkillBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
-	SkillDataRow = *Found;
+	SkillListRow = *Found;
 }

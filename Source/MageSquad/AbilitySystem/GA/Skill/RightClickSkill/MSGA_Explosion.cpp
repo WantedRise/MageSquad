@@ -29,8 +29,8 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	SkillID = CurrentSkillID;
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	CoolTime = SkillDataRow.CoolTime;
-	Range = SkillDataRow.Range;
+	CoolTime = SkillListRow.CoolTime;
+	Range = SkillListRow.Range;
 	TArray<float> FinalDamageSequence = BaseDamageSequence;
 	for (float& Damage : FinalDamageSequence)
 	{

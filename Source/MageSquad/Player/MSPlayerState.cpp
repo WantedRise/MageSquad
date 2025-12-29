@@ -513,18 +513,3 @@ void AMSPlayerState::ApplyRandomSkillLevelUpChoice_Server()
 	ApplySkillLevelUpChoice_Server(CurrentLevelUpSessionId, Picked);
 }
 
-const TArray<FMSSkillList>& AMSPlayerState::GetOwnedSkills() const
-{
-	return OwnedSkills;
-}
-
-const FMSSkillList* AMSPlayerState::GetOwnedSkillByID(int32 InSkillID) const
-{
-	return Algo::FindByPredicate(
-		OwnedSkills,
-		[InSkillID](const FMSSkillList& Skill)
-		{
-			return Skill.SkillID == InSkillID;
-		}
-	);
-}
