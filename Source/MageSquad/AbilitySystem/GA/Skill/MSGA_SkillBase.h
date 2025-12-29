@@ -29,11 +29,12 @@ public:
 		const FGameplayEventData* TriggerEventData) override;
 	
 protected:
-	// 스킬 데이터
+	// 플레이어 스테이트에서 읽은 데이터
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")
-	FMSSkillList SkillListRow;
+	FMSSkillList SkillDataRow;
 	
 	// 스킬 ID
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")
 	int32 SkillID;
+	
 };

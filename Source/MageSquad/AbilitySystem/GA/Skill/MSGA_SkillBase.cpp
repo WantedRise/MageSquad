@@ -2,6 +2,7 @@
 
 
 #include "MSGA_SkillBase.h"
+#include "Player/MSPlayerState.h"
 
 #include "Player/MSPlayerState.h"
 
@@ -16,19 +17,27 @@ void UMSGA_SkillBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
-	const AMSPlayerState* PS = Cast<AMSPlayerState>(ActorInfo ? ActorInfo->OwnerActor.Get() : nullptr);
-	if (!PS)
+	// PlayerState 가져오기
+	APawn* Pawn = Cast<APawn>(ActorInfo->AvatarActor.Get());
+	if (!Pawn)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] PlayerState(OwnerActor) is NULL"), *GetName());
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	const FMSSkillList* Skill = PS->GetOwnedSkillByID(SkillID);
-	if (!Skill)
+	AMSPlayerState* PS = Pawn->GetPlayerState<AMSPlayerState>();
+	if (!PS)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] OwnedSkill not found (SkillID=%d)"), *GetName(), SkillID);
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+	
+	const FMSSkillList* Found = PS->GetOwnedSkillByID(SkillID);
+	if (!Found)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	SkillDataRow = *Found;
 }

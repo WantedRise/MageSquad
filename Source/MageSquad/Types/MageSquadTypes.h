@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameplayEffectTypes.h"
-#include "SkillData/MSSkillDataRow.h"
 #include "SkillData/MSSkillList.h"
 #include "MageSquadTypes.generated.h"
 
@@ -266,9 +265,9 @@ class MAGESQUAD_API UMSSkillSlotRuntimeData : public UObject
 
 public:
 	// 스킬 행 초기화 함수
-	void InitFromRow(const FMSSkillDataRow& Skill, int32 InSlotIndex)
+	void InitFromRow(const FMSSkillList& InRow, int32 InSlotIndex)
 	{
-		SkillRow = Skill;
+		SkillRow = InRow;
 		SlotIndex = InSlotIndex;
 	}
 
@@ -279,7 +278,7 @@ public:
 
 	// 해당 스킬의 최종 데이터(레벨 반영된 한 행)
 	UPROPERTY(BlueprintReadOnly)
-	FMSSkillDataRow SkillRow;
+	FMSSkillList SkillRow;
 };
 
 

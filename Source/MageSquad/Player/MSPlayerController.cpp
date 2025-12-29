@@ -363,9 +363,8 @@ void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 S
 
 	SetPause(false);
 
-	FInputModeGameOnly Mode;
-	SetInputMode(Mode);
-	bShowMouseCursor = false;
+	FInputModeGameAndUI InputMode;
+	SetInputMode(InputMode);
 }
 
 void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 SessionId,
@@ -409,7 +408,6 @@ void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 Se
 	InputMode.SetWidgetToFocus(LevelUpPanelInstance->TakeWidget());
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
-	bShowMouseCursor = true;
 }
 
 void AMSPlayerController::Server_SelectSkillLevelUpChoice_Implementation(int32 SessionId,
