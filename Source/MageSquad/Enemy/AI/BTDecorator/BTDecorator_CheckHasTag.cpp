@@ -23,7 +23,6 @@ bool UBTDecorator_CheckHasTag::CalculateRawConditionValue(UBehaviorTreeComponent
 		return Result;
 	}
 	
-	
 	for (const auto& Tag : GameplayTags)
 	{
 		Result = OwnerPawn->GetAbilitySystemComponent()->HasMatchingGameplayTag(Tag);
