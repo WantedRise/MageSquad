@@ -39,9 +39,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FText SkillDescription;
 
-	// 스킬 아이콘 (소프트 레퍼런스)
+	// 스킬 아이콘 머티리얼 (소프트 레퍼런스)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSoftObjectPtr<UTexture2D> SkillIcon;
+	TSoftObjectPtr<UMaterialInterface> SkillIcon;
 	
 	// 스킬 GA (소프트 레퍼런스)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
