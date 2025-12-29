@@ -25,12 +25,14 @@ AMSPlayerState::AMSPlayerState()
 	AttributeSet = CreateDefaultSubobject<UMSPlayerAttributeSet>(TEXT("AttributeSet"));
 
 	bUIReady = false;
+	bIsAlive = true;
 }
 void AMSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMSPlayerState, bUIReady);
+	DOREPLIFETIME(AMSPlayerState, bIsAlive);
 }
 
 void AMSPlayerState::SetUIReady(bool bReady)
@@ -143,7 +145,7 @@ void AMSPlayerState::FindSkillRowBySkillIDAndAdd(const int32 SkillID)
 	// 값 복사해서 추가
 	FMSSkillList NewSkill = *FoundRow;
 	OwnedSkills.Add(NewSkill);
-	
+
 	if (NewSkill.SkillType == 1) SkillNum++;
 }
 
@@ -175,7 +177,7 @@ void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplay
 	{
 		Skill.Penetration += 1;
 	}
-	
+
 }
 
 void AMSPlayerState::GiveAbilityForSkillRow_Server(const FMSSkillList& Skill)
@@ -312,13 +314,13 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 	FRandomStream RandStream(PlayerSeed);
 
 	auto Shuffle = [&](TArray<FMSLevelUpChoicePair>& Arr)
-	{
-		for (int32 i = Arr.Num() - 1; i > 0; --i)
 		{
-			const int32 Index = RandStream.RandRange(0, i);
-			Arr.Swap(i, Index);
-		}
-	};
+			for (int32 i = Arr.Num() - 1; i > 0; --i)
+			{
+				const int32 Index = RandStream.RandRange(0, i);
+				Arr.Swap(i, Index);
+			}
+		};
 
 	Shuffle(AcquireCandidates);
 	Shuffle(UpgradeCandidates);
@@ -327,11 +329,11 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 	// - 슬롯 여유 있으면 Acquire 1개 우선(가능할 때)
 	// - 나머지는 Upgrade로 채우되 부족하면 Acquire로 채움
 	auto PickOne = [&](TArray<FMSLevelUpChoicePair>& Pool)
-	{
-		if (Pool.Num() <= 0) return false;
-		CurrentSkillChoices.Add(Pool.Pop(EAllowShrinking::No)); // 뒤에서 하나
-		return true;
-	};
+		{
+			if (Pool.Num() <= 0) return false;
+			CurrentSkillChoices.Add(Pool.Pop(EAllowShrinking::No)); // 뒤에서 하나
+			return true;
+		};
 
 	// 1) Acquire 1개(가능하면)
 	if (bHasFreeSlot && AcquireCandidates.Num() > 0 && CurrentSkillChoices.Num() < 3)
@@ -410,7 +412,7 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 		return;
 
 	const bool bIsAcquire = !UpgradeTag.IsValid();
-	
+
 	if (bIsAcquire)
 	{
 		// 방어: 이미 가지고 있는 스킬이면 Acquire가 오면 안 되지만, 혹시 모르니 Upgrade로 처리
@@ -434,13 +436,13 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] Skill row not found. Tag=%s"), *SkillTag.ToString());
 			return;
 		}
-		
+
 		FMSSkillList NewSkill = *Row;
 		NewSkill.SkillLevel = 1;
 
 		OwnedSkills.Add(NewSkill);
 		SkillNum++;
-		
+
 		// GA 부여 
 		GiveAbilityForSkillRow_Server(NewSkill);
 
@@ -459,7 +461,7 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 		{
 			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] GetPawn() is null (not possessed yet)."));
 		}
-		
+
 		bSkillLevelUpCompleted = true;
 
 		UE_LOG(LogTemp, Log, TEXT("[LevelUp][Acquire] Skill=%s Level=1"), *SkillTag.ToString());
@@ -516,8 +518,20 @@ void AMSPlayerState::ApplyRandomSkillLevelUpChoice_Server()
 
 void AMSPlayerState::SetAliveState_Server(bool bInAlive)
 {
+	if (!HasAuthority()) return;
+	if (bIsAlive == bInAlive) return;
+
+	// 살아있는 상태 초기화
+	bIsAlive = bInAlive;
+
+	// 리슨 서버(호스트)의 로컬 관전 컨트롤러는 서버에 존재하므로 OnRep가 호출되지 않음
+	// 따라서 서버에서도 델리게이트를 브로드캐스트 함
+	OnAliveStateChanged.Broadcast(bIsAlive);
+
+	ForceNetUpdate();
 }
 
 void AMSPlayerState::OnRep_IsAlive()
 {
+	OnAliveStateChanged.Broadcast(bIsAlive);
 }

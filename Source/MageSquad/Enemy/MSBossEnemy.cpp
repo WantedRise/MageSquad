@@ -127,14 +127,14 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 	{
 		// 카메라 전환: 보스 본인(this)을 뷰 타겟으로 설정
 		OriginalViewTarget = PC->GetViewTarget();
-		PC->SetViewTargetWithBlend(this, 0.5f, VTBlend_Cubic);
+		PC->SetViewTargetWithBlend(this, 0.5f, VTBlend_Cubic, 0.f, true);
 	}
 	else
 	{
 		// 원래 카메라로 복귀
 		if (OriginalViewTarget)
 		{
-			PC->SetViewTargetWithBlend(OriginalViewTarget, 1.0f, VTBlend_Cubic);
+			PC->SetViewTargetWithBlend(OriginalViewTarget, 1.0f, VTBlend_Cubic, 0.f, true);
 		}
 	}
 }
