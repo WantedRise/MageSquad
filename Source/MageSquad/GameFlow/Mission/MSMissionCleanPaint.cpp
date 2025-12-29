@@ -34,7 +34,7 @@ void UMSMissionCleanPaint::Initialize(UWorld* World)
     }
     FNavLocation NavLoc;
     FVector OutLocation;
-    if (NavSystem->ProjectPointToNavigation(FVector(0,0,0), NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
+    if (NavSystem->ProjectPointToNavigation(FVector(0,0,0), NavLoc, FVector(2000.0f, 2000.0f, 2000.0f)))
     {
         OutLocation = NavLoc.Location;
         OutLocation.Z = 10.f;
@@ -55,8 +55,20 @@ void UMSMissionCleanPaint::Initialize(UWorld* World)
         &UMSMissionCleanPaint::OnAreaProgressChanged
     );
 
-    InkAreas.Add(SpawnedActor);
+    AMSInkAreaActor* SpawnedActor2 = World->SpawnActor<AMSInkAreaActor>(
+        MissionActorClass,
+        OutLocation+FVector(0,1000.0f,0),
+        FRotator::ZeroRotator,
+        SpawnParams
+    );
 
+    SpawnedActor2->OnProgressChanged.AddUObject(
+        this,
+        &UMSMissionCleanPaint::OnAreaProgressChanged
+    );
+
+    InkAreas.Add(SpawnedActor);
+    InkAreas.Add(SpawnedActor2);
     //BindInkAreas(World);
     // 초기 상태 1회 계산
     OnAreaProgressChanged(0.0f);
