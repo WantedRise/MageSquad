@@ -337,20 +337,53 @@ void AMSPlayerController::ApplyLocalInputState(bool bDead)
 	}
 }
 
-void AMSPlayerController::OnSpectatePrevAction(const FInputActionValue& Value)
+void AMSPlayerController::RequestChangeSpectate(int32 Direction)
 {
+	if (HasAuthority())
+	{
+		// 서버는 바로 처리
+		HandleChangeSpectate_Server(Direction);
+	}
+	else
+	{
+		// 클라이언트는 서버에게 관전 대상 변경 요청
+		ServerRPCChangeSpectate(Direction);
+	}
+}
+
+void AMSPlayerController::HandleChangeSpectate_Server(int32 Direction)
+{
+	if (!IsLocalController()) return;
+
+	// 관전 사이클 변경
 	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
 	if (!MyChar || !MyChar->GetSpectating()) return;
-	CycleSpectateTarget(-1);
-	UE_LOG(LogTemp, Warning, TEXT("[Player-Input] OnSpectatePrevAction."));
+	CycleSpectateTarget(Direction);
+}
+
+void AMSPlayerController::ServerRPCChangeSpectate_Implementation(int32 Direction)
+{
+	if (!HasAuthority()) return;
+
+	HandleChangeSpectate_Server(Direction);
+}
+
+void AMSPlayerController::OnSpectatePrevAction(const FInputActionValue& Value)
+{
+	// 로컬 컨트롤러가 아닌 경우 종료
+	if (!IsLocalController()) return;
+
+	// 관전 대상 변경 요청 (이전 대상으로)
+	RequestChangeSpectate(-1);
 }
 
 void AMSPlayerController::OnSpectateNextAction(const FInputActionValue& Value)
 {
-	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
-	if (!MyChar || !MyChar->GetSpectating()) return;
-	CycleSpectateTarget(+1);
-	UE_LOG(LogTemp, Warning, TEXT("[Player-Input] OnSpectateNextAction."));
+	// 로컬 컨트롤러가 아닌 경우 종료
+	if (!IsLocalController()) return;
+
+	// 관전 대상 변경 요청 (다음 대상으로)
+	RequestChangeSpectate(+1);
 }
 
 void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId)
@@ -522,7 +555,7 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 		Tracker->ShowDefaultProgress();
 		break;
 	}
-	
+
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
 		Tracker->StartMissionTimer(GS, GS->GetMissionEndTime());
