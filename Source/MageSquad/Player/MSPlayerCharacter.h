@@ -340,7 +340,7 @@ protected:
 protected:
 	// 기본 경험치 픽업 반경
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Experience")
-	float BaseExperiencePickupRange = 250.f;
+	float BaseExperiencePickupRange = 500.f;
 
 	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 속성 변경 델리게이트 핸들
 	FDelegateHandle AttributeSetPickupRangeModChangedHandle;

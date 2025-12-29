@@ -127,10 +127,10 @@ protected:
 	* Death & Respawn Section
 	*****************************************************/
 public:
-	/** 서버 전용: 살아있음 상태 변경 */
+	// 서버: 살아있음 상태 변경 콜백 함수
 	void SetAliveState_Server(bool bInAlive);
 
-	/** 현재 살아있는 상태인지 */
+	// 현재 생존 여부 Getter
 	bool IsAlive() const { return bIsAlive; }
 
 private:
