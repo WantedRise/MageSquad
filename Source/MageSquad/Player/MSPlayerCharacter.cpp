@@ -681,6 +681,12 @@ void AMSPlayerCharacter::HandlePassiveSkillTimer_Server(int32 SlotIndex)
 
 	if (!SkillSlots.IsValidIndex(SlotIndex) || !SkillSlots[SlotIndex].IsValid()) return;
 
+	// 플레이어가 사망 상태면 스킵
+	if (AbilitySystemComponent->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead))
+	{
+		return;
+	}
+
 	// 슬롯의 스킬 데이터 가져오기
 	const FMSPlayerSkillSlotNet& Slot = SkillSlots[SlotIndex];
 	if (!Slot.SkillEventTag.IsValid()) return;
