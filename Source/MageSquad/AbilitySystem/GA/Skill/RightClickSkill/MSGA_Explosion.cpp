@@ -31,7 +31,8 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 	CoolTime = SkillDataRow.CoolTime;
 	Range = SkillDataRow.Range;
-	for (auto& Damage : DamageSequence)
+	TArray<float> FinalDamageSequence = BaseDamageSequence;
+	for (float& Damage : FinalDamageSequence)
 	{
 		Damage *= SkillDataRow.SkillDamage;
 	}
@@ -72,7 +73,7 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.LifeTime = 0.f;
 	RuntimeData.DamageEffect = DamageEffect;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaPeriodic::StaticClass();
-	RuntimeData.DamageSequence = DamageSequence;
+	RuntimeData.DamageSequence = FinalDamageSequence;
 	RuntimeData.DamageInterval = DamageInterval;
 
 	// 공격 스폰

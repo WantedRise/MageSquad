@@ -59,18 +59,25 @@ protected:
 	// 플레이어가 보유 중인 스킬 목록
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	TArray<FMSSkillList> OwnedSkills;
-
-	// 태그로 가지고 있는 스킬 검색
-	static int32 FindOwnedSkillIndexByTag(const TArray<FMSSkillList>& OwnedSkills, const FGameplayTag& SkillTag);
-	
-	// DataTable에서 스킬 Row 찾기 (SkillEventTag로 매칭) ---
-	static const FMSSkillList* FindSkillRowByTag(UDataTable* SkillListDataTable, const FGameplayTag& SkillTag);
 	
 	// 스킬 업그레이드 적용
 	void ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplayTag& UpgradeTag);
 	
 	// 스킬 GA 부여
 	void GiveAbilityForSkillRow_Server(const FMSSkillList& Skill);
+	
+public:
+	// 태그로 가지고 있는 스킬 검색
+	static int32 FindOwnedSkillIndexByTag(const TArray<FMSSkillList>& OwnedSkills, const FGameplayTag& SkillTag);
+	
+	// SkillID로 가지고 있는 스킬 검색
+	const FMSSkillList* GetOwnedSkillByID(int32 SkillID) const;
+	
+	// DataTable에서 스킬 Row 찾기 (SkillEventTag로 매칭) ---
+	static const FMSSkillList* FindSkillRowByTag(UDataTable* SkillListDataTable, const FGameplayTag& SkillTag);
+	
+	// DataTable에서 스킬 Row 찾고 가지고 있는 스킬 리스트에 추가
+	void FindSkillRowBySkillIDAndAdd(const int32 SkillID);
 private:
 	//게임 시작 체크를 위해
 	UPROPERTY(Replicated)
@@ -85,6 +92,7 @@ public:
 	
 	// 랜덤 스킬 레벨업 적용
 	void ApplyRandomSkillLevelUpChoice_Server();
+	
 public:
 	const TArray<FMSLevelUpChoicePair>& GetCurrentSkillChoices() const { return CurrentSkillChoices; }
 	bool IsSkillLevelUpCompleted() const { return bSkillLevelUpCompleted; }

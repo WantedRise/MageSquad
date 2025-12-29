@@ -34,11 +34,12 @@ protected:
 	
 	// 피해량
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<float> DamageSequence = { 0.1f, 0.1f, 0.1f, 0.7f };
-
+	TArray<float> BaseDamageSequence = { 0.1f, 0.1f, 0.1f, 0.7f };
+	
+	
 	// 피해 주기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float DamageInterval = 0.2f;
+	float DamageInterval = 0.25f;
 
 	// 쿨타임
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

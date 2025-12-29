@@ -21,7 +21,7 @@ struct FMSSkillList : public FTableRowBase
 public:
 	// 스킬 타입 ( 1: AutoActive, 2: Left Click, 3: Right Click )
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 SkillType = 0;
+	int32 SkillType = 1;
 
 	// 고유 스킬 ID
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

@@ -3,6 +3,7 @@
 
 #include "Player/MSPlayerState.h"
 
+#include "MSPlayerCharacter.h"
 #include "Player/MSPlayerController.h"
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
@@ -65,6 +66,18 @@ int32 AMSPlayerState::FindOwnedSkillIndexByTag(const TArray<FMSSkillList>& Owned
 	return INDEX_NONE;
 }
 
+const FMSSkillList* AMSPlayerState::GetOwnedSkillByID(int32 SkillID) const
+{
+	for (const FMSSkillList& Skill : OwnedSkills)
+	{
+		if (Skill.SkillID == SkillID)
+		{
+			return &Skill;
+		}
+	}
+	return nullptr;
+}
+
 const FMSSkillList* AMSPlayerState::FindSkillRowByTag(UDataTable* SkillListDataTable, const FGameplayTag& SkillTag)
 {
 	if (!SkillListDataTable || !SkillTag.IsValid())
@@ -82,6 +95,56 @@ const FMSSkillList* AMSPlayerState::FindSkillRowByTag(UDataTable* SkillListDataT
 		}
 	}
 	return nullptr;
+}
+
+void AMSPlayerState::FindSkillRowBySkillIDAndAdd(const int32 SkillID)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (!SkillListDataTable || SkillID <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[FindSkillRowBySkillIDAndAdd] Invalid DataTable or SkillID=%d"), SkillID);
+		return;
+	}
+
+	// 이미 보유 중이면 무시(중복 방지)
+	for (const FMSSkillList& Owned : OwnedSkills)
+	{
+		if (Owned.SkillID == SkillID)
+		{
+			return;
+		}
+	}
+
+	// DataTable에서 Row 찾기 (선형 탐색)
+	static const FString Ctx(TEXT("FindSkillRowBySkillIDAndAdd"));
+	TArray<FMSSkillList*> AllRows;
+	SkillListDataTable->GetAllRows(Ctx, AllRows);
+
+	const FMSSkillList* FoundRow = nullptr;
+	for (const FMSSkillList* Row : AllRows)
+	{
+		if (Row && Row->SkillID == SkillID)
+		{
+			FoundRow = Row;
+			break;
+		}
+	}
+
+	if (!FoundRow)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[FindSkillRowBySkillIDAndAdd] Row not found. SkillID=%d"), SkillID);
+		return;
+	}
+
+	// 값 복사해서 추가
+	FMSSkillList NewSkill = *FoundRow;
+	OwnedSkills.Add(NewSkill);
+	
+	if (NewSkill.SkillType == 1) SkillNum++;
 }
 
 void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplayTag& UpgradeTag)
@@ -170,14 +233,13 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 
 	const bool bHasFreeSlot = (SkillNum < MaxSkillCount);
 
-	// ✅ 후보 풀 분리
+	// 후보 풀 분리
 	TArray<FMSLevelUpChoicePair> AcquireCandidates; // 새 스킬 습득(UpgradeTag invalid)
 	TArray<FMSLevelUpChoicePair> UpgradeCandidates; // 기존 스킬 업그레이드
 
 	AcquireCandidates.Reserve(AllRows.Num());
 	UpgradeCandidates.Reserve(AllRows.Num() * 4);
 
-	// Owned lookup 최적화(선택): Set으로 만들어도 됨. 지금은 기존 방식 유지.
 	for (const FMSSkillList* Row : AllRows)
 	{
 		if (!Row) continue;
@@ -260,7 +322,7 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 	Shuffle(AcquireCandidates);
 	Shuffle(UpgradeCandidates);
 
-	// ✅ 최종 3개 구성 규칙
+	// 최종 3개 구성 규칙
 	// - 슬롯 여유 있으면 Acquire 1개 우선(가능할 때)
 	// - 나머지는 Upgrade로 채우되 부족하면 Acquire로 채움
 	auto PickOne = [&](TArray<FMSLevelUpChoicePair>& Pool)
@@ -364,13 +426,6 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 			return;
 		}
 
-		// 슬롯 체크
-		if (SkillNum >= MaxSkillCount)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] No free slot. SkillNum=%d"), SkillNum);
-			return;
-		}
-
 		// DataTable에서 해당 스킬 구조체 가져오기
 		const FMSSkillList* Row = FindSkillRowByTag(SkillListDataTable, SkillTag);
 		if (!Row)
@@ -378,16 +433,32 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] Skill row not found. Tag=%s"), *SkillTag.ToString());
 			return;
 		}
-
+		
 		FMSSkillList NewSkill = *Row;
 		NewSkill.SkillLevel = 1;
 
 		OwnedSkills.Add(NewSkill);
-		SkillNum = OwnedSkills.Num(); // 또는 SkillNum++
+		SkillNum++;
 		
 		// GA 부여 
 		GiveAbilityForSkillRow_Server(NewSkill);
 
+		if (APawn* Pawn = GetPawn())
+		{
+			if (AMSPlayerCharacter* PC = Cast<AMSPlayerCharacter>(Pawn))
+			{
+				PC->AcquireSkill(NewSkill.SkillID);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] Pawn is not AMSPlayerCharacter. Pawn=%s"), *GetNameSafe(Pawn));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] GetPawn() is null (not possessed yet)."));
+		}
+		
 		bSkillLevelUpCompleted = true;
 
 		UE_LOG(LogTemp, Log, TEXT("[LevelUp][Acquire] Skill=%s Level=1"), *SkillTag.ToString());

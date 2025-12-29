@@ -424,18 +424,18 @@ void AMSPlayerCharacter::RequestUseActiveSkill(EMSSkillSlotIndex SlotIndex)
 	}
 }
 
-void AMSPlayerCharacter::AcquireSkill(int32 SkillID, int32 SkillLevel)
+void AMSPlayerCharacter::AcquireSkill(int32 SkillID)
 {
 	// 서버에서 호출되는 것이 이상적이나, 호출자가 클라이언트일 수 있으므로 보정
 	if (HasAuthority())
 	{
-		ServerRPCAcquireSkill(SkillID, SkillLevel);
+		ServerRPCAcquireSkill_Implementation(SkillID);
 		return;
 	}
 
 	if (IsLocallyControlled())
 	{
-		ServerRPCAcquireSkill(SkillID, SkillLevel);
+		ServerRPCAcquireSkill(SkillID);
 	}
 }
 
@@ -482,22 +482,28 @@ void AMSPlayerCharacter::EnsureSkillSlotArrays()
 	}
 }
 
-void AMSPlayerCharacter::ServerRPCAcquireSkill_Implementation(int32 SkillID, int32 SkillLevel)
+void AMSPlayerCharacter::ServerRPCAcquireSkill_Implementation(int32 SkillID)
 {
 	if (!HasAuthority()) return;
 
 	// 스킬 슬롯 보정
 	EnsureSkillSlotArrays();
 
-	// 스킬 데이터
-	FMSSkillDataRow Row;
-
-	// 스킬 데이터 가져오기
-	if (!ResolveSkillRow(SkillID, SkillLevel, Row))
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Skill] ResolveSkillRow failed. SkillID=%d, Level=%d"), SkillID, SkillLevel);
+		UE_LOG(LogTemp, Warning, TEXT("[Skill] ServerRPCAcquireSkill: PlayerState is null"));
 		return;
 	}
+	
+	// 스킬 데이터
+	const FMSSkillList* FoundSkill = PS->GetOwnedSkillByID(SkillID);
+	if (!FoundSkill)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Skill] ServerRPCAcquireSkill: Owned skill not found. SkillID=%d"), SkillID);
+		return;
+	}
+	FMSSkillList Row = *FoundSkill;
 
 	// 스킬 슬롯에 데이터 할당
 	EquipSkillFromRow_Server(Row);
@@ -538,28 +544,7 @@ void AMSPlayerCharacter::HandleActiveSkillSlot_Server(int32 SlotIndex)
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Slot.SkillEventTag, Payload);
 }
 
-bool AMSPlayerCharacter::ResolveSkillRow(int32 SkillID, int32 SkillLevel, FMSSkillDataRow& OutRow) const
-{
-	if (!SkillDataTable) return false;
-
-	// DataTable RowName이 보장되지 않는 구조임
-	// DataTable의 모든 행을 SkillID/SkillLevel로 선형 탐색
-	for (const TPair<FName, uint8*>& Pair : SkillDataTable->GetRowMap())
-	{
-		const FMSSkillDataRow* Row = reinterpret_cast<const FMSSkillDataRow*>(Pair.Value);
-		if (!Row) continue;
-
-		if (Row->SkillID == SkillID && Row->SkillLevel == SkillLevel)
-		{
-			OutRow = *Row;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void AMSPlayerCharacter::EquipSkillFromRow_Server(const FMSSkillDataRow& Row)
+void AMSPlayerCharacter::EquipSkillFromRow_Server(const FMSSkillList& Row)
 {
 	if (!HasAuthority()) return;
 
@@ -590,7 +575,7 @@ void AMSPlayerCharacter::EquipSkillFromRow_Server(const FMSSkillDataRow& Row)
 	}
 }
 
-void AMSPlayerCharacter::SetSkillSlot_Server(int32 SlotIndex, const FMSSkillDataRow& Row)
+void AMSPlayerCharacter::SetSkillSlot_Server(int32 SlotIndex, const FMSSkillList& Row)
 {
 	if (!HasAuthority()) return;
 
@@ -829,14 +814,19 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbilityClass));
 		}
 	}
-
 	// 시작 스킬 획득
 	for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
 	{
 		if (*StartSkillData.SkillAbilty)
 		{
+			// PlayerState 가져오기
+			AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+			if (!PS) return;
+			
+			PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
+			
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));
-			AcquireSkill(StartSkillData.SkillId, StartSkillData.SkillLevel);
+			AcquireSkill(StartSkillData.SkillId);
 		}
 	}
 }

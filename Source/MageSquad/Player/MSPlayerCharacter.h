@@ -176,7 +176,7 @@ public:
 	 * SkillType에 따라 슬롯에 장착(패시브: 4칸 중 빈 칸, 액티브: 좌/우 고정)
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Custom | Skill")
-	void AcquireSkill(int32 SkillID, int32 SkillLevel = 1);
+	void AcquireSkill(int32 SkillID);
 
 	// 현재 슬롯 정보(OwnerOnly 복제, UI/입력 바인딩 용도)
 	UFUNCTION(BlueprintCallable, Category = "Custom | Skill")
@@ -188,10 +188,6 @@ protected:
 	void OnRep_SkillSlots();
 
 protected:
-	// 스킬 데이터 테이블
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Skill")
-	TObjectPtr<UDataTable> SkillDataTable;
-
 	// 스킬 슬롯
 	UPROPERTY(ReplicatedUsing = OnRep_SkillSlots)
 	TArray<FMSPlayerSkillSlotNet> SkillSlots;
@@ -202,7 +198,7 @@ private:
 
 	// 서버에게 스킬 획득을 요청하는 함수 ServerRPC
 	UFUNCTION(Server, Reliable)
-	void ServerRPCAcquireSkill(int32 SkillID, int32 SkillLevel = 1);
+	void ServerRPCAcquireSkill(int32 SkillID);
 
 	// 서버에게 액티브 스킬 사용을 요청하는 함수 ServerRPC
 	UFUNCTION(Server, Reliable)
@@ -211,13 +207,11 @@ private:
 	// 액티브 스킬 실제 트리거 함수 (서버 전용)
 	void HandleActiveSkillSlot_Server(int32 SlotIndex);
 
-	// SkillID/Level을 기반으로 DT에서 Row를 찾는 함수
-	bool ResolveSkillRow(int32 SkillID, int32 SkillLevel, FMSSkillDataRow& OutRow) const;
 
 
 	// SkillType에 맞게 슬롯에 장착하는 함수들 (서버 전용)
-	void EquipSkillFromRow_Server(const FMSSkillDataRow& Row);
-	void SetSkillSlot_Server(int32 SlotIndex, const FMSSkillDataRow& Row);
+	void EquipSkillFromRow_Server(const FMSSkillList& Row);
+	void SetSkillSlot_Server(int32 SlotIndex, const FMSSkillList& Row);
 	int32 FindOrAllocatePassiveSlotIndex_Server(int32 SkillID) const;
 
 
