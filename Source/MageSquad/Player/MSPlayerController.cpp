@@ -342,6 +342,7 @@ void AMSPlayerController::OnSpectatePrevAction(const FInputActionValue& Value)
 	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
 	if (!MyChar || !MyChar->GetSpectating()) return;
 	CycleSpectateTarget(-1);
+	UE_LOG(LogTemp, Warning, TEXT("[Player-Input] OnSpectatePrevAction."));
 }
 
 void AMSPlayerController::OnSpectateNextAction(const FInputActionValue& Value)
@@ -349,6 +350,7 @@ void AMSPlayerController::OnSpectateNextAction(const FInputActionValue& Value)
 	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
 	if (!MyChar || !MyChar->GetSpectating()) return;
 	CycleSpectateTarget(+1);
+	UE_LOG(LogTemp, Warning, TEXT("[Player-Input] OnSpectateNextAction."));
 }
 
 void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId)
