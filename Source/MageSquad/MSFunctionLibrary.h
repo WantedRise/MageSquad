@@ -57,4 +57,8 @@ public:
 		APawn* Instigator,				// 발사체를 발사한 객체
 		TSubclassOf<AMSBaseProjectile> ProjectileClass = nullptr // 발사체 클래스
 	);
+
+	// 주어진 액터가 관전 대상으로 유효한지 판단하는 함수
+	static bool IsValidSpectateTargetActor(const class AActor* Candidate);
+
 };

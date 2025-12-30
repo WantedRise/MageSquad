@@ -19,6 +19,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#include "MSFunctionLibrary.h"
+
+#include "Net/UnrealNetwork.h"
+
 #include "EngineUtils.h"
 
 void AMSPlayerController::BeginPlay()
@@ -140,6 +144,13 @@ void AMSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void AMSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(AMSPlayerController, SpectateTargetActor, COND_OwnerOnly);
+}
+
 void AMSPlayerController::EnsureHUDCreated()
 {
 	if (!IsLocalController() || HUDWidgetInstance || !HUDWidgetClass) return;
@@ -240,52 +251,6 @@ void AMSPlayerController::UpdateCursor()
 	}
 }
 
-void AMSPlayerController::CycleSpectateTarget(int32 Direction)
-{
-	// 관전 상태에서만 동작
-	AMSPlayerCharacter* OwningChar = Cast<AMSPlayerCharacter>(GetPawn());
-	if (!OwningChar || !OwningChar->GetSpectating()) return;
-
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	// 생존 중인 팀원 목록
-	TArray<AMSPlayerCharacter*> AliveCharacters;
-
-	// 월드 내 PlayerContoller 탐색
-	for (APlayerController* PC : TActorRange<APlayerController>(GetWorld()))
-	{
-		AMSPlayerCharacter* Char = PC ? Cast<AMSPlayerCharacter>(PC->GetPawn()) : nullptr;
-		if (Char && Char != OwningChar && !Char->GetIsDead())
-		{
-			// 생존 중인 팀원 목록에 추가
-			AliveCharacters.Add(Char);
-		}
-	}
-
-	// 생존 중인 팀원 목록이 없으면 종료
-	if (AliveCharacters.Num() == 0) return;
-
-	// 현재 관전 대상의 인덱스 찾기
-	AActor* CurrentViewTarget = GetViewTarget();
-	int32 CurrentIndex = AliveCharacters.IndexOfByKey(CurrentViewTarget);
-
-	int32 NewIndex;
-	// 유효하지 않은 인덱스면 제외
-	if (CurrentIndex == INDEX_NONE)
-	{
-		NewIndex = 0;
-	}
-	// 현재 관전 대상 인덱스부터 시작해서 모듈러 연산을 통해 관전 대상 순환
-	else
-	{
-		NewIndex = (CurrentIndex + Direction + AliveCharacters.Num()) % AliveCharacters.Num();
-	}
-
-	// 관전 대상 변경
-	SetSpectateViewTarget(AliveCharacters[NewIndex]);
-}
-
 void AMSPlayerController::SetSpectateViewTarget(AActor* NewTarget)
 {
 	if (!NewTarget) return;
@@ -337,6 +302,74 @@ void AMSPlayerController::ApplyLocalInputState(bool bDead)
 	}
 }
 
+void AMSPlayerController::SetSpectateTarget_Server(AActor* NewTarget)
+{
+	if (!HasAuthority()) return;
+
+	// 관전 대상이 유효한지 확인
+	if (NewTarget && !UMSFunctionLibrary::IsValidSpectateTargetActor(NewTarget))
+	{
+		NewTarget = nullptr;
+	}
+
+	// 관전 대상 변경
+	SpectateTargetActor = NewTarget;
+
+	// 리슨 서버(호스트)는 관전 대상 변경 OnRep 호출이 안되므로, 직접 호출
+	if (IsLocalController())
+	{
+		// 해당 관전 대상이 유효하면 해당 대상으로 관전 카메라 전환
+		if (SpectateTargetActor)
+		{
+			SetSpectateViewTarget(SpectateTargetActor);
+		}
+		// 관전 대상이 유효하지 않으면 내 Pawn으로 관전 카메라 복귀
+		else if (APawn* P = GetPawn())
+		{
+			SetSpectateViewTarget(P);
+		}
+	}
+
+	ForceNetUpdate();
+}
+
+void AMSPlayerController::EnsureValidSpectateTarget_Server()
+{
+	if (!HasAuthority()) return;
+
+	// 현재 타겟이 살아있지 않으면, 첫 번째 살아있는 팀원으로 자동 전환
+	if (SpectateTargetActor && UMSFunctionLibrary::IsValidSpectateTargetActor(SpectateTargetActor)) return;
+
+	// 현재 내 캐릭터가 관전 상태가 아니면 종료
+	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
+	if (!MyChar || !MyChar->GetSpectating()) return;
+
+	// 월드의 모든 플레이어를 순회하며 생존중인 캐릭터를 찾아 저장
+	AActor* Fallback = nullptr;
+	for (APlayerController* PC : TActorRange<APlayerController>(GetWorld()))
+	{
+		AMSPlayerCharacter* Char = PC ? Cast<AMSPlayerCharacter>(PC->GetPawn()) : nullptr;
+		if (Char && Char != MyChar && !Char->GetIsDead())
+		{
+			Fallback = Char;
+			break;
+		}
+	}
+
+	// 월드의 생존중인 캐릭터로 관전 대상을 전환
+	SetSpectateTarget_Server(Fallback);
+}
+
+void AMSPlayerController::CycleSpectateTarget(int32 Direction)
+{
+	// 외부 호출에도 안전하게 처리하도록 서버에서만 실제 타겟을 결정/저장
+	// 외부 호출(예: BP)도 안전하게 처리: 서버에서만 
+	if (!IsLocalController() && !HasAuthority()) return;
+
+	// 관전 대상 변경 요청
+	RequestChangeSpectate(Direction);
+}
+
 void AMSPlayerController::RequestChangeSpectate(int32 Direction)
 {
 	if (HasAuthority())
@@ -353,12 +386,45 @@ void AMSPlayerController::RequestChangeSpectate(int32 Direction)
 
 void AMSPlayerController::HandleChangeSpectate_Server(int32 Direction)
 {
-	if (!IsLocalController()) return;
+	if (!HasAuthority()) return;
 
-	// 관전 사이클 변경
+	// 현재 내 캐릭터가 관전 상태가 아니면 종료
 	AMSPlayerCharacter* MyChar = Cast<AMSPlayerCharacter>(GetPawn());
 	if (!MyChar || !MyChar->GetSpectating()) return;
-	CycleSpectateTarget(Direction);
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 월드의 모든 플레이어를 순회하며 생존중인 캐릭터를 모두 찾아 저장
+	TArray<AMSPlayerCharacter*> AliveCharacters;
+	for (APlayerController* PC : TActorRange<APlayerController>(World))
+	{
+		AMSPlayerCharacter* Char = PC ? Cast<AMSPlayerCharacter>(PC->GetPawn()) : nullptr;
+		if (Char && Char != MyChar && !Char->GetIsDead())
+		{
+			AliveCharacters.Add(Char);
+		}
+	}
+
+	// 생존중인 대상이 없으면 종료
+	if (AliveCharacters.Num() == 0)
+	{
+		SetSpectateTarget_Server(nullptr);
+		return;
+	}
+
+	// 현재 관전 대상 가져오기
+	AActor* CurrentTarget = SpectateTargetActor ? SpectateTargetActor.Get() : GetViewTarget();
+
+	// 생존중인 캐릭터 목록에 현재 관전 대상이 있는지 검사 + 인덱스 가져오기
+	int32 CurrentIndex = AliveCharacters.IndexOfByKey(CurrentTarget);
+
+	// 관전 대상이 유효하면 해당 관전 대상 인덱스를 기준으로 모듈러 연산
+	const int32 NewIndex = (CurrentIndex == INDEX_NONE) ? 0
+		: (CurrentIndex + Direction + AliveCharacters.Num()) % AliveCharacters.Num();
+
+	// 다음 관전 대상으로 관전 대상 설정
+	SetSpectateTarget_Server(AliveCharacters[NewIndex]);
 }
 
 void AMSPlayerController::ServerRPCChangeSpectate_Implementation(int32 Direction)
@@ -366,6 +432,22 @@ void AMSPlayerController::ServerRPCChangeSpectate_Implementation(int32 Direction
 	if (!HasAuthority()) return;
 
 	HandleChangeSpectate_Server(Direction);
+}
+
+void AMSPlayerController::OnRep_SpectateTargetActor()
+{
+	if (!IsLocalController()) return;
+
+	// 관전 대상이 변경된 경우, 해당 관전 대상이 유효하면 해당 대상으로 관전 카메라 전환
+	if (SpectateTargetActor && IsValid(SpectateTargetActor))
+	{
+		SetSpectateViewTarget(SpectateTargetActor);
+	}
+	// 관전 대상이 유효하지 않으면 내 Pawn으로 관전 카메라 복귀
+	else if (APawn* P = GetPawn())
+	{
+		SetSpectateViewTarget(P);
+	}
 }
 
 void AMSPlayerController::OnSpectatePrevAction(const FInputActionValue& Value)
