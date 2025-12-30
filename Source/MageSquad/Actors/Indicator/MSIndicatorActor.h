@@ -19,18 +19,28 @@ public:
 	void Initialize(const FAttackIndicatorParams& Params);
 
 protected:
+	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<class UDecalComponent> DecalComponent;
+	TObjectPtr<UDecalComponent> DecalComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Indicator")
+	TObjectPtr<UMaterialInterface> IndicatorMaterial;
 
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterial;
 
+	UPROPERTY(ReplicatedUsing = OnRep_CachedParams)
 	FAttackIndicatorParams CachedParams;
+
 	float ElapsedTime = 0.f;
 
-	virtual void Tick(float DeltaTime) override;
-
 private:
-	void UpdateFillPercent() const;
+	UFUNCTION()
+	void OnRep_CachedParams();
+
+	void ApplyMaterialParams();
+	void UpdateFillPercent();
 
 };

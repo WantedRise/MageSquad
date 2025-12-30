@@ -8,15 +8,15 @@
 /*
  * 작성자 : 임희섭
  * 작성일 : 2025/12/30
- * 보스 패턴의 인디케이터 지정을 위한 데이터 구조체
+ * 보스 공격의 인디케이터 지정을 위한 데이터 구조체
  */
 
 UENUM(BlueprintType)
 enum class EIndicatorShape : uint8
 {
-	Circle,      // 원형 (360도)
-	Cone,        // 부채꼴
-	Rectangle    // 사각형
+	Circle = 0,      // 원형 (360도)
+	Cone = 1,        // 부채꼴
+	Rectangle = 2    // 사각형
 };
 
 USTRUCT(BlueprintType)
