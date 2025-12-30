@@ -68,19 +68,19 @@ protected:
 public:
 	// 떠오르는 연출 높이
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float FloatUpHeight = 60.f;
+	float FloatUpHeight = 200.f;
 
 	// 떠오르는 연출 시간
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float FloatUpTime = 0.12f;
+	float FloatUpTime = 0.20f;
 
 	// 플레이어로 빨려들어가는 속도 (클수록 빠름)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float AttractInterpSpeed = 12.f;
+	float AttractInterpSpeed = 8.f;
 
 	// 경험치 오브 획득 후 서버에서 Destroy까지 지연 (연출 재생 시간 확보)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float DestroyDelay = 0.35f;
+	float DestroyDelay = 0.5f;
 
 private:
 	// 중복 획득 방지용 플래그 (서버에서만 true로 설정)
