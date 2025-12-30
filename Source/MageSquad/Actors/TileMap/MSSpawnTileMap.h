@@ -48,7 +48,6 @@ public:
 	AMSSpawnTileMap();
 
 	// ========== 에디터 설정 ==========
-	
 	// 타일 크기 (가로, 세로 동일)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TileMap|Settings", meta = (ClampMin = "50.0"))
 	float TileSize = 300.f;
@@ -82,7 +81,6 @@ public:
 	FVector NavMeshQueryExtent = FVector(100.f, 100.f, 500.f);
 
 	// ========== 생성된 데이터 ==========
-	
 	// 모든 타일 데이터 (에디터에서 생성, 레벨에 저장됨)
 	// AdvancedDisplay: Details 패널에서 숨김 (대량 데이터로 인한 에디터 렉 방지)
 	UPROPERTY(BlueprintReadOnly, Category = "TileMap|Data", meta = (AdvancedDisplay))
@@ -100,7 +98,6 @@ public:
 	TArray<int32> SpawnableTileIndices;
 
 	// ========== 디버그 시각화 ==========
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TileMap|Debug")
 	bool bShowDebugTiles = true;
 

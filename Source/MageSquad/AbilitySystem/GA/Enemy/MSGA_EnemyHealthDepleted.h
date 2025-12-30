@@ -7,7 +7,10 @@
 #include "MSGA_EnemyHealthDepleted.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/25
+ * Enemy의 Health가 소진됐을 때 발동하는 어빌리티
+ * Normal Enemy와 Boss Enemy의 Event를 나누기 위함
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_EnemyHealthDepleted : public UMSGA_EnemyBaseAbility
