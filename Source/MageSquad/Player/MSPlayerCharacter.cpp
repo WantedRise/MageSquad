@@ -74,10 +74,10 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->CameraLagSpeed = 4.f;
 	SpringArm->TargetArmLength = TargetArmLength;
-	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bUsePawnControlRotation = false;
 	SpringArm->bInheritPitch = false;
-	SpringArm->bInheritRoll = true;
-	SpringArm->bInheritYaw = true;
+	SpringArm->bInheritRoll = false;
+	SpringArm->bInheritYaw = false;
 	SpringArm->bDoCollisionTest = false;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
