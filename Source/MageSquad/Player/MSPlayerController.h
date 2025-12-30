@@ -168,12 +168,6 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerRPCChangeSpectate(int32 Direction);
 
-public:
-	// 현재 관전 대상
-	// - 서버가 이 값을 갱신하면, 소유 클라이언트에서 OnRep로 카메라 전환을 수행
-	UPROPERTY(ReplicatedUsing = OnRep_SpectateTargetActor)
-	TObjectPtr<AActor> SpectateTargetActor = nullptr;
-
 protected:
 	/* ================== Spectate Camera Blend Option ================== */
 	// 관전 카메라 전환 블랜딩 시간
@@ -202,6 +196,12 @@ protected:
 	// 관전 대상 변경(다음) 입력 액션
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Spectate | Input")
 	TObjectPtr<class UInputAction> SpectateNextAction;
+
+private:
+	// 현재 관전 대상
+	// - 서버가 이 값을 갱신하면, 소유 클라이언트에서 OnRep로 카메라 전환을 수행
+	UPROPERTY(ReplicatedUsing = OnRep_SpectateTargetActor)
+	TObjectPtr<AActor> SpectateTargetActor = nullptr;
 
 
 
