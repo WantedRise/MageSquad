@@ -8,18 +8,8 @@ void UMSMissionScript::Initialize(UWorld* World)
 
 }
 
-void UMSMissionScript::OnMissionStart()
-{
-
-}
-
 void UMSMissionScript::Deinitialize()
 {
-}
-
-void UMSMissionScript::OnMissionEnd()
-{
-
 }
 
 void UMSMissionScript::SetOwnerMissionComponent(UMSMissionComponent* InOwner)
