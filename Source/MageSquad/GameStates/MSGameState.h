@@ -7,10 +7,16 @@
 #include "Containers/Ticker.h"
 #include "MSGameState.generated.h"
 
-
+// 게임 진행 수치 변동 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnProgressUpdated, float/* Normalized */);
+
+// 미션 시작 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionChanged, int32/* MissionID */);
+
+// 미션 진행 수치 변동 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionProgressChanged, float);
+
+// 미션 종료 델리게이트
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnMissionFinished, int32/* MissionID */, bool/* Result*/);
 
 // 현재 레벨 내 공유 경험치 값 변동 델리게이트
@@ -129,21 +135,10 @@ protected:
 	UPROPERTY(Replicated)
 	float MissionEndTime = 0.f;
 protected:
-
-	//UPROPERTY(ReplicatedUsing = OnRep_RemainingTime)
-	//float RemainingMissionTime;
-	//
 	UPROPERTY(VisibleAnywhere)
 	class UMSMissionComponent* MissionComponent;
 	UPROPERTY(VisibleAnywhere)
 	class UMSGameProgressComponent* GameProgress;
-	//현재 미션을 관리하는 컴포넌트
-	//UPROPERTY(VisibleAnywhere)
-	//class UMSMission* GameProgress;
-	//현재 게임의 흐름을 정의하는 GameFlow 인스턴스
-
-
-
 	/*****************************************************
 	* Shared Experience & Level Section
 	*****************************************************/
