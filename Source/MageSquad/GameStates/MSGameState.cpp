@@ -404,13 +404,16 @@ void AMSGameState::ProcessLevelUps_Server()
 		SharedXPRequired = GetRequiredXPForLevel_Server(SharedLevel, ActivePlayerCount);
 		SharedXPRequired = FMath::Max(1.f, SharedXPRequired);
 
-		/*
-		* 서버 측 레벨업 알림 지점
-		*/
+
+
+		/* ======== 서버 측 레벨업 알림 지점 ======== */
 		OnSharedLevelUp.Broadcast(SharedLevel);
-		StartSkillLevelUpPhase();
+
 		// 모든 클라이언트에게 레벨업 효과를 처리하도록 알림
 		BroadcastSharedLevelUp_ServerOnly();
+
+		// 스킬 레벨업 선택지 시작 호출
+		StartSkillLevelUpPhase();
 	}
 
 	// XP/요구XP/레벨이 바뀌었으니 브로드캐스트

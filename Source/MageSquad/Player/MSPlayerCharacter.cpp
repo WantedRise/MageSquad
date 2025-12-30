@@ -1195,8 +1195,10 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 	// #1: 공유 목숨 소비
 	GS->ConsumeLife_Server();
 
+
 	// #2: 서버: 사망에서 꺼둔 요소들 복구
 	OnRespawnExit_Server();
+
 
 	// #3: 카메라를 다시 내 캐릭터로 복귀
 	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(GetController()))
@@ -1209,9 +1211,23 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 		UE_LOG(LogTemp, Warning, TEXT("[Player-Spectate] Non AMSPlayerController."));
 	}
 
+	// #4: 부활 VFX 재생 (Gameplay Cue)
+	// 부활 GameplayCue 태그 지정
+	FGameplayTag Cue_PlayerRevive;
+	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	Cue_PlayerRevive = TagsManager.RequestGameplayTag(FName("GameplayCue.Player.Revive"), false);
+
+	// Cue 파라미터로 Pawn의 위치 전달
+	FGameplayCueParameters Params;
+	Params.Location = GetActorLocation();
+	Params.Instigator = this;
+
+	// Gameplay Cue 수행
+	AbilitySystemComponent->ExecuteGameplayCue(Cue_PlayerRevive, Params);
+
 
 	// ============================================================
-	// #4: ASC 관련 초기화 로직
+	// #5: ASC 관련 초기화 로직
 	// ============================================================
 	// 체력을 최대값으로 회복
 	if (AttributeSet)

@@ -79,7 +79,7 @@ void AMSExperienceOrb::Tick(float DeltaSeconds)
 			return;
 		}
 
-		const FVector TargetLoc = Target->GetActorLocation() + FVector(0.f, 0.f, 70.f);
+		const FVector TargetLoc = Target->GetActorLocation();
 		const FVector CurrentLoc = GetActorLocation();
 		const FVector NewLoc = FMath::VInterpTo(CurrentLoc, TargetLoc, DeltaSeconds, AttractInterpSpeed);
 		SetActorLocation(NewLoc);
