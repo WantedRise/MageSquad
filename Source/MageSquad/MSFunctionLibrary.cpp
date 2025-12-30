@@ -152,3 +152,18 @@ bool UMSFunctionLibrary::IsValidSpectateTargetActor(const AActor* Candidate)
 	// 이 플레이어가 생존해있으면 관전 대상으로 합격
 	return (Char && !Char->GetIsDead() && !Char->IsPendingKillPending());
 }
+
+FText UMSFunctionLibrary::GetTargetPlayerNameText(AActor* Target)
+{
+	// Pawn으로 캐스팅
+	const APawn* Pawn = Cast<APawn>(Target);
+	if (!Pawn) return FText::GetEmpty();
+
+	// Pawn으로부터 PlayerState 가져오기
+	APlayerState* PS = Pawn->GetPlayerState();
+	if (!PS) return FText::GetEmpty();
+
+	// PlayerState로부터 플레이어 이름을 가져와 반환
+	const FString PlayerName = PS->GetPlayerName();
+	return PlayerName.IsEmpty() ? FText::GetEmpty() : FText::FromString(PlayerName);
+}
