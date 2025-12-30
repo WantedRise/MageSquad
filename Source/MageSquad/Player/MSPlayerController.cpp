@@ -251,12 +251,51 @@ void AMSPlayerController::UpdateCursor()
 	}
 }
 
+void AMSPlayerController::SetSpectateTarget_Server(AActor* NewTarget)
+{
+	if (!HasAuthority()) return;
+
+	// 관전 대상이 유효한지 확인
+	if (NewTarget && !UMSFunctionLibrary::IsValidSpectateTargetActor(NewTarget))
+	{
+		NewTarget = nullptr;
+	}
+
+	// 관전 대상 변경
+	SpectateTargetActor = NewTarget;
+
+	// 리슨 서버(호스트)는 관전 대상 변경 OnRep 호출이 안되므로, 직접 호출
+	if (IsLocalController())
+	{
+		// 해당 관전 대상이 유효하면 해당 대상으로 관전 카메라 전환
+		if (SpectateTargetActor)
+		{
+			SetSpectateViewTarget(SpectateTargetActor);
+		}
+		// 관전 대상이 유효하지 않으면 내 Pawn으로 관전 카메라 복귀
+		else if (APawn* P = GetPawn())
+		{
+			SetSpectateViewTarget(P);
+		}
+	}
+
+	ForceNetUpdate();
+}
+
 void AMSPlayerController::SetSpectateViewTarget(AActor* NewTarget)
 {
 	if (!NewTarget) return;
 
 	// 관전 전용 전환 연출
 	SetViewTargetWithBlend(NewTarget, SpectateBlendTime, SpectateBlendFunction);
+
+	// HUD 위젯에 관전 UI 레이아웃을 설정하도록 호출
+	if (HUDWidgetInstance)
+	{
+		// 플레이어의 관전 상태를 전달
+		AMSPlayerCharacter* MSPlayer = Cast<AMSPlayerCharacter>(GetPawn());
+		HUDWidgetInstance->SetSpectateUI(MSPlayer ? MSPlayer->GetSpectating() : false, UMSFunctionLibrary::GetTargetPlayerNameText(NewTarget));
+	}
 }
 
 void AMSPlayerController::ApplyLocalInputState(bool bDead)
@@ -302,42 +341,11 @@ void AMSPlayerController::ApplyLocalInputState(bool bDead)
 	}
 }
 
-void AMSPlayerController::SetSpectateTarget_Server(AActor* NewTarget)
-{
-	if (!HasAuthority()) return;
-
-	// 관전 대상이 유효한지 확인
-	if (NewTarget && !UMSFunctionLibrary::IsValidSpectateTargetActor(NewTarget))
-	{
-		NewTarget = nullptr;
-	}
-
-	// 관전 대상 변경
-	SpectateTargetActor = NewTarget;
-
-	// 리슨 서버(호스트)는 관전 대상 변경 OnRep 호출이 안되므로, 직접 호출
-	if (IsLocalController())
-	{
-		// 해당 관전 대상이 유효하면 해당 대상으로 관전 카메라 전환
-		if (SpectateTargetActor)
-		{
-			SetSpectateViewTarget(SpectateTargetActor);
-		}
-		// 관전 대상이 유효하지 않으면 내 Pawn으로 관전 카메라 복귀
-		else if (APawn* P = GetPawn())
-		{
-			SetSpectateViewTarget(P);
-		}
-	}
-
-	ForceNetUpdate();
-}
-
 void AMSPlayerController::EnsureValidSpectateTarget_Server()
 {
 	if (!HasAuthority()) return;
 
-	// 현재 타겟이 살아있지 않으면, 첫 번째 살아있는 팀원으로 자동 전환
+	// 관전 대상이 유효하면 종료
 	if (SpectateTargetActor && UMSFunctionLibrary::IsValidSpectateTargetActor(SpectateTargetActor)) return;
 
 	// 현재 내 캐릭터가 관전 상태가 아니면 종료
@@ -358,16 +366,6 @@ void AMSPlayerController::EnsureValidSpectateTarget_Server()
 
 	// 월드의 생존중인 캐릭터로 관전 대상을 전환
 	SetSpectateTarget_Server(Fallback);
-}
-
-void AMSPlayerController::CycleSpectateTarget(int32 Direction)
-{
-	// 외부 호출에도 안전하게 처리하도록 서버에서만 실제 타겟을 결정/저장
-	// 외부 호출(예: BP)도 안전하게 처리: 서버에서만 
-	if (!IsLocalController() && !HasAuthority()) return;
-
-	// 관전 대상 변경 요청
-	RequestChangeSpectate(Direction);
 }
 
 void AMSPlayerController::RequestChangeSpectate(int32 Direction)
@@ -432,6 +430,14 @@ void AMSPlayerController::ServerRPCChangeSpectate_Implementation(int32 Direction
 	if (!HasAuthority()) return;
 
 	HandleChangeSpectate_Server(Direction);
+}
+
+void AMSPlayerController::CycleSpectateTarget(int32 Direction)
+{
+	if (!IsLocalController() && !HasAuthority()) return;
+
+	// 관전 대상 변경 요청
+	RequestChangeSpectate(Direction);
 }
 
 void AMSPlayerController::OnRep_SpectateTargetActor()

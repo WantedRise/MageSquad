@@ -61,4 +61,6 @@ public:
 	// 주어진 액터가 관전 대상으로 유효한지 판단하는 함수
 	static bool IsValidSpectateTargetActor(const class AActor* Candidate);
 
+	// 주어진 타깃 플레이어의 이름을 반환하는 함수
+	static FText GetTargetPlayerNameText(AActor* Target);
 };

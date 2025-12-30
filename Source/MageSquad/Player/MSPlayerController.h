@@ -128,27 +128,26 @@ private:
 	* Spectator Section
 	*****************************************************/
 public:
+	// 서버: 관전 대상 설정 함수
+	void SetSpectateTarget_Server(AActor* NewTarget);
+
 	// 관전 대상 변경 함수
 	void SetSpectateViewTarget(AActor* NewTarget);
 
 	// 사망 상태에 따른 관전 입력 적용 함수
 	void ApplyLocalInputState(bool bDead);
 
-	// 서버: 관전 대상 설정 함수
-	void SetSpectateTarget_Server(AActor* NewTarget);
-
 	// 서버: 현재 관전 대상이 유효하지 않으면 자동으로 다음 대상으로 전환하는 함수
 	void EnsureValidSpectateTarget_Server();
-
-	// 생존 중인 팀원 탐색 후 관전 사이클을 돌리는 함수
-	UFUNCTION(BlueprintCallable, Category = "Custom | Spectate")
-	void CycleSpectateTarget(int32 Direction);
 
 	// 현재 관전 대상 Getter
 	UFUNCTION(BlueprintCallable, Category = "Custom | Spectate")
 	AActor* GetSpectateTargetActor() const { return SpectateTargetActor; }
 
 protected:
+	// 생존 중인 팀원 탐색 후 관전 사이클을 돌리는 함수
+	void CycleSpectateTarget(int32 Direction);
+	
 	// 관전 대상 변경 OnRep 함수. 로컬 클라이언트에서만 카메라 전환 수행
 	UFUNCTION()
 	void OnRep_SpectateTargetActor();

@@ -16,9 +16,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTakeDamaged);
  *
  * 플레이어 HUD 위젯
  * - 로컬 체력바
+ * - 팀원 상태(자신 제외)
+ * - 공유 경험치/레벨
  * - 로컬 스킬/쿨다운(예정)
- * - 팀원 상태(자신 제외)(예정)
- * - 공유 경험치/레벨(예정)
  */
 UCLASS()
 class MAGESQUAD_API UMSPlayerHUDWidget : public UUserWidget
@@ -38,9 +38,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Custom | HUD")
 	void RequestReinitialize();
 
+
+	// 관전 UI 레이아웃 설정 함수
+	UFUNCTION(BlueprintCallable, Category = "Custom | HUD | Spectate")
+	void SetSpectateUI(bool bInSpectating, const FText& InTargetPlayerName);
+
+	// 관전 상태 변경 이벤트 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = "Custom | HUD | Spectate")
+	void BP_OnSpectateStateChanged(bool bInSpectating);
+
+
 	class UMSMissionNotifyWidget* GetMissionNotifyWidget() const { return MissionNotifyWidget; }
 	class UMSMissionTrackerWidget* GetMissionTrackerWidget() const { return MissionTrackerWidget; }
 	class UMSGameProgressWidget* GetGameProgressWidget() const { return GameProgressWidget; }
+
 protected:
 	// 바인딩 시도 함수 (바인딩 성공 여부에 따라 결괏값 반환)
 	bool TryBindLocalHealth();
@@ -117,6 +128,10 @@ protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UImage> HitEffectImageWidget;
 
+	// 현재 관전 대상 플레이어 이름 텍스트 위젯
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UTextBlock> SpectateTargetNameTextWidget;
+
 	// 미션 알림 위젯 클래스
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UMSMissionNotifyWidget> MissionNotifyWidget;
@@ -169,6 +184,12 @@ private:
 
 	// 현재 공유 데이터 갱신중 상태
 	bool bTeamPolling = false;
+
+	// 현재 관전 상태
+	bool bSpectateUIActive = false;
+
+	// 현재 관전 대상 이름
+	FText SpectateTargetPlayerName;
 
 	// 바인딩 재시도 타이머, 재시도 횟수 카운트
 	FTimerHandle RebindTimer;

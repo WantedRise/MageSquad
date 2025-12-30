@@ -81,6 +81,32 @@ void UMSPlayerHUDWidget::RequestReinitialize()
 	InitializeHUD();
 }
 
+void UMSPlayerHUDWidget::SetSpectateUI(bool bInSpectating, const FText& InTargetPlayerName)
+{
+	// 관전 상태 및 관전 대상 변경 여부 저장
+	const bool bStateChanged = (bSpectateUIActive != bInSpectating);
+	const bool bNameChanged = !SpectateTargetPlayerName.EqualTo(InTargetPlayerName);
+
+	// 관전 상태 및 관전 대상 초기화
+	bSpectateUIActive = bInSpectating;
+	SpectateTargetPlayerName = InTargetPlayerName;
+
+	// 관전 상태가 바뀌었으면 관전 상태 변경 이벤트 호출
+	if (bStateChanged)
+	{
+		BP_OnSpectateStateChanged(bSpectateUIActive);
+	}
+
+	// 관전 대상이 변경되었으면 현재 관전 대상 플레이어 이름 텍스트 변경
+	if (bNameChanged)
+	{
+		if (SpectateTargetNameTextWidget)
+		{
+			SpectateTargetNameTextWidget->SetText(SpectateTargetPlayerName);
+		}
+	}
+}
+
 bool UMSPlayerHUDWidget::TryBindLocalHealth()
 {
 	APlayerController* PC = GetOwningPlayer();
