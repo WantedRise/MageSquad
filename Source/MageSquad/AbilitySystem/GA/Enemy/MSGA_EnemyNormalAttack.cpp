@@ -23,8 +23,7 @@ UMSGA_EnemyNormalAttack::UMSGA_EnemyNormalAttack()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Attack);
-	
-	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead)	;
+	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
 
 void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -98,13 +97,13 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	}
 	
 	// 이벤트 처리 - 발사체 발사
-	
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(Owner->GetProjectileDataClass());
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
 	const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
 	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
 	RuntimeData.DamageEffect = Owner->GetDamageEffectClass();
 	RuntimeData.Radius = 3.f;
+	RuntimeData.CriticalChance = 0.f; // 몬스터의 공격은 치명타가 뜨지 않도록 함
 	
 	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
 	

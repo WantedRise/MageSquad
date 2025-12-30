@@ -47,7 +47,7 @@ void AMSBossEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	SetActorScale3D(FVector(3.f, 3.f, 3.f));	
+	SetActorScale3D(FVector(2.f, 2.f, 2.f));	
 	
 	ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_Tier_Boss);
 }

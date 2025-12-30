@@ -7,7 +7,9 @@
 #include "MSGA_EnemyIdle.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/20
+ * Enemy의 기본 상태를 나타낼 Abilty
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_EnemyIdle : public UMSGA_EnemyBaseAbility
