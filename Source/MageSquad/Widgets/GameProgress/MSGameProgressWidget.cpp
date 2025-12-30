@@ -23,7 +23,6 @@ void UMSGameProgressWidget::NativeConstruct()
 
 void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percent)
 {
-    UE_LOG(LogTemp, Error, TEXT("AddProgressEventMarker Fail"));
     if (!ProgressEventMarkerClass || !MissionEventLayer || !PB_GameProgress)
     {
         return;
@@ -36,6 +35,7 @@ void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percen
 
     if (!MarkerWidget)
     {
+        UE_LOG(LogTemp, Error, TEXT("AddProgressEventMarker MarkerWidget nullptr"));
         return;
     }
     MarkerWidget->SetMissionID(MissionID);
@@ -44,8 +44,8 @@ void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percen
     // SizeBox 실제 Width 가져오기
     const float TrackWidth = SizeBox_Track->GetCachedGeometry().GetLocalSize().X;
 
-    const float XPos = TrackWidth * Percent;
-
+    const float XPos = (TrackWidth * Percent);
+    UE_LOG(LogTemp, Error, TEXT("AddProgressEventMarker %f"), XPos);
     if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(MarkerWidget->Slot))
     {
         CanvasSlot->SetSize(FVector2D(100.0f,30.0f));

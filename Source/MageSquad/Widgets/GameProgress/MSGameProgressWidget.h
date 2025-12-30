@@ -48,7 +48,7 @@ private:
 
     // 미션 이벤트 마커 위젯 클래스
     UPROPERTY(EditDefaultsOnly, Category = "Progress")
-    TSubclassOf<UUserWidget> ProgressEventMarkerClass;
+    TSubclassOf<class UMSMissionEventMarker> ProgressEventMarkerClass;
 
     float TargetPercent = 0.f;
     float CurrentPercent = 0.f;
