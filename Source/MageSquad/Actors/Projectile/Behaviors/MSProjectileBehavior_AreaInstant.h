@@ -27,4 +27,6 @@ private:
 private:
 	UPROPERTY(Transient)
 	TSet<TWeakObjectPtr<AActor>> HitActors;
+	
+	bool bDamageApplied = false;
 };

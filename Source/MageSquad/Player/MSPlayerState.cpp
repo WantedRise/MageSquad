@@ -184,11 +184,11 @@ void AMSPlayerState::GiveAbilityForSkillRow_Server(const FMSSkillList& Skill)
 {
 	if (!HasAuthority() || !AbilitySystemComponent)
 		return;
-
-	if (!Skill.SkillAbility.IsValid())
+	
+	if (Skill.SkillAbility.IsNull())
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("[GiveAbility] SkillAbility is invalid. Skill=%s"),
+			TEXT("[GiveAbility] SkillAbility is NULL. Skill=%s"),
 			*Skill.SkillEventTag.ToString());
 		return;
 	}

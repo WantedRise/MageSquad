@@ -39,6 +39,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 ProjectileNumber = 1;
 	
+	// 범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SkillRadius = 200.f;
+	
 	// 발사체 원본 데이터 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;

@@ -5,6 +5,7 @@
 
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
+#include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaInstant.h"
 #include "Engine/OverlapResult.h"
 #include "Types/MageSquadTypes.h"
 
@@ -30,6 +31,10 @@ void UMSGA_Lightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	SkillDamage = SkillListRow.SkillDamage;
 	ProjectileNumber = SkillListRow.ProjectileNumber;
+	SkillRadius = SkillListRow.Range;
+	
+	UE_LOG(LogTemp, Warning, TEXT("[Lightning GA] ActivateAbility CALLED Auth=%d"), 
+	ActorInfo && ActorInfo->IsNetAuthority());
 	
 	AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
 	const UWorld* World = Avatar ? Avatar->GetWorld() : nullptr;
@@ -51,7 +56,8 @@ void UMSGA_Lightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.Damage = SkillDamage;
 	RuntimeData.DamageEffect = DamageEffect;
 	RuntimeData.LifeTime = 1.f;
-	// RuntimeData.BehaviorClass = 
+	RuntimeData.Radius = SkillRadius;
+	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
 	
 	for (auto& Target : Targets)
 	{
@@ -63,7 +69,12 @@ void UMSGA_Lightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			Avatar,
 			Cast<APawn>(Avatar)
 		);
+		
+		UE_LOG(LogTemp, Warning, TEXT("[Lightning GA] Launch at target=%s"), *GetNameSafe(Target));
 	}
+	
+	
+	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
 void UMSGA_Lightning::FindRandomEnemyTargets(const UWorld* World, const AActor* Avatar,

@@ -9,30 +9,68 @@
 #include "MSGameplayTags.h"
 #include "AbilitySystem/Globals/MSAbilitySystemGlobals.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
+#include "Engine/OverlapResult.h"
 
 void UMSProjectileBehavior_AreaInstant::OnBegin_Implementation()
 {
-	HitActors.Reset();
+	if (!IsAuthority() || bDamageApplied)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorldSafe();
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!World || !OwnerActor)
+	{
+		return;
+	}
+
+	// 스폰 순간 범위
+	const float Radius = RuntimeData.Radius;
+	const FVector Origin = OwnerActor->GetActorLocation();
+
+	FCollisionObjectQueryParams ObjParams;
+	ObjParams.AddObjectTypesToQuery(ECC_GameTraceChannel3); // MSEnemy
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AreaInstant_InitialQuery), false);
+	QueryParams.AddIgnoredActor(OwnerActor);
+
+	TArray<FOverlapResult> Hits;
+	const bool bAnyHit = World->OverlapMultiByObjectType(
+		Hits,
+		Origin,
+		FQuat::Identity,
+		ObjParams,
+		FCollisionShape::MakeSphere(Radius),
+		QueryParams
+	);
+
+	if (bAnyHit)
+	{
+		for (const FOverlapResult& H : Hits)
+		{
+			AActor* Target = H.GetActor();
+			if (!Target) continue;
+
+			// 중복 방지(컴포넌트 여러개로 중복 히트될 수 있음)
+			if (HitActors.Contains(Target)) continue;
+			HitActors.Add(Target);
+
+			ApplyDamageToTarget(Target, RuntimeData.Damage);
+		}
+	}
+
+	// 데미지는 끝
+	bDamageApplied = true;
+
+	// 추가 판정 차단
+	OwnerActor->EnableCollision(false);
 }
 
 void UMSProjectileBehavior_AreaInstant::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
-	(void)HitResult;
-
-	if (!IsAuthority() || !Target)
-	{
-		return;
-	}
-
-	// 중복 방지
-	if (HitActors.Contains(Target))
-	{
-		return;
-	}
-	HitActors.Add(Target);
-
-	const FProjectileRuntimeData& RuntimeData = GetRuntimeData();
-	ApplyDamageToTarget(Target, RuntimeData.Damage);
+	// 즉발형: 이후 진입 데미지 없음
+	(void)Target; (void)HitResult;
 }
 
 void UMSProjectileBehavior_AreaInstant::OnEnd_Implementation()
@@ -42,7 +80,6 @@ void UMSProjectileBehavior_AreaInstant::OnEnd_Implementation()
 
 void UMSProjectileBehavior_AreaInstant::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
-	const FProjectileRuntimeData& RuntimeData = GetRuntimeData();
 	if (!Target || !RuntimeData.DamageEffect)
 	{
 		return;
