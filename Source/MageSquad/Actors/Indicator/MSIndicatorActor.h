@@ -7,6 +7,13 @@
 #include "Types/MSIndicatorTypes.h"
 #include "MSIndicatorActor.generated.h"
 
+/*
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/31
+ * Indicator Decal을 표현할 액터
+ * 게임 플레이 큐에서 스폰할 예정
+ */
+
 UCLASS()
 class MAGESQUAD_API AMSIndicatorActor : public AActor
 {
@@ -41,6 +48,6 @@ private:
 	void OnRep_CachedParams();
 
 	void ApplyMaterialParams();
-	void UpdateFillPercent();
+	void UpdateFillPercent() const;
 
 };
