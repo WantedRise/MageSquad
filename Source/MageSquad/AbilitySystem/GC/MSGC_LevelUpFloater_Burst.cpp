@@ -71,6 +71,12 @@ bool UMSGC_LevelUpFloater_Burst::OnExecute_Implementation(AActor* Target, const 
 				EAttachLocation::KeepWorldPosition,
 				true
 			);
+
+			// 나이아가라의 회전 절댓값 설정
+			if (Niagara)
+			{
+				Niagara->SetAbsolute(false, true, false);
+			}
 		}
 
 		// 월드 좌표를 스크린 좌표로 변환

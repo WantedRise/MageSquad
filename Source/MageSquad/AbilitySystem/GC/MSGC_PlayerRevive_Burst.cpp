@@ -54,6 +54,12 @@ bool UMSGC_PlayerRevive_Burst::OnExecute_Implementation(AActor* Target, const FG
 			EAttachLocation::KeepWorldPosition,
 			true
 		);
+
+		// 나이아가라의 회전 절댓값 설정
+		if (Niagara)
+		{
+			Niagara->SetAbsolute(false, true, false);
+		}
 	}
 
 	return true;
