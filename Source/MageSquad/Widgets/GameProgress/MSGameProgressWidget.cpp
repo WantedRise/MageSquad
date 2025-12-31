@@ -8,6 +8,7 @@
 #include "Components/ProgressBar.h"
 #include "GameStates/MSGameState.h"
 #include "MSMissionEventMarker.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
 
 void UMSGameProgressWidget::NativeConstruct()
 {
@@ -23,7 +24,6 @@ void UMSGameProgressWidget::NativeConstruct()
 
 void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percent)
 {
-    UE_LOG(LogTemp, Error, TEXT("AddProgressEventMarker Fail"));
     if (!ProgressEventMarkerClass || !MissionEventLayer || !PB_GameProgress)
     {
         return;
@@ -36,28 +36,39 @@ void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percen
 
     if (!MarkerWidget)
     {
+        UE_LOG(LogTemp, Error, TEXT("AddProgressEventMarker MarkerWidget nullptr"));
         return;
     }
     MarkerWidget->SetMissionID(MissionID);
     MissionEventLayer->AddChild(MarkerWidget);
 
-    // SizeBox 실제 Width 가져오기
-    const float TrackWidth = SizeBox_Track->GetCachedGeometry().GetLocalSize().X;
+    // SizeBox 실제 Width 
+    FGeometry Geometry = SizeBox_Track->GetCachedGeometry();
+    const float TrackWidth = Geometry.GetLocalSize().X;
+    const float XPos = (TrackWidth * Percent);
+    // MarkerWidget이 배치될 부모(CanvasPanel 등)의 Geometry
+    FGeometry ParentGeometry = MarkerWidget->GetParent()->GetCachedGeometry();
 
-    const float XPos = TrackWidth * Percent;
+    // SizeBox의 특정 로컬 지점(XPos)을 '절대 좌표(Absolute)'로 변환
+    // TrackWidth * Percent 로 계산된 XPos를 사용
+    FVector2D LocalPoint(XPos, 0.0f);
+    FVector2D AbsolutePoint = Geometry.LocalToAbsolute(LocalPoint);
 
+    // 이 '절대 좌표'를 부모 위젯의 '로컬 좌표'로 다시 변환
+    // 이 과정에서 DPI 스케일과 창모드/전체화면 오차가 자동으로 상쇄
+    FVector2D FinalLocalPos = ParentGeometry.AbsoluteToLocal(AbsolutePoint);
+
+    // 슬롯 설정
     if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(MarkerWidget->Slot))
     {
-        CanvasSlot->SetSize(FVector2D(100.0f,30.0f));
+        CanvasSlot->SetSize(FVector2D(100.0f, 30.0f));
 
-        // 좌측 기준 (0,0)
+        // 부모의 왼쪽 위(0,0)를 기준으로 잡습니다.
         CanvasSlot->SetAnchors(FAnchors(0.f, 0.f));
-
-        // 마커 중앙을 기준으로 위치
         CanvasSlot->SetAlignment(FVector2D(0.0f, -1.0f));
 
-        // 가운데 위치하기 위해 이미지 절반 길이만큼 빼줌
-        CanvasSlot->SetPosition(FVector2D(XPos - 32.f, 0.f));
+        // 계산된 로컬 좌표를 적용합니다.
+        CanvasSlot->SetPosition(FinalLocalPos);
     }
 }
 
