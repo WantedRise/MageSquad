@@ -7,7 +7,10 @@
 #include "MSGA_Lightning.generated.h"
 
 /**
+*  작성자: 박세찬
+ * 작성일: 26/01/01
  * 
+ * 몬스터 위치에 낙뢰
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_Lightning : public UMSGA_SkillBase
