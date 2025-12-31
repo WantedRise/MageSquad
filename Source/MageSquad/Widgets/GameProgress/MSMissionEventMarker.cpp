@@ -13,9 +13,7 @@ void UMSMissionEventMarker::SetMissionID(int32 InMissionID)
     LoadMissionIcon();
 
     
-    PlayAnimation(
-        Anim_Move
-    );
+    PlayAnimation(Anim_Move,0.0f,0);
 }
 
 void UMSMissionEventMarker::LoadMissionIcon()
@@ -75,6 +73,7 @@ void UMSMissionEventMarker::LoadMissionIcon()
 void UMSMissionEventMarker::NativeDestruct()
 {
     MissionID = INDEX_NONE;
+    StopAnimation(Anim_Move);
     //SetVisibility(ESlateVisibility::Collapsed);
     Super::NativeDestruct();
 }
