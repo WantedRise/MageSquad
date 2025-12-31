@@ -3,10 +3,11 @@
 
 #include "AbilitySystem/GC/MSGC_Indicator.h"
 #include "Actors/Indicator/MSIndicatorActor.h"
+#include "Types/MageSquadTypes.h"
 
  AMSGC_Indicator::AMSGC_Indicator()
  {
- 	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Boss.AttackIndicator"));
+ 	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.AttackIndicator"));
  }
 
  bool AMSGC_Indicator::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
@@ -20,9 +21,18 @@
  	
  	// EffectContext에서 파라미터 추출
  	FAttackIndicatorParams IndicatorParams;
-
- 	// Parameters.RawMagnitude, Parameters.Location 등을 활용하거나
- 	// Custom EffectContext를 만들어서 FAttackIndicatorParams를 전달
+    
+ 	if (const FGameplayEffectContext* BaseCtx = Parameters.EffectContext.Get())
+ 	{
+ 		if (BaseCtx->GetScriptStruct() == FMSGameplayEffectContext::StaticStruct())
+ 		{
+ 			const FMSGameplayEffectContext* MSCtx = static_cast<const FMSGameplayEffectContext*>(BaseCtx);
+ 			if (MSCtx->HasIndicatorParams())
+ 			{
+ 				IndicatorParams = MSCtx->GetIndicatorParams();
+ 			}
+ 		}
+ 	}
 
  	// 위치와 회전 설정
  	FVector SpawnLocation = Parameters.Location;

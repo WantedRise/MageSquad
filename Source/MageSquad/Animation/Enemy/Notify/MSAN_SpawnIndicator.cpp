@@ -1,0 +1,124 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Animation/Enemy/Notify/MSAN_SpawnIndicator.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffectTypes.h"
+#include "Actors/Indicator/MSIndicatorActor.h"
+#include "Types/MageSquadTypes.h"
+
+UMSAN_SpawnIndicator::UMSAN_SpawnIndicator()
+{
+	IndicatorCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.AttackIndicator"));
+    
+	// 기본 파라미터
+	IndicatorParams.Shape = EIndicatorShape::Cone;
+	IndicatorParams.Radius = 500.f;
+	IndicatorParams.Angle = 90.f;
+	IndicatorParams.Duration = 1.5f;
+}
+
+void UMSAN_SpawnIndicator::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
+{
+	Super::Notify(MeshComp, Animation, EventReference);
+	
+	if (!MeshComp)
+	{
+		return;
+	}
+
+	AActor* Owner = MeshComp->GetOwner();
+	if (!Owner)
+	{
+		return;
+	}
+
+	// 서버에서만 실행 (GameplayCue가 클라이언트에 자동 동기화)
+	if (!Owner->HasAuthority())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Owner);
+	if (!ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AnimNotify_SpawnIndicator: Owner has no AbilitySystemComponent!"));
+		return;
+	}
+
+	// 스폰 위치 계산
+	FVector SpawnLocation;
+	FRotator SpawnRotation;
+
+	if (bUseSocket && MeshComp->DoesSocketExist(SocketName))
+	{
+		SpawnLocation = MeshComp->GetSocketLocation(SocketName);
+		SpawnRotation = MeshComp->GetSocketRotation(SocketName);
+	}
+	else
+	{
+		SpawnLocation = Owner->GetActorLocation();
+		SpawnRotation = Owner->GetActorRotation();
+	}
+
+#if WITH_EDITOR
+	// 에디터 프리뷰: ASC 없이 직접 스폰
+	if (!Owner->GetWorld()->IsGameWorld())
+	{
+		if (PreviewIndicatorClass)
+		{
+			AMSIndicatorActor* Indicator = Owner->GetWorld()->SpawnActor<AMSIndicatorActor>(
+				PreviewIndicatorClass,
+				SpawnLocation,
+				SpawnRotation
+			);
+			if (Indicator)
+			{
+				Indicator->Initialize(IndicatorParams);
+			}
+		}
+		return;
+	}
+#endif
+	
+	// 오프셋 적용
+	SpawnLocation += SpawnRotation.RotateVector(LocationOffset);
+	SpawnRotation += RotationOffset;
+
+	// Custom EffectContext 생성
+	FMSGameplayEffectContext* EffectContext = new FMSGameplayEffectContext();
+	EffectContext->SetIndicatorParams(IndicatorParams);
+	EffectContext->AddInstigator(Owner, Owner);
+
+	// GameplayCue 파라미터 설정
+	FGameplayCueParameters CueParams;
+	CueParams.Location = SpawnLocation;
+	CueParams.Normal = SpawnRotation.Vector();
+	CueParams.EffectContext = FGameplayEffectContextHandle(EffectContext);
+
+	// GameplayCue 실행
+	ASC->ExecuteGameplayCue(IndicatorCueTag, CueParams);
+}
+
+FString UMSAN_SpawnIndicator::GetNotifyName_Implementation() const
+{
+	// 에디터에서 표시될 이름
+	FString ShapeName;
+	switch (IndicatorParams.Shape)
+	{
+	case EIndicatorShape::Circle:
+		ShapeName = FString::Printf(TEXT("Circle R:%.0f"), IndicatorParams.Radius);
+		break;
+	case EIndicatorShape::Cone:
+		ShapeName = FString::Printf(TEXT("Cone R:%.0f A:%.0f"), IndicatorParams.Radius, IndicatorParams.Angle);
+		break;
+	case EIndicatorShape::Rectangle:
+		ShapeName = FString::Printf(TEXT("Rect W:%.0f L:%.0f"), IndicatorParams.Width, IndicatorParams.Length);
+		break;
+	}
+
+	return FString::Printf(TEXT("Indicator (%s)"), *ShapeName);
+}

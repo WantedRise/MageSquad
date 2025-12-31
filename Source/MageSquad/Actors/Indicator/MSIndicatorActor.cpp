@@ -83,7 +83,7 @@ void AMSIndicatorActor::ApplyMaterialParams()
 		break;
 
 	case EIndicatorShape::Cone:
-		DynamicMaterial->SetScalarParameterValue(TEXT("Angle"), FMath::DegreesToRadians(CachedParams.Angle));
+		DynamicMaterial->SetScalarParameterValue(TEXT("Angle"), CachedParams.Angle);
 		DecalComponent->DecalSize = FVector(CachedParams.Radius);
 		break;
 
@@ -94,7 +94,7 @@ void AMSIndicatorActor::ApplyMaterialParams()
 	}
 }
 
-void AMSIndicatorActor::UpdateFillPercent()
+void AMSIndicatorActor::UpdateFillPercent() const
 {
 	if (DynamicMaterial)
 	{
