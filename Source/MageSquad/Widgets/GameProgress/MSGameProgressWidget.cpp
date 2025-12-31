@@ -57,7 +57,7 @@ void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percen
     // 이 '절대 좌표'를 부모 위젯의 '로컬 좌표'로 다시 변환
     // 이 과정에서 DPI 스케일과 창모드/전체화면 오차가 자동으로 상쇄
     FVector2D FinalLocalPos = ParentGeometry.AbsoluteToLocal(AbsolutePoint);
-
+    FinalLocalPos.X -= MarkerWidget->GetImageSizeX();
     // 슬롯 설정
     if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(MarkerWidget->Slot))
     {

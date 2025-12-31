@@ -22,6 +22,7 @@ class MAGESQUAD_API UMSMissionEventMarker : public UUserWidget
 
 public:
 	void SetMissionID(int32 InMissionID);
+	float GetImageSizeX();
 protected:
 	virtual void NativeDestruct() override;
 private:

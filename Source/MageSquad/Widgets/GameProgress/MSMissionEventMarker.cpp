@@ -16,6 +16,22 @@ void UMSMissionEventMarker::SetMissionID(int32 InMissionID)
     PlayAnimation(Anim_Move,0.0f,0);
 }
 
+float UMSMissionEventMarker::GetImageSizeX()
+{
+    if (Image_Marker)
+    {
+        // 위젯의 최신 지오메트리 정보를 가져옴
+        FGeometry MarkerGeometry = Image_Marker->GetCachedGeometry();
+
+        // 로컬 크기를 가져옴 (이 값이 위젯의 실제 너비와 높이임)
+        FVector2D MarkerSize = MarkerGeometry.GetLocalSize();
+
+        return MarkerSize.X;  // 가로 길이
+    }
+
+    return 0.0f;
+}
+
 void UMSMissionEventMarker::LoadMissionIcon()
 {
     UE_LOG(LogTemp, Error, TEXT("LoadMissionIcon"));
