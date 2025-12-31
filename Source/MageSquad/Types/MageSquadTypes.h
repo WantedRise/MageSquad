@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameplayEffectTypes.h"
+#include "MSIndicatorTypes.h"
 #include "SkillData/MSSkillList.h"
 #include "MageSquadTypes.generated.h"
 
@@ -326,6 +327,10 @@ struct MAGESQUAD_API FMSPlayerSkillSlotNet
  * 작성일: 25/12/15
  *
  * 블링크 전달용 게임플레이 이펙트 콘텍스트
+ * 
+ * 수정자 : 임희섭
+ * 수정일 : 2025/12/31
+ * Indicator용 데이터 추가
  */
 USTRUCT(BlueprintType)
 struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
@@ -333,6 +338,7 @@ struct MAGESQUAD_API FMSGameplayEffectContext : public FGameplayEffectContext
 	GENERATED_BODY()
 
 public:
+#pragma region Blink Section
 	// GameplayCue용 컬러 파라미터 (LinearColor)
 	UPROPERTY()
 	FLinearColor CueColor = FLinearColor::White;
@@ -356,6 +362,23 @@ public:
 	}
 
 	FORCEINLINE bool HasBlinkSegment() const { return bHasBlinkSegment; }
+#pragma endregion 
+	
+#pragma region Indicator Section
+	FAttackIndicatorParams IndicatorParams;
+
+	UPROPERTY()
+	bool bHasIndicatorParams = false;
+	
+	FORCEINLINE void SetIndicatorParams(const FAttackIndicatorParams& InParams)
+	{
+		IndicatorParams = InParams;
+		bHasIndicatorParams = true;
+	}
+	
+	FORCEINLINE const FAttackIndicatorParams& GetIndicatorParams() const { return IndicatorParams; }
+	FORCEINLINE bool HasIndicatorParams() const { return bHasIndicatorParams; }
+#pragma endregion
 
 	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
 
@@ -397,9 +420,14 @@ public:
 			{
 				Flags |= 0x02;
 			}
+			// 0x04: Indicator
+			if (bHasIndicatorParams)
+			{
+				Flags |= 0x04;
+			}
 		}
 
-		Ar.SerializeBits(&Flags, 2);
+		Ar.SerializeBits(&Flags, 3); // 2->3으로 확장 - 임희섭
 
 		if (Flags & 0x01)
 		{
@@ -421,6 +449,40 @@ public:
 			BlinkStart = FVector::ZeroVector;
 			BlinkEnd = FVector::ZeroVector;
 			bHasBlinkSegment = false;
+		}
+		
+		// Indicator
+		if (Flags & 0x04)
+		{
+			uint8 ShapeValue = static_cast<uint8>(IndicatorParams.Shape);
+			Ar << ShapeValue;
+			if (Ar.IsLoading())
+			{
+				IndicatorParams.Shape = static_cast<EIndicatorShape>(ShapeValue);
+			}
+
+			Ar << IndicatorParams.Duration;
+
+			switch (IndicatorParams.Shape)
+			{
+			case EIndicatorShape::Circle:
+				Ar << IndicatorParams.Radius;
+				break;
+			case EIndicatorShape::Cone:
+				Ar << IndicatorParams.Radius;
+				Ar << IndicatorParams.Angle;
+				break;
+			case EIndicatorShape::Rectangle:
+				Ar << IndicatorParams.Width;
+				Ar << IndicatorParams.Length;
+				break;
+			}
+			bHasIndicatorParams = true;
+		}
+		else if (Ar.IsLoading())
+		{
+			IndicatorParams = FAttackIndicatorParams();
+			bHasIndicatorParams = false;
 		}
 		return true;
 	}

@@ -8,6 +8,6 @@ void UMSGameInstance::Init()
 {
 	Super::Init();
 
-	// ╬Н╨Т╦╝ф╪ ╫ц╫╨ешюг ╠ш╥н╧З ╪Ёа╓╟З ╣╔юлем ╟Э╦╝
+	// Л√╢К╧▄К╕╛М▀╟ Л▀°Л┼╓М┘°Л²≤ Й╦─К║°К╡▄ Л└╓Л═∙ЙЁ╪ К█╟Л²╢М└╟ Й╢─К╕╛
 	UAbilitySystemGlobals::Get().InitGlobalData();
 }
