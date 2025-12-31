@@ -172,6 +172,8 @@ void AMSBaseProjectile::BeginPlay()
 	{
 		ArmLifeTimerIfNeeded(GetEffectiveRuntimeData());
 	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("[Projectile] BeginPlay %s Auth=%d"), *GetName(), HasAuthority());
 }
 
 void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)

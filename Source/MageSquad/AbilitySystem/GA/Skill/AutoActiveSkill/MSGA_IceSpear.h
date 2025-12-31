@@ -40,10 +40,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillDamage = 20.f;
 
-	// 쿨타임
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CoolTime = 3.f;
-
 	// 투사체 개수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 ProjectileNumber = 1;

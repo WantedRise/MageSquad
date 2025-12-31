@@ -38,16 +38,14 @@ void UMSProjectileBehavior_AreaPeriodic::StartPeriodicDamage()
 	{
 		return;
 	}
-	// RuntimeData가져오기
-	const FProjectileRuntimeData& RD = GetRuntimeData();
-	if (RD.DamageInterval <= 0.f)
+	if (RuntimeData.DamageInterval <= 0.f)
 	{
 		// 주기가 0이면 무한 호출 위험 -> 방지
 		return;
 	}
 
 	// 시퀀스가 비어있으면 종료
-	if (RD.DamageSequence.Num() <= 0)
+	if (RuntimeData.DamageSequence.Num() <= 0)
 	{
 		return;
 	}
@@ -64,7 +62,7 @@ void UMSProjectileBehavior_AreaPeriodic::StartPeriodicDamage()
 			PeriodicTimerHandle,
 			this,
 			&UMSProjectileBehavior_AreaPeriodic::TickPeriodicDamage,
-			RD.DamageInterval,
+			RuntimeData.DamageInterval,
 			true
 		);
 	}
@@ -97,8 +95,7 @@ void UMSProjectileBehavior_AreaPeriodic::TickPeriodicDamage()
 		return;
 	}
 
-	const FProjectileRuntimeData& RD = GetRuntimeData();
-	if (CurrentTickIndex >= RD.DamageSequence.Num())
+	if (CurrentTickIndex >= RuntimeData.DamageSequence.Num())
 	{
 		// 모든 틱 완료 -> 종료
 		StopPeriodicDamage();
@@ -107,7 +104,7 @@ void UMSProjectileBehavior_AreaPeriodic::TickPeriodicDamage()
 	}
 
 	// 이번 틱 데미지
-	const float DamageAmount = RD.DamageSequence[CurrentTickIndex];
+	const float DamageAmount = RuntimeData.DamageSequence[CurrentTickIndex];
 	++CurrentTickIndex;
 
 	// 장판 범위 안의 액터 수집 (루트=CollisionSphere라 가정)
@@ -145,9 +142,7 @@ void UMSProjectileBehavior_AreaPeriodic::ApplyDamageToTarget(AActor* Target, flo
 	{
 		return;
 	}
-	// RuntimeData 가져오기
-	const FProjectileRuntimeData& RD = GetRuntimeData();
-	if (!RD.DamageEffect)
+	if (!RuntimeData.DamageEffect)
 	{
 		return;
 	}
@@ -166,7 +161,7 @@ void UMSProjectileBehavior_AreaPeriodic::ApplyDamageToTarget(AActor* Target, flo
 	Context.AddSourceObject(OwnerProj); // “이 데미지의 출처 오브젝트” 정도만 남김(선택)
 
 	FGameplayEffectSpecHandle SpecHandle =
-		TargetASC->MakeOutgoingSpec(RD.DamageEffect, 1.f, Context);
+		TargetASC->MakeOutgoingSpec(RuntimeData.DamageEffect, 1.f, Context);
 
 	if (!SpecHandle.IsValid())
 	{
