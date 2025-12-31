@@ -53,10 +53,13 @@ namespace MSGameplayTags
 
 	/* Skill Ability Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_IceSpear, "Skill.Ability.IceSpear");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Lightning, "Skill.Ability.Lightning");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Explosion, "Skill.Ability.Explosion");
 
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Lightning, "Skill.Event.Lightning");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 
 	/* Skill Upgrade Type Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Damage, "Upgrade.Damage");
@@ -81,7 +84,6 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_HpDecrease, "TEST.Event.HpDecrease");
 	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_MaxHpIncrease, "TEST.Event.MaxHpIncrease");
 	UE_DEFINE_GAMEPLAY_TAG(TEST_Event_MaxHpDecrease, "TEST.Event.MaxHpDecrease");
-	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 	
 	/* GameplayCue Tags */
 	//UE_DEFINE_GAMEPLAY_TAG(GameplayCue_HitFlash,"GameplayCue.HitFlash");
