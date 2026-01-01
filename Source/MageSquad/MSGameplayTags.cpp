@@ -54,11 +54,13 @@ namespace MSGameplayTags
 	/* Skill Ability Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_IceSpear, "Skill.Ability.IceSpear");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Lightning, "Skill.Ability.Lightning");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Tornado, "Skill.Ability.Tornado");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Explosion, "Skill.Ability.Explosion");
 
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Lightning, "Skill.Event.Lightning");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Tornado, "Skill.Event.Tornado");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 
 	/* Skill Upgrade Type Tags */
