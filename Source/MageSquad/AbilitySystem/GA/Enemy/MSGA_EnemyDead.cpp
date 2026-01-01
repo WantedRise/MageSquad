@@ -22,7 +22,7 @@ UMSGA_EnemyDead::UMSGA_EnemyDead()
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Dead);
 	
-	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead)	;
+	// BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
 
 void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

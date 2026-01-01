@@ -37,17 +37,15 @@ void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle
 		{
 			AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
 		}
-		//HandleDeath();
 	}
-	 else
-	 {
+	else
+	{
 	 	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(Owner->GetController()))
 	 	{
 	 		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsGroggyKey(), true);
 	 	}
-	 	//HandleBossPhaseTransition(ASC);
-	 }
-
+	}
+	
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);

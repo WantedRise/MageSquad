@@ -3,21 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/GA/Enemy/MSGA_EnemyBaseAbility.h"
-#include "MSGA_EnemyDead.generated.h"
+#include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
+#include "MSGA_Boss_Sevarog_Meteor.generated.h"
 
 /**
  * 작성자 : 임희섭
- * 작성일 : 2025/12/17
- * Enemy들이 죽을 때 발동될 Dead Ability
+ * 작성일 : 2026/01/02
+ * Boss Sevarog의 Pattern1 어빌리티
+ * 플레이어를 추격하며 바닥이 터진다. 
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_EnemyDead : public UMSGA_EnemyBaseAbility
+class MAGESQUAD_API UMSGA_Boss_Sevarog_Meteor : public UMSGA_EnemyBossBaseAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMSGA_EnemyDead();
+	UMSGA_Boss_Sevarog_Meteor();
 	
 public:
 	virtual void ActivateAbility(
@@ -45,7 +46,4 @@ private:
 	UFUNCTION()
 	void OnInterruptedCallback();
 	
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AMSExperienceOrb> ExpReward;	
 };

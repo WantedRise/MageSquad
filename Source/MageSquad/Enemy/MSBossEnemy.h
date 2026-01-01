@@ -43,6 +43,9 @@ public:
 public:
 	FORCEINLINE UAnimMontage* GetSpawnMontage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->SpawnAnim;}
 	FORCEINLINE UAnimMontage* GetGroggyMontage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->GroggyAnim;}
+	FORCEINLINE UAnimMontage* GetPattern1Montage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->Partten1Anim;}
+	FORCEINLINE UAnimMontage* GetPattern2Montage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->Partten2Anim;}
+	FORCEINLINE UAnimMontage* GetPattern3Montage() const {return Cast<UDA_EnemyBossAnimationSet>(AnimData)->Partten3Anim;}
 	FORCEINLINE USkeletalMesh* GetPhase2SkeletalMesh() const {return Phase2SkeletalMesh;}
 	FORCEINLINE class UCameraComponent* GetBossCamera() const { return Camera; }
 	
