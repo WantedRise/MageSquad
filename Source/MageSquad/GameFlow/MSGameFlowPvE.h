@@ -25,6 +25,7 @@ class MAGESQUAD_API UMSGameFlowPvE : public UMSGameFlowBase
 	GENERATED_BODY()
 
 public:
+	UMSGameFlowPvE();
 	virtual void BeginDestroy() override;
 	//PvE 전용 이벤트 및 초기 상태 설정
 	virtual void Initialize(class AMSGameState* InOwnerGameState, UDataTable* InTimelineTable) override;
@@ -34,6 +35,7 @@ public:
 	virtual void OnExitState(EGameFlowState PreState) override;
 	//게임 흐름을 실제로 시작시키는 진입점
 	virtual void Start() override;
+	
 	//
 	void ScheduleMission(float TriggerTime, int32 MissionID);
 	//미션컴포넌트 OnMissionFinished에 바인딩
@@ -42,6 +44,10 @@ public:
 	
 
 private:
+	void SetWave(float FirstWaveTime, float DelayWaveTime, float EndTime);
+	UFUNCTION()
+	void StartWave(float DelayWaveTime, float EndTime);
+	void StopWave();
 	void GiveMissionReward(int32 MissionId);
 	void StartSkillLevelUpPhaseDelayed();
 	UFUNCTION()
@@ -56,4 +62,9 @@ private:
 	int32 CurrentMissionIndex = 0;
 	float MissionTriggerTime = 0;
 	FTimerHandle SkillLevelUpDelayTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Wave", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AMSWaveManager> WaveManagerClass;
+	UPROPERTY()
+	AMSWaveManager* WaveManager;
 };
