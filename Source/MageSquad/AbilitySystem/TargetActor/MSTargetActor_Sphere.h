@@ -25,5 +25,5 @@ protected:
 
 private:
 	// 디버그용 Sphere 그리기
-	void DrawDebugTargetArea() const;
+	void DrawDebugTargetArea(bool IsValid) const;
 };

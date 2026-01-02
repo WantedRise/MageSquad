@@ -48,6 +48,10 @@
  	if (Indicator)
  	{
  		Indicator->Initialize(IndicatorParams);
+ 		
+ 		// Owner 설정 (데미지 정보를 인터페이스로 조회하기 위함)
+ 		// Target은 GameplayCue를 실행한 주체 (보스 등)
+ 		Indicator->SetIndicatorOwner(Target);
  	}
 
  	return true;

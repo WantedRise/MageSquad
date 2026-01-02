@@ -5,6 +5,8 @@
 
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/Tasks/MSAT_ChaseAndSpawnMeteor.h"
+#include "Actors/Indicator/MSIndicatorActor.h"
 #include "Enemy/MSBossEnemy.h"
 
 UMSGA_Boss_Sevarog_Meteor::UMSGA_Boss_Sevarog_Meteor()
@@ -16,6 +18,11 @@ UMSGA_Boss_Sevarog_Meteor::UMSGA_Boss_Sevarog_Meteor()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Pattern1);
+	
+	// 기본 Indicator 파라미터 설정
+	IndicatorParams.Shape = EIndicatorShape::Circle;
+	IndicatorParams.Radius = 200.f;
+	IndicatorParams.Duration = 1.0f;
 }
 
 void UMSGA_Boss_Sevarog_Meteor::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -24,6 +31,13 @@ void UMSGA_Boss_Sevarog_Meteor::ActivateAbility(const FGameplayAbilitySpecHandle
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	// CommitAbility 체크 (쿨다운, 코스트 등)
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+	
 	if (UAnimMontage* Pattern1Montage = Owner->GetPattern1Montage())
 	{
 		UAbilityTask_PlayMontageAndWait* Pattern1Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Pattern1"), Pattern1Montage);
@@ -31,6 +45,33 @@ void UMSGA_Boss_Sevarog_Meteor::ActivateAbility(const FGameplayAbilitySpecHandle
 		Pattern1Task->OnInterrupted.AddDynamic(this, &UMSGA_Boss_Sevarog_Meteor::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		Pattern1Task->ReadyForActivation();
 	}
+	
+	// 서버에서만 추적 로직 실행
+	if (!HasAuthority(&ActivationInfo))
+	{
+		return;
+	}
+
+	// Indicator 클래스 유효성 체크
+	if (!IndicatorActorClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UMSGA_Boss_Sevarog_Meteor: IndicatorActorClass is not set!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	 // 추적 + 스폰 태스크 시작
+	UMSAT_ChaseAndSpawnMeteor* ChaseTask = UMSAT_ChaseAndSpawnMeteor::CreateTask(
+		this,
+		ChaseDuration,
+		SpawnInterval,
+		IndicatorActorClass,
+		IndicatorParams,
+		MeteorDamageEffect);
+	
+	ChaseTask->OnChaseComplete.AddDynamic(this, &UMSGA_Boss_Sevarog_Meteor::OnChaseComplete);
+	ChaseTask->OnIndicatorSpawned.AddDynamic(this, &UMSGA_Boss_Sevarog_Meteor::OnIndicatorSpawned);
+	ChaseTask->ReadyForActivation();
 }
 
 void UMSGA_Boss_Sevarog_Meteor::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -59,4 +100,31 @@ void UMSGA_Boss_Sevarog_Meteor::OnInterruptedCallback()
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = true;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UMSGA_Boss_Sevarog_Meteor::OnChaseComplete()
+{
+	bool bReplicatedEndAbility = true;
+	bool bWasCancelled = false;
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UMSGA_Boss_Sevarog_Meteor::OnIndicatorSpawned(AMSIndicatorActor* Indicator, FVector Location)
+{
+	if (!Indicator)
+	{
+		return;
+	}
+
+	// 추가 처리 (사운드, VFX 등)
+	// Task에서 이미 데미지 정보를 설정하므로 여기서는 추가 이펙트만 처리
+	
+	// 예: GameplayCue 발동
+	// UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
+	// if (SourceASC)
+	// {
+	//     FGameplayCueParameters CueParams;
+	//     CueParams.Location = Location;
+	//     SourceASC->ExecuteGameplayCue(MSGameplayTags::GameplayCue_Meteor_Warning, CueParams);
+	// }
 }

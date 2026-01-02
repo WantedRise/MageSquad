@@ -42,14 +42,14 @@ TArray<AActor*> AMSTargetActor_Sphere::PerformOverlapCheck()
 #if WITH_EDITOR
 	if (bDrawDebug)
 	{
-		DrawDebugTargetArea();
+		DrawDebugTargetArea(!HitActors.IsEmpty());
 	}
 #endif
 
 	return HitActors;
 }
 
-void AMSTargetActor_Sphere::DrawDebugTargetArea() const
+void AMSTargetActor_Sphere::DrawDebugTargetArea(bool IsValid) const
 {
 #if WITH_EDITOR
 	const FVector Location = GetActorLocation();
@@ -60,7 +60,7 @@ void AMSTargetActor_Sphere::DrawDebugTargetArea() const
 		Location,
 		Radius,
 		24,
-		FColor::Red,
+		IsValid == true ? FColor::Green : FColor::Red,
 		false,
 		DebugDrawDuration,
 		0,

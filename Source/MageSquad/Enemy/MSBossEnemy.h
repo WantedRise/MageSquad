@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "DataAssets/Enemy/DA_EnemyBossAnimationSet.h"
 #include "Enemy/MSBaseEnemy.h"
+#include "Interfaces/MSIndicatorDamageInterface.h"
 #include "MSBossEnemy.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossCutsceneStateChanged, bool, bIsStarting);
@@ -15,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossCutsceneStateChanged, bool, b
  * 보스를 나타내는 클래스
  */
 UCLASS()
-class MAGESQUAD_API AMSBossEnemy : public AMSBaseEnemy
+class MAGESQUAD_API AMSBossEnemy : public AMSBaseEnemy, public IMSIndicatorDamageInterface
 {
 	GENERATED_BODY()
 	
@@ -49,8 +50,13 @@ public:
 	FORCEINLINE USkeletalMesh* GetPhase2SkeletalMesh() const {return Phase2SkeletalMesh;}
 	FORCEINLINE class UCameraComponent* GetBossCamera() const { return Camera; }
 	
+protected:
+	virtual UAbilitySystemComponent* GetIndicatorSourceASC_Implementation() const override;
+	virtual TSubclassOf<UGameplayEffect> GetIndicatorDamageEffect_Implementation() const override;
+	
 private:
 	void TrySetMesh(USkeletalMesh* NewSkeletalMesh);
+	
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnBossCutsceneStateChanged OnBossCutsceneStateChanged;
