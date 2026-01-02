@@ -41,7 +41,7 @@ private:
 	float StartTime = 0.f;
 
 	// 이동 파라미터
-	float MoveSpeed = 900.f;     // 전진 속도
+	float MoveSpeed = 500.f;     // 전진 속도
 	float SwirlAmp = 120.f;      // 흔들림 크기(좌우)
 	float SwirlFreq = 7.f;       // 흔들림 속도
 	float NoiseAmp = 60.f;       // 불규칙성 크기

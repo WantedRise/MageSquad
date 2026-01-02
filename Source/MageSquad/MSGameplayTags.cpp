@@ -68,7 +68,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_CoolTime, "Upgrade.CoolTime");
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_ProjectileNum, "Upgrade.ProjectileNum");
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Penetration, "Upgrade.Penetration");
-	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Radius, "Upgrade.Radius");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Range, "Upgrade.Range");
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Duration, "Upgrade.Duration");
 
 	/* Shared Tags */
