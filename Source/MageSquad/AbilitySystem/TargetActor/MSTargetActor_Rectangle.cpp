@@ -22,7 +22,8 @@ TArray<AActor*> AMSTargetActor_Rectangle::PerformOverlapCheck()
 	const FVector BoxExtent(HalfLength, HalfWidth, 100.f); // Z는 충분한 높이
 	
 	// 박스의 중심을 전방으로 HalfLength만큼 밀어줌
-	const FVector OverlapLocation = GetActorLocation() + (GetActorForwardVector() * HalfLength);
+	//const FVector OverlapLocation = GetActorLocation() + (GetActorForwardVector() * HalfLength);
+	const FVector OverlapLocation = GetActorLocation();
 	const FQuat OverlapRotation = GetActorQuat();
 
 	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
@@ -51,7 +52,7 @@ TArray<AActor*> AMSTargetActor_Rectangle::PerformOverlapCheck()
 #if WITH_EDITOR
 	if (bDrawDebug)
 	{
-		DrawDebugTargetArea();
+		DrawDebugTargetArea(!HitActors.IsEmpty());
 	}
 #endif
 
@@ -73,7 +74,7 @@ bool AMSTargetActor_Rectangle::IsActorInRectangle(const AActor* Actor) const
 		   (FMath::Abs(LocalPos.Y) <= (CachedParams.Width * 0.5f));
 }
 
-void AMSTargetActor_Rectangle::DrawDebugTargetArea() const
+void AMSTargetActor_Rectangle::DrawDebugTargetArea(bool IsValid) const
 {
 #if WITH_EDITOR
 	const FVector Location = GetActorLocation();
@@ -91,7 +92,7 @@ void AMSTargetActor_Rectangle::DrawDebugTargetArea() const
 	   Location,
 	   BoxExtent,
 	   FQuat(Rotation),
-	   FColor::Red,
+	   IsValid == true ? FColor::Green : FColor::Red,
 	   false,
 	   DebugDrawDuration,
 	   0,

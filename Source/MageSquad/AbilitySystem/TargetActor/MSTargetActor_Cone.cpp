@@ -54,7 +54,6 @@ TArray<AActor*> AMSTargetActor_Cone::PerformOverlapCheck()
 #if WITH_EDITOR
     if (bDrawDebug)
     {
-        // 하나라도 잡혔으면 Green, 아니면 Red
         DrawDebugTargetArea(!HitActors.IsEmpty());
     }
 #endif

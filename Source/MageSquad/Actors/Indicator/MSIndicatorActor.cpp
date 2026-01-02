@@ -102,8 +102,8 @@ void AMSIndicatorActor::ApplyMaterialParams()
 		//DecalComponent->DecalSize = FVector(CachedParams.Length * 0.5f, CachedParams.Width * 0.5f, 100.f);
 		float HalfLength = CachedParams.Length * 0.5f;
 		float HalfWidth = CachedParams.Width * 0.5f;
-		SetActorLocation(GetActorLocation() + (GetActorUpVector() * HalfLength));
-		DecalComponent->DecalSize = FVector(0.f, HalfWidth, HalfLength);
+		SetActorLocation(GetActorLocation() + (GetActorUpVector() * HalfLength)); // 데칼 회전때문에 Forward가 아닌 UpVector 이용
+		DecalComponent->DecalSize = FVector(500.f, HalfWidth, HalfLength);
 		break;
 	}
 }

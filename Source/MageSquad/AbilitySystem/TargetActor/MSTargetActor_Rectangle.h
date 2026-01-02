@@ -30,5 +30,5 @@ private:
 	bool IsActorInRectangle(const AActor* Actor) const;
 
 	// 디버그용 Rectangle 그리기
-	void DrawDebugTargetArea() const;
+	void DrawDebugTargetArea(bool IsValid) const;
 };
