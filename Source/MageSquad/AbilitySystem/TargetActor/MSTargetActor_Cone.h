@@ -29,5 +29,5 @@ private:
 	bool IsActorInCone(const AActor* Actor) const;
 
 	// 디버그용 Cone 그리기
-	void DrawDebugTargetArea() const;
+	void DrawDebugTargetArea(bool bHasHit) const;
 };
