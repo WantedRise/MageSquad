@@ -9,6 +9,18 @@
 #include "GameModes/MSGameMode.h"
 #include "TimerManager.h"
 #include <System/MSMissionDataSubsystem.h>
+#include "Actors/Wave/MSWaveManager.h"
+
+UMSGameFlowPvE::UMSGameFlowPvE()
+{
+	static ConstructorHelpers::FClassFinder<AMSWaveManager>
+		WaveManagerBP(TEXT("/Game/Blueprints/Actors/Wave/BP_WaveManager.BP_WaveManager_C"));
+
+	if (WaveManagerBP.Succeeded())
+	{
+		WaveManagerClass = WaveManagerBP.Class;
+	}
+}
 
 void UMSGameFlowPvE::BeginDestroy()
 {
@@ -36,6 +48,22 @@ void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable
 	MissionTimelineTable->GetAllRows(Context, MissionTimelineRows);
 	
 	CurrentMissionIndex = 0;
+
+	if (!WaveManagerClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("WaveManagerClass not set"));
+		return;
+	}
+	
+	FActorSpawnParameters Params;
+	Params.Owner = nullptr;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	WaveManager = InOwnerGameState->GetWorld()->SpawnActor<AMSWaveManager>(
+		WaveManagerClass,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		Params
+	);
 }
 
 void UMSGameFlowPvE::OnEnterState(EGameFlowState NewState)
@@ -103,6 +131,56 @@ void UMSGameFlowPvE::Start()
 	{
 		GameProgress->StartProgress();
 	}
+
+	SetWave(5.0f, 0.0f, MissionTriggerTime);
+}
+
+void UMSGameFlowPvE::SetWave(float FirstWaveTime,float DelayWaveTime, float EndTime)
+{
+	if (!WaveManager || !IsValid(WaveManager))
+	{
+		return;
+	}
+
+	FTimerHandle WaveStartDelayTimer;
+	FTimerDelegate StartWaveDelegate;
+	StartWaveDelegate.BindUObject(
+		this,
+		&UMSGameFlowPvE::StartWave,
+		DelayWaveTime,
+		EndTime
+	);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		WaveStartDelayTimer,
+		StartWaveDelegate,
+		FirstWaveTime,
+		false
+	);
+}
+
+void UMSGameFlowPvE::StartWave(float DelayWaveTime, float EndTime)
+{
+	if (!WaveManager || !IsValid(WaveManager))
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[GameFlow] Wave start"));
+
+	WaveManager->StartWaveTimer(DelayWaveTime, EndTime);
+}
+
+void UMSGameFlowPvE::StopWave()
+{
+	if (!WaveManager || !IsValid(WaveManager))
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[GameFlow] Wave auto-stopped"));
+
+	WaveManager->StopWaveTimer();
 }
 
 void UMSGameFlowPvE::ScheduleMission(float TriggerTime, int32 MissionID)
