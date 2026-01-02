@@ -91,6 +91,8 @@ void AMSWaveManager::RequestSpawnWave()
 		// 랜덤 회전
 		const float RandomYaw = FMath::FRandRange(MinYaw, MaxYaw);
 		MapPivot->SetActorRotation(FRotator(0.f, RandomYaw, 0.f));
+		// 클라 동기화
+		ActiveWave->ApplyWaveRotation(ActiveWave->GetActorRotation().Yaw);
 		ActiveWave->ActivateWave(StartLocation);
 		return;
 	}
@@ -145,8 +147,6 @@ void AMSWaveManager::SpawnWaveInternal()
 		return;
 	}
 
-
-	
 	// Pivot에 부착 (회전 기준)
 	ActiveWave->AttachToActor(
 		MapPivot,

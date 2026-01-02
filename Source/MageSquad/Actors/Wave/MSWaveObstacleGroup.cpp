@@ -204,3 +204,19 @@ void AMSWaveObstacleGroup::FinishWave()
 
 	OnWaveFinished.Broadcast();
 }
+
+void AMSWaveObstacleGroup::ApplyWaveRotation(float Yaw)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	MulticastSetWaveRotation(Yaw);
+}
+
+void AMSWaveObstacleGroup::MulticastSetWaveRotation_Implementation(float Yaw)
+{
+	const FRotator NewRot(0.f, Yaw, 0.f);
+	SetActorRotation(NewRot);
+}

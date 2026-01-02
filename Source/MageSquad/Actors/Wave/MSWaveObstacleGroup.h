@@ -24,10 +24,12 @@ protected:
 	UFUNCTION()
 	void OnRep_ServerLocation();
 	virtual void Tick(float DeltaTime) override;
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSetWaveRotation(float Yaw);
 public:
 	/* ===== Settings ===== */
 	FOnWaveFinished OnWaveFinished;
-
+	void ApplyWaveRotation(float Yaw);
 	// Block 길이 (Y 방향)
 	UPROPERTY(EditAnywhere, Category = "Wave")
 	float BlockLength = 930.f;
