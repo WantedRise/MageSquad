@@ -26,6 +26,10 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Groggy, "Enemy.Ability.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Idle, "Enemy.Ability.Idle");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Move, "Enemy.Ability.Move");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Pattern1, "Enemy.Ability.Pattern1");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Pattern2, "Enemy.Ability.Pattern2");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Pattern3, "Enemy.Ability.Pattern3");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_Ability_Pattern4, "Enemy.Ability.Pattern4");
 	
 	/*Enemy State Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Idle, "Enemy.State.Idle");
@@ -36,6 +40,11 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Spawn, "Enemy.State.Spawn");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Groggy, "Enemy.State.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Phase2, "Enemy.State.Phase2");
+	
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Pattern1, "Enemy.State.Pattern1");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Pattern2, "Enemy.State.Pattern2");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Pattern3, "Enemy.State.Pattern3");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Pattern4, "Enemy.State.Pattern4");
 	
 	/*Enemy Tier Tags*/
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_Tier_Normal, "Enemy.Tier.Normal");

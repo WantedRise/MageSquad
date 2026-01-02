@@ -151,6 +151,16 @@ void AMSBossEnemy::OnRep_Phase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh)
 	}
 }
 
+UAbilitySystemComponent* AMSBossEnemy::GetIndicatorSourceASC_Implementation() const
+{
+    return ASC;
+}
+
+TSubclassOf<UGameplayEffect> AMSBossEnemy::GetIndicatorDamageEffect_Implementation() const
+{
+	return DamageEffectClass;
+}
+
 void AMSBossEnemy::TrySetMesh(USkeletalMesh* NewSkeletalMesh)
 {	
 	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] TrySetMesh: %s"), *Phase2SkeletalMesh.GetName());

@@ -112,7 +112,6 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 					// GameplayEffect 적용
 					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 					
-					
 					UE_LOG(LogTemp, Warning, TEXT("[%s] ApplyGameplayEffectSpecToSelf"),
 						   HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"));
 				}

@@ -18,6 +18,7 @@ class MAGESQUAD_API UMSGA_EnemyDead : public UMSGA_EnemyBaseAbility
 	
 public:
 	UMSGA_EnemyDead();
+	
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, 
