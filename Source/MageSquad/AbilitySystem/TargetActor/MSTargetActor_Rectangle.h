@@ -27,7 +27,7 @@ protected:
 
 private:
 	// 액터가 Rectangle 범위 내에 있는지 정밀 판정
-	bool IsActorInRectangle(AActor* Actor) const;
+	bool IsActorInRectangle(const AActor* Actor) const;
 
 	// 디버그용 Rectangle 그리기
 	void DrawDebugTargetArea() const;

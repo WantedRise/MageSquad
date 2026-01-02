@@ -99,7 +99,16 @@ void AMSIndicatorActor::ApplyMaterialParams()
 
 	case EIndicatorShape::Rectangle:
 		DynamicMaterial->SetScalarParameterValue(TEXT("AspectRatio"), CachedParams.Length / CachedParams.Width);
-		DecalComponent->DecalSize = FVector(CachedParams.Length * 0.5f, CachedParams.Width * 0.5f, 100.f);
+		//DecalComponent->DecalSize = FVector(CachedParams.Length * 0.5f, CachedParams.Width * 0.5f, 100.f);
+		// [핵심 1] 언리얼 데칼 사이즈: X=투사깊이, Y=너비(Width), Z=길이(Length)
+		// 평면상에서 앞뒤로 뻗는 것이 Z축, 좌우가 Y축이 됩니다.
+		float HalfLength = CachedParams.Length * 0.5f;
+		float HalfWidth = CachedParams.Width * 0.5f;
+		DecalComponent->DecalSize = FVector(HalfLength, HalfWidth, 100.f);
+
+		// // [핵심 2] 데칼은 중심 기준으로 그려지므로, 발밑에서 시작하려면 앞으로 HalfLength만큼 밀어야 함
+		// // 데칼 로컬 좌표계에서 Z축이 실제 월드의 정면(Forward) 방향이 됩니다.
+		// DecalComponent->SetRelativeLocation(FVector(0.f, 0.f, HalfLength));
 		break;
 	}
 }
@@ -183,11 +192,17 @@ TArray<AActor*> AMSIndicatorActor::SpawnTargetActorAndPerformTargeting()
 	// TargetActor 스폰
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	
+	// 데칼의 -90도 회전을 무시하고 수평(Pitch=0)으로 스폰
+	FRotator SpawnRotation = GetActorRotation();
+	SpawnRotation.Pitch = 0.f;
+	SpawnRotation.Roll = 0.f;
 
 	AMSTargetActor_IndicatorBase* TargetActor = World->SpawnActor<AMSTargetActor_IndicatorBase>(
 		TargetActorClass,
 		GetActorLocation(),
-		GetActorRotation(),
+		//GetActorRotation(),
+		SpawnRotation,
 		SpawnParams);
 
 	if (TargetActor)
