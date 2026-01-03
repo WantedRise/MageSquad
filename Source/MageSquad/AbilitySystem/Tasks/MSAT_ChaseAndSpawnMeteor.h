@@ -57,10 +57,10 @@ protected:
 
 private:
 	// 모든 플레이어 위치에 Indicator 스폰
-	void SpawnIndicatorsOnAllPlayers();
+	void SpawnIndicatorsOnAllPlayers() const;
 	
 	// 특정 위치에 Indicator 스폰
-	AMSIndicatorActor* SpawnIndicatorAtLocation(const FVector& Location);
+	AMSIndicatorActor* SpawnIndicatorAtLocation(const FVector& Location) const;
 	
 	// 바닥 높이 계산 (LineTrace)
 	float GetGroundZ(const FVector& Location) const;

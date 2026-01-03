@@ -48,6 +48,8 @@ private:
 	void OnInterruptedCallback();
 	UFUNCTION()
 	void OnChaseComplete();
+	UFUNCTION()
+	void OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData);
 	// Indicator 스폰 콜백 (사운드, VFX 등 추가 처리용)
 	UFUNCTION()
 	void OnIndicatorSpawned(AMSIndicatorActor* Indicator, FVector Location);

@@ -88,7 +88,8 @@ void AMSIndicatorActor::ApplyMaterialParams()
 	{
 	case EIndicatorShape::Circle:
 		DynamicMaterial->SetScalarParameterValue(TEXT("Angle"), PI * 2.f);
-		DecalComponent->DecalSize = FVector(CachedParams.Radius);
+		// 데칼 투영에 필요한 최소 높이 충족을 위해 X값만 처리, 회전 때문에 X값 사용
+		DecalComponent->DecalSize = FVector(CachedParams.Radius * 2, CachedParams.Radius, CachedParams.Radius);
 		break;
 
 	case EIndicatorShape::Cone:
