@@ -4,22 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
-#include "MSGA_Boss_Sevarog_Laser.generated.h"
+#include "MSGA_Boss_Sevarog_Grip.generated.h"
 
 /**
  * 작성자 : 임희섭
  * 작성일 : 2026/01/03
- * Boss Sevarog의 Pattern2 어빌리티
- * 일직선으로 레이저를 발사한다. 
+ * Boss Sevarog의 Pattern3 어빌리티
+ * 전방 부채꼴의 범위에 피해를 준다. 
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_Boss_Sevarog_Laser : public UMSGA_EnemyBossBaseAbility
+class MAGESQUAD_API UMSGA_Boss_Sevarog_Grip : public UMSGA_EnemyBossBaseAbility
 {
 	GENERATED_BODY()
-
+	
 public:
-	UMSGA_Boss_Sevarog_Laser();
-
+	UMSGA_Boss_Sevarog_Grip();
+	
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
