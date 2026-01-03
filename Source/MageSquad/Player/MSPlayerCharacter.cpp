@@ -169,11 +169,8 @@ void AMSPlayerCharacter::BeginPlay()
 	// 플레이어 방향 표시 인디케이터 설정
 	if (DirectionIndicatorComponent)
 	{
-		// 생존 상태 필터 적용 + 거리 표기 비활성화 + 사망/관전 상태 인디케이터 비활성화
-		DirectionIndicatorComponent->bRequiresAlive = true;
+		// 거리 표기 비활성화
 		DirectionIndicatorComponent->bShowDistance = false;
-		DirectionIndicatorComponent->bHideWhenLocalDead = false;
-		DirectionIndicatorComponent->TypeTag = TEXT("Player");
 	}
 }
 

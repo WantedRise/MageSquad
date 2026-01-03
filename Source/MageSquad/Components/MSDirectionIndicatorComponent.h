@@ -48,17 +48,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
 	bool bShowDistance = false;
 
-	// 대상(본인)이 활성화 or 생존 상태일 때만 표시하려면 true로 설정
+	// 대상(본인)의 인디케이터 가시화 여부 (true이면 표시함)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
-	bool bRequiresAlive = false;
-
-	// 플레이어: 로컬 플레이어가 사망/관전 상태일 때, 인디케이터를 숨길지 여부
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
-	bool bHideWhenLocalDead = false;
-
-	// 인디케이터 타입 태그. UI에서 아이콘 프리셋을 선택하거나 우선순위 등 구분에 사용 (ex. "Player", "Mission", "Boss")
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
-	FName TypeTag = TEXT("Player");
+	bool bRequiresActivation = true;
 
 private:
 	// 방향 표시 인디케이터 서브시스템에 등록되었는지 여부

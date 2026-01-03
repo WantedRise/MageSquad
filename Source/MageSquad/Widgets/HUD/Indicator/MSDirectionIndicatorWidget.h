@@ -52,9 +52,6 @@ protected:
 	// 인디케이터 아이템 위젯을 풀에 반환하는 함수
 	void ReleaseItemWidget(class UMSDirectionIndicatorItemWidget* Widget);
 
-	// 방향 표시 인디케이터 위젯 가시성 업데이트 (로컬 플레이어 사망/관전 상태 체크)
-	void UpdateWidgetVisibility();
-
 	// 방향 표시 인디케이터 갱신 함수
 	void UpdateIndicator();
 
@@ -69,15 +66,15 @@ protected:
 
 	// 인디케이터 표시 시작 임계값(px). 대상의 스크린 좌표가 이 범위 밖으로 나가면 표시 시작
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
-	float ActivationInsetPixel = 80.f;
+	float ActivationInsetPixel = 150.f;
 
 	// 인디케이터 표시 해제 임계값(px). 대상의 스크린 좌표가 이 범위 안으로 들어오면 표시 해제
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
-	float DeactivationInsetPixel = 120.f;
+	float DeactivationInsetPixel = 300.f;
 
 	// 화면 가장자리 마진값(px). 인디케이터가 화면 끝에서 이만큼 떨어진 곳에 위치 시킴
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")
-	float EdgeMarginPixel = 32.f;
+	float EdgeMarginPixel = 80.f;
 
 	// 인디케이터 간 최소 간격(px)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Indicator")

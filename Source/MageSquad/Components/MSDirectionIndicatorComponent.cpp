@@ -96,33 +96,10 @@ bool UMSDirectionIndicatorComponent::ShouldShowIndicatorForPlayer(APlayerControl
 		}
 	}
 
-	// 생존 or 활성화 상태 체크
-	if (bRequiresAlive)
+	// 비가시화를 원하는 경우 표시하지 않음
+	if (!bRequiresActivation)
 	{
-		// #1: 플레이어의 경우
-		if (TypeTag == TEXT("Player"))
-		{
-			if (const AActor* OwnerActor = GetOwner())
-			{
-				if (const AMSPlayerCharacter* MSPlayer = Cast<AMSPlayerCharacter>(OwnerActor))
-				{
-					// 로컬 플레이어가 사망 상태면 false 반환
-					if (!MSPlayer->GetIsDead())
-					{
-						return false;
-					}
-
-					// 로컬 플레이어가 사망 상태면 false 반환
-					if (bHideWhenLocalDead)
-					{
-						if (!MSPlayer->GetIsDead())
-						{
-							return false;
-						}
-					}
-				}
-			}
-		}
+		return false;
 	}
 
 	return true;

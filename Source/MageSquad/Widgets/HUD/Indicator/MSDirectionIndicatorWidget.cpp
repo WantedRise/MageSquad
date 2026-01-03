@@ -7,7 +7,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 
-#include "Player/MSPlayerState.h"
+#include "Player/MSPlayerCharacter.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "System/MSDirectionIndicatorSubsystem.h"
 
@@ -24,7 +24,7 @@ void UMSDirectionIndicatorWidget::NativeConstruct()
 			&UMSDirectionIndicatorWidget::UpdateIndicator,
 			UpdateInterval,
 			true,
-			1.f
+			3.f
 		);
 	}
 }
@@ -112,40 +112,11 @@ void UMSDirectionIndicatorWidget::ReleaseItemWidget(UMSDirectionIndicatorItemWid
 	IndicatorItemPool.Add(Widget);
 }
 
-void UMSDirectionIndicatorWidget::UpdateWidgetVisibility()
-{
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC) return;
-
-	// 플레이어 생존 여부
-	bool bLocalAlive = true;
-	if (const APlayerState* PS = PC->PlayerState)
-	{
-		if (const AMSPlayerState* MSPC = Cast<AMSPlayerState>(PS))
-		{
-			bLocalAlive = MSPC->IsAlive();
-		}
-	}
-
-	// 가시성 업데이트
-	if (!bLocalAlive)
-	{
-		SetVisibility(ESlateVisibility::Collapsed);
-	}
-	else
-	{
-		SetVisibility(ESlateVisibility::HitTestInvisible);
-	}
-}
-
 void UMSDirectionIndicatorWidget::UpdateIndicator()
 {
 	// ============================================================
-	// #1: 위젯 가시성 업데이트 (로컬 생존 여부에 따른 전체 ON/OFF)
+	// #1: 위젯 가시성 업데이트 (위젯이 숨김 상태 여부에 따른 전체 ON/OFF)
 	// ============================================================
-	UpdateWidgetVisibility();
-
-	// 위젯이 숨김 상태인 경우 화면에 표시할 필요가 없음
 	if (GetVisibility() == ESlateVisibility::Collapsed)
 	{
 		// 현재 활성화된 인디케이터 아이템 위젯들을 전부 풀로 반환
@@ -168,14 +139,21 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 	APlayerController* PC = GetOwningPlayer();
 	if (!PC) return;
 
+	UWorld* World = GetWorld();
+	if (!World) return;
+
 	// 뷰포트 크기(픽셀) 가져오기
-	FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(GetWorld());
+	FVector2D ViewportSizePixel = UWidgetLayoutLibrary::GetViewportSize(World);
 
-	// 유효하지 않은 뷰포트 방어
-	if (ViewportSize.X <= 0.f || ViewportSize.Y <= 0.f) return;
+	// 유효하지 않은 뷰포트 크기 방어
+	if (ViewportSizePixel.X <= 0.f || ViewportSizePixel.Y <= 0.f) return;
 
-	// 화면 중앙(레이 투영 기준점)
-	const FVector2D Center(ViewportSize.X * 0.5f, ViewportSize.Y * 0.5f);
+	// DPI 스케일을 얻어 픽셀값을 UMG 좌표계로 변환
+	const float ViewportScale = UWidgetLayoutLibrary::GetViewportScale(World);
+	const FVector2D ViewportSizeUI = ViewportSizePixel / ViewportScale;
+
+	// 화면 중앙(레이 투영 기준점) - UMG 좌표계
+	const FVector2D Center(ViewportSizeUI.X * 0.5f, ViewportSizeUI.Y * 0.5f);
 
 
 	// ============================================================
@@ -186,40 +164,59 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 	// 
 	// 즉, OffRect가 OnRect보다 보통 더 넓거나/다르게 설정되어 경계 근처에서 ON/OFF가 빠르게 토글되는 현상을 줄임
 	// ============================================================
+	// 인디케이터 표시 시작/해제 경계선을 UMG 좌표계로 변환
+	const float ActivationInset = ActivationInsetPixel / ViewportScale;
+	const float DeactivationInset = DeactivationInsetPixel / ViewportScale;
+
 	// 인디케이터 표시 시작 경계선 좌표
-	const float MinXOn = ActivationInsetPixel;
-	const float MaxXOn = ViewportSize.X - ActivationInsetPixel;
-	const float MinYOn = ActivationInsetPixel;
-	const float MaxYOn = ViewportSize.Y - ActivationInsetPixel;
+	const float MinXOn = ActivationInset;
+	const float MaxXOn = ViewportSizeUI.X - ActivationInset;
+	const float MinYOn = ActivationInset;
+	const float MaxYOn = ViewportSizeUI.Y - ActivationInset;
 
 	// 인디케이터 표시 해제 경계선 좌표
-	const float MinXOff = DeactivationInsetPixel;
-	const float MaxXOff = ViewportSize.X - DeactivationInsetPixel;
-	const float MinYOff = DeactivationInsetPixel;
-	const float MaxYOff = ViewportSize.Y - DeactivationInsetPixel;
+	const float MinXOff = ActivationInset;
+	const float MaxXOff = ViewportSizeUI.X - ActivationInset;
+	const float MinYOff = ActivationInset;
+	const float MaxYOff = ViewportSizeUI.Y - ActivationInset;
 
 
 	// ============================================================
 	// #4: 인디케이터를 실제로 붙일 엣지(가장자리) 사각형 정의
 	// ============================================================
-	// 인디케이터 화면 가장자리 경계선 마진값 좌표
-	const float EdgeMinX = EdgeMarginPixel;
-	const float EdgeMaxX = ViewportSize.X - EdgeMarginPixel;
-	const float EdgeMinY = EdgeMarginPixel;
-	const float EdgeMaxY = ViewportSize.Y - EdgeMarginPixel;
+	// 인디케이터 화면 가장자리 경계선 마진값 좌표 (UMG 좌표계)
+	const float EdgeMargin = EdgeMarginPixel / ViewportScale;
+	const float EdgeMinX = EdgeMargin;
+	const float EdgeMaxX = ViewportSizeUI.X - EdgeMargin;
+	const float EdgeMinY = EdgeMargin;
+	const float EdgeMaxY = ViewportSizeUI.Y - EdgeMargin;
 
 
 	// ============================================================
 	// #5: 인디케이터 표시 액터 목록 수집
 	// ============================================================
 	TArray<UMSDirectionIndicatorComponent*> Sources;
-	if (UWorld* World = GetWorld())
+
+	// 현재 서브시스템에 등록된 표시 액터 목록을 가져와 저장
+	if (UMSDirectionIndicatorSubsystem* Subsystem = World->GetSubsystem<UMSDirectionIndicatorSubsystem>())
 	{
-		// 현재 서브시스템에 등록된 표시 액터 목록을 가져와 저장
-		if (UMSDirectionIndicatorSubsystem* Subsystem = World->GetSubsystem<UMSDirectionIndicatorSubsystem>())
+		Subsystem->GetIndicatorSources(Sources);
+	}
+
+	// 표시할 인디케이터가 하나도 없으면 기존 인디케이터를 정리하고 종료
+	if (Sources.Num() <= 0)
+	{
+		// 기존 인디케이터 전부 반환
+		for (auto& Pair : ActiveIndicators)
 		{
-			Subsystem->GetIndicatorSources(Sources);
+			if (Pair.Value.IndicatorItem)
+			{
+				ReleaseItemWidget(Pair.Value.IndicatorItem);
+				Pair.Value.IndicatorItem = nullptr;
+			}
 		}
+		ActiveIndicators.Empty();
+		return;
 	}
 
 
@@ -232,7 +229,7 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 
 	// ============================================================
 	// #7: 각 소스(인디케이터 표시 액터)에 대해:
-	// 1. 표시 가능 여부 필터링
+	// 1. 표시 여부 필터링
 	// 2. 월드 좌표 -> 스크린 좌표 프로젝션
 	// 3. 히스테리시스 기반으로 표시해야 하는지 결정
 	// 4. 표시해야 하는 경우, 화면에 표시할 가장자리 위치 계산
@@ -244,18 +241,18 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 		if (!Source) continue;
 
 		// ============================================================
-		// #7-1: 이 인디케이터가 로컬 플레이어들에게 표시되지 않아도 되는 경우
+		// #7-1: 이 인디케이터의 표시 여부 필터링
 		// ============================================================
-		//if (!Source->ShouldShowIndicatorForPlayer(PC))
-		//{
-		//	// 기존에 활성화 되어있으면 숨김 처리
-		//	FIndicatorItem* Existing = ActiveIndicators.Find(Source);
-		//	if (Existing)
-		//	{
-		//		Existing->bVisible = false;
-		//	}
-		//	continue;
-		//}
+		if (!Source->ShouldShowIndicatorForPlayer(PC))
+		{
+			// 만약 가시화 상태라면 비가시화 처리
+			FIndicatorItem* Existing = ActiveIndicators.Find(Source);
+			if (Existing)
+			{
+				Existing->bVisible = false;
+			}
+			continue;
+		}
 
 
 		// ============================================================
@@ -267,20 +264,26 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 
 		// 프로젝션: 플레이어의 화면 위치에 투영된 월드를 가져온 다음, 이를 위젯 위치로 변환
 		FVector WorldLocation = Source->GetIndicatorWorldLocation();
-		FVector2D ScreenPos;
+		FVector2D ScreenPosPixel;
 		bool bProjected = false;
-		if (UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PC, WorldLocation, ScreenPos, false))
+		if (UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PC, WorldLocation, ScreenPosPixel, false))
 		{
 			bProjected = true;
 		}
-		else
+
+		// 픽셀 좌표를 UMG 좌표계로 변환 (DPI 스케일 적용)
+		FVector2D ScreenPos = ScreenPosPixel / ViewportScale;
+
+		if (!bProjected)
 		{
 			// 프로젝션 실패(카메라 뒤/특이 케이스 고려)
 			// 안전하게 Center로 두고, 엣지 사각형 내부로 Clamp
 			ScreenPos = Center;
-			ScreenPos.X = FMath::Clamp(ScreenPos.X, EdgeMinX, EdgeMaxX);
-			ScreenPos.Y = FMath::Clamp(ScreenPos.Y, EdgeMinY, EdgeMaxY);
 		}
+
+		// 화면 가장자리 마진값을 벗어나지 않도록 Clamp
+		ScreenPos.X = FMath::Clamp(ScreenPos.X, EdgeMinX, EdgeMaxX);
+		ScreenPos.Y = FMath::Clamp(ScreenPos.Y, EdgeMinY, EdgeMaxY);
 
 
 		// ============================================================
@@ -335,7 +338,7 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 		// +-----------------+
 		// |				 |
 		// |				 |
-		// |        + -> -> "|
+		// |        + -> -> O|
 		// |				 |
 		// |				 |
 		// +-----------------+
@@ -433,6 +436,12 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 		ActiveIndicators.Remove(Key);
 	}
 
+	// 표시해야 할 인디케이터가 없으면 UI 작업과 슬롯팅을 스킵
+	if (ActiveIndicators.Num() <= 0)
+	{
+		return;
+	}
+
 
 	// ============================================================
 	// #9: 슬롯팅(겹침 방지) 준비
@@ -481,9 +490,12 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 	// ============================================================
 	// #10: 슬롯팅(겹침 방지) 수행
 	// ============================================================
+	// 슬롯 간격을 DPI로 나눠 계산. 람다에서 캡처하여 사용
+	const float SlotGap = SlotGapPixel / ViewportScale;
+
 	// 슬롯팅용 람다 함수 생성
 	auto SlottingPass =
-		[this, &EdgeMinX, &EdgeMaxX, &EdgeMinY, &EdgeMaxY]
+		[this, &EdgeMinX, &EdgeMaxX, &EdgeMinY, &EdgeMaxY, &SlotGap]
 		(TArray<FIndicatorItem*>& Group, bool bHorizontal)
 		{
 			if (Group.Num() <= 1) return;
@@ -499,7 +511,7 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 			);
 
 			// #10-2: 축 Clamp 범위 설정
-			const float MinAxis = bHorizontal ? EdgeMinX : EdgeMaxY;
+			const float MinAxis = bHorizontal ? EdgeMinX : EdgeMinY;
 			const float MaxAxis = bHorizontal ? EdgeMaxX : EdgeMaxY;
 
 			// #10-3: 이전 항목과의 최소 간격 보장
@@ -510,13 +522,6 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 				FIndicatorItem* Item = Group[i];
 				if (!Item) continue;
 
-				// 현재 위젯 크기 가져오기
-				FVector2D Size(0.f, 0.f);
-				if (Item->IndicatorItem)
-				{
-					Size = Item->IndicatorItem->GetDesiredSize();
-				}
-
 				// 현재 아이템의 축 값(정렬 축 기준)
 				float Axis = bHorizontal ? Item->DesiredPos.X : Item->DesiredPos.Y;
 
@@ -526,15 +531,15 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 					// 이전 아이템 위젯의 크기
 					float PrevSizeAlongAxis = 0.f;
 
-					// 이전 아이템 유효 검사
+					// 이전 아이템의 유효성 검사
 					if (Group[i - 1] && Group[i - 1]->IndicatorItem)
 					{
 						FVector2D PrevSize = Group[i - 1]->IndicatorItem->GetDesiredSize();
 						PrevSizeAlongAxis = bHorizontal ? PrevSize.X : PrevSize.Y;
 					}
 
-					// 최소 간격 계산
-					float RequiredMin = PrevAxis + PrevSizeAlongAxis + SlotGapPixel;
+					// 최소 간격 계산 (DPI 적용)
+					float RequiredMin = PrevAxis + PrevSizeAlongAxis + SlotGap;
 
 					// 현재 아이템의 축 값이 최소 간격보다 작으면 최소 간격으로 보정
 					if (Axis < RequiredMin)
@@ -591,6 +596,9 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 		// #11-2: Canvas 상에서 위치/정렬 설정
 		if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Item.IndicatorItem->Slot))
 		{
+			// 위젯 DesiredSize 그대로 사용
+			CanvasSlot->SetAutoSize(true);
+
 			// 절대 좌표 기반 배치
 			CanvasSlot->SetAnchors(FAnchors(0.f, 0.f));
 
@@ -610,6 +618,15 @@ void UMSDirectionIndicatorWidget::UpdateIndicator()
 		Item.IndicatorItem->SetDistance(bShowDist, Item.Distance);
 
 		// #11-6: 사망 오버레이 표시 설정
-		Item.IndicatorItem->SetDeadOverlayVisible(false);
+		if (Item.IndicatorComponent.IsValid())
+		{
+			if (AActor* Owner = Item.IndicatorComponent.Get()->GetOwner())
+			{
+				if (AMSPlayerCharacter* Player = Cast<AMSPlayerCharacter>(Owner))
+				{
+					Item.IndicatorItem->SetDeadOverlayVisible(Player->GetIsDead());
+				}
+			}
+		}
 	}
 }

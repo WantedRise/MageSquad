@@ -28,7 +28,6 @@ void UMSDirectionIndicatorItemWidget::NativeConstruct()
 	// 위젯 기본값 초기화
 	if (IconImageWidget)
 	{
-		// 특정 아이콘을 넣을 예정이니, null값 초기화
 		IconImageWidget->SetBrushFromTexture(nullptr);
 	}
 	if (DistanceTextWidget)
