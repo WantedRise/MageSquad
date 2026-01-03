@@ -6,6 +6,7 @@
 #include "Player/MSPlayerController.h"
 
 #include "Components/Player/MSHUDDataComponent.h"
+#include "Components/MSDirectionIndicatorComponent.h"
 #include "Engine/Texture2D.h"
 
 #include "Camera/CameraComponent.h"
@@ -24,7 +25,6 @@
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "MSGameplayTags.h"
 
 #include "Actors/Experience/MSExperienceOrb.h"
 #include "Actors/Revival/MSTeamReviveActor.h"
@@ -37,6 +37,8 @@
 
 #include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
+
+#include "MSGameplayTags.h"
 
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
@@ -111,6 +113,8 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 
 	HUDDataComponent = CreateDefaultSubobject<UMSHUDDataComponent>(TEXT("HUDDataComponent"));
 
+	DirectionIndicatorComponent = CreateDefaultSubobject<UMSDirectionIndicatorComponent>(TEXT("DirectionIndicatorComponent"));
+
 	// 액터 태그 설정
 	Tags.AddUnique(TEXT("Player"));
 }
@@ -160,6 +164,17 @@ void AMSPlayerCharacter::BeginPlay()
 	// - 텍스트: HUDDataComponent 복제값(RepDisplayName)에 의해 갱신
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
+
+
+	// 플레이어 방향 표시 인디케이터 설정
+	if (DirectionIndicatorComponent)
+	{
+		// 생존 상태 필터 적용 + 거리 표기 비활성화 + 사망/관전 상태 인디케이터 비활성화
+		DirectionIndicatorComponent->bRequiresAlive = true;
+		DirectionIndicatorComponent->bShowDistance = false;
+		DirectionIndicatorComponent->bHideWhenLocalDead = false;
+		DirectionIndicatorComponent->TypeTag = TEXT("Player");
+	}
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
