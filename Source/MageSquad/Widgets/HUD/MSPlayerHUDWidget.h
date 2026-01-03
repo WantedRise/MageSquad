@@ -132,6 +132,10 @@ protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UTextBlock> SpectateTargetNameTextWidget;
 
+	// 방향 표시 인디케이터 위젯
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSDirectionIndicatorWidget> DirectionIndicatorWidget;
+
 	// 미션 알림 위젯 클래스
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UMSMissionNotifyWidget> MissionNotifyWidget;
