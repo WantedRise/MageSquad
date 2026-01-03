@@ -12,6 +12,7 @@ void UMSMissionScript::Deinitialize()
 {
 }
 
+
 void UMSMissionScript::SetOwnerMissionComponent(UMSMissionComponent* InOwner)
 {
 	OwnerMissionComponent = InOwner;

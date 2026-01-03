@@ -81,6 +81,8 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
     if (!IsServer())
         return;
 
+    CurrentMissionData = MissionRow;
+
     if (MissionScript)
     {
         // 기존 미션은 실패처리 하거나 단순 정리만 수행

@@ -40,4 +40,10 @@ struct FMSMissionRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere)
     FText Description;
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<class AActor> FindTargetActorClass = nullptr;
+
+    UPROPERTY(EditAnywhere)
+    int32 FindTargetCount = 0;
 };

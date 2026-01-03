@@ -689,6 +689,8 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID, bool bSuccess)
 					}
 				}
 			}
+
+
 		}), DelayTime, false
 	);
 }
