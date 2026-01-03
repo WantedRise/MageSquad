@@ -352,7 +352,7 @@ protected:
 
 
 	/*****************************************************
-	* UI / HUD Section
+	* UI / HUD / Indicator Section
 	*****************************************************/
 protected:
 	// HUD 공개 데이터 초기화 함수 (서버 전용)
@@ -374,6 +374,10 @@ protected:
 	// 서버에서 받는 최소 HUD 공개 데이터 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | UI")
 	TObjectPtr<class UMSHUDDataComponent> HUDDataComponent = nullptr;
+
+	// 방향 표시 인디케이터 컴포넌트 (팀원에게 위치 및 초상화 제공)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Indicator")
+	TObjectPtr<class UMSDirectionIndicatorComponent> DirectionIndicatorComponent;
 
 	// 플레이어 아이콘 (팀원에게만 표시)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
