@@ -605,9 +605,8 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 		return true;
 	}
 
-	// ============================================================
-	// 폴백: 기존 NavMesh 방식 (타일맵이 없을 때)
-	// ============================================================
+	// 타일맵이 없을때는 기존 NavMesh 방식 
+	// 나중에 껐을 때 스폰이 제대로 이루어지지 않는 현상 테스트용으로 남겨둠
 
 	if (!NavSystem)
 	{

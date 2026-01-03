@@ -50,7 +50,7 @@ protected:
 	FName SocketName;
 
 	/** GameplayCue 태그 (기본값: GameplayCue.Enemy.AttackIndicator) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Indicator|Advanced")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Indicator|Advanced", meta = (Categories = "GameplayCue.Enemy"))
 	FGameplayTag IndicatorCueTag;
 	
 #if WITH_EDITORONLY_DATA

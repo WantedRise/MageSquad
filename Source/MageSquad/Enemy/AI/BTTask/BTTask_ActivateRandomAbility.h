@@ -40,7 +40,7 @@ public:
 	virtual FString GetStaticDescription() const override;
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Ability")
+	UPROPERTY(EditAnywhere, Category = "Ability", meta = (Categories = "Enemy.Ability"))
 	FGameplayTagContainer AbilityTagPool;
 
 private:
