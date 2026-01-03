@@ -93,17 +93,6 @@ void AMSBaseEnemy::BeginPlay()
 	// 	(int32)NetMode,
 	// 	HasAuthority() ? TEXT("Server") : TEXT("Client"));
 	
-	// ENetMode NetMode1 = GetWorld()->GetNetMode();
-	// UE_LOG(LogTemp, Error, TEXT("[Enemy BeginPlay] %s | NetMode: %d | HasAuth: %d | LocalRole: %d | RemoteRole: %d | bReplicates: %d | bHidden: %d"), 
-	// 	*GetName(),
-	// 	(int32)NetMode,
-	// 	HasAuthority(),
-	// 	(int32)GetLocalRole(),
-	// 	(int32)GetRemoteRole(),
-	// 	GetIsReplicated(),
-	// 	IsHidden()
-	// );
-	
 	if (!HasAuthority() && !CurrentMonsterID.IsNone())
 	{
 		OnRep_MonsterID(); 
