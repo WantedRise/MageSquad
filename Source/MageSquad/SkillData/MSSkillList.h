@@ -14,6 +14,21 @@
 class UGameplayAbility;
 
 USTRUCT(BlueprintType)
+struct FMSUpgradeInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag Tag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Current = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Max = 0;
+};
+
+USTRUCT(BlueprintType)
 struct FMSSkillList : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -54,10 +69,14 @@ public:
 	// 스킬 데미지
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float SkillDamage = 0.f;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float BaseSkillDamage = 0.f;
+	
 	// 쿨타임
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float CoolTime = 0.f;
+	float CoolTime = 10.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float BaseCoolTime = 10.f;
 
 	// 발사체 개수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -70,12 +89,16 @@ public:
 	// 지속 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Duration = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float BaseDuration = 0.f;
 
 	// 범위
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Range = 0.f;
-
-	// 가능한 업그레이드 종류
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTagContainer AvailableUpgradeTags;
+	float BaseRange = 0.f;
+
+	// 업그레이드 정보
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FMSUpgradeInfo> UpgradeInfos;
 };

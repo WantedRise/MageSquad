@@ -9,11 +9,11 @@
 #include "MSBaseProjectile.generated.h"
 
 /**
- * 작성자: 김준형
- * 작성일: 25/12/15
+ * ?�성?? 김준??
+ * ?�성?? 25/12/15
  *
- * 수정: 박세찬
- * 발사체, 공격의 몸체 역할
+ * ?�정: 박세�?
+ * 발사�? 공격??몸체 ??��
  */
 
 class UStaticMeshComponent;
@@ -28,46 +28,50 @@ class MAGESQUAD_API AMSBaseProjectile : public AActor
 public:
 	AMSBaseProjectile();
 
-	// 원본 StaticData로부터 RuntimeData 초기화
+	// ?�본 StaticData로�???RuntimeData 초기??
 	void InitProjectileRuntimeDataFromClass(TSubclassOf<UProjectileStaticData> InProjectileDataClass);
 
-	// 런타임 데이터 Getter
+	// ?��????�이??Getter
 	const FProjectileRuntimeData& GetProjectileRuntimeData() const { return ProjectileRuntimeData; }
 
-	// 유효한 런타임 데이터 반환
+	// ?�효???��????�이??반환
 	FProjectileRuntimeData GetEffectiveRuntimeData() const;
 
-	// 런타임 데이터 Setter (GA가 만든 RuntimeData 주입)
+	// ?��????�이??Setter (GA가 만든 RuntimeData 주입)
 	void SetProjectileRuntimeData(const FProjectileRuntimeData& InRuntimeData);
 
-	// Collision 반경 설정 (장판/투사체 공용)
+	// Collision 반경 ?�정 (?�판/?�사�?공용)
 	void SetCollisionRadius(float Radius);
 
 	// Collision on/off
 	void EnableCollision(bool bEnable);
 
-	// 이동 정지 (장판용)
+	// ?�동 ?��? (?�판??
 	void StopMovement();
 
-	// ProjectileMovement 접근 (Behavior에서 직접 세팅)
+	// ProjectileMovement ?�근 (Behavior?�서 직접 ?�팅)
 	UProjectileMovementComponent* GetMovementComponent() const
 	{
 		return ProjectileMovementComponent;
 	}
 
-	// Attach VFX (한 번만)
+	// Attach VFX (??번만)
 	void SpawnAttachVFXOnce();
+
+	// Explosive�� �ð� ���� ����ȭ
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopAndHide(const FVector& InLocation);
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// 벽/바닥 등 Block으로 멈췄을 때
+	// �?바닥 ??Block?�로 멈췄????
 	UFUNCTION()
 	void OnProjectileStop(const FHitResult& ImpactResult);
 
-	// 적과 충돌 시
+	// ?�과 충돌 ??
 	UFUNCTION()
 	void OnHitOverlap(
 		UPrimitiveComponent* OverlappedComp,
@@ -78,20 +82,20 @@ protected:
 		const FHitResult& SweepResult
 	);
 
-	// 런타임 데이터 복제 시(클라) 적용
+	// ?��????�이??복제 ???�라) ?�용
 	UFUNCTION()
 	void OnRep_ProjectileRuntimeData();
 
 
 
 protected:
-	// 서버/클라 모두에서 Behavior 보장
+	// ?�버/?�라 모두?�서 Behavior 보장
 	void EnsureBehavior();
 
-	// 런타임 데이터 적용(메시/스케일/무브먼트/VFX/수명 타이머)
+	// ?��????�이???�용(메시/?��???무브먼트/VFX/?�명 ?�?�머)
 	void ApplyProjectileRuntimeData(bool bSpawnAttachVFX);
 
-	// LifeTime 타이머 세팅 (서버)
+	// LifeTime ?�?�머 ?�팅 (?�버)
 	void ArmLifeTimerIfNeeded(const FProjectileRuntimeData& EffectiveData);
 	
 protected:
@@ -99,34 +103,36 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileRuntimeData)
 	FProjectileRuntimeData ProjectileRuntimeData;
 
-	// RuntimeData가 한 번이라도 초기화되었는지
+	// RuntimeData가 ??번이?�도 초기?�되?�는지
 	UPROPERTY(Replicated)
 	bool bRuntimeDataInitialized = false;
 
-	// 히트 판정용 콜리전(적 Overlap 전용)
+	// ?�트 ?�정??콜리????Overlap ?�용)
 	UPROPERTY()
 	TObjectPtr<USphereComponent> CollisionSphere = nullptr;
 
-	// 시각/블로킹용 메시
+	// ?�각/블로?�용 메시
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> ProjectileMesh = nullptr;
 
-	// 이동 처리
+	// ?�동 처리
 	UPROPERTY()
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent = nullptr;
 
-	// 행동(투사체/장판/지속) 객체
+	// ?�동(?�사�??�판/지?? 객체
 	UPROPERTY(Transient)
 	TObjectPtr<UMSProjectileBehaviorBase> Behavior = nullptr;
 
-	// 수명 타이머(로컬 변수로 두면 중복 버그 생김)
+	// ?�명 ?�?�머(로컬 변?�로 ?�면 중복 버그 ?��?)
 	FTimerHandle LifeTimerHandle;
 
-	// Attach VFX 중복 생성 방지 (로컬)
+	// Attach VFX 중복 ?�성 방�? (로컬)
 	bool bAttachVfxSpawned = false;
 
 public:
-	// 원본 StaticData 클래스
+	// ?�본 StaticData ?�래??
 	UPROPERTY(Replicated)
 	TSubclassOf<UProjectileStaticData> ProjectileDataClass;
 };
+
+

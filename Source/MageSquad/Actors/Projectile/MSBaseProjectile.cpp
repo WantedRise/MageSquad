@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Actors/Projectile/MSBaseProjectile.h"
 
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -30,38 +29,42 @@ AMSBaseProjectile::AMSBaseProjectile()
 	bReplicates = true;
 	SetReplicateMovement(true);
 
-	// overlap 판정용 sphere
+	// Overlap 판정용 Sphere
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
 	SetRootComponent(CollisionSphere.Get());
-	
-	// sphere 콜리전 설정
+
+	// Sphere Collision 설정
 	CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CollisionSphere->SetCollisionObjectType(ECC_GameTraceChannel2);     // MSProjectile
+	CollisionSphere->SetCollisionObjectType(ECC_GameTraceChannel2);               // MSProjectile
 	CollisionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CollisionSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Overlap); // MSEnemy
 	CollisionSphere->SetGenerateOverlapEvents(true);
 
 	CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AMSBaseProjectile::OnHitOverlap);
-	
-	// 시각용 Mesh는 Sphere에 부착
+
+	// 시각적 Mesh를 Sphere에 부착
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
 	ProjectileMesh->SetupAttachment(CollisionSphere.Get());
 	ProjectileMesh->SetIsReplicated(true);
 	ProjectileMesh->SetCollisionProfileName(TEXT("MSProjectile"));
 	ProjectileMesh->bReceivesDecals = false;
 
+	// Projectile Movement
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovementComponent->ProjectileGravityScale = 0.f;
 	ProjectileMovementComponent->Velocity = FVector::ZeroVector;
 	ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AMSBaseProjectile::OnProjectileStop);
 
-	// 액터 태그 설정
+	// (권장) 이동 기준 컴포넌트 지정
+	ProjectileMovementComponent->UpdatedComponent = CollisionSphere.Get();
+
+	// 태그 설정
 	Tags.AddUnique(TEXT("Projectile"));
 }
 
 void AMSBaseProjectile::InitProjectileRuntimeDataFromClass(TSubclassOf<UProjectileStaticData> InProjectileDataClass)
 {
-	// 발사체 원본 데이터 초기화
+	// 발사체 기본 데이터 클래스 설정
 	ProjectileDataClass = InProjectileDataClass;
 
 	const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(ProjectileDataClass);
@@ -75,7 +78,8 @@ void AMSBaseProjectile::SetProjectileRuntimeData(const FProjectileRuntimeData& I
 	ProjectileRuntimeData = InRuntimeData;
 	bRuntimeDataInitialized = true;
 
-	// 이미 실행 중인 경우 즉시 적용 (서버 측 지연 생성때문에 늦게 나온 경우)
+	// 이미 BeginPlay 이후라면 즉시 반영
+	// (서버에서 런타임 데이터를 늦게 받는 경우 등)
 	if (HasActorBegunPlay())
 	{
 		EnsureBehavior();
@@ -151,6 +155,14 @@ void AMSBaseProjectile::SpawnAttachVFXOnce()
 	}
 }
 
+void AMSBaseProjectile::Multicast_StopAndHide_Implementation(const FVector& InLocation)
+{
+	SetActorLocation(InLocation);
+	StopMovement();
+	EnableCollision(false);
+	SetActorHiddenInGame(true);
+}
+
 void AMSBaseProjectile::BeginPlay()
 {
 	Super::BeginPlay();
@@ -166,13 +178,13 @@ void AMSBaseProjectile::BeginPlay()
 
 	// 런타임 데이터 적용
 	ApplyProjectileRuntimeData(true);
-	
+
 	// 서버 LifeTime 타이머
 	if (HasAuthority())
 	{
 		ArmLifeTimerIfNeeded(GetEffectiveRuntimeData());
 	}
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("[Projectile] BeginPlay %s Auth=%d"), *GetName(), HasAuthority());
 }
 
@@ -188,18 +200,10 @@ void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
-
-	if (EffectiveData.OnHitVFX)
+if (EffectiveData.OnHitSFX)
 	{
-		// 폭발 나이아가라 재생
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectiveData.OnHitVFX, GetActorLocation());
-	}
-
-	if (EffectiveData.OnHitSFX)
-	{
-		// 폭발 사운드 재생
+		// 히트 사운드 재생
 		UGameplayStatics::PlaySoundAtLocation(this, EffectiveData.OnHitSFX, GetActorLocation(), 1.f);
-
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -247,25 +251,22 @@ void AMSBaseProjectile::OnHitOverlap(
 	const FHitResult& SweepResult
 )
 {
-	// 서버에서만
 	if (!HasAuthority())
 	{
 		return;
 	}
-	// 자기 자신이라면 무시
 	if (!OtherActor || OtherActor == this)
 	{
 		return;
 	}
-	// Behavior 보장
 	EnsureBehavior();
 	if (!Behavior)
 	{
 		return;
 	}
-
 	Behavior->OnTargetEnter(OtherActor, SweepResult);
 }
+
 
 void AMSBaseProjectile::OnProjectileStop(const FHitResult& ImpactResult)
 {
@@ -273,9 +274,9 @@ void AMSBaseProjectile::OnProjectileStop(const FHitResult& ImpactResult)
 	{
 		Behavior->OnEnd();
 	}
-	// 발사체 파괴 (EndPlay 호출)
 	Destroy();
 }
+
 
 void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 {
@@ -288,11 +289,13 @@ void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
 	}
 
 	// Radius
-	SetCollisionRadius(EffectiveData.Radius);
+	SetCollisionRadius(100.f);
 
 	// Mesh Scale
 	if (ProjectileMesh)
 	{
+		// 기존 코드 유지: Radius 값으로 스케일 조정
+		// (원한다면 Radius를 지름/비율로 해석해서 별도 변환하는 게 더 안전함)
 		ProjectileMesh->SetWorldScale3D(FVector(EffectiveData.Radius));
 	}
 
@@ -307,26 +310,27 @@ void AMSBaseProjectile::ArmLifeTimerIfNeeded(const FProjectileRuntimeData& Effec
 {
 	if (EffectiveData.LifeTime <= 0.f)
 	{
-		return; // 무한 지속(Behavior가 종료 제어)
+		return; // 무한 지속
 	}
 
 	if (UWorld* World = GetWorld())
 	{
 		TWeakObjectPtr<AMSBaseProjectile> WeakSelf(this);
+
 		World->GetTimerManager().ClearTimer(LifeTimerHandle);
 		World->GetTimerManager().SetTimer(
 			LifeTimerHandle,
 			FTimerDelegate::CreateLambda([WeakSelf]()
+			{
+				if (WeakSelf.IsValid())
 				{
-					if (WeakSelf.IsValid())
+					if (WeakSelf->HasAuthority() && WeakSelf->Behavior)
 					{
-						if (WeakSelf->HasAuthority() && WeakSelf->Behavior)
-						{
-							WeakSelf->Behavior->OnEnd();
-						}
-						WeakSelf->Destroy();
+						WeakSelf->Behavior->OnEnd();
 					}
-				}),
+					WeakSelf->Destroy();
+				}
+			}),
 			EffectiveData.LifeTime,
 			false
 		);
@@ -335,7 +339,7 @@ void AMSBaseProjectile::ArmLifeTimerIfNeeded(const FProjectileRuntimeData& Effec
 
 void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
 {
-	// 런타임 데이터 리플리케이션 시, VFX만 제외하고 런타임 데이터 적용
+	// 런타임 데이터 리플리케이션 후 클라에서 반영
 	EnsureBehavior();
 	ApplyProjectileRuntimeData(true);
 }
