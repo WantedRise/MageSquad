@@ -11,4 +11,5 @@ enum class EMissionType : uint8
 	EliteMonster    UMETA(DisplayName = "EliteMonster"),
 	Boss			UMETA(DisplayName = "Boss"),
 	ClearPaint		UMETA(DisplayName = "ClearPaint"),
+	FindTarget		UMETA(DisplayName = "FindTarget"),
 };

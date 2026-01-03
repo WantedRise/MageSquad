@@ -106,6 +106,11 @@ void UMSMissionTrackerWidget::SetTextBossHp(float InNormalized)
     Text_BossHp->SetText(HpText);
 }
 
+void UMSMissionTrackerWidget::UpdateFindCount(int32 Current, int32 Target)
+{
+    Text_FindTarget->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Current, Target)));
+}
+
 void UMSMissionTrackerWidget::StopMissionTimer()
 {
     GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);

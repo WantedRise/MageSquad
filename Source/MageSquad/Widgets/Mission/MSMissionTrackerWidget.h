@@ -33,6 +33,7 @@ public:
 	void SetBossHpProgress(float InNormalized);
 	// 보스 HP 텍스트 갱신
 	void SetTextBossHp(float InNormalized);
+	void UpdateFindCount(int32 Current, int32 Target);
 	// 일반 미션용 Progress UI 표시
 	void ShowDefaultProgress();
 	// 보스용 Progress UI 표시
@@ -57,6 +58,8 @@ public:
 	class UTextBlock* Text_MissionMessage;
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Progress_TargetHp;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Text_FindTarget;
 
 	FTimerHandle UITimerHandle;
 	float MissionEndTime;

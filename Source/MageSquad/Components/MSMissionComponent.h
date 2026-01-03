@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Types/GameMissionTypes.h"
+#include "DataStructs/MSGameMissionData.h"
 #include "MSMissionComponent.generated.h"
 
 struct FMSMissionRow;
@@ -41,6 +42,10 @@ public: /* ===== Server Only ===== */
 	void UpdateMission();
 	// 강제 종료 (실패)
 	void AbortMission();
+
+	FMSMissionRow GetCurrentMissionData() const {
+		return CurrentMissionData;
+	}
 private: 
 	/* ===== Server Only ===== */
 	// GameState 미션 관련 델리게이트 바인딩
@@ -71,4 +76,6 @@ private:
 	class AMSGameState* OwnerGameState;
 	// 미션 제한 시간 타이머 
 	FTimerHandle MissionTimerHandle;
+
+	FMSMissionRow CurrentMissionData;
 };

@@ -122,6 +122,25 @@ void AMSWaveManager::SpawnPivotIfNeeded()
 	UE_LOG(LogTemp, Error, TEXT("WaveManager->MapPivot"));
 }
 
+void AMSWaveManager::SetWavePaused(bool bIsStartCutscene)
+{
+	if (!ActiveWave)
+	{
+		return;
+	}
+
+	if (bIsStartCutscene)
+	{
+		GetWorld()->GetTimerManager().PauseTimer(NextWaveTimerHandle);
+		ActiveWave->bMoving = false;
+	}
+	else
+	{
+		GetWorld()->GetTimerManager().UnPauseTimer(NextWaveTimerHandle);
+		ActiveWave->bMoving = true;
+	}
+}
+
 void AMSWaveManager::SpawnWaveInternal()
 {
 	if (!WaveClass || !MapPivot)
