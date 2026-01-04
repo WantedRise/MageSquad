@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Types/GameMissionTypes.h"
 #include "DataStructs/MSGameMissionData.h"
+#include "DataStructs/MSMissionProgressUIData.h"
 #include "MSMissionComponent.generated.h"
 
 struct FMSMissionRow;
+struct FMSMissionProgressUIData;
 
 /*
 * 작성자: 이상준
@@ -59,7 +60,6 @@ private:
 	void RequestMissionScriptDestroy();
 	/* ====================== */
 	
-	void HandleMissionProgressChanged(float Progress);
 	void OnMissionFinished(int32 MissionID,bool bSuccess);
 private:
 	// 서버 권한 확인
@@ -68,14 +68,12 @@ private:
 	// 서버 전용, 현재 실행 중인 미션 로직 스크립트
 	UPROPERTY()
 	class UMSMissionScript* MissionScript = nullptr;
-	// 현재 미션 타입 //Todo : 안쓰이는중
-	EMissionType CurrentMissionType = EMissionType::None;
-	// 현재 미션 진행도 //Todo : 안쓰이는중
-	float CurrentProgress = 0.f;
+
 	// 소유 GameState
 	class AMSGameState* OwnerGameState;
 	// 미션 제한 시간 타이머 
 	FTimerHandle MissionTimerHandle;
 
 	FMSMissionRow CurrentMissionData;
+	FMSMissionProgressUIData CurrentProgress;
 };

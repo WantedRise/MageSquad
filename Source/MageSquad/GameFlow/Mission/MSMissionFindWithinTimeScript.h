@@ -6,6 +6,8 @@
 #include "GameFlow/Mission/MSMissionScript.h"
 #include "MSMissionFindWithinTimeScript.generated.h"
 
+struct FMSMissionProgressUIData;
+
 /**
  * 
  */
@@ -18,7 +20,7 @@ public:
 	/** UMSMissionScript 인터페이스 */
 	virtual void Initialize(UWorld* World) override;
 	virtual void Deinitialize() override;
-	virtual float GetProgress() const override;
+	virtual void GetProgress(FMSMissionProgressUIData& OutData) const override;
 	virtual bool IsCompleted() const override;
 	/** 타겟 수집 알림 */
 	void NotifyTargetFound();

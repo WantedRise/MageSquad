@@ -23,6 +23,7 @@
 #include "MSFunctionLibrary.h"
 #include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
+#include "DataStructs/MSMissionProgressUIData.h"
 
 AMSGameState::AMSGameState()
 {
@@ -134,12 +135,16 @@ void AMSGameState::SetCurrentMissionID(int32 NewMissionID)
 	OnMissionChanged.Broadcast(CurrentMissionID);
 }
 
-void AMSGameState::SetMissionProgress(float NewProgress)
+void AMSGameState::SetMissionProgress(const FMSMissionProgressUIData& NewData)
 {
 	if (!HasAuthority())
 		return;
+	MissionProgress = NewData;
 
-	MissionProgress = FMath::Clamp(NewProgress, 0.f, 1.f);
+	MissionProgress.Normalized = FMath::Clamp(
+		MissionProgress.Normalized, 0.f, 1.f
+	);
+
 	OnMissionProgressChanged.Broadcast(MissionProgress);
 }
 

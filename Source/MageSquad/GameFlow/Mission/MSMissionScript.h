@@ -6,6 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "MSMissionScript.generated.h"
 
+struct FMSMissionProgressUIData;
+
 /**
  * 작성자: 이상준
  * 작성일: 25/12/30
@@ -26,9 +28,9 @@ public:
     // 스폰한 액터 제거, 델리게이트 해제 등
     virtual void Deinitialize();
     // 현재 미션 진행도 반환
-    virtual float GetProgress() const { return 0.f; }
+    virtual void  GetProgress(FMSMissionProgressUIData& OutData) const;
     // 미션 완료 여부 판단
-    virtual bool IsCompleted() const { return GetProgress() >= 1.f; }
+    virtual bool IsCompleted() const { return true; }
     // 미션을 소유하는 MissionComponent 설정
     void SetOwnerMissionComponent(class UMSMissionComponent* InOwner);
 protected:
