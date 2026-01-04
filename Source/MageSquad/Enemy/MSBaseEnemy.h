@@ -67,6 +67,7 @@ public: /*Getter*/
 	FORCEINLINE UAnimMontage* GetMoveMontage() const { return AnimData->WalkAnim; }
 	FORCEINLINE UAnimMontage* GetIdleMontage() const { return AnimData->IdleAnim; }	
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetDamageEffectClass() const { return DamageEffectClass; }
+	FORCEINLINE TSubclassOf<class UGameplayEffect> GetCooldownEffectClass() const { return CooldownEffectClass; }
 	FORCEINLINE TSubclassOf<class UProjectileStaticData> GetProjectileDataClass() const { return ProjectileDataClass; }
 
 protected:
@@ -92,6 +93,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Attack")
 	TSubclassOf<class UGameplayEffect> DamageEffectClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Cooldown")
+	TSubclassOf<class UGameplayEffect> CooldownEffectClass;
+	
 	bool bIsInPool = false;
 
 public: /*Setter*/

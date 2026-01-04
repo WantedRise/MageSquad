@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MSGA_Boss_PatternBase.h"
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
 #include "MSGA_Boss_Sevarog_Laser.generated.h"
 
@@ -13,7 +14,7 @@
  * 일직선으로 레이저를 발사한다. 
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_Boss_Sevarog_Laser : public UMSGA_EnemyBossBaseAbility
+class MAGESQUAD_API UMSGA_Boss_Sevarog_Laser : public UMSGA_Boss_PatternBase
 {
 	GENERATED_BODY()
 

@@ -3,6 +3,8 @@
 
 #include "Enemy/AI/BTService/BTService_OrientToTarget.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -20,10 +22,18 @@ UBTService_OrientToTarget::UBTService_OrientToTarget()
 void UBTService_OrientToTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
+	APawn* OwningPawn = OwnerComp.GetAIOwner()->GetPawn();
+
+	if (UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwningPawn))
+	{
+		if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Enemy.State.PreventRotation"))))
+		{
+			return;
+		}
+	}
 
 	UObject* ActorObject = OwnerComp.GetBlackboardComponent()->GetValueAsObject(TargetActorKey.SelectedKeyName);
 	AActor* TargetActor = Cast<AActor>(ActorObject);
-	APawn* OwningPawn = OwnerComp.GetAIOwner()->GetPawn();
 
 	if (OwningPawn && TargetActor)
 	{

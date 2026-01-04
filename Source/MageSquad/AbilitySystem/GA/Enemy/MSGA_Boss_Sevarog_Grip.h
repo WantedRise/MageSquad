@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MSGA_Boss_PatternBase.h"
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
 #include "MSGA_Boss_Sevarog_Grip.generated.h"
 
@@ -13,7 +14,7 @@
  * 전방 부채꼴의 범위에 피해를 준다. 
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_Boss_Sevarog_Grip : public UMSGA_EnemyBossBaseAbility
+class MAGESQUAD_API UMSGA_Boss_Sevarog_Grip : public UMSGA_Boss_PatternBase
 {
 	GENERATED_BODY()
 	
