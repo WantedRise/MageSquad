@@ -36,3 +36,14 @@ UWorld* UMSProjectileBehaviorBase::GetWorldSafe() const
 	}
 	return nullptr;
 }
+
+void UMSProjectileBehaviorBase::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+{
+	if (!InOwner)
+	{
+		return;
+	}
+
+	const float CollisionRadius = (InRuntimeData.Radius > 0.f) ? InRuntimeData.Radius : 100.f;
+	InOwner->SetCollisionRadius(CollisionRadius);
+}

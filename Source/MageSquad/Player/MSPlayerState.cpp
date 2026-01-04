@@ -181,7 +181,7 @@ void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplay
 	const FString TagStr = UpgradeTag.ToString();
 
 	// Skill.CoolTime, Skill.SkillDamage, Skill.ProjectileNumber, Skill.Range
-	if (TagStr.Contains(TEXT("Upgrade.Cooldown")))
+	if (TagStr.Contains(TEXT("Upgrade.CoolTime")))
 	{
 		const float BaseCoolTime = (Skill.BaseCoolTime > 0.f) ? Skill.BaseCoolTime : Skill.CoolTime;
 		const float NewCoolTime = BaseCoolTime * (1.f - 0.1f * UpgradeInfoPtr->Current);
@@ -277,6 +277,7 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 	for (const FMSSkillList* Row : AllRows)
 	{
 		if (!Row) continue;
+		if (Row->SkillType != 1) continue;
 
 		const FGameplayTag SkillTag = Row->SkillEventTag;
 		if (!SkillTag.IsValid()) continue;

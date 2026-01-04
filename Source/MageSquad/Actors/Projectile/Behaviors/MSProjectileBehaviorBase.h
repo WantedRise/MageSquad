@@ -49,6 +49,9 @@ public:
 
     virtual void OnEnd_Implementation() {}
 
+    /** 충돌 반지름 적용 (기본: RuntimeData.Radius) */
+    virtual void ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData);
+
 public:
     /** 런타임 데이터 Getter */
     const FProjectileRuntimeData& GetRuntimeData() const { return RuntimeData; }

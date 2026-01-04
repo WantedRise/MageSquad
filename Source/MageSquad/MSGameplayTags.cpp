@@ -68,6 +68,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Tornado, "Skill.Ability.Tornado");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Explosion, "Skill.Ability.Explosion");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_Fireball, "Skill.Ability.Fireball");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_PoisonPlant, "Skill.Ability.PoisonPlant");
 
 	/* Skill Event Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceSpear, "Skill.Event.IceSpear");
@@ -75,9 +76,11 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Tornado, "Skill.Event.Tornado");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Fireball, "Skill.Event.Fireball");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_PoisonPlant, "Skill.Event.PoisonPlant");
 
 	/* Skill Cooldown Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Cooldown_Explosion, "Skill.Cooldown.Explosion");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Cooldown_PoisonPlant, "Skill.Cooldown.PoisonPlant");
 
 	/* Skill Upgrade Type Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Damage, "Upgrade.Damage");

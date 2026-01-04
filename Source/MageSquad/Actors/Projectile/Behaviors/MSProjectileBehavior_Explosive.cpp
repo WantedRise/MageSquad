@@ -148,6 +148,16 @@ void UMSProjectileBehavior_Explosive::OnEnd_Implementation()
 	HitActors.Reset();
 }
 
+void UMSProjectileBehavior_Explosive::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+{
+	if (!InOwner)
+	{
+		return;
+	}
+
+	InOwner->SetCollisionRadius(50.f);
+}
+
 void UMSProjectileBehavior_Explosive::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)

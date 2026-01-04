@@ -18,6 +18,7 @@ public:
 	virtual void OnBegin_Implementation() override;
 	virtual void OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult) override;
 	virtual void OnEnd_Implementation() override;
+	virtual void ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData) override;
 
 private:
 	void ApplyDamageToTarget(AActor* Target, float DamageAmount);
