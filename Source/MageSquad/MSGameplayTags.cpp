@@ -76,6 +76,9 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Explosion, "Skill.Event.Explosion");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_Fireball, "Skill.Event.Fireball");
 
+	/* Skill Cooldown Tags */
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Cooldown_Explosion, "Skill.Cooldown.Explosion");
+
 	/* Skill Upgrade Type Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Damage, "Upgrade.Damage");
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_CoolTime, "Upgrade.CoolTime");

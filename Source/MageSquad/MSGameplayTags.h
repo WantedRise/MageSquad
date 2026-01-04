@@ -75,6 +75,9 @@ namespace MSGameplayTags
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Event_Tornado);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Event_Explosion);
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Event_Fireball);
+
+	/* Skill Cooldown Tags */
+	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Skill_Cooldown_Explosion);
 	
 	/* Skill Upgrade Type Tags */
 	MAGESQUAD_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Upgrade_Damage);

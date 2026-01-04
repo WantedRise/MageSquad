@@ -3,6 +3,7 @@
 
 #include "MSGA_Explosion.h"
 #include "AbilitySystemComponent.h"
+#include "GameplayEffectTypes.h"
 #include "MSGameplayTags.h"
 #include "Player/MSPlayerController.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaPeriodic.h"
@@ -20,6 +21,32 @@ UMSGA_Explosion::UMSGA_Explosion()
 	Trigger.TriggerTag = FGameplayTag(MSGameplayTags::Skill_Event_Explosion);
 	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(Trigger);
+}
+
+void UMSGA_Explosion::ApplyCooldown(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	if (!CooldownGameplayEffectClass || !ActorInfo)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+	if (!ASC)
+	{
+		return;
+	}
+
+	const FGameplayEffectSpecHandle SpecHandle =
+		MakeOutgoingGameplayEffectSpec(CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+
+	if (SpecHandle.IsValid())
+	{
+		SpecHandle.Data->SetDuration(CoolTime, true);
+		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
 }
 
 void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -60,6 +87,12 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (!ProjectileDataClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] ProjectileDataClass is null"), *GetName());
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
