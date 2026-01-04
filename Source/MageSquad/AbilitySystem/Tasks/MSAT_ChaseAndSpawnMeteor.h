@@ -61,7 +61,7 @@ protected:
 
 private:
 	// 모든 플레이어 위치에 Indicator 스폰
-	void SpawnIndicatorsOnAllPlayers() const;
+	void SpawnIndicatorsOnAllPlayers();
 	
 	// 특정 위치에 Indicator 스폰
 	AMSIndicatorActor* SpawnIndicatorAtLocation(const FVector& Location) const;
@@ -77,22 +77,28 @@ private:
 	float TotalDuration = 5.f;
 	float SpawnInterval = 0.5f;
 	
+	// 런타임
+	float ElapsedTime = 0.f;
+	float TimeSinceLastSpawn = 0.f;
+	
+	// 스폰 종료 후 마지막 Indicator 완료 대기
+	bool bSpawningComplete = false;
+	int32 ActiveIndicatorCount = 0;
+	
+	FAttackIndicatorParams CachedIndicatorParams;
+	
 	UPROPERTY()
 	TSubclassOf<AMSIndicatorActor> IndicatorActorClass;
 	
 	UPROPERTY()
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 	
-	FAttackIndicatorParams CachedIndicatorParams;
-
-	// 런타임
-	float ElapsedTime = 0.f;
-	float TimeSinceLastSpawn = 0.f;
-	
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	TObjectPtr<UParticleSystem> CompleteParticle;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	TObjectPtr<USoundBase> CompleteSound;
+    
+
 	
 };
