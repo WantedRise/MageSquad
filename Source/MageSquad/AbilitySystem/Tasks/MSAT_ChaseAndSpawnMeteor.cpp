@@ -3,7 +3,10 @@
 
 #include "AbilitySystem/Tasks/MSAT_ChaseAndSpawnMeteor.h"
 
+#include "AbilitySystemComponent.h"
+#include "MSGameplayTags.h"
 #include "Actors/Indicator/MSIndicatorActor.h"
+#include "Player/MSPlayerCharacter.h"
 
 UMSAT_ChaseAndSpawnMeteor* UMSAT_ChaseAndSpawnMeteor::CreateTask(UGameplayAbility* OwningAbility, float InTotalDuration,
                                                                  float InSpawnInterval, TSubclassOf<AMSIndicatorActor> IndicatorClass, const FAttackIndicatorParams& IndicatorParams,
@@ -31,8 +34,11 @@ void UMSAT_ChaseAndSpawnMeteor::TickTask(float DeltaTime)
 {
 	Super::TickTask(DeltaTime);
 
+	UE_LOG(LogTemp, Warning, TEXT("[ChaseTask] TickTask - ElapsedTime: %.2f"), ElapsedTime);
+	
 	if (!Ability || !AbilitySystemComponent.IsValid())
 	{
+		UE_LOG(LogTemp, Error, TEXT("[ChaseTask] Ability or ASC invalid!"));
 		EndTask();
 		return;
 	}
@@ -54,6 +60,7 @@ void UMSAT_ChaseAndSpawnMeteor::TickTask(float DeltaTime)
 	// 스폰 간격 체크
 	if (TimeSinceLastSpawn >= SpawnInterval)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[ChaseTask] Spawning indicators..."));
 		TimeSinceLastSpawn = 0.f;
 		SpawnIndicatorsOnAllPlayers();
 	}
@@ -64,7 +71,7 @@ void UMSAT_ChaseAndSpawnMeteor::OnDestroy(bool bInOwnerFinished)
 	Super::OnDestroy(bInOwnerFinished);
 }
 
-void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers()
+void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers() const
 {
 	// 서버에서만 실행
 	AActor* AvatarActor = GetAvatarActor();
@@ -93,6 +100,14 @@ void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers()
 		{
 			continue;
 		}
+		
+		if (AMSPlayerCharacter* Player = Cast<AMSPlayerCharacter>(PlayerPawn))
+		{
+			if (Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead))
+			{
+				continue;
+			}
+		}
 
 		const FVector PlayerLocation = PlayerPawn->GetActorLocation();
 		AMSIndicatorActor* SpawnedIndicator = SpawnIndicatorAtLocation(PlayerLocation);
@@ -104,7 +119,7 @@ void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers()
 	}
 }
 
-AMSIndicatorActor* UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorAtLocation(const FVector& Location)
+AMSIndicatorActor* UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorAtLocation(const FVector& Location) const
 {
 	UWorld* World = GetWorld();
 	if (!World || !IndicatorActorClass)

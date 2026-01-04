@@ -154,16 +154,43 @@ void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplay
 	if (!UpgradeTag.IsValid())
 		return;
 
+	FMSUpgradeInfo* UpgradeInfoPtr = nullptr;
+	for (FMSUpgradeInfo& Info : Skill.UpgradeInfos)
+	{
+		if (Info.Tag == UpgradeTag)
+		{
+			UpgradeInfoPtr = &Info;
+			break;
+		}
+	}
+
+	if (!UpgradeInfoPtr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ApplyUpgradeTagToSkill] Upgrade tag not found. Tag=%s"), *UpgradeTag.ToString());
+		return;
+	}
+
+	if (UpgradeInfoPtr->Max > 0 && UpgradeInfoPtr->Current >= UpgradeInfoPtr->Max)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ApplyUpgradeTagToSkill] Upgrade tag reached max. Tag=%s"), *UpgradeTag.ToString());
+		return;
+	}
+
+	UpgradeInfoPtr->Current += 1;
+
 	const FString TagStr = UpgradeTag.ToString();
 
 	// Skill.CoolTime, Skill.SkillDamage, Skill.ProjectileNumber, Skill.Range
 	if (TagStr.Contains(TEXT("Upgrade.Cooldown")))
 	{
-		Skill.CoolTime = FMath::Max(0.05f, Skill.CoolTime * 0.8f); // 20% 쿨감
+		const float BaseCoolTime = (Skill.BaseCoolTime > 0.f) ? Skill.BaseCoolTime : Skill.CoolTime;
+		const float NewCoolTime = BaseCoolTime * (1.f - 0.1f * UpgradeInfoPtr->Current);
+		Skill.CoolTime = FMath::Max(0.05f, NewCoolTime);
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Damage")))
 	{
-		Skill.SkillDamage *= 1.3f; // 30% 증가
+		const float BaseDamage = (Skill.BaseSkillDamage > 0.f) ? Skill.BaseSkillDamage : Skill.SkillDamage;
+		Skill.SkillDamage = BaseDamage * (1.f + 0.3f * UpgradeInfoPtr->Current); // 30% damage
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Projectile")))
 	{
@@ -171,13 +198,18 @@ void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplay
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Range")))
 	{
-		Skill.Range *= 1.1f;
+		const float BaseRange = (Skill.BaseRange > 0.f) ? Skill.BaseRange : Skill.Range;
+		Skill.Range = BaseRange * (1.f + 0.2f * UpgradeInfoPtr->Current);
+	}
+	else if (TagStr.Contains(TEXT("Upgrade.Duration")))
+	{
+		const float BaseDuration = (Skill.BaseDuration > 0.f) ? Skill.BaseDuration : Skill.Duration;
+		Skill.Duration = BaseDuration * (1.f + 0.2f * UpgradeInfoPtr->Current);
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Penetration")))
 	{
 		Skill.Penetration += 1;
 	}
-
 }
 
 void AMSPlayerState::GiveAbilityForSkillRow_Server(const FMSSkillList& Skill)
@@ -252,12 +284,14 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 		// 보유 여부/레벨 조회
 		bool bOwned = false;
 		int32 CurrentLevel = 0;
-		for (const FMSSkillList& Owned : OwnedSkills)
+		FMSSkillList* OwnedSkillPtr = nullptr;
+		for (FMSSkillList& Owned : OwnedSkills)
 		{
 			if (Owned.SkillEventTag == SkillTag)
 			{
 				bOwned = true;
 				CurrentLevel = Owned.SkillLevel;
+				OwnedSkillPtr = &Owned;
 				break;
 			}
 		}
@@ -285,19 +319,20 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 			continue;
 
 		// 업그레이드 태그가 없으면 업그레이드 후보 제외 (원하면 "레벨업만" 후보로 넣을 수도 있음)
-		if (Row->AvailableUpgradeTags.Num() <= 0)
+		if (!OwnedSkillPtr || OwnedSkillPtr->UpgradeInfos.Num() <= 0)
 			continue;
 
-		TArray<FGameplayTag> UpgradeTags;
-		Row->AvailableUpgradeTags.GetGameplayTagArray(UpgradeTags);
-
-		for (const FGameplayTag& UpgradeTag : UpgradeTags)
+		for (const FMSUpgradeInfo& UpgradeInfo : OwnedSkillPtr->UpgradeInfos)
 		{
-			if (!UpgradeTag.IsValid()) continue;
+			if (!UpgradeInfo.Tag.IsValid())
+				continue;
+
+			if (UpgradeInfo.Max > 0 && UpgradeInfo.Current >= UpgradeInfo.Max)
+				continue;
 
 			FMSLevelUpChoicePair Pair;
 			Pair.SkillTag = SkillTag;
-			Pair.UpgradeTag = UpgradeTag;
+			Pair.UpgradeTag = UpgradeInfo.Tag;
 			UpgradeCandidates.Add(Pair);
 		}
 	}

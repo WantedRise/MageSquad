@@ -31,18 +31,29 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	// 1. ASC 가져오기
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (ASC)
+	{
+		// 2. 파라미터 설정
+		FGameplayCueParameters CueParams;
+		CueParams.Instigator = GetAvatarActorFromActorInfo();
+		CueParams.TargetAttachComponent = Owner->GetMesh();
+
+		// 3. ASC를 통해 GameplayCue 실행
+		FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
+		ASC->ExecuteGameplayCue(CueTag, CueParams);
+	}
+	
 	if (UAnimMontage* DeadMontage = Owner->GetDeadMontage())
 	{
 		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Dead"), DeadMontage);
 		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
 		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		EnemyDeadTask->ReadyForActivation();
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
+		//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		
 		Owner->SetActorEnableCollision(false);
-		
-		// AMSBaseAIController* AIController = Cast<AMSBaseAIController>(Owner->GetController());
-		// AIController->StopAI();
 	}
 }
 
@@ -56,8 +67,6 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
-	UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability End"), *GetAvatarActorFromActorInfo()->GetName())
 	
 	if (AMSBaseAIController* EnemyAIController = Cast<AMSBaseAIController>(Owner->GetController()))
 	{

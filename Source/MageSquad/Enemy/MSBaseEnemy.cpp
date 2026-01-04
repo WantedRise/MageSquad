@@ -88,21 +88,10 @@ void AMSBaseEnemy::BeginPlay()
 	Super::BeginPlay();
 	
 	ENetMode NetMode = GetWorld()->GetNetMode();
-	UE_LOG(LogTemp, Error, TEXT("[Enemy BeginPlay] %s - NetMode: %d, HasAuthority: %s"), 
-		*GetName(),
-		(int32)NetMode,
-		HasAuthority() ? TEXT("Server") : TEXT("Client"));
-	
-	// ENetMode NetMode1 = GetWorld()->GetNetMode();
-	// UE_LOG(LogTemp, Error, TEXT("[Enemy BeginPlay] %s | NetMode: %d | HasAuth: %d | LocalRole: %d | RemoteRole: %d | bReplicates: %d | bHidden: %d"), 
+	// UE_LOG(LogTemp, Error, TEXT("[Enemy BeginPlay] %s - NetMode: %d, HasAuthority: %s"), 
 	// 	*GetName(),
 	// 	(int32)NetMode,
-	// 	HasAuthority(),
-	// 	(int32)GetLocalRole(),
-	// 	(int32)GetRemoteRole(),
-	// 	GetIsReplicated(),
-	// 	IsHidden()
-	// );
+	// 	HasAuthority() ? TEXT("Server") : TEXT("Client"));
 	
 	if (!HasAuthority() && !CurrentMonsterID.IsNone())
 	{
@@ -188,11 +177,11 @@ void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
 		return;
 	}
 	
-	UE_LOG(LogTemp, Error, TEXT("[SetMonsterID] %s | Old: %s -> New: %s | HasAuth: %d"), 
-*GetName(),
-*CurrentMonsterID.ToString(),
-*NewMonsterID.ToString(),
-HasAuthority());
+// 	UE_LOG(LogTemp, Error, TEXT("[SetMonsterID] %s | Old: %s -> New: %s | HasAuth: %d"), 
+// *GetName(),
+// *CurrentMonsterID.ToString(),
+// *NewMonsterID.ToString(),
+// HasAuthority());
 	
 	CurrentMonsterID = NewMonsterID;
 	
