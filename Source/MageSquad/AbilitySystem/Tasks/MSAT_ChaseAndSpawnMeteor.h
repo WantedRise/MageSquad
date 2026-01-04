@@ -39,6 +39,8 @@ public:
  * @param IndicatorClass - 스폰할 Indicator 클래스
  * @param IndicatorParams - Indicator 초기화 파라미터
  * @param DamageEffect - 적용할 데미지 GameplayEffect (선택)
+ * @param CompleteParticle
+ * @param CompleteSound
  */
 	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks",
 		meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "true"))
@@ -48,7 +50,9 @@ public:
 		float InSpawnInterval,
 		TSubclassOf<AMSIndicatorActor> IndicatorClass,
 		const FAttackIndicatorParams& IndicatorParams,
-		TSubclassOf<UGameplayEffect> DamageEffect = nullptr);
+		TSubclassOf<UGameplayEffect> DamageEffect = nullptr,
+		UParticleSystem* CompleteParticle = nullptr,
+		USoundBase* CompleteSound = nullptr);
 
 protected:
 	virtual void Activate() override;
@@ -64,7 +68,11 @@ private:
 	
 	// 바닥 높이 계산 (LineTrace)
 	float GetGroundZ(const FVector& Location) const;
-
+	
+	UFUNCTION()
+	void HandleIndicatorComplete(AMSIndicatorActor* Indicator, const TArray<AActor*>& HitActors);
+	
+private:
 	// 설정값
 	float TotalDuration = 5.f;
 	float SpawnInterval = 0.5f;
@@ -80,5 +88,11 @@ private:
 	// 런타임
 	float ElapsedTime = 0.f;
 	float TimeSinceLastSpawn = 0.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TObjectPtr<UParticleSystem> CompleteParticle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TObjectPtr<USoundBase> CompleteSound;
 	
 };

@@ -40,6 +40,8 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Spawn, "Enemy.State.Spawn");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Groggy, "Enemy.State.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Phase2, "Enemy.State.Phase2");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_PreventRotation, "Enemy.State.PreventRotation");
+	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_CoolDown, "Enemy.State.CoolDown");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Pattern1, "Enemy.State.Pattern1");
 	UE_DEFINE_GAMEPLAY_TAG(Enemy_State_Pattern2, "Enemy.State.Pattern2");

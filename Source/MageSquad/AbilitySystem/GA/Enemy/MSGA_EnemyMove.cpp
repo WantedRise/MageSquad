@@ -3,9 +3,12 @@
 
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyMove.h"
 
+#include "AIController.h"
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
+#include "Enemy/AIController/MSBaseAIController.h"
 
 UMSGA_EnemyMove::UMSGA_EnemyMove()
 {
@@ -26,6 +29,12 @@ void UMSGA_EnemyMove::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	// AI Controller를 통한 이동 시작
+	if (AMSBaseAIController* AIC = Cast<AMSBaseAIController>(ActorInfo->OwnerActor->GetInstigatorController()))
+	{
+		AIC->MoveToActor(Cast<AActor>(AIC->GetBlackboardComponent()->GetValueAsObject(AIC->GetTargetActorKey()))); 
+	}
+	
 	if (UAnimMontage* MoveMontage = Owner->GetMoveMontage())
 	{
 		UAbilityTask_PlayMontageAndWait* EnemyMoveTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Move"), MoveMontage);
@@ -39,12 +48,22 @@ void UMSGA_EnemyMove::CancelAbility(const FGameplayAbilitySpecHandle Handle, con
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
+	
+	if (AMSBaseAIController* AIC = Cast<AMSBaseAIController>(ActorInfo->OwnerActor->GetInstigatorController()))
+	{
+		AIC->StopMovement();
+	}
 }
 
 void UMSGA_EnemyMove::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
+	if (AMSBaseAIController* AIC = Cast<AMSBaseAIController>(ActorInfo->OwnerActor->GetInstigatorController()))
+	{
+		AIC->StopMovement();
+	}
 }
 
 void UMSGA_EnemyMove::OnCompleteCallback()

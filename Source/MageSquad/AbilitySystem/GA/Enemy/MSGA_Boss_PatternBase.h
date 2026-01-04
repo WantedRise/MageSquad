@@ -3,24 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MSGA_Boss_PatternBase.h"
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
-#include "MSGA_Boss_Sevarog_Laser.generated.h"
+#include "MSGA_Boss_PatternBase.generated.h"
 
 /**
  * 작성자 : 임희섭
- * 작성일 : 2026/01/03
- * Boss Sevarog의 Pattern2 어빌리티
- * 일직선으로 레이저를 발사한다. 
+ * 작성일 : 2026/01/04
+ * 보스의 패턴들의 공통 기능이 들어가는 어빌리티
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_Boss_Sevarog_Laser : public UMSGA_Boss_PatternBase
+class MAGESQUAD_API UMSGA_Boss_PatternBase : public UMSGA_EnemyBossBaseAbility
 {
 	GENERATED_BODY()
-
+	
 public:
-	UMSGA_Boss_Sevarog_Laser();
-
+	UMSGA_Boss_PatternBase();
+	
 public:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -40,10 +38,5 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
-
-private:
-	UFUNCTION()
-	void OnCompleteCallback();
-	UFUNCTION()
-	void OnInterruptedCallback();
+	
 };
