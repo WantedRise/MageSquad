@@ -47,6 +47,8 @@ void UMSGA_EnemySpawn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		// UE_LOG(LogTemp, Warning, TEXT("[%s] SpawnStart"),
 		//        HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"));
 	}
+	
+	Owner->SetActorEnableCollision(false);
 }
 
 void UMSGA_EnemySpawn::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -68,6 +70,8 @@ void UMSGA_EnemySpawn::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 		BossAIController->GetBlackboardComponent()->SetValueAsBool(BossAIController->GetIsSpawndKey(), false);
 		Owner->Multicast_PlaySpawnCutscene(false);
 	}
+	
+	Owner->SetActorEnableCollision(true);
 }
 
 void UMSGA_EnemySpawn::OnCompleteCallback()
