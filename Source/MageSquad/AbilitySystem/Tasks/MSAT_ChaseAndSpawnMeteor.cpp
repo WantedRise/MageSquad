@@ -36,33 +36,47 @@ void UMSAT_ChaseAndSpawnMeteor::TickTask(float DeltaTime)
 {
 	Super::TickTask(DeltaTime);
 
-	UE_LOG(LogTemp, Warning, TEXT("[ChaseTask] TickTask - ElapsedTime: %.2f"), ElapsedTime);
-	
 	if (!Ability || !AbilitySystemComponent.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("[ChaseTask] Ability or ASC invalid!"));
 		EndTask();
+		return;
+	}
+	
+	if (bSpawningComplete)
+	{
+		if (ActiveIndicatorCount <= 0)
+		{
+			if (ShouldBroadcastAbilityTaskDelegates())
+			{
+				OnChaseComplete.Broadcast();
+			}
+			EndTask();
+		}
 		return;
 	}
 
 	ElapsedTime += DeltaTime;
 	TimeSinceLastSpawn += DeltaTime;
 
-	// 종료 조건
+	// 스폰 페이즈 종료 체크
 	if (ElapsedTime >= TotalDuration)
 	{
-		if (ShouldBroadcastAbilityTaskDelegates())
+		bSpawningComplete = true;
+        
+		// 활성 Indicator가 없으면 즉시 종료
+		if (ActiveIndicatorCount <= 0)
 		{
-			OnChaseComplete.Broadcast();
+			if (ShouldBroadcastAbilityTaskDelegates())
+			{
+				OnChaseComplete.Broadcast();
+			}
+			EndTask();
 		}
-		EndTask();
 		return;
 	}
-
 	// 스폰 간격 체크
 	if (TimeSinceLastSpawn >= SpawnInterval)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[ChaseTask] Spawning indicators..."));
 		TimeSinceLastSpawn = 0.f;
 		SpawnIndicatorsOnAllPlayers();
 	}
@@ -73,7 +87,7 @@ void UMSAT_ChaseAndSpawnMeteor::OnDestroy(bool bInOwnerFinished)
 	Super::OnDestroy(bInOwnerFinished);
 }
 
-void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers() const
+void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers()
 {
 	// 서버에서만 실행
 	AActor* AvatarActor = GetAvatarActor();
@@ -116,10 +130,11 @@ void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers() const
 
 		if (SpawnedIndicator && ShouldBroadcastAbilityTaskDelegates())
 		{
+			++ActiveIndicatorCount;
 			OnIndicatorSpawned.Broadcast(SpawnedIndicator, PlayerLocation);
 			
 			SpawnedIndicator->OnIndicatorComplete.AddDynamic(
-			const_cast<UMSAT_ChaseAndSpawnMeteor*>(this),
+			this,
 			&UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete);
 		}
 	}
@@ -205,4 +220,15 @@ void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indic
 		FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), 
 		Params
 	);
+	
+	--ActiveIndicatorCount;
+    
+	if (bSpawningComplete && ActiveIndicatorCount <= 0)
+	{
+		if (ShouldBroadcastAbilityTaskDelegates())
+		{
+			OnChaseComplete.Broadcast();
+		}
+		EndTask();
+	}
 }
