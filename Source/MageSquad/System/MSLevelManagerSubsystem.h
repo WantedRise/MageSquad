@@ -22,7 +22,12 @@ public:
     //레벨 URL 초기화
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+public:
+    /** 로비에서 캐릭터 선택 저장 */
+    void SaveSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterID);
 
+    /** 인게임에서 캐릭터 선택 복원 */
+    bool ConsumeSelectedCharacter(const FUniqueNetIdRepl& NetId, FName& OutCharacterID);
 public:
     //클라 로딩 전용 레벨로 이동
     void TravelToLoadingLevel();
@@ -59,4 +64,7 @@ private:
     //실제 게임 플레이 레벨 URL
     UPROPERTY(VisibleAnywhere)
     FString GameLevelURL;
+
+    /** PlayerId → CharacterID */
+    TMap<FUniqueNetIdRepl, FName> PendingSelectedCharacters;
 };

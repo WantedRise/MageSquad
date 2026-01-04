@@ -133,11 +133,18 @@ public:
 	// 현재 생존 여부 Getter
 	bool IsAlive() const { return bIsAlive; }
 
+	// 캐릭터 ID 선택 저장
+	void SetSelectedCharacterID(FName InCharacterID);
+
+	// 캐릭터 ID
+	FName GetSelectedCharacterID() const { return SelectedCharacterID; }
 private:
 	// 생존 상태 변경 OnRep 함수
 	UFUNCTION()
 	void OnRep_IsAlive();
 
+	UFUNCTION()
+	void OnRep_SelectedCharacterID();
 public:
 	// 생존 상태 변경 이벤트 델리게이트
 	FOnAliveStateChangedNative OnAliveStateChanged;
@@ -146,4 +153,8 @@ private:
 	// 살아있는 상태 (관전 대상 자동 전환/필터링 용)
 	UPROPERTY(ReplicatedUsing = OnRep_IsAlive)
 	bool bIsAlive = true;
+
+	//
+	UPROPERTY(ReplicatedUsing = OnRep_SelectedCharacterID)
+	FName SelectedCharacterID = NAME_None;
 };

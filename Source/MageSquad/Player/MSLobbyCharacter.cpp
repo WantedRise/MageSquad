@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSLobbyCharacter.h"
@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerState.h"
 #include "MageSquad.h"
 #include "MSLobbyPlayerState.h"
+#include "DataStructs/MSCharacterData.h"
+
 // Sets default values
 AMSLobbyCharacter::AMSLobbyCharacter()
 {
@@ -136,5 +138,18 @@ void AMSLobbyCharacter::UpdateReadyStatusUI(bool bReady)
 	}
 }
 
+void AMSLobbyCharacter::ApplyCharacterAppearance(const FMSCharacterData& CharacterData)
+{
+	// Material 교체
+	if (CharacterData.OverrideMaterial)
+	{
+		GetMesh()->SetMaterial(0, CharacterData.OverrideMaterial);
+	}
 
+	// 2️⃣ Material 교체
+	if (CharacterData.StaffMesh)
+	{
+		//StaffMesh->SetStaticMesh(CharacterData.StaffMesh);
+	}
+}
 

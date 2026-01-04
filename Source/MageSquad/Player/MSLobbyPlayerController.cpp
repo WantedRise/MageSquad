@@ -82,3 +82,18 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 		bShowMouseCursor = true;
 	}
 }
+
+
+void AMSLobbyPlayerController::ServerSelectCharacter_Implementation(FName CharacterID)
+{
+	AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>();
+
+	if (!PS) return;
+
+	PS->SetSelectedCharacter(CharacterID);
+
+	if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	{
+		LevelManager->SaveSelectedCharacter(PS->GetUniqueId(), CharacterID);
+	}
+}

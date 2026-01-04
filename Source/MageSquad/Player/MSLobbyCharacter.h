@@ -1,9 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/CharacterAppearanceInterface.h"
 #include "MSLobbyCharacter.generated.h"
 
 /*
@@ -23,7 +24,7 @@
 * 캐릭터 메쉬 교체 또한 PlayerState 변경을 통해 적용될 예정.
 */
 UCLASS()
-class MAGESQUAD_API AMSLobbyCharacter : public ACharacter
+class MAGESQUAD_API AMSLobbyCharacter : public ACharacter, public ICharacterAppearanceInterface
 {
 	GENERATED_BODY()
 
@@ -33,7 +34,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	//UI를 갱신 및 델리게이드 바인딩
 	virtual void OnRep_PlayerState() override;
-	
+	virtual void ApplyCharacterAppearance(const FMSCharacterData& CharacterData) override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

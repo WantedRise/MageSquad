@@ -33,6 +33,28 @@ void UMSLevelManagerSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
+void UMSLevelManagerSubsystem::SaveSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterID)
+{
+	PendingSelectedCharacters.Add(NetId, CharacterID);
+
+
+}
+
+bool UMSLevelManagerSubsystem::ConsumeSelectedCharacter(const FUniqueNetIdRepl& NetId, FName& OutCharacterID)
+{
+	if (FName* Found = PendingSelectedCharacters.Find(NetId))
+	{
+		OutCharacterID = *Found;
+		PendingSelectedCharacters.Remove(NetId);
+
+
+
+		return true;
+	}
+
+	return false;
+}
+
 void UMSLevelManagerSubsystem::TravelToLoadingLevel()
 {
     UGameplayStatics::OpenLevel(GetWorld(), FName(LoadingLevelURL));
