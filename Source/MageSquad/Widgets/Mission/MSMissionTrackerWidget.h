@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "MSMissionTrackerWidget.generated.h"
 
+struct FMSMissionProgressUIData;
+
 /**
  * 작성자: 이상준	
  * 작성일: 25/12/30
@@ -29,15 +31,16 @@ public:
 	void UpdateRemainingTime();
 	// Todo : HP 분기에 따라 개선
 	// 진행도 갱신
-	void SetTargetHpProgress(float InNormalized);
+	void UpdateProgress(const FMSMissionProgressUIData& Data);
 	void SetBossHpProgress(float InNormalized);
 	// 보스 HP 텍스트 갱신
-	void SetTextBossHp(float InNormalized);
+	void SetTextBossHp(float CurrentHp, float MaxHp);
 	void UpdateFindCount(int32 Current, int32 Target);
 	// 일반 미션용 Progress UI 표시
 	void ShowDefaultProgress();
 	// 보스용 Progress UI 표시
 	void ShowBossProgress();
+	void ShowFindTargetUI();
 	// 미션 타이머 중지
 	void StopMissionTimer();
 public:

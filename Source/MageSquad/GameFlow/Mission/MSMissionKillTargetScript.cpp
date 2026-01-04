@@ -10,6 +10,7 @@
 #include "Components/MSMissionComponent.h"
 #include "Utils/MSUtils.h"
 #include "MSGameplayTags.h"
+#include "DataStructs/MSMissionProgressUIData.h"
 
 // UMSMission_EliteKillScript.cpp
 void UMSMissionKillTargetScript::Initialize(UWorld* World)
@@ -31,7 +32,8 @@ void UMSMissionKillTargetScript::Initialize(UWorld* World)
 
 
 	// GAS Attribute 변경 델리게이트 바인딩
-	MaxHP = AttributeSet->GetMaxHealth();
+	MaxHp = AttributeSet->GetMaxHealth();
+	CurrentHp = MaxHp;
 	ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(
 		this, &UMSMissionKillTargetScript::OnEliteHPChanged);
 
@@ -58,9 +60,7 @@ void UMSMissionKillTargetScript::SpawnElite(UWorld* World)
 
 void UMSMissionKillTargetScript::OnEliteHPChanged(const FOnAttributeChangeData& Data)
 {
-	float CurrentHP = Data.NewValue;
-
-	Progress = FMath::Clamp((CurrentHP / MaxHP), 0.0f, 1.0f);
+	CurrentHp = Data.NewValue;
 
 	if (OwnerMissionComponent.IsValid())
 	{
@@ -68,14 +68,17 @@ void UMSMissionKillTargetScript::OnEliteHPChanged(const FOnAttributeChangeData& 
 	}
 }
 
-float UMSMissionKillTargetScript::GetProgress() const
+void UMSMissionKillTargetScript::GetProgress(FMSMissionProgressUIData& OutData) const
 {
-	return Progress;
+	OutData.MissionType = EMissionType::Boss;
+	OutData.CurrentHp = CurrentHp;
+	OutData.MaxHp = MaxHp;
+	OutData.Normalized = FMath::Clamp((CurrentHp / MaxHp), 0.0f, 1.0f);
 }
 
 bool UMSMissionKillTargetScript::IsCompleted() const
 {
-	if (GetProgress() > 0.0f)
+	if (CurrentHp / MaxHp > 0.0f)
 		return  false;
 
 	// 2페이지 판정
@@ -87,6 +90,6 @@ bool UMSMissionKillTargetScript::IsCompleted() const
 		}
 	}
 
-	return GetProgress() <= 0.0f;
+	return CurrentHp / MaxHp <= 0.0f;
 }
 

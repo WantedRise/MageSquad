@@ -7,6 +7,7 @@
 #include "System/MSEnemySpawnSubsystem.h" 
 #include "Actors/TileMap/MSSpawnTileMap.h"
 #include <System/MSMissionDataSubsystem.h>
+#include "DataStructs/MSMissionProgressUIData.h"
 
 void UMSMissionFindWithinTimeScript::Initialize(UWorld* World)
 {
@@ -111,12 +112,12 @@ void UMSMissionFindWithinTimeScript::NotifyTargetFound()
 	OwnerMissionComponent->UpdateMission();
 }
 
-float UMSMissionFindWithinTimeScript::GetProgress() const
+void UMSMissionFindWithinTimeScript::GetProgress(FMSMissionProgressUIData& OutData) const
 {
-	if (RequiredFindCount <= 0)
-		return 1.f;
-
-	return FMath::Clamp(
+	OutData.MissionType = EMissionType::FindTarget;
+	OutData.TargetCount = RequiredFindCount;
+	OutData.CurrentCount = CurrentFindCount;
+	OutData.Normalized = FMath::Clamp(
 		static_cast<float>(CurrentFindCount) / RequiredFindCount,
 		0.f,
 		1.f

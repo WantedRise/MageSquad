@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
 #include "Components/MSMissionComponent.h"
+#include "DataStructs/MSMissionProgressUIData.h"
 
 UMSMissionCleanPaint::UMSMissionCleanPaint()
 {
@@ -91,31 +92,53 @@ void UMSMissionCleanPaint::Deinitialize()
     Super::Deinitialize();
 }
 
-void UMSMissionCleanPaint::OnAreaProgressChanged(float)
+void UMSMissionCleanPaint::OnAreaProgressChanged(float /*AreaRatio*/)
 {
+    // Percent 재계산
+    RecalculateCurrentPercent();
+
+    // 미션 시스템에 변경 통지
     if (OwnerMissionComponent.IsValid())
     {
         OwnerMissionComponent->UpdateMission();
     }
 }
 
-float UMSMissionCleanPaint::GetProgress() const
+void UMSMissionCleanPaint::RecalculateCurrentPercent()
 {
     if (InkAreas.Num() == 0)
-        return 1.f;
+    {
+        CurrentPercent = 1.0f;
+        return;
+    }
 
     float Total = 0.f;
+    int32 ValidCount = 0;
 
     for (const TWeakObjectPtr<AMSInkAreaActor>& Area : InkAreas)
     {
         if (!Area.IsValid())
             continue;
 
-        const float Ratio = Area->GetCleanRatio();
-        //보정 
+        Total += Area->GetCleanRatio(); // 0~1
+        ++ValidCount;
+    }
+    const float RawPercent = (ValidCount > 0) ? (Total / ValidCount) : TargetPercent;
+    CurrentPercent = FMath::Clamp(RawPercent / TargetPercent, 0.f, 1.f);
+}
 
-        Total += (Ratio >= AreaCompleteThreshold) ? 1.f : Ratio;
+void UMSMissionCleanPaint::GetProgress(FMSMissionProgressUIData& OutData) const
+{
+    OutData.MissionType = EMissionType::ClearPaint;
+    OutData.Normalized = CurrentPercent;
+}
+
+bool UMSMissionCleanPaint::IsCompleted() const
+{
+    if (InkAreas.Num() == 0)
+    {
+        return true;
     }
 
-    return Total / InkAreas.Num();
+    return CurrentPercent >= 1.0f;
 }
