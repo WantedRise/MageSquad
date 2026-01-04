@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MSGA_Boss_PatternBase.h"
 #include "AbilitySystem/GA/Enemy/MSGA_EnemyBossBaseAbility.h"
 #include "Types/MSIndicatorTypes.h"
 #include "MSGA_Boss_Sevarog_Meteor.generated.h"
@@ -11,10 +12,10 @@
  * 작성자 : 임희섭
  * 작성일 : 2026/01/02
  * Boss Sevarog의 Pattern1 어빌리티
-* 모든 플레이어를 추격하며 바닥에 폭발을 일으킨다.
+ * 모든 플레이어를 추격하며 바닥에 폭발을 일으킨다.
  */
 UCLASS()
-class MAGESQUAD_API UMSGA_Boss_Sevarog_Meteor : public UMSGA_EnemyBossBaseAbility
+class MAGESQUAD_API UMSGA_Boss_Sevarog_Meteor : public UMSGA_Boss_PatternBase
 {
 	GENERATED_BODY()
 	
@@ -76,5 +77,11 @@ protected:
 	// Indicator 파라미터 (Shape, Radius, Duration 등)
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
 	FAttackIndicatorParams IndicatorParams;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TObjectPtr<UParticleSystem> CompleteParticle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TObjectPtr<USoundBase> CompleteSound;
 	
 };

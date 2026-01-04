@@ -10,7 +10,7 @@
 
 UMSAT_ChaseAndSpawnMeteor* UMSAT_ChaseAndSpawnMeteor::CreateTask(UGameplayAbility* OwningAbility, float InTotalDuration,
                                                                  float InSpawnInterval, TSubclassOf<AMSIndicatorActor> IndicatorClass, const FAttackIndicatorParams& IndicatorParams,
-                                                                 TSubclassOf<UGameplayEffect> DamageEffect)
+                                                                 TSubclassOf<UGameplayEffect> DamageEffect, UParticleSystem* CompleteParticle, USoundBase* CompleteSound)
 {
 	UMSAT_ChaseAndSpawnMeteor* Task = NewAbilityTask<UMSAT_ChaseAndSpawnMeteor>(OwningAbility);
 	Task->TotalDuration = InTotalDuration;
@@ -19,6 +19,8 @@ UMSAT_ChaseAndSpawnMeteor* UMSAT_ChaseAndSpawnMeteor::CreateTask(UGameplayAbilit
 	Task->CachedIndicatorParams = IndicatorParams;
 	Task->DamageEffectClass = DamageEffect;
 	Task->bTickingTask = true;
+	Task->CompleteParticle = CompleteParticle;
+	Task->CompleteSound = CompleteSound;
 	return Task;
 }
 
@@ -115,6 +117,10 @@ void UMSAT_ChaseAndSpawnMeteor::SpawnIndicatorsOnAllPlayers() const
 		if (SpawnedIndicator && ShouldBroadcastAbilityTaskDelegates())
 		{
 			OnIndicatorSpawned.Broadcast(SpawnedIndicator, PlayerLocation);
+			
+			SpawnedIndicator->OnIndicatorComplete.AddDynamic(
+			const_cast<UMSAT_ChaseAndSpawnMeteor*>(this),
+			&UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete);
 		}
 	}
 }
@@ -177,4 +183,26 @@ float UMSAT_ChaseAndSpawnMeteor::GetGroundZ(const FVector& Location) const
 	}
 
 	return Location.Z;
+}
+
+void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indicator, const TArray<AActor*>& HitActors)
+{
+	// 컨텍스트 객체 생성 (New로 생성하지만 핸들이 관리하므로 메모리는 안전)
+	FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
+	
+	Context->SetEffectAssets(CompleteParticle, CompleteSound);
+	// Context->AddInstigator(GetAvatarActorFromActorInfo(), GetAvatarActorFromActorInfo()); // 필요한 경우
+	
+	FGameplayEffectContextHandle ContextHandle(Context);
+	
+	FGameplayCueParameters Params;
+	Params.EffectContext = ContextHandle;
+	Params.Location = Indicator->GetActorLocation(); // 재생될 위치
+	Params.RawMagnitude = 1.0f;       // 필요시 강도 전달
+
+	// 5. 실행
+	AbilitySystemComponent->ExecuteGameplayCue(
+		FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), 
+		Params
+	);
 }

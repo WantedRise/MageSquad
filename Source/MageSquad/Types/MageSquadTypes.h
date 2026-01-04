@@ -4,6 +4,7 @@
 #include "GameplayTagContainer.h"
 #include "GameplayEffectTypes.h"
 #include "MSIndicatorTypes.h"
+#include "Particles/ParticleSystem.h"
 #include "SkillData/MSSkillList.h"
 #include "MageSquadTypes.generated.h"
 
@@ -380,6 +381,23 @@ public:
 	FORCEINLINE bool HasIndicatorParams() const { return bHasIndicatorParams; }
 #pragma endregion
 
+#pragma region Effect Asset Section
+	UPROPERTY()
+	TObjectPtr<UParticleSystem> ParticleAsset = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USoundBase> SoundAsset = nullptr;
+
+	bool bHasEffectAssets = false;
+
+	FORCEINLINE void SetEffectAssets(UParticleSystem* InParticle, USoundBase* InSound)
+	{
+		ParticleAsset = InParticle;
+		SoundAsset = InSound;
+		bHasEffectAssets = (InParticle || InSound);
+	}
+#pragma endregion
+	
 	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
 
 	/**
@@ -427,7 +445,7 @@ public:
 			}
 		}
 
-		Ar.SerializeBits(&Flags, 3); // 2->3으로 확장 - 임희섭
+		Ar.SerializeBits(&Flags, 4); // 2->4로 확장 - 임희섭
 
 		if (Flags & 0x01)
 		{
@@ -483,6 +501,15 @@ public:
 		{
 			IndicatorParams = FAttackIndicatorParams();
 			bHasIndicatorParams = false;
+		}
+		
+		// EffectAsset
+		if (Flags & 0x08)
+		{
+			// Object 포인터 직렬화 (네트워크 전송용)
+			Ar << ParticleAsset; 
+			Ar << SoundAsset;
+			bHasEffectAssets = true;
 		}
 		return true;
 	}

@@ -1,0 +1,53 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "AbilitySystem/GC/MSGC_IndicatorComplete.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
+#include "Types/MageSquadTypes.h"
+
+UMSGC_IndicatorComplete::UMSGC_IndicatorComplete()
+{
+	GameplayCueTag = FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete");
+}
+
+bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const
+{
+	Super::OnExecute_Implementation(Target, Parameters);
+
+	const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get());
+    
+	UParticleSystem* ParticleToPlay = CompleteParticle; // 기본값 (에디터 설정값)
+	USoundBase* SoundToPlay = CompleteSound;           // 기본값
+
+	if (Context && Context->bHasEffectAssets)
+	{
+		if (Context->ParticleAsset)
+		{
+			ParticleToPlay = Context->ParticleAsset;
+		}
+		if (Context->SoundAsset)
+		{
+			SoundToPlay = Context->SoundAsset;
+		}
+	}
+
+	FVector SpawnLocation = Parameters.Location;
+	if (Target && SpawnLocation.IsZero())
+	{
+		SpawnLocation = Target->GetActorLocation();
+	}
+	
+	SpawnLocation.Z = 0.f;
+
+	if (ParticleToPlay)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(Target->GetWorld(), ParticleToPlay, SpawnLocation);
+	}
+	if (SoundToPlay)
+	{
+		UGameplayStatics::PlaySoundAtLocation(Target->GetWorld(), SoundToPlay, SpawnLocation);
+	}
+
+	return true;
+}

@@ -71,6 +71,22 @@ void UMSGA_EnemyNormalAttack::EndAbility(const FGameplayAbilitySpecHandle Handle
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
+	UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent();	
+	// GameplayEffectSpec 생성
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	Context.AddSourceObject(Owner);
+	
+	FGameplayEffectSpecHandle SpecHandle =
+		ASC->MakeOutgoingSpec(Owner->GetCooldownEffectClass(), 1.f, Context);
+
+	if (!SpecHandle.IsValid())
+	{
+		return;
+	}
+	
+	// GameplayEffect 적용
+	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 }
 
 void UMSGA_EnemyNormalAttack::OnCompleteCallback()

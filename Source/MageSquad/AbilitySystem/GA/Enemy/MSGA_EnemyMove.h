@@ -7,7 +7,9 @@
 #include "MSGA_EnemyMove.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2025/12/28
+ * 몬스터의 이동을 어빌리티화 
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_EnemyMove : public UMSGA_EnemyBaseAbility

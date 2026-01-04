@@ -80,6 +80,13 @@ AMSBaseEnemy::AMSBaseEnemy()
 	{
 		DamageEffectClass = DamageEffectClassRef.Class;
 	}
+	
+	static ConstructorHelpers::FClassFinder<UGameplayEffect> CooldownEffectClassRef(TEXT("/Game/Blueprints/GAS/GE/BPGE_EnemyPatternCooldown.BPGE_EnemyPatternCooldown_C"));
+	
+	if (CooldownEffectClassRef.Succeeded())
+	{
+		CooldownEffectClass = CooldownEffectClassRef.Class;
+	}
 }
 
 // Called when the game starts or when spawned
