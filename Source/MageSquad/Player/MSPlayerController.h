@@ -40,6 +40,7 @@ protected:
 	virtual void OnRep_Pawn() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void Tick(float DeltaTime) override; // 시그니피컨스 매니저 사용을 위한 추가 - 26/01/05 임희섭
 
 
 	/*****************************************************

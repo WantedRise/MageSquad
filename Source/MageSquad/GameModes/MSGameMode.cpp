@@ -35,32 +35,6 @@ void AMSGameMode::BeginPlay()
 	);
 }
 
-void AMSGameMode::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	
-	if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
-	{
-		TArray<FTransform> TransformArray;
-        
-		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		{
-			if (APlayerController* PC = It->Get())
-			{
-				if (APawn* Pawn = PC->GetPawn())
-				{
-					TransformArray.Add(Pawn->GetTransform());
-				}
-			}
-		}
-
-		if (TransformArray.Num() > 0)
-		{
-			SigManager->Update(TArrayView<FTransform>(TransformArray));
-		}
-	}
-}
-
 void AMSGameMode::SetupGameFlow()
 {
 	check(GameFlowClass);
