@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -32,10 +32,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillRadius = 200.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<UGameplayEffect> DamageEffect;
 };

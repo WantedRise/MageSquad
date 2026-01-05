@@ -85,7 +85,8 @@ void UMSGA_IceNova::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 	RuntimeData.Damage = SkillListRow.SkillDamage;
 	RuntimeData.DamageEffect = DamageEffect;
-	RuntimeData.LifeTime = 5.f;
+	RuntimeData.Effects = AdditionalEffects;
+	RuntimeData.LifeTime = 1.5f;
 	RuntimeData.Radius = Range;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
 
@@ -102,4 +103,3 @@ void UMSGA_IceNova::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
-

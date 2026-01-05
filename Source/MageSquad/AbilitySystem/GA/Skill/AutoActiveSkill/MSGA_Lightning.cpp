@@ -55,6 +55,7 @@ void UMSGA_Lightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 	RuntimeData.Damage = SkillDamage;
 	RuntimeData.DamageEffect = DamageEffect;
+	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.LifeTime = 1.f;
 	RuntimeData.Radius = SkillRadius;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();

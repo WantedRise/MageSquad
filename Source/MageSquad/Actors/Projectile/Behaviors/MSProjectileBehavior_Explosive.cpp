@@ -194,6 +194,23 @@ void UMSProjectileBehavior_Explosive::ApplyDamageToTarget(AActor* Target, float 
 
 	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (DamageAmount * -1.f));
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+	for (const TSubclassOf<UGameplayEffect>& ExtraEffect : RuntimeData.Effects)
+	{
+		if (!ExtraEffect)
+		{
+			continue;
+		}
+
+		FGameplayEffectSpecHandle ExtraSpec =
+			TargetASC->MakeOutgoingSpec(ExtraEffect, 1.f, Context);
+		if (!ExtraSpec.IsValid())
+		{
+			continue;
+		}
+
+		TargetASC->ApplyGameplayEffectSpecToSelf(*ExtraSpec.Data.Get());
+	}
 }
 
 

@@ -57,6 +57,45 @@ void UMSProjectileBehavior_AreaInstant::OnBegin_Implementation()
 			HitActors.Add(Target);
 
 			ApplyDamageToTarget(Target, RuntimeData.Damage);
+			if (RuntimeData.Effects.Num() > 0)
+			{
+				for (const TSubclassOf<UGameplayEffect>& ExtraEffect : RuntimeData.Effects)
+				{
+					if (!ExtraEffect)
+					{
+						continue;
+					}
+
+					UAbilitySystemComponent* TargetASC = nullptr;
+					if (Target->GetClass()->ImplementsInterface(UAbilitySystemInterface::StaticClass()))
+					{
+						TargetASC = Cast<IAbilitySystemInterface>(Target)->GetAbilitySystemComponent();
+					}
+					if (!TargetASC)
+					{
+						TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+					}
+					if (!TargetASC)
+					{
+						continue;
+					}
+
+					FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
+					if (AMSBaseProjectile* OwnerProj = GetOwnerActor())
+					{
+						Context.AddSourceObject(OwnerProj);
+					}
+
+					FGameplayEffectSpecHandle SpecHandle =
+						TargetASC->MakeOutgoingSpec(ExtraEffect, 1.f, Context);
+					if (!SpecHandle.IsValid())
+					{
+						continue;
+					}
+
+					TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				}
+			}
 		}
 	}
 

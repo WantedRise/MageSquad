@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -28,7 +28,7 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 protected:
-	// SharkFin 스킬 ID는 11
+	// SharkFin ?ㅽ궗 ID??11
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CurrentSkillID = 11;
 
@@ -38,9 +38,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Range = 1.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<class UGameplayEffect> DamageEffect;
 };

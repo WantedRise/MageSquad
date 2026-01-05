@@ -7,6 +7,9 @@
 #include "SkillData/MSSkillList.h"
 #include "MSGA_SkillBase.generated.h"
 
+class UGameplayEffect;
+class UProjectileStaticData;
+
 /**
  * 작성자: 박세찬
  * 작성일: 25/12/12
@@ -36,5 +39,14 @@ protected:
 	// 스킬 ID
 	UPROPERTY(EditDefaultsOnly, Category="SkillData")
 	int32 SkillID;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<UProjectileStaticData> ProjectileDataClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TArray<TSubclassOf<UGameplayEffect>> AdditionalEffects;
 	
 };

@@ -105,6 +105,7 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.Radius = Range;
 	RuntimeData.LifeTime = 0.f;
 	RuntimeData.DamageEffect = DamageEffect;
+	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaPeriodic::StaticClass();
 	RuntimeData.DamageSequence = FinalDamageSequence;
 	RuntimeData.DamageInterval = DamageInterval;
