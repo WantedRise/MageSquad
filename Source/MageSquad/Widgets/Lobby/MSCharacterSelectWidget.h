@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "MSCharacterSelectWidget.generated.h"
 
+struct FMSCharacterData;
+
 /**
  * 
  */
@@ -17,11 +19,14 @@ class MAGESQUAD_API UMSCharacterSelectWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
+public:
+    void UpdatePlayerState();
 private:
     void BuildCharacterSlots();
     void OnCharacterClicked(FName CharacterID);
+    void ApplySelectedCharacter(FMSCharacterData Data);
     void HandleCharacterChanged(FName CharacterID);
-    //void BindPlayerState();
+    
 protected:
     UPROPERTY(meta = (BindWidget))
     class UUniformGridPanel* CharacterGrid;
@@ -39,5 +44,6 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, Category = "Grid")
     int32 Rows = 1;
-        
+    
+    FName CurrentCharacterID;
 };

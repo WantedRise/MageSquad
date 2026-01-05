@@ -11,6 +11,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "Net/UnrealNetwork.h"
 #include <System/MSCharacterDataSubsystem.h>
+#include "MageSquad.h"
 
 AMSPlayerState::AMSPlayerState()
 {
@@ -576,31 +577,4 @@ void AMSPlayerState::OnRep_IsAlive()
 void AMSPlayerState::SetSelectedCharacterID(FName InCharacterID)
 {
 	SelectedCharacterID = InCharacterID;
-
-	// 서버에서 바로 반응이 필요한 경우 대비
-	OnRep_SelectedCharacterID();
-}
-
-void AMSPlayerState::OnRep_SelectedCharacterID()
-{
-	UE_LOG(LogTemp, Log,
-		TEXT("[PlayerState] SelectedCharacterID = %s"),  *SelectedCharacterID.ToString());
-
-	// UI 갱신, Pawn 초기화 트리거 등 가능
-	APawn* Pawn = GetPawn();
-	if (!Pawn) return;
-
-	ICharacterAppearanceInterface* Appearance = Cast<ICharacterAppearanceInterface>(Pawn);
-
-	if (!Appearance) return;
-
-	UMSCharacterDataSubsystem* CharacterData = GetWorld()->GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-
-	if (!CharacterData) return;
-
-	const FMSCharacterData* Data = CharacterData->FindCharacterData(SelectedCharacterID);
-
-	if (!Data) return;
-
-	Appearance->ApplyCharacterAppearance(*Data);
 }

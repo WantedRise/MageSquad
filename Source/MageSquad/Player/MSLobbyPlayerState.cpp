@@ -9,8 +9,6 @@
 #include <System/MSSteamManagerSubsystem.h>
 #include <GameModes/MSLobbyGameMode.h>
 #include <System/MSLevelManagerSubsystem.h>
-#include <Interfaces/CharacterAppearanceInterface.h>
-#include <System/MSCharacterDataSubsystem.h>
 
 AMSLobbyPlayerState::AMSLobbyPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -114,39 +112,9 @@ void AMSLobbyPlayerState::SetSelectedCharacter(FName CharacterID)
 
 void AMSLobbyPlayerState::OnRep_SelectedCharacterID()
 {
-	// UI가 알아서 반응하도록 Delegate 호출
-	OnCharacterChanged.Broadcast(SelectedCharacterID);
-
-	APawn* Pawn = GetPawn();
-	if (!Pawn) return;
-
-	ICharacterAppearanceInterface* Appearance =
-		Cast<ICharacterAppearanceInterface>(Pawn);
-
-	if (!Appearance) return;
-
-	UMSCharacterDataSubsystem* CharacterData =
-		GetWorld()->GetGameInstance()
-		->GetSubsystem<UMSCharacterDataSubsystem>();
-
-	const FMSCharacterData* Data =
-		CharacterData->FindCharacterData(SelectedCharacterID);
-
-	if (Data)
+	if (OnCharacterChanged.IsBound())
 	{
-		Appearance->ApplyCharacterAppearance(*Data);
-	}
-
-	if (UWorld* World = GetWorld())
-	{
-		if (UGameInstance* GI = World->GetGameInstance())
-		{
-			auto* LevelManager = GI->GetSubsystem<UMSLevelManagerSubsystem>();
-
-			if (LevelManager)
-			{
-				LevelManager->SaveSelectedCharacter(GetUniqueId(), SelectedCharacterID);
-			}
-		}
+		OnCharacterChanged.Broadcast(SelectedCharacterID);
 	}
 }
+

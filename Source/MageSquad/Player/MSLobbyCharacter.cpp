@@ -10,6 +10,7 @@
 #include "MageSquad.h"
 #include "MSLobbyPlayerState.h"
 #include "DataStructs/MSCharacterData.h"
+#include <System/MSCharacterDataSubsystem.h>
 
 // Sets default values
 AMSLobbyCharacter::AMSLobbyCharacter()
@@ -77,6 +78,7 @@ void AMSLobbyCharacter::PossessedBy(AController* NewController)
 	}
 
 	InitializeLobbyCharacterFromPlayerState();
+
 }
 
 void AMSLobbyCharacter::OnRep_PlayerState()
@@ -97,8 +99,17 @@ void AMSLobbyCharacter::InitializeLobbyCharacterFromPlayerState()
 		// 준비 상태 변경 시 UI 전환
 		// PlayerState의 Ready 상태 변경 → Ready / Cancel UI 토글
 		PS->OnLobbyReadyStateChanged.AddUObject(this, &AMSLobbyCharacter::UpdateReadyStatusUI);
+		PS->OnCharacterChanged.AddUObject(this, &AMSLobbyCharacter::UpdateCharacterAppearance);
+		UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+		const FMSCharacterData* Data = CharacterData->FindCharacterData(PS->GetSelectedCharacterID());
+		if (Data)
+		{
+			ApplyCharacterAppearance(*Data);
+		}
 	}
 }
+
+
 
 
 // Called every frame
@@ -146,10 +157,19 @@ void AMSLobbyCharacter::ApplyCharacterAppearance(const FMSCharacterData& Charact
 		GetMesh()->SetMaterial(0, CharacterData.OverrideMaterial);
 	}
 
-	// 2️⃣ Material 교체
+	// Material 교체
 	if (CharacterData.StaffMesh)
 	{
 		//StaffMesh->SetStaticMesh(CharacterData.StaffMesh);
 	}
 }
 
+void AMSLobbyCharacter::UpdateCharacterAppearance(const FName& CharacterID)
+{
+	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	const FMSCharacterData* Data = CharacterData->FindCharacterData(CharacterID);
+	if (Data)
+	{
+		ApplyCharacterAppearance(*Data);
+	}
+}

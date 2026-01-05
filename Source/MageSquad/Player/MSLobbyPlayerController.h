@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MSLobbyPlayerController.generated.h"
 
-
+struct FMSCharacterData;
 
 /*
 * 작성자: 이상준
@@ -34,13 +34,15 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSelectCharacter(FName CharacterID);
 
+	void ApplyCharacterPreview(FMSCharacterData Data);
 protected:
 	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;
-
+	virtual void OnRep_PlayerState() override;
 protected:
 	//로비 메인 UI 위젯을 생성하고 화면에 표시
 	void CreateLobbyUI();
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<class UUserWidget> LobbyMainWidgetClass;

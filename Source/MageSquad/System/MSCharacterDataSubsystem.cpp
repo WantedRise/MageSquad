@@ -68,3 +68,12 @@ void UMSCharacterDataSubsystem::BuildCache()
     return nullptr;
 }
 
+ FName UMSCharacterDataSubsystem::GetDefaultCharacterID() const
+ {
+     for (const auto& Pair : CachedCharacterData)
+     {
+         return Pair.Key;
+     }
+
+     return NAME_None;
+ }

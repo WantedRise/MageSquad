@@ -23,6 +23,8 @@ public:
     /** CharacterID → Character Data */
     const FMSCharacterData* FindCharacterData(FName CharacterID) const;
 
+    FName GetDefaultCharacterID() const;
+
     /** 전체 캐릭터 데이터 반환 (UI용) */
     const TMap<FName, const FMSCharacterData*>& GetAllCharacters() const
     {

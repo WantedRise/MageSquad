@@ -1,10 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "MSLobbyMainWidget.generated.h"
+
+class UMSCharacterSelectWidget;
 
 /*
 * 작성자: 이상준
@@ -20,7 +22,10 @@ class MAGESQUAD_API UMSLobbyMainWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer);
+	UMSCharacterSelectWidget* GetCharacterSelectWidget() { return MSCharacterSelect; }
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UMSLobbyReadyWidget* WBP_MSLobbyReady;
+	UPROPERTY(meta = (BindWidget))
+	UMSCharacterSelectWidget* MSCharacterSelect;
 };

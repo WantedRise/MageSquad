@@ -36,8 +36,8 @@ void UMSLevelManagerSubsystem::Deinitialize()
 void UMSLevelManagerSubsystem::SaveSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterID)
 {
 	PendingSelectedCharacters.Add(NetId, CharacterID);
-
-
+	
+	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::SaveSelectedCharacter() %s"), *NetId.GetUniqueNetId().Get()->ToString());
 }
 
 bool UMSLevelManagerSubsystem::ConsumeSelectedCharacter(const FUniqueNetIdRepl& NetId, FName& OutCharacterID)
@@ -47,7 +47,7 @@ bool UMSLevelManagerSubsystem::ConsumeSelectedCharacter(const FUniqueNetIdRepl& 
 		OutCharacterID = *Found;
 		PendingSelectedCharacters.Remove(NetId);
 
-
+		UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::ConsumeSelectedCharacter() %s"), *NetId.GetUniqueNetId().Get()->ToString());
 
 		return true;
 	}

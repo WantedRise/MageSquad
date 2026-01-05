@@ -7,7 +7,7 @@
 #include "MSLobbyPlayerState.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLobbyReadyStateChanged,bool);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterChanged, FName);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterChanged, const FName&);
  
 /*
 * 작성자: 이상준
@@ -44,7 +44,7 @@ public:
 	FOnCharacterChanged OnCharacterChanged;
 
 	void SetSelectedCharacter(FName CharacterID);
-
+	FName GetSelectedCharacterID() { return SelectedCharacterID; }
 	UFUNCTION()
 	void OnRep_SelectedCharacterID();
 protected:

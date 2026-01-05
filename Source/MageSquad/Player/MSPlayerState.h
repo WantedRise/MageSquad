@@ -138,13 +138,15 @@ public:
 
 	// 캐릭터 ID
 	FName GetSelectedCharacterID() const { return SelectedCharacterID; }
+
+	//UFUNCTION()
+	//void OnRep_SelectedCharacterID();
 private:
 	// 생존 상태 변경 OnRep 함수
 	UFUNCTION()
 	void OnRep_IsAlive();
 
-	UFUNCTION()
-	void OnRep_SelectedCharacterID();
+
 public:
 	// 생존 상태 변경 이벤트 델리게이트
 	FOnAliveStateChangedNative OnAliveStateChanged;
@@ -155,6 +157,6 @@ private:
 	bool bIsAlive = true;
 
 	//
-	UPROPERTY(ReplicatedUsing = OnRep_SelectedCharacterID)
+	UPROPERTY(Replicated)
 	FName SelectedCharacterID = NAME_None;
 };

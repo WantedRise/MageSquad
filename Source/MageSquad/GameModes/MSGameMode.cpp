@@ -146,82 +146,9 @@ void AMSGameMode::NotifyClientsShowLoadingWidget()
 void AMSGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-
-	AMSPlayerState* PS = NewPlayer->GetPlayerState<AMSPlayerState>();
-
-	if (!PS) return;
-
-	auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
-
-	if (!LevelManager) return;
-
-	FName CharacterID;
-
-	const FUniqueNetIdRepl& NetId = PS->GetUniqueId();
-	if (!NetId.IsValid())
-	{
-		return;
-	}
-
-	if (LevelManager->ConsumeSelectedCharacter(NetId, CharacterID))
-	{
-		PS->SetSelectedCharacterID(CharacterID);
-	}
-	else
-	{
-
-	}
 }
 
 void AMSGameMode::RestartPlayer(AController* NewPlayer)
 {
 	Super::RestartPlayer(NewPlayer);
-
-	if (!NewPlayer) return;
-
-	AMSPlayerState* PS = NewPlayer->GetPlayerState<AMSPlayerState>();
-	if (!PS) return;
-
-
-	// LevelManager에서 임시 캐릭터 꺼내기
-	UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
-
-	if (!LevelManager) return;
-
-	FName CharacterNewID = NAME_None;
-
-	const FUniqueNetIdRepl& NetId = PS->GetUniqueId();
-	if (!NetId.IsValid())
-	{
-		return;
-	}
-
-	if (!LevelManager->ConsumeSelectedCharacter(NetId, CharacterNewID))
-	{
-
-		return;
-	}
-
-	// 3️⃣ InGame PlayerState에 확정 저장 (⭐ Source of Truth)
-	PS->SetSelectedCharacterID(CharacterNewID);
-
-	// 4️⃣ Pawn 가져오기 (이미 Possess된 상태)
-	APawn* Pawn = NewPlayer->GetPawn();
-	if (!Pawn) return;
-
-	// 5️⃣ 캐릭터 외형 적용
-	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-
-	if (!CharacterData)
-		return;
-
-	const FMSCharacterData* Data = CharacterData->FindCharacterData(CharacterNewID);
-
-	if (!Data) return;
-
-	// 인터페이스 기반 외형 적용
-	if (ICharacterAppearanceInterface* Appearance = Cast<ICharacterAppearanceInterface>(Pawn))
-	{
-		Appearance->ApplyCharacterAppearance(*Data);
-	}
 }

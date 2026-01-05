@@ -40,6 +40,8 @@
 
 #include "MSGameplayTags.h"
 #include <System/MSCharacterDataSubsystem.h>
+#include "MageSquad.h"
+#include <System/MSLevelManagerSubsystem.h>
 
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
@@ -173,6 +175,8 @@ void AMSPlayerCharacter::BeginPlay()
 		// 거리 표기 비활성화
 		DirectionIndicatorComponent->bShowDistance = false;
 	}
+
+
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -295,6 +299,13 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
+
+	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	const FMSCharacterData* Data = CharacterData->FindCharacterData(PS->GetSelectedCharacterID());
+	if (Data)
+	{
+		ApplyCharacterAppearance(*Data);
+	}
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
@@ -847,13 +858,21 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 		}
 	}
 
+	FName NewCharacterID = NAME_None;
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
-	const FName CharacterID = PS->GetSelectedCharacterID();
+	auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
+	if (!LevelManager->ConsumeSelectedCharacter(PS->GetUniqueId(), NewCharacterID))
+	{
+		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("UniqueID can't find"))
+		return;
+	}
+
 	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-	const FMSCharacterData* Data = CharacterData->FindCharacterData(CharacterID);
+	const FMSCharacterData* Data = CharacterData->FindCharacterData(NewCharacterID);
 	if (!Data)
 	{
+		MS_LOG(LogMSNetwork,Log,TEXT("%s"),TEXT("Data is nullptr"))
 		// 저장 데이터 없을 시 
 		// 시작 스킬 획득
 		for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
@@ -868,7 +887,7 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 		}
 		return;
 	}
-
+	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Data apply"))
 	// 초기 스탯 GE
 	if (Data->InitialStatEffect)
 	{
@@ -908,6 +927,7 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 	}
 
 	ApplyCharacterAppearance(*Data);
+	PS->SetSelectedCharacterID(NewCharacterID);
 }
 
 void AMSPlayerCharacter::ApplyCharacterAppearance(const FMSCharacterData& CharacterData)
