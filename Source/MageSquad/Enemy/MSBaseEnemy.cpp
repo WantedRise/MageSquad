@@ -22,6 +22,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	GetMesh()->bReceivesDecals = false;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	
 	// 메시의 콜리전은 NoCollision으로 설정
 	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
@@ -30,7 +31,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSEnemy"));
 	// GetMesh()->SetupAttachment(GetCapsuleComponent());
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -GetCapsuleComponent()->GetScaledCapsuleHalfHeight())); 
-	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f)); // 예시
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f)); 
 	
 	// GAS 컴포넌트
 	ASC = CreateDefaultSubobject<UMSEnemyAbilitySystemComponent>(TEXT("ASC"));
@@ -40,12 +41,12 @@ AMSBaseEnemy::AMSBaseEnemy()
 	
 	// Character는 리플리케이트
 	bReplicates = true;
-	ACharacter::SetReplicateMovement(true);  // Movement 리플리케이트 (기본값)S
+	ACharacter::SetReplicateMovement(true);  // Movement 리플리케이트 (기본값)
 	bNetLoadOnClient = true;
 	bAlwaysRelevant = true;
 	SetNetCullDistanceSquared(0.f); // 리플레케이션 거리 무한 // 스폰할 때 무한으로
 	SetNetUpdateFrequency(500.f);
-	NetDormancy = DORM_Never;  // 중요: Dormancy 완전 비활성화
+	NetDormancy = DORM_Never;  // Dormancy 완전 비활성화
     
 	// RVO 설정
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();

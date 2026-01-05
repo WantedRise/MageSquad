@@ -16,7 +16,6 @@ void AMSNormalAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 서버에서만 AI 제어를 하면 되므로 HasAuthority 체크
 	if (HasAuthority())
 	{
 		if (AMSGameState* GS = Cast<AMSGameState>(GetWorld()->GetGameState()))

@@ -15,6 +15,9 @@ AMSBaseAIController::AMSBaseAIController()
 {
 	// MoveTo 시 회전 방식 설정
 	bAllowStrafe = false;  // 무조건 회전해서 이동
+	
+	// Tick은 Default로 끔
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AMSBaseAIController::OnPossess(APawn* InPawn)
