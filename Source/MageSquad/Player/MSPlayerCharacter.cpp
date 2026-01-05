@@ -179,10 +179,7 @@ void AMSPlayerCharacter::Tick(float DeltaSecond)
 	Super::Tick(DeltaSecond);
 
 	// 로컬에서 제어되는 폰만 수행 (서버 연동 필요 없음)
-	if (!IsLocallyControlled())
-	{
-		return;
-	}
+	if (!IsLocallyControlled()) return;
 
 	// 카메라 줌 인/아웃 보간 수행
 	UpdateCameraZoom(DeltaSecond);
@@ -440,24 +437,25 @@ void AMSPlayerCharacter::RequestUseActiveSkill(EMSSkillSlotIndex SlotIndex)
 	if (HasAuthority())
 	{
 		// 서버는 바로 처리
-		HandleActiveSkillSlot_Server(static_cast<int32>(Slot));
+		SendSkillActive_Server(static_cast<int32>(Slot));
 	}
 	else
 	{
 		// 클라이언트는 서버에게 스킬 사용 요청
-		ServerRPCUseActiveSkillSlot(Slot);
+		ServerRPCSendSkillActive(Slot);
 	}
 }
 
 void AMSPlayerCharacter::AcquireSkill(int32 SkillID)
 {
-	// 서버에서 호출되는 것이 이상적이나, 호출자가 클라이언트일 수 있으므로 보정
+	// 서버의 경우 직접 내부 처리 수행
 	if (HasAuthority())
 	{
-		ServerRPCAcquireSkill_Implementation(SkillID);
+		AcquireSkill_Server(SkillID);
 		return;
 	}
 
+	// 클라이언트의 경우 서버에 RPC 호출
 	if (IsLocallyControlled())
 	{
 		ServerRPCAcquireSkill(SkillID);
@@ -470,27 +468,68 @@ void AMSPlayerCharacter::OnRep_SkillSlots()
 	EnsureSkillSlotArrays();
 }
 
+void AMSPlayerCharacter::AcquireSkill_Server(int32 SkillID)
+{
+	if (!HasAuthority()) return;
+
+	// 스킬 슬롯 배열 및 서버 전용 런타임 데이터 준비
+	EnsureSkillSlotArrays();
+
+	// PlayerState를 통해 플레이어가 소유한 스킬 데이터를 조회
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Skill] AcquireSkill_Server: PlayerState is null"));
+		return;
+	}
+
+	// PlayerState가 보유한 스킬 목록에서 해당 SkillID의 행을 찾음
+	const FMSSkillList* FoundSkill = PS->GetOwnedSkillByID(SkillID);
+	if (!FoundSkill)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Skill] AcquireSkill_Server: Owned skill not found. SkillID=%d"), SkillID);
+		return;
+	}
+
+	// 구조체를 복사
+	FMSSkillList Row = *FoundSkill;
+
+	// 행 정보에 따라 슬롯에 장착
+	EquipSkillFromRow_Server(Row);
+
+	// 패시브 스킬이 새로 추가되거나 쿨타임 관련 속성 변경이 있을 수 있으므로 패시브 타이머 갱신
+	RebuildPassiveSkillTimers_Server();
+}
+
+void AMSPlayerCharacter::ServerRPCAcquireSkill_Implementation(int32 SkillID)
+{
+	// 서버에 스킬 획득 처리 요청
+	AcquireSkill_Server(SkillID);
+}
+
 void AMSPlayerCharacter::EnsureSkillSlotArrays()
 {
+	// 총 스킬 슬롯 수
+	// 액티브 2개 + 패시브 4개
 	constexpr int32 SlotCount = 6;
 	constexpr int32 PassiveCount = 4;
 
-	// 스킬 슬롯 개수 초기화
+	// 스킬 슬롯 배열 보정 (서버/클라이언트 공통)
 	if (SkillSlots.Num() != SlotCount)
 	{
 		SkillSlots.SetNum(SlotCount);
 	}
 
-	// 서버에서만 설정
+	// 서버: 런타임 데이터 및 타이머 핸들 준비
 	if (HasAuthority())
 	{
-		// 스킬 슬롯 런타임 데이터 개수 초기화
+		// 런타임 데이터 배열 크기가 맞지 않으면 조정
 		if (SkillRuntimeData.Num() != SlotCount)
 		{
 			SkillRuntimeData.SetNum(SlotCount);
 		}
 
-		// 현재 스킬 슬롯 배열을 순회하며 스킬 슬롯 런타임 데이터 생성
+		// 각 슬롯별 런타임 데이터가 없으면 새 객체 생성
 		for (int32 i = 0; i < SlotCount; ++i)
 		{
 			if (!SkillRuntimeData[i])
@@ -499,7 +538,7 @@ void AMSPlayerCharacter::EnsureSkillSlotArrays()
 			}
 		}
 
-		// 패시브 스킬 타이머 배열도 개수 초기화
+		// 패시브 스킬 타이머 핸들은 패시브 슬롯 수에 맞게 준비
 		if (PassiveSkillTimerHandles.Num() != PassiveCount)
 		{
 			PassiveSkillTimerHandles.SetNum(PassiveCount);
@@ -507,59 +546,21 @@ void AMSPlayerCharacter::EnsureSkillSlotArrays()
 	}
 }
 
-void AMSPlayerCharacter::ServerRPCAcquireSkill_Implementation(int32 SkillID)
+bool AMSPlayerCharacter::SendSkillActive_Server(int32 SlotIndex)
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority()) return false;
 
-	// 스킬 슬롯 보정
+	// 슬롯 배열 및 런타임 데이터가 준비되어 있는지 보정
 	EnsureSkillSlotArrays();
 
-	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
-	if (!PS)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Skill] ServerRPCAcquireSkill: PlayerState is null"));
-		return;
-	}
+	// 스킬 슬롯 인덱스 검사
+	if (!SkillSlots.IsValidIndex(SlotIndex) || !SkillSlots[SlotIndex].IsValid()) return false;
 
-	// 스킬 데이터
-	const FMSSkillList* FoundSkill = PS->GetOwnedSkillByID(SkillID);
-	if (!FoundSkill)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Skill] ServerRPCAcquireSkill: Owned skill not found. SkillID=%d"), SkillID);
-		return;
-	}
-	FMSSkillList Row = *FoundSkill;
-
-	// 스킬 슬롯에 데이터 할당
-	EquipSkillFromRow_Server(Row);
-
-	// 스킬 자동 발동 타이머 설정
-	RebuildPassiveSkillTimers_Server();
-}
-
-void AMSPlayerCharacter::ServerRPCUseActiveSkillSlot_Implementation(uint8 SlotIndex)
-{
-	if (!HasAuthority()) return;
-
-	// 스킬 사용
-	HandleActiveSkillSlot_Server(static_cast<int32>(SlotIndex));
-}
-
-void AMSPlayerCharacter::HandleActiveSkillSlot_Server(int32 SlotIndex)
-{
-	if (!HasAuthority()) return;
-
-	// 스킬 슬롯 보정
-	EnsureSkillSlotArrays();
-
-	// 스킬 슬롯에 없는 스킬인 경우 종료
-	if (!SkillSlots.IsValidIndex(SlotIndex) || !SkillSlots[SlotIndex].IsValid()) return;
-
-	// 해당 스킬에 대한 스킬 슬롯 데이터 가져오기
+	// 스킬 슬롯 데이터 유효성 검사
 	const FMSPlayerSkillSlotNet& Slot = SkillSlots[SlotIndex];
-	if (!Slot.SkillEventTag.IsValid()) return;
+	if (!Slot.SkillEventTag.IsValid()) return false;
 
-	// 게임플레이 이벤트 데이터로 스킬에 전달할 데이터 설정
+	// 게임플레이 이벤트 데이터 설정. 스킬 레벨은 EventMagnitude로 전달
 	FGameplayEventData Payload;
 	Payload.EventTag = Slot.SkillEventTag;
 	Payload.EventMagnitude = static_cast<float>(Slot.SkillLevel);
@@ -567,50 +568,69 @@ void AMSPlayerCharacter::HandleActiveSkillSlot_Server(int32 SlotIndex)
 
 	// 스킬 어빌리티 이벤트 트리거
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Slot.SkillEventTag, Payload);
+
+	return true;
+}
+
+void AMSPlayerCharacter::ServerRPCSendSkillActive_Implementation(uint8 SlotIndex)
+{
+	if (!HasAuthority()) return;
+
+	// 스킬 사용 요청
+	SendSkillActive_Server(static_cast<int32>(SlotIndex));
 }
 
 void AMSPlayerCharacter::EquipSkillFromRow_Server(const FMSSkillList& Row)
 {
 	if (!HasAuthority()) return;
 
-	// DT의 SkillType 규약
-	// 1: 자동(패시브), 2: 좌클릭 액티브, 3: 우클릭 액티브
-	if (Row.SkillType == 1)
-	{
-		// 새로 추가할 수 있는 패시브 슬롯 탐색
-		const int32 PassiveSlotIndex = FindOrAllocatePassiveSlotIndex_Server(Row.SkillID);
+	// ============================================================
+	// #1: SkillType에 맞는 스킬 슬롯 인덱스 가져오기
+	// 
+	// SkillType 규약:
+	// 1 = 패시브 스킬
+	// 2 = 좌클릭 액티브 스킬
+	// 3 = 우클릭 액티브 스킬
+	// ============================================================
+	int32 TargetIndex = INDEX_NONE;
 
-		// 패시브 스킬 슬롯이 모두 찬 경우
-		if (PassiveSlotIndex == 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[Player-Skill] All passive skill slots are full and no more can be added."));
-		}
-		else
-		{
-			SetSkillSlot_Server(PassiveSlotIndex, Row);
-		}
-	}
-	else if (Row.SkillType == 2)
+	switch (Row.SkillType)
 	{
-		SetSkillSlot_Server(static_cast<int32>(EMSSkillSlotIndex::ActiveLeft), Row);
+	case 1: // 패시브 스킬 장착 or 갱신
+		TargetIndex = FindOrAllocatePassiveSlotIndex_Server(Row.SkillID);
+		break;
+
+	case 2: // 좌클릭 액티브 스킬 장착
+		TargetIndex = static_cast<int32>(EMSSkillSlotIndex::ActiveLeft);
+		break;
+
+	case 3: // 우클릭 액티브 스킬 장착
+		TargetIndex = static_cast<int32>(EMSSkillSlotIndex::ActiveRight);
+		break;
+
+	default: break;
 	}
-	else if (Row.SkillType == 3)
+
+	// 스킬 슬롯 할당 실패 예외 처리
+	if (TargetIndex == INDEX_NONE)
 	{
-		SetSkillSlot_Server(static_cast<int32>(EMSSkillSlotIndex::ActiveRight), Row);
+		// 패시브 스킬이 가득 찬 경우 or 잘못된 타입
+		UE_LOG(LogTemp, Warning, TEXT("[Player-Skill] Failed to equip skill. Passive slots may be full or invalid type. SkillID = %d"), Row.SkillID);
+		return;
 	}
-}
 
-void AMSPlayerCharacter::SetSkillSlot_Server(int32 SlotIndex, const FMSSkillList& Row)
-{
-	if (!HasAuthority()) return;
 
-	// 스킬 슬롯 보정
+	// ============================================================
+	// #2: 지정된 스킬 슬롯에 스킬 데이터 설정하기
+	// ============================================================
+
+	// 스킬 슬롯 배열 및 서버 전용 런타임 데이터 준비
 	EnsureSkillSlotArrays();
 
-	if (!SkillSlots.IsValidIndex(SlotIndex)) return;
+	if (!SkillSlots.IsValidIndex(TargetIndex)) return;
 
 	// 스킬 슬롯 정보 초기화
-	FMSPlayerSkillSlotNet& Slot = SkillSlots[SlotIndex];
+	FMSPlayerSkillSlotNet& Slot = SkillSlots[TargetIndex];
 	Slot.SkillType = Row.SkillType;
 	Slot.SkillID = Row.SkillID;
 	Slot.SkillLevel = Row.SkillLevel;
@@ -618,19 +638,19 @@ void AMSPlayerCharacter::SetSkillSlot_Server(int32 SlotIndex, const FMSSkillList
 	Slot.BaseCoolTime = Row.CoolTime;
 
 	// 스킬 런타임 데이터에 초기화 
-	if (SkillRuntimeData.IsValidIndex(SlotIndex) && SkillRuntimeData[SlotIndex])
+	if (SkillRuntimeData.IsValidIndex(TargetIndex) && SkillRuntimeData[TargetIndex])
 	{
-		SkillRuntimeData[SlotIndex]->InitFromRow(Row, SlotIndex);
+		SkillRuntimeData[TargetIndex]->InitFromRow(Row, TargetIndex);
 	}
 }
 
 int32 AMSPlayerCharacter::FindOrAllocatePassiveSlotIndex_Server(int32 SkillID) const
 {
-	// 패시브 스킬 시작/끝 열거현 번호
+	// 패시브 스킬 슬롯의 시작과 끝 인덱스
 	constexpr int32 PassiveStart = static_cast<int32>(EMSSkillSlotIndex::Passive01);
 	constexpr int32 PassiveEnd = static_cast<int32>(EMSSkillSlotIndex::Passive04);
 
-	// 이미 같은 스킬을 갖고 있으면 해당 슬롯을 갱신(스킬 레벨업)
+	// 이미 동일한 스킬이 장착되어 있다면 해당 슬롯을 반환 (스킬 레벨업)
 	for (int32 i = PassiveStart; i <= PassiveEnd; ++i)
 	{
 		if (SkillSlots.IsValidIndex(i) && SkillSlots[i].SkillID == SkillID)
@@ -639,7 +659,7 @@ int32 AMSPlayerCharacter::FindOrAllocatePassiveSlotIndex_Server(int32 SkillID) c
 		}
 	}
 
-	// 앞의 빈 슬롯 우선
+	// 빈 슬롯(스킬 ID가 0)을 찾아 반환. 앞쪽 슬롯부터 우선 탐색
 	for (int32 i = PassiveStart; i <= PassiveEnd; ++i)
 	{
 		if (SkillSlots.IsValidIndex(i) && SkillSlots[i].SkillID == 0)
@@ -648,77 +668,94 @@ int32 AMSPlayerCharacter::FindOrAllocatePassiveSlotIndex_Server(int32 SkillID) c
 		}
 	}
 
-	// 모두 찼으면 예외 처리 및 로그 출력
-	return 0;
+	// 빈 슬롯이 없는 경우 INDEX_NONE(-1)을 반환하여 실패 처리
+	return INDEX_NONE;
 }
 
 void AMSPlayerCharacter::RebuildPassiveSkillTimers_Server()
 {
 	if (!HasAuthority()) return;
 
-	// 스킬 슬롯 보정
+	// 스킬 슬롯과 관련 배열을 보정하여 일관된 상태 유지
 	EnsureSkillSlotArrays();
 
-	// 기존 타이머 모두 제거
+
+	// ============================================================
+	// #1: 기존 패시브 타이머를 모두 제거
+	// ============================================================
 	for (FTimerHandle& Handle : PassiveSkillTimerHandles)
 	{
 		GetWorldTimerManager().ClearTimer(Handle);
 	}
 
+
+	// ============================================================
+	// #2: 패시브 슬롯을 순회하며 새롭게 타이머 설정
+	// ============================================================
 	// 패시브 스킬 시작 슬롯 인덱스, 패시브 개수
 	constexpr int32 PassiveStart = static_cast<int32>(EMSSkillSlotIndex::Passive01);
 	constexpr int32 PassiveCount = 4;
 
 	for (int32 i = 0; i < PassiveCount; ++i)
 	{
-		// 슬롯 인덱스
+		// 스킬 슬롯 가져오기 (슬롯이 없다면 스킵)
 		const int32 SlotIndex = PassiveStart + i;
 		if (!SkillSlots.IsValidIndex(SlotIndex)) continue;
 
-		// 슬롯의 스킬 데이터 가져오기
+
+		// 슬롯의 스킬 데이터 가져오기 (슬롯에 유효한 스킬이 없으면 스킵)
 		const FMSPlayerSkillSlotNet& Slot = SkillSlots[SlotIndex];
 		if (!Slot.IsValid()) continue;
 
-		// 패시브(자동)만 타이머 설정
+
+		// 패시브(자동) 스킬인지 확인. SkillType == 1인 경우에만 타이머 설정
 		if (Slot.SkillType != 1) continue;
 
-		// 스킬 주기 계산
+
+		// 스킬의 기본 쿨타임을 기반으로 최종 주기 계산
 		const float Interval = ComputeFinalInterval(Slot.BaseCoolTime);
 		if (Interval <= 0.f) continue;
 
-		// 패시브 스킬 자동 발동 타이머 바인딩
-		FTimerDelegate Delegate;
-		Delegate.BindUObject(this, &AMSPlayerCharacter::HandlePassiveSkillTimer_Server, SlotIndex);
 
-		// 패시브 스킬 자동 발동 타이머 설정
+		// 패시브 스킬 타이머 설정
+		FTimerDelegate Delegate;
+		Delegate.BindUObject(this, &AMSPlayerCharacter::SendPassiveSkillActive_Server, SlotIndex);
+
+		// 타이머는 최종 주기마다 반복
 		GetWorldTimerManager().SetTimer(PassiveSkillTimerHandles[i], Delegate, Interval, true, Interval);
 	}
 }
 
-void AMSPlayerCharacter::HandlePassiveSkillTimer_Server(int32 SlotIndex)
+float AMSPlayerCharacter::ComputeFinalInterval(float BaseCoolTime) const
+{
+	if (BaseCoolTime <= 0.f) return 0.f;
+
+	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 가져오기
+	float CooldownReduction = 0.f;
+	if (AttributeSet)
+	{
+		CooldownReduction = AttributeSet->GetCooldownReduction();
+	}
+
+	// 쿨타임 감소 비율은 최대 95%까지만 적용
+	CooldownReduction = FMath::Clamp(CooldownReduction, 0.f, 0.95f);
+
+	// 스킬 기본 쿨타임 * 쿨타임 감소 비율로 최종 쿨타임 계산
+	const float FinalInterval = BaseCoolTime * (1.f - CooldownReduction);
+
+	// 스킬의 최소 쿨타임은 0.05초로 제한
+	return FMath::Max(0.05f, FinalInterval);
+}
+
+void AMSPlayerCharacter::SendPassiveSkillActive_Server(int32 SlotIndex)
 {
 	if (!HasAuthority()) return;
 
-	if (!SkillSlots.IsValidIndex(SlotIndex) || !SkillSlots[SlotIndex].IsValid()) return;
+	// 플레이어가 사망 상태인 경우에는 스킬이 발동하지 않도록 설정
+	if (AbilitySystemComponent->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead)) return;
 
-	// 플레이어가 사망 상태면 스킵
-	if (AbilitySystemComponent->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead))
-	{
-		return;
-	}
-
-	// 슬롯의 스킬 데이터 가져오기
-	const FMSPlayerSkillSlotNet& Slot = SkillSlots[SlotIndex];
-	if (!Slot.SkillEventTag.IsValid()) return;
-
-	// 게임플레이 이벤트 데이터로 스킬에 전달할 데이터 설정
-	FGameplayEventData Payload;
-	Payload.EventTag = Slot.SkillEventTag;
-	Payload.EventMagnitude = static_cast<float>(Slot.SkillLevel);
-	Payload.OptionalObject = SkillRuntimeData.IsValidIndex(SlotIndex) ? SkillRuntimeData[SlotIndex] : nullptr;
-
-	// 스킬 어빌리티 이벤트 트리거
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Slot.SkillEventTag, Payload);
+	// 스킬 사용
+	SendSkillActive_Server(SlotIndex);
 }
 
 void AMSPlayerCharacter::BindCooldownReductionDelegate()
@@ -745,30 +782,8 @@ void AMSPlayerCharacter::OnCooldownReductionChanged(const FOnAttributeChangeData
 {
 	if (!HasAuthority()) return;
 
-	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 속성이 변경됨에 따라
-	// 패시브 스킬 자동 발동 타이머를 재구성
+	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 속성이 변경됨에 따라 패시브 스킬 자동 발동 타이머를 재구성
 	RebuildPassiveSkillTimers_Server();
-}
-
-float AMSPlayerCharacter::ComputeFinalInterval(float BaseCoolTime) const
-{
-	if (BaseCoolTime <= 0.f) return 0.f;
-
-	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 가져오기
-	float CooldownReduction = 0.f;
-	if (AttributeSet)
-	{
-		CooldownReduction = AttributeSet->GetCooldownReduction();
-	}
-
-	// 쿨타임 감소 비율은 최대 95%까지만 적용
-	CooldownReduction = FMath::Clamp(CooldownReduction, 0.f, 0.95f);
-
-	// 스킬 기본 쿨타임 * 쿨타임 감소 비율로 최종 쿨타임 계산
-	const float FinalInterval = BaseCoolTime * (1.f - CooldownReduction);
-
-	// 스킬의 최소 쿨타임은 0.05초로 제한
-	return FMath::Max(0.05f, FinalInterval);
 }
 
 void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)

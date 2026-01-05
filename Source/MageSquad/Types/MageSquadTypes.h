@@ -69,6 +69,77 @@ public:
 
 /**
  * 작성자: 김준형
+ * 작성일: 25/12/20
+ *
+ * 스킬 슬롯 런타임 데이터
+ * 스킬 데이터테이블의 행을 캐싱하여, 어빌리티가 매번 DT를 조회하지 않도록 함
+ * GameplayEvent의 OptionalObject로 전달하기 위해 UObject를 상속
+ */
+UCLASS(BlueprintType)
+class MAGESQUAD_API UMSSkillSlotRuntimeData : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	// 스킬 행 초기화 함수
+	void InitFromRow(const FMSSkillList& InRow, int32 InSlotIndex)
+	{
+		SkillRow = InRow;
+		SlotIndex = InSlotIndex;
+	}
+
+public:
+	// 어떤 슬롯에서 발생한 이벤트인지(디버깅/확장용)
+	UPROPERTY(BlueprintReadOnly)
+	int32 SlotIndex = INDEX_NONE;
+
+	// 해당 스킬의 최종 데이터(레벨 반영된 한 행)
+	UPROPERTY(BlueprintReadOnly)
+	FMSSkillList SkillRow;
+};
+
+
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/20
+ *
+ * 네트워크로 전달되는 최소 스킬 슬롯 정보
+ * 플레이어는 "어떤 스킬을 갖고 있는지"와 "쿨타임"만 알고, 실제 스킬 동작은 어빌리티에서 처리
+ */
+USTRUCT(BlueprintType)
+struct MAGESQUAD_API FMSPlayerSkillSlotNet
+{
+	GENERATED_BODY()
+
+	// 스킬 종류 (1: 자동(패시브), 2: 좌클릭 액티브, 3: 우클릭 액티브)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	int32 SkillType = 0;
+
+	// 스킬 ID. 스킬 식별용
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	int32 SkillID = 0;
+
+	// 스킬 레벨
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	int32 SkillLevel = 0;
+
+	// 스킬 어빌리티를 활성화할 이벤트 태그
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	FGameplayTag SkillEventTag;
+
+	// 스킬의 원본 쿨타임
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	float BaseCoolTime = 0.f;
+
+	bool IsValid() const
+	{
+		return SkillID > 0 && SkillEventTag.IsValid();
+	}
+};
+
+
+/**
+ * 작성자: 김준형
  * 작성일: 25/12/15
  *
  * 발사체의 원본 데이터
@@ -249,77 +320,6 @@ public:
 	// Behavior 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
-};
-
-
-/**
- * 작성자: 김준형
- * 작성일: 25/12/20
- *
- * 스킬 슬롯 런타임 데이터
- * 스킬 데이터테이블의 행을 캐싱하여, 어빌리티가 매번 DT를 조회하지 않도록 함
- * GameplayEvent의 OptionalObject로 전달하기 위해 UObject를 상속
- */
-UCLASS(BlueprintType)
-class MAGESQUAD_API UMSSkillSlotRuntimeData : public UObject
-{
-	GENERATED_BODY()
-
-public:
-	// 스킬 행 초기화 함수
-	void InitFromRow(const FMSSkillList& InRow, int32 InSlotIndex)
-	{
-		SkillRow = InRow;
-		SlotIndex = InSlotIndex;
-	}
-
-public:
-	// 어떤 슬롯에서 발생한 이벤트인지(디버깅/확장용)
-	UPROPERTY(BlueprintReadOnly)
-	int32 SlotIndex = INDEX_NONE;
-
-	// 해당 스킬의 최종 데이터(레벨 반영된 한 행)
-	UPROPERTY(BlueprintReadOnly)
-	FMSSkillList SkillRow;
-};
-
-
-/**
- * 작성자: 김준형
- * 작성일: 25/12/20
- *
- * 네트워크로 전달되는 최소 스킬 슬롯 정보
- * 플레이어는 "어떤 스킬을 갖고 있는지"와 "쿨타임"만 알고, 실제 스킬 동작은 어빌리티에서 처리
- */
-USTRUCT(BlueprintType)
-struct MAGESQUAD_API FMSPlayerSkillSlotNet
-{
-	GENERATED_BODY()
-
-	// 스킬 종류 (1: 자동(패시브), 2: 좌클릭 액티브, 3: 우클릭 액티브)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
-	int32 SkillType = 0;
-
-	// 스킬 ID. 스킬 식별용
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
-	int32 SkillID = 0;
-
-	// 스킬 레벨
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
-	int32 SkillLevel = 0;
-
-	// 스킬 어빌리티를 활성화할 이벤트 태그
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
-	FGameplayTag SkillEventTag;
-
-	// 스킬의 원본 쿨타임
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
-	float BaseCoolTime = 0.f;
-
-	bool IsValid() const
-	{
-		return SkillID > 0 && SkillEventTag.IsValid();
-	}
 };
 
 

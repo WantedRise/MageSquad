@@ -167,14 +167,10 @@ private:
 
 
 	/*****************************************************
-	* Skill Slot Section
+	* Attack Skill Section (Passive/Active)
 	*****************************************************/
 public:
-	/**
-	 * 스킬 획득 함수 (외부에서 호출)
-	 * 서버에서 호출하는 것을 권장. 클라이언트 호출도 안전하게 ServerRPC로 처리
-	 * SkillType에 따라 슬롯에 장착(패시브: 4칸 중 빈 칸, 액티브: 좌/우 고정)
-	 */
+	// 스킬 획득 함수 (외부 호출 가능)
 	UFUNCTION(BlueprintCallable, Category = "Custom | Skill")
 	void AcquireSkill(int32 SkillID);
 
@@ -187,39 +183,41 @@ protected:
 	UFUNCTION()
 	void OnRep_SkillSlots();
 
-protected:
-	// 스킬 슬롯
-	UPROPERTY(ReplicatedUsing = OnRep_SkillSlots)
-	TArray<FMSPlayerSkillSlotNet> SkillSlots;
-
 private:
-	// 스킬 슬롯 보정 함수 (배열/런타임 데이터/타이머)
-	void EnsureSkillSlotArrays();
+	// 서버: 스킬 획득 내부 처리 함수
+	void AcquireSkill_Server(int32 SkillID);
 
 	// 서버에게 스킬 획득을 요청하는 함수 ServerRPC
 	UFUNCTION(Server, Reliable)
 	void ServerRPCAcquireSkill(int32 SkillID);
 
-	// 서버에게 액티브 스킬 사용을 요청하는 함수 ServerRPC
+	// 스킬 슬롯 보정 함수 (배열/런타임 데이터/타이머)
+	void EnsureSkillSlotArrays();
+
+
+	// 서버: 스킬 슬롯에서 유효한 스킬 이벤트를 발사하는 함수 (발사 결과 반환)
+	bool SendSkillActive_Server(int32 SlotIndex);
+
+	// 서버에게 스킬 발사 요청하는 함수 ServerRPC
 	UFUNCTION(Server, Reliable)
-	void ServerRPCUseActiveSkillSlot(uint8 SlotIndex);
-
-	// 액티브 스킬 실제 트리거 함수 (서버 전용)
-	void HandleActiveSkillSlot_Server(int32 SlotIndex);
+	void ServerRPCSendSkillActive(uint8 SlotIndex);
 
 
-
-	// SkillType에 맞게 슬롯에 장착하는 함수들 (서버 전용)
+	// 서버: SkillType에 맞는 스킬 장착 함수
 	void EquipSkillFromRow_Server(const FMSSkillList& Row);
-	void SetSkillSlot_Server(int32 SlotIndex, const FMSSkillList& Row);
+
+	// 서버: 장착 or 갱신할 패시브 스킬 슬롯 반환 함수
 	int32 FindOrAllocatePassiveSlotIndex_Server(int32 SkillID) const;
 
 
-	// 패시브 스킬 자동 발동 타이머 재구성 함수 (서버 전용)
+	// 서버: 패시브 스킬 자동 발동 타이머 재구성 함수
 	void RebuildPassiveSkillTimers_Server();
 
-	// 패시브 스킬 실제 자동 발동 트리거 함수 (서버 전용)
-	void HandlePassiveSkillTimer_Server(int32 SlotIndex);
+	// 서버: 패시브 스킬 실제 자동 발동 트리거 함수
+	void SendPassiveSkillActive_Server(int32 SlotIndex);
+
+	// 패시브 스킬 자동 사용 주기 계산 함수
+	float ComputeFinalInterval(float BaseCoolTime) const;
 
 
 	// 플레이어 능력치(AttributeSet)의 쿨타임 감소 속성 변경 델리게이트 바인딩 함수
@@ -228,10 +226,11 @@ private:
 	// 속성 변경에 따른 콜백 함수
 	void OnCooldownReductionChanged(const FOnAttributeChangeData& Data);
 
-	// 최종 자동 사용 주기 계산 함수
-	float ComputeFinalInterval(float BaseCoolTime) const;
+protected:
+	// 스킬 슬롯
+	UPROPERTY(ReplicatedUsing = OnRep_SkillSlots)
+	TArray<FMSPlayerSkillSlotNet> SkillSlots;
 
-private:
 	// 패시브 스킬 타이머 핸들(4개)
 	TArray<FTimerHandle> PassiveSkillTimerHandles;
 
@@ -245,7 +244,7 @@ private:
 
 
 	/*****************************************************
-	* Non-Skill Ability Section
+	* Non Attack Skill Section
 	*****************************************************/
 private:
 	// 어빌리티 트리거 함수
