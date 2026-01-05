@@ -8,6 +8,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "InputActionValue.h"
 #include "Types/MageSquadTypes.h"
+#include "DataAssets/Player/DA_PlayerStartUpData.h"
 #include "MSPlayerCharacter.generated.h"
 
 /**
@@ -284,6 +285,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Custom | Player")
 	void SetPlayerData(const FPlayerStartAbilityData& InPlayerData);
 
+	UDA_PlayerStartUpData* GetPlayerStartUpData() const { return PlayerStartUpData; }
 protected:
 	// 플레이어 시작 데이터 에셋
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Player")

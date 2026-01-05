@@ -35,6 +35,7 @@ public class MageSquad : ModuleRules
             "PreLoadScreen",
             "Paper2D",
             "OnlineSubsystem",
+            "OnlineSubsystemUtils",
             "OnlineSubsystemSteam",
             "SignificanceManager"
         });

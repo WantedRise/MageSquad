@@ -176,7 +176,7 @@ private:
 	
 	/** 내부 스폰 로직 (풀에서 가져오거나 새로 생성) */
 	AMSBaseEnemy* SpawnMonsterInternal(const FName& MonsterID, const FVector& Location);
-	
+
 	/** TileMap 기반 랜덤 스폰 위치 검색 */
 	bool GetRandomSpawnLocation(APlayerController* TargetPlayer, FVector& OutLocation);
 
@@ -192,9 +192,12 @@ private:
 public:
 	/** DataTable 데이터로 Enemy 초기화 (메시, 애니메이션, GAS) */
 	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
+
 	/** Enemy 활성화 (위치 설정, AI 시작) */
 	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location) const;
-	
+
+	// 타일맵 찾기 및 캐싱
+	AMSSpawnTileMap* GetSpawnTileMap();
 private:
 	/** Enemy 비활성화 (숨김, 콜리전 끄기, AI 정지) */
 	void DeactivateEnemy(AMSBaseEnemy* Enemy);
@@ -223,9 +226,6 @@ private:
 	
 	/** 서버 권한 체크 */
 	bool HasAuthority() const;
-	
-	// 타일맵 찾기 및 캐싱
-	AMSSpawnTileMap* GetSpawnTileMap();
 
 	// 모든 플레이어 컨트롤러 수집
 	TArray<APlayerController*> GetAllPlayerControllers() const;

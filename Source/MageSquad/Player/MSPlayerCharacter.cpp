@@ -39,6 +39,9 @@
 #include "Net/UnrealNetwork.h"
 
 #include "MSGameplayTags.h"
+#include <System/MSCharacterDataSubsystem.h>
+#include "MageSquad.h"
+#include <System/MSLevelManagerSubsystem.h>
 
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
@@ -172,6 +175,8 @@ void AMSPlayerCharacter::BeginPlay()
 		// 거리 표기 비활성화
 		DirectionIndicatorComponent->bShowDistance = false;
 	}
+
+
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -860,15 +865,14 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbilityClass));
 		}
 	}
-	// 시작 스킬 획득
+
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS) return;
+
 	for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
 	{
 		if (*StartSkillData.SkillAbilty)
 		{
-			// PlayerState 가져오기
-			AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
-			if (!PS) return;
-
 			PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
 
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));

@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSLobbyPlayerState.h"
@@ -8,6 +8,8 @@
 #include "Net/UnrealNetwork.h"
 #include <System/MSSteamManagerSubsystem.h>
 #include <GameModes/MSLobbyGameMode.h>
+#include <System/MSLevelManagerSubsystem.h>
+#include "Player/MSPlayerCharacter.h"
 
 AMSLobbyPlayerState::AMSLobbyPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -28,7 +30,6 @@ void AMSLobbyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void AMSLobbyPlayerState::OnRep_PlayerName()
 {
 	Super::OnRep_PlayerName();
-
 
 }
 // 준비 상태 설정 변경 시 GameMode에 알려 전체 준비 상태를 재계산한다.
@@ -102,4 +103,3 @@ void AMSLobbyPlayerState::OnRep_IsReady()
 		OnLobbyReadyStateChanged.Broadcast(bIsReady);
 	}
 }
-

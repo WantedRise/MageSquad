@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSLobbyCharacter.h"
@@ -9,6 +9,10 @@
 #include "GameFramework/PlayerState.h"
 #include "MageSquad.h"
 #include "MSLobbyPlayerState.h"
+#include "DataStructs/MSCharacterData.h"
+#include <System/MSCharacterDataSubsystem.h>
+#include "Components/StaticMeshComponent.h"
+
 // Sets default values
 AMSLobbyCharacter::AMSLobbyCharacter()
 {
@@ -24,6 +28,15 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 	{
 		Widget3DPassThroughMaterial = MaterialFinder.Object;
 	}
+
+	StaffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Staff"));
+	StaffMesh->SetupAttachment(GetMesh(), StaffAttachSocketName);
+	StaffMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	StaffMesh->SetGenerateOverlapEvents(false);
+	StaffMesh->PrimaryComponentTick.bCanEverTick = false;
+	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
+	StaffMesh->bReceivesDecals = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -75,6 +88,7 @@ void AMSLobbyCharacter::PossessedBy(AController* NewController)
 	}
 
 	InitializeLobbyCharacterFromPlayerState();
+
 }
 
 void AMSLobbyCharacter::OnRep_PlayerState()
@@ -97,7 +111,6 @@ void AMSLobbyCharacter::InitializeLobbyCharacterFromPlayerState()
 		PS->OnLobbyReadyStateChanged.AddUObject(this, &AMSLobbyCharacter::UpdateReadyStatusUI);
 	}
 }
-
 
 // Called every frame
 void AMSLobbyCharacter::Tick(float DeltaTime)
@@ -135,6 +148,3 @@ void AMSLobbyCharacter::UpdateReadyStatusUI(bool bReady)
 		LobbyPlayerEntryWidget->SetTextReadyStatus(bReady);
 	}
 }
-
-
-

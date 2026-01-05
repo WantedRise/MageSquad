@@ -11,6 +11,13 @@
 #include "Widgets/Lobby/MSLobbyReadyWidget.h"
 #include "GameStates/MSLobbyGameState.h"
 #include <System/MSLevelManagerSubsystem.h>
+#include "Widgets/Lobby/MSCharacterSelectWidget.h"
+#include "DataStructs/MSCharacterData.h"
+#include <Interfaces/CharacterAppearanceInterface.h>
+#include <System/MSCharacterDataSubsystem.h>
+#include "Player/MSPlayerCharacter.h"
+#include "DataAssets/Player/DA_CharacterData.h"
+#include "Player/MSLobbyCharacter.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -61,6 +68,18 @@ void AMSLobbyPlayerController::BeginPlay()
 	}
 }
 
+void AMSLobbyPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (LobbyMainWidget)
+	{
+		if (UMSCharacterSelectWidget* CharacterSelectWidget = LobbyMainWidget->GetCharacterSelectWidget())
+		{
+			//CharacterSelectWidget->UpdatePlayerState();
+		}
+	}
+}
+
 void AMSLobbyPlayerController::CreateLobbyUI()
 {
 	if (LobbyMainWidget || !LobbyMainWidgetClass)
@@ -81,4 +100,38 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 		//SetInputMode(InputMode);
 		bShowMouseCursor = true;
 	}
+}
+
+void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(FName InCharacterId)
+{
+	if (InCharacterId == NAME_None)
+		return;
+
+	auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	if (!CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
+	{
+		return;
+	}
+
+	FTransform TM = GetPawn() ? GetPawn()->GetActorTransform() : FTransform::Identity;
+
+	if (APawn* PlayerOldPawn = GetPawn())
+	{
+		PlayerOldPawn->Destroy();
+	}
+
+	if (const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByCharacterId(InCharacterId))
+	{
+		if (CharacterSelection->LobbyCharacterClass)
+		{
+			APawn* NewPawn = GetWorld()->SpawnActor<APawn>(CharacterSelection->LobbyCharacterClass, TM);
+			Possess(NewPawn);
+		}
+	}
+
+	const FUniqueNetIdRepl NetId = PlayerState->GetUniqueId();
+	if (!NetId.IsValid())
+		return;
+
+	CharacterDataManager->CacheSelectedCharacter(NetId, InCharacterId);
 }

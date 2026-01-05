@@ -15,7 +15,9 @@
 #include "System/MSLevelManagerSubsystem.h"
 #include "System/MSMissionDataSubsystem.h"
 #include <Player/MSPlayerController.h>
-
+#include <System/MSCharacterDataSubsystem.h>
+#include "OnlineSubsystemTypes.h"
+#include "DataAssets/Player/DA_CharacterData.h"
 
 AMSGameMode::AMSGameMode()
 {
@@ -140,4 +142,43 @@ void AMSGameMode::NotifyClientsShowLoadingWidget()
 			PC->ClientShowLoadingWidget();
 		}
 	}
+}
+
+void AMSGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	
+}
+
+void AMSGameMode::RestartPlayer(AController* NewPlayer)
+{
+	AMSPlayerState* PS = NewPlayer->GetPlayerState<AMSPlayerState>();
+	if (!PS)
+	{
+		Super::RestartPlayer(NewPlayer);
+		return;
+	}
+
+	const FUniqueNetIdRepl NetId = PS->GetUniqueId();
+	auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	if (!NetId.IsValid() || !CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
+	{
+		Super::RestartPlayer(NewPlayer);
+		return;
+	}
+
+	const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByNetId(NetId);
+	if (!CharacterSelection || !CharacterSelection->PlayerCharacterClass)
+	{
+		return;
+	}
+	FTransform SpawnTM = ChoosePlayerStart(NewPlayer)->GetActorTransform();
+
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
+		CharacterSelection->PlayerCharacterClass,
+		SpawnTM
+	);
+
+	NewPlayer->Possess(NewPawn);
 }

@@ -53,6 +53,9 @@ struct MAGESQUAD_API FPlayerStartAbilityData
 	GENERATED_BODY()
 
 public:
+	// 초기 스탯 설명
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FText> InitialStatInfo;
 	// 플레이어가 시작 시 부여받는 어빌리티 목록
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
 	TArray<TSubclassOf<class UGameplayAbility>> Abilties;
@@ -64,6 +67,7 @@ public:
 	// 플레이어가 시작 시 한 번 적용되는 게임플레이 이펙트 목록
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
+
 };
 
 

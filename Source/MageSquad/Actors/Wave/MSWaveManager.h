@@ -32,6 +32,8 @@ public:
 	void StartWaveTimer(float DelayNextWaveTime, float EndTime);
 	
 	void StopWaveTimer();
+	UFUNCTION()
+	void SetWavePaused(bool bIsStartCutscene);
 protected:
 	/* ===== Internal ===== */
 	void ScheduleNextWave();

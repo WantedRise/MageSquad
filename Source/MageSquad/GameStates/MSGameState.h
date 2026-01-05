@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
 #include "Containers/Ticker.h"
+#include "DataStructs/MSMissionProgressUIData.h"
 #include "MSGameState.generated.h"
 
 // 게임 진행 수치 변동 델리게이트
@@ -14,7 +15,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnProgressUpdated, float/* Normalized */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionChanged, int32/* MissionID */);
 
 // 미션 진행 수치 변동 델리게이트
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionProgressChanged, float);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionProgressChanged, const FMSMissionProgressUIData&);
 
 // 미션 종료 델리게이트
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnMissionFinished, int32/* MissionID */, bool/* Result*/);
@@ -36,6 +37,8 @@ DECLARE_MULTICAST_DELEGATE(FOnSharedLivesDepleted);
 
 // 파라미터로 연출 시작(true)인지 종료(false)인지를 넘김 - 임희섭
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossSpawnCutsceneStateChanged, bool, bIsStart);
+
+struct FMSMissionProgressUIData;
 
 /*
 * 작성자: 이상준
@@ -108,7 +111,7 @@ public:
 	UFUNCTION()
 	void SetCurrentMissionID(int32 InMissionID);
 	//미션 진행도 설정
-	void SetMissionProgress(float NewProgress);
+	void SetMissionProgress(const FMSMissionProgressUIData& NewData);
 	//미션 완료 알림
 	void NotifyMissionFinished(bool bSuccess);
 	//
@@ -120,7 +123,7 @@ protected:
 	int32 CurrentMissionID = INDEX_NONE;
 	//미션 진행도
 	UPROPERTY(ReplicatedUsing = OnRep_MissionProgress)
-	float MissionProgress = 0.001f;
+	FMSMissionProgressUIData MissionProgress;
 	//끝난 미션 카운트
 	UPROPERTY(ReplicatedUsing = OnRep_MissionFinished)
 	uint8 MissionFinishedCounter = 0;

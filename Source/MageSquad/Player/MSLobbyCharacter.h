@@ -1,9 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/CharacterAppearanceInterface.h"
 #include "MSLobbyCharacter.generated.h"
 
 /*
@@ -52,7 +53,6 @@ public:
 
 protected:
 	void InitializeLobbyCharacterFromPlayerState();
-	
     UPROPERTY()
     TObjectPtr<UMaterial> Widget3DPassThroughMaterial;
 
@@ -65,4 +65,10 @@ protected:
 	// PlayerState 변경 시 UI 갱신에 사용
 	UPROPERTY()
 	class UMSLobbyPlayerEntryWidget* LobbyPlayerEntryWidget;
+	// 지팡이 메시
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Weapon")
+	TObjectPtr<class UStaticMeshComponent> StaffMesh;
+	// 지팡이 메시를 부착할 소켓 이름
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Weapon")
+	FName StaffAttachSocketName = TEXT("s_Staff");
 };

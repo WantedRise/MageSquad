@@ -9,7 +9,7 @@
 #include "InputActionValue.h"
 #include "MSPlayerController.generated.h"
 
-
+struct FMSMissionProgressUIData;
 class UMSLevelUpPanel;
 /**
  * 작성자: 김준형
@@ -66,7 +66,7 @@ private: /* 미션 */
 	void OnMissionFinished(int32 MissionId, bool bSuccess);
 	// 미션 진행도 변경 시 호출되는 콜백
 	UFUNCTION()
-	void OnMissionProgressChanged(float Normalized);
+	void OnMissionProgressChanged(const FMSMissionProgressUIData& Data);
 
 	// 미션 UI의 표시 타이밍과 초기 설정을 처리
 	void HandleMissionStarted(const FMSMissionRow& MissionData);
