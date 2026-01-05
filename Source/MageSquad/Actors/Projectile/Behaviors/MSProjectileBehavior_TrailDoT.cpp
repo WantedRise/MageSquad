@@ -1,0 +1,364 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "Actors/Projectile/Behaviors/MSProjectileBehavior_TrailDoT.h"
+
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
+#include "GameplayEffect.h"
+#include "MSGameplayTags.h"
+#include "Actors/Projectile/MSBaseProjectile.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Engine/OverlapResult.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
+
+void UMSProjectileBehavior_TrailDoT::OnBegin_Implementation()
+{
+	DirectHitActors.Reset();
+	TrailPoints.Reset();
+
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	StartLocation = OwnerActor->GetActorLocation();
+	VirtualLocation = StartLocation;
+	TrailPoints.Add(StartLocation);
+	bMovementStopped = false;
+
+	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
+	if (!MoveComp)
+	{
+		return;
+	}
+
+	MoveComp->StopMovementImmediately();
+	MoveComp->Velocity = FVector::ZeroVector;
+
+	TravelDirection = RuntimeData.Direction.GetSafeNormal();
+	if (TravelDirection.IsNearlyZero())
+	{
+		TravelDirection = OwnerActor->GetActorForwardVector();
+	}
+
+	OwnerActor->EnableCollision(false);
+
+	if (UWorld* World = OwnerActor->GetWorld())
+	{
+		World->GetTimerManager().SetTimer(
+			TrailSampleTimerHandle,
+			this,
+			&UMSProjectileBehavior_TrailDoT::SampleTrailPoint,
+			TrailSampleInterval,
+			true
+		);
+
+		const float DamageInterval = (RuntimeData.DamageInterval > 0.f) ? RuntimeData.DamageInterval : 0.5f;
+		World->GetTimerManager().SetTimer(
+			TrailDamageTimerHandle,
+			this,
+			&UMSProjectileBehavior_TrailDoT::TickTrailDamage,
+			DamageInterval,
+			true
+		);
+
+		const float TrailLifetime = (RuntimeData.LifeTime > 0.f) ? RuntimeData.LifeTime : DefaultTrailLifetime;
+		World->GetTimerManager().SetTimer(
+			TrailEndTimerHandle,
+			this,
+			&UMSProjectileBehavior_TrailDoT::EndTrail,
+			TrailLifetime,
+			false
+		);
+	}
+}
+
+void UMSProjectileBehavior_TrailDoT::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+{
+	if (!IsAuthority())
+	{
+		return;
+	}
+
+	if (!CanHitDirectTarget(Target))
+	{
+		return;
+	}
+
+	DirectHitActors.Add(Target);
+	ApplyDamageToTarget(Target, RuntimeData.Damage);
+	(void)HitResult;
+}
+
+void UMSProjectileBehavior_TrailDoT::OnEnd_Implementation()
+{
+	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
+	{
+		if (UWorld* World = OwnerActor->GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(TrailSampleTimerHandle);
+			World->GetTimerManager().ClearTimer(TrailDamageTimerHandle);
+			World->GetTimerManager().ClearTimer(TrailEndTimerHandle);
+		}
+	}
+
+	TrailPoints.Reset();
+	DirectHitActors.Reset();
+}
+
+void UMSProjectileBehavior_TrailDoT::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+{
+	if (!InOwner)
+	{
+		return;
+	}
+
+	const float Base = (InRuntimeData.Radius > 0.f) ? InRuntimeData.Radius : 100.f;
+	InOwner->SetCollisionRadius(Base * 0.15f);
+}
+
+void UMSProjectileBehavior_TrailDoT::SampleTrailPoint()
+{
+	if (!IsAuthority())
+	{
+		return;
+	}
+
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	if (bMovementStopped)
+	{
+		return;
+	}
+
+	const float Step = RuntimeData.ProjectileSpeed * TrailSampleInterval;
+	VirtualLocation += TravelDirection * Step;
+	TrailPoints.Add(VirtualLocation);
+	HandleDirectHitAtPoint(VirtualLocation);
+
+	const float MaxDistance = RuntimeData.Radius;
+	if (MaxDistance > 0.f)
+	{
+		const float Dist = FVector::Dist(StartLocation, VirtualLocation);
+		if (Dist >= MaxDistance)
+		{
+			bMovementStopped = true;
+			if (UWorld* World = OwnerActor->GetWorld())
+			{
+				World->GetTimerManager().ClearTimer(TrailSampleTimerHandle);
+			}
+		}
+	}
+}
+
+void UMSProjectileBehavior_TrailDoT::TickTrailDamage()
+{
+	if (!IsAuthority())
+	{
+		return;
+	}
+
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	if (!RuntimeData.DamageEffect || TrailPoints.Num() == 0)
+	{
+		return;
+	}
+
+	const float TrailRadius = ((RuntimeData.Radius > 0.f) ? RuntimeData.Radius : 100.f) * 0.15f;
+	const float DotDamage = RuntimeData.Damage * 0.2f;
+
+	UWorld* World = OwnerActor->GetWorld();
+	if (!World || TrailRadius <= 0.f)
+	{
+		return;
+	}
+
+	TSet<AActor*> UniqueTargets;
+	for (const FVector& Point : TrailPoints)
+	{
+		TArray<FOverlapResult> Hits;
+		FCollisionObjectQueryParams ObjParams;
+		ObjParams.AddObjectTypesToQuery(ECC_GameTraceChannel3); // MSEnemy
+
+		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TrailDotOverlap), false);
+		QueryParams.AddIgnoredActor(OwnerActor);
+
+		const bool bAnyHit = World->OverlapMultiByObjectType(
+			Hits,
+			Point,
+			FQuat::Identity,
+			ObjParams,
+			FCollisionShape::MakeSphere(TrailRadius),
+			QueryParams
+		);
+
+		if (!bAnyHit)
+		{
+			continue;
+		}
+
+		for (const FOverlapResult& H : Hits)
+		{
+			if (AActor* HitActor = H.GetActor())
+			{
+				UniqueTargets.Add(HitActor);
+			}
+		}
+	}
+
+	for (AActor* Target : UniqueTargets)
+	{
+		ApplyDamageToTarget(Target, DotDamage);
+	}
+}
+
+void UMSProjectileBehavior_TrailDoT::EndTrail()
+{
+	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
+	{
+		OwnerActor->Destroy();
+	}
+}
+
+void UMSProjectileBehavior_TrailDoT::HandleDirectHitAtPoint(const FVector& Point)
+{
+	if (!IsAuthority() || RuntimeData.DamageEffect == nullptr)
+	{
+		return;
+	}
+
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	const float HitRadius = ((RuntimeData.Radius > 0.f) ? RuntimeData.Radius : 100.f) * 0.15f;
+	if (HitRadius <= 0.f)
+	{
+		return;
+	}
+
+	UWorld* World = OwnerActor->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	TArray<FOverlapResult> Hits;
+	FCollisionObjectQueryParams ObjParams;
+	ObjParams.AddObjectTypesToQuery(ECC_GameTraceChannel3); // MSEnemy
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TrailDirectOverlap), false);
+	QueryParams.AddIgnoredActor(OwnerActor);
+
+	const bool bAnyHit = World->OverlapMultiByObjectType(
+		Hits,
+		Point,
+		FQuat::Identity,
+		ObjParams,
+		FCollisionShape::MakeSphere(HitRadius),
+		QueryParams
+	);
+
+	if (!bAnyHit)
+	{
+		return;
+	}
+
+	for (const FOverlapResult& H : Hits)
+	{
+		AActor* HitActor = H.GetActor();
+		if (!HitActor || DirectHitActors.Contains(HitActor))
+		{
+			continue;
+		}
+
+		if (!CanHitDirectTarget(HitActor))
+		{
+			continue;
+		}
+
+		DirectHitActors.Add(HitActor);
+		ApplyDamageToTarget(HitActor, RuntimeData.Damage);
+	}
+}
+
+bool UMSProjectileBehavior_TrailDoT::CanHitDirectTarget(AActor* Target) const
+{
+	if (!IsValid(Target))
+	{
+		return false;
+	}
+
+	const AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return false;
+	}
+
+	if (Target == OwnerActor || Target == OwnerActor->GetOwner())
+	{
+		return false;
+	}
+
+	if (APawn* Inst = OwnerActor->GetInstigator())
+	{
+		if (Target == Inst)
+		{
+			return false;
+		}
+	}
+
+	if (DirectHitActors.Contains(Target))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void UMSProjectileBehavior_TrailDoT::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+{
+	if (!Target || !RuntimeData.DamageEffect)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+
+	if (!TargetASC)
+	{
+		return;
+	}
+
+	FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
+	if (AMSBaseProjectile* OwnerProj = GetOwnerActor())
+	{
+		Context.AddSourceObject(OwnerProj);
+	}
+
+	FGameplayEffectSpecHandle SpecHandle =
+		TargetASC->MakeOutgoingSpec(RuntimeData.DamageEffect, 1.f, Context);
+	if (!SpecHandle.IsValid())
+	{
+		return;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (DamageAmount * -1.f));
+	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+}
+
