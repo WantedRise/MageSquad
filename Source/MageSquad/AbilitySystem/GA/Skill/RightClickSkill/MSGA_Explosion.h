@@ -32,9 +32,9 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 protected:
-	// Explosion 스킬 ID는 31
+	// Explosion 스킬 ID는 21
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 CurrentSkillID = 31;
+	int32 CurrentSkillID = 21;
 	
 	// 피해량
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

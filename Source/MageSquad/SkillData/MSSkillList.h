@@ -101,4 +101,8 @@ public:
 	// 업그레이드 정보
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FMSUpgradeInfo> UpgradeInfos;
+	
+	// 액티브 스킬 쿨타임 태그
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag SkillCooldownTag;
 };

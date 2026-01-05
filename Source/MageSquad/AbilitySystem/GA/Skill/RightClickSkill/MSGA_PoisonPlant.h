@@ -25,9 +25,9 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 protected:
-	// PoisonPlant 스킬 ID는 32
+	// PoisonPlant 스킬 ID는 22
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 CurrentSkillID = 32;
+	int32 CurrentSkillID = 22;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<float> BaseDamageSequence = { 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f };

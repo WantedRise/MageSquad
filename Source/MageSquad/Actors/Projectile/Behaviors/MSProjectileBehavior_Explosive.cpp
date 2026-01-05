@@ -33,7 +33,7 @@ void UMSProjectileBehavior_Explosive::OnBegin_Implementation()
 		RootPrim->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);
 	}
 
-MoveComp->bInitialVelocityInLocalSpace = false;
+	MoveComp->bInitialVelocityInLocalSpace = false;
 	MoveComp->InitialSpeed = RuntimeData.ProjectileSpeed;
 	MoveComp->MaxSpeed = RuntimeData.ProjectileSpeed;
 	MoveComp->bRotationFollowsVelocity = true;
