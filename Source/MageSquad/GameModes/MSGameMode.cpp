@@ -146,9 +146,35 @@ void AMSGameMode::NotifyClientsShowLoadingWidget()
 void AMSGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+
+	
 }
 
 void AMSGameMode::RestartPlayer(AController* NewPlayer)
 {
-	Super::RestartPlayer(NewPlayer);
+	AMSPlayerState* PS = NewPlayer->GetPlayerState<AMSPlayerState>();
+	if (!PS)
+	{
+		Super::RestartPlayer(NewPlayer);
+		return;
+	}
+
+	const FUniqueNetIdRepl NetId = PS->GetUniqueId();
+	auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	if (!NetId.IsValid() || !CharacterDataManager || CharacterDataManager->GetAllPlayerCharacter().Num() <= 0)
+	{
+		Super::RestartPlayer(NewPlayer);
+		return;
+	}
+
+	TSubclassOf<AMSPlayerCharacter> Test;
+	CharacterDataManager->PopCachedSelectedCharacterForPlayer(NetId, Test);
+	FTransform SpawnTM = ChoosePlayerStart(NewPlayer)->GetActorTransform();
+
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
+		Test,
+		SpawnTM
+	);
+
+	NewPlayer->Possess(NewPawn);
 }

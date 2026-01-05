@@ -11,6 +11,7 @@
 #include "MSLobbyPlayerState.h"
 #include "DataStructs/MSCharacterData.h"
 #include <System/MSCharacterDataSubsystem.h>
+#include "Components/StaticMeshComponent.h"
 
 // Sets default values
 AMSLobbyCharacter::AMSLobbyCharacter()
@@ -27,6 +28,15 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 	{
 		Widget3DPassThroughMaterial = MaterialFinder.Object;
 	}
+
+	StaffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Staff"));
+	StaffMesh->SetupAttachment(GetMesh(), StaffAttachSocketName);
+	StaffMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	StaffMesh->SetGenerateOverlapEvents(false);
+	StaffMesh->PrimaryComponentTick.bCanEverTick = false;
+	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
+	StaffMesh->bReceivesDecals = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -99,18 +109,8 @@ void AMSLobbyCharacter::InitializeLobbyCharacterFromPlayerState()
 		// 준비 상태 변경 시 UI 전환
 		// PlayerState의 Ready 상태 변경 → Ready / Cancel UI 토글
 		PS->OnLobbyReadyStateChanged.AddUObject(this, &AMSLobbyCharacter::UpdateReadyStatusUI);
-		PS->OnCharacterChanged.AddUObject(this, &AMSLobbyCharacter::UpdateCharacterAppearance);
-		UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-		const FMSCharacterData* Data = CharacterData->FindCharacterData(PS->GetSelectedCharacterID());
-		if (Data)
-		{
-			ApplyCharacterAppearance(*Data);
-		}
 	}
 }
-
-
-
 
 // Called every frame
 void AMSLobbyCharacter::Tick(float DeltaTime)
@@ -146,30 +146,5 @@ void AMSLobbyCharacter::UpdateReadyStatusUI(bool bReady)
 	{
 		UE_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("true"));
 		LobbyPlayerEntryWidget->SetTextReadyStatus(bReady);
-	}
-}
-
-void AMSLobbyCharacter::ApplyCharacterAppearance(const FMSCharacterData& CharacterData)
-{
-	// Material 교체
-	if (CharacterData.OverrideMaterial)
-	{
-		GetMesh()->SetMaterial(0, CharacterData.OverrideMaterial);
-	}
-
-	// Material 교체
-	if (CharacterData.StaffMesh)
-	{
-		//StaffMesh->SetStaticMesh(CharacterData.StaffMesh);
-	}
-}
-
-void AMSLobbyCharacter::UpdateCharacterAppearance(const FName& CharacterID)
-{
-	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-	const FMSCharacterData* Data = CharacterData->FindCharacterData(CharacterID);
-	if (Data)
-	{
-		ApplyCharacterAppearance(*Data);
 	}
 }

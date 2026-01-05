@@ -55,6 +55,8 @@ bool UMSLevelManagerSubsystem::ConsumeSelectedCharacter(const FUniqueNetIdRepl& 
 	return false;
 }
 
+
+
 void UMSLevelManagerSubsystem::TravelToLoadingLevel()
 {
     UGameplayStatics::OpenLevel(GetWorld(), FName(LoadingLevelURL));

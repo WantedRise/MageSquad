@@ -28,21 +28,21 @@ void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
             //호스트 표시
             PS->SetHost(true);
         }
+        //삭제
+        //// 이미 값이 있으면 건드리지 않음
+        //if (PS->GetSelectedCharacterID() != NAME_None)
+        //    return;
 
-        // 이미 값이 있으면 건드리지 않음
-        if (PS->GetSelectedCharacterID() != NAME_None)
-            return;
+        //UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+        //if (!CharacterData) return;
 
-        UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-        if (!CharacterData) return;
+        //const FName DefaultCharacterID = CharacterData->GetDefaultCharacterID();
 
-        const FName DefaultCharacterID = CharacterData->GetDefaultCharacterID();
+        //if (DefaultCharacterID == NAME_None)
+        //    return;
 
-        if (DefaultCharacterID == NAME_None)
-            return;
-
-        // ⭐ 디폴트 캐릭터 설정
-        PS->SetSelectedCharacter(DefaultCharacterID);
+        //// ⭐ 디폴트 캐릭터 설정
+        //PS->SetSelectedCharacter(DefaultCharacterID);
     }
 }
 
@@ -141,5 +141,3 @@ void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
         }
     }
 }
-
-

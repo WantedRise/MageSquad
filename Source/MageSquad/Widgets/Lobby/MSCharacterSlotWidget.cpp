@@ -5,6 +5,7 @@
 #include "DataStructs/MSCharacterData.h"
 #include "Components/Image.h"
 
+
 void UMSCharacterSlotWidget::InitSlot(FName InCharacterID, const FMSCharacterData& Data)
 {
     CharacterID = InCharacterID;
@@ -14,6 +15,15 @@ void UMSCharacterSlotWidget::InitSlot(FName InCharacterID, const FMSCharacterDat
     }
 }
 
+void UMSCharacterSlotWidget::InitSlot(TSubclassOf<AMSPlayerCharacter> InClass)
+{
+    PawnClass = InClass;
+    /*if (Data.Portrait)
+    {
+        Image_Portrait->SetBrushFromTexture(Data.Portrait);
+    }*/
+}
+
 void UMSCharacterSlotWidget::HiddenPortrait()
 {
     Image_Portrait->SetVisibility(ESlateVisibility::Hidden);
@@ -21,7 +31,8 @@ void UMSCharacterSlotWidget::HiddenPortrait()
 
 void UMSCharacterSlotWidget::HandleClicked()
 {
-    OnClicked.Broadcast(CharacterID);
+    //OnClicked.Broadcast(CharacterID);
+    OnCharacterClicked.Broadcast(PawnClass);
 }
 
 FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
@@ -30,7 +41,8 @@ FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
 {
     if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
     {
-        OnClicked.Broadcast(CharacterID);
+        //OnClicked.Broadcast(CharacterID);
+        OnCharacterClicked.Broadcast(PawnClass);
         return FReply::Handled();
     }
 

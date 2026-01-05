@@ -28,6 +28,7 @@ public:
 
     /** 인게임에서 캐릭터 선택 복원 */
     bool ConsumeSelectedCharacter(const FUniqueNetIdRepl& NetId, FName& OutCharacterID);
+
 public:
     //클라 로딩 전용 레벨로 이동
     void TravelToLoadingLevel();

@@ -32,9 +32,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRequestSetReady(bool bNewReady);
 	UFUNCTION(Server, Reliable)
-	void ServerSelectCharacter(FName CharacterID);
-
-	void ApplyCharacterPreview(FMSCharacterData Data);
+	void Server_SelectCharacter(TSubclassOf<AMSPlayerCharacter> SelectedClass);
 protected:
 	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;

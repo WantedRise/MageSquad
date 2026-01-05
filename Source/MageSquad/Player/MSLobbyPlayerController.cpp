@@ -14,6 +14,8 @@
 #include "Widgets/Lobby/MSCharacterSelectWidget.h"
 #include "DataStructs/MSCharacterData.h"
 #include <Interfaces/CharacterAppearanceInterface.h>
+#include <System/MSCharacterDataSubsystem.h>
+#include "Player/MSPlayerCharacter.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -71,7 +73,7 @@ void AMSLobbyPlayerController::OnRep_PlayerState()
 	{
 		if (UMSCharacterSelectWidget* CharacterSelectWidget = LobbyMainWidget->GetCharacterSelectWidget())
 		{
-			CharacterSelectWidget->UpdatePlayerState();
+			//CharacterSelectWidget->UpdatePlayerState();
 		}
 	}
 }
@@ -98,29 +100,41 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 	}
 }
 
-
-void AMSLobbyPlayerController::ServerSelectCharacter_Implementation(FName CharacterID)
+void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(
+	TSubclassOf<AMSPlayerCharacter> SelectedClass
+)
 {
-	AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>();
+	if (!SelectedClass)
+		return;
 
-	if (!PS) return;
-
-	PS->SetSelectedCharacter(CharacterID);
-
-	if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	if (!CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
 	{
-		LevelManager->SaveSelectedCharacter(PS->GetUniqueId(), CharacterID);
+		return;
 	}
-}
 
-// AMSLobbyPlayerController.cpp
-void AMSLobbyPlayerController::ApplyCharacterPreview(FMSCharacterData Data)
-{
-	APawn* PlayerPawn = GetPawn();
-	if (!PlayerPawn) return;
-	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("PlayerPawn"));
-	if (ICharacterAppearanceInterface* Appearance = Cast<ICharacterAppearanceInterface>(PlayerPawn))
+	FTransform TM = GetPawn()
+		? GetPawn()->GetActorTransform()
+		: FTransform::Identity;
+
+	if (APawn* PlayerOldPawn = GetPawn())
 	{
-		Appearance->ApplyCharacterAppearance(Data);
+		PlayerOldPawn->Destroy();
 	}
+
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
+		SelectedClass,
+		TM
+	);
+
+	Possess(NewPawn);
+
+	const FUniqueNetIdRepl NetId = PlayerState->GetUniqueId();
+	if (!NetId.IsValid())
+		return;
+
+	UMSCharacterDataSubsystem* Cache = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	if (!Cache) return;
+	Cache->CacheSelectedCharacterForPlayer(NetId, SelectedClass);
+
 }

@@ -20,6 +20,21 @@ class MAGESQUAD_API UDA_PlayerStartUpData : public UDataAsset
 	GENERATED_BODY()
 
 public:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName CharacterID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FText CharacterName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FText CharacterInfo;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UTexture2D* Portrait;
+    // 초기 스탯 설명
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FText> InitialStatInfo;
+
 	// 플레이어 시작 어빌리티/이펙트 데이터
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
 	FPlayerStartAbilityData PlayerStartAbilityData;

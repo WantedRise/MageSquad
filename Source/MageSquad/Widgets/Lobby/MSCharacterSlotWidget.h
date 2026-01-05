@@ -7,6 +7,10 @@
 #include "MSCharacterSlotWidget.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterSlotClicked, FName);
+DECLARE_MULTICAST_DELEGATE_OneParam(
+    FOnCharacterClicked,
+    TSubclassOf<class AMSPlayerCharacter>
+);
 
 struct FMSCharacterData;
 
@@ -21,8 +25,10 @@ public:
     virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 public:
     void InitSlot(FName InCharacterID,const FMSCharacterData& Data);
+    void InitSlot(TSubclassOf<AMSPlayerCharacter> InClass);
     void HiddenPortrait();
     FOnCharacterSlotClicked OnClicked;
+    FOnCharacterClicked OnCharacterClicked;
 protected:
     UPROPERTY(meta = (BindWidget))
     class UImage* Image_Portrait;
@@ -32,4 +38,6 @@ protected:
 
 private:
     FName CharacterID;
+    int32 CharacterIndex;
+    TSubclassOf<class AMSPlayerCharacter> PawnClass;
 };

@@ -9,6 +9,7 @@
 #include <System/MSSteamManagerSubsystem.h>
 #include <GameModes/MSLobbyGameMode.h>
 #include <System/MSLevelManagerSubsystem.h>
+#include "Player/MSPlayerCharacter.h"
 
 AMSLobbyPlayerState::AMSLobbyPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -29,7 +30,6 @@ void AMSLobbyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void AMSLobbyPlayerState::OnRep_PlayerName()
 {
 	Super::OnRep_PlayerName();
-
 
 }
 // 준비 상태 설정 변경 시 GameMode에 알려 전체 준비 상태를 재계산한다.
@@ -103,18 +103,3 @@ void AMSLobbyPlayerState::OnRep_IsReady()
 		OnLobbyReadyStateChanged.Broadcast(bIsReady);
 	}
 }
-
-void AMSLobbyPlayerState::SetSelectedCharacter(FName CharacterID)
-{
-	SelectedCharacterID = CharacterID;
-	OnRep_SelectedCharacterID();
-}
-
-void AMSLobbyPlayerState::OnRep_SelectedCharacterID()
-{
-	if (OnCharacterChanged.IsBound())
-	{
-		OnCharacterChanged.Broadcast(SelectedCharacterID);
-	}
-}
-

@@ -24,7 +24,7 @@
 * 캐릭터 메쉬 교체 또한 PlayerState 변경을 통해 적용될 예정.
 */
 UCLASS()
-class MAGESQUAD_API AMSLobbyCharacter : public ACharacter, public ICharacterAppearanceInterface
+class MAGESQUAD_API AMSLobbyCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -34,7 +34,6 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	//UI를 갱신 및 델리게이드 바인딩
 	virtual void OnRep_PlayerState() override;
-	virtual void ApplyCharacterAppearance(const FMSCharacterData& CharacterData) override;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -54,7 +53,6 @@ public:
 
 protected:
 	void InitializeLobbyCharacterFromPlayerState();
-	void UpdateCharacterAppearance(const FName& CharacterID);
     UPROPERTY()
     TObjectPtr<UMaterial> Widget3DPassThroughMaterial;
 
@@ -67,4 +65,10 @@ protected:
 	// PlayerState 변경 시 UI 갱신에 사용
 	UPROPERTY()
 	class UMSLobbyPlayerEntryWidget* LobbyPlayerEntryWidget;
+	// 지팡이 메시
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Weapon")
+	TObjectPtr<class UStaticMeshComponent> StaffMesh;
+	// 지팡이 메시를 부착할 소켓 이름
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Weapon")
+	FName StaffAttachSocketName = TEXT("s_Staff");
 };

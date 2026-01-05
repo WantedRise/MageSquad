@@ -8,7 +8,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "InputActionValue.h"
 #include "Types/MageSquadTypes.h"
-#include "Interfaces/CharacterAppearanceInterface.h"
 #include "MSPlayerCharacter.generated.h"
 
 /**
@@ -35,7 +34,7 @@ enum class EMSSkillSlotIndex : uint8
  * - 경험치 / 스킬 슬롯 시스템
  */
 UCLASS()
-class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySystemInterface, public ICharacterAppearanceInterface
+class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -113,7 +112,6 @@ protected:
 protected:
 	virtual void PawnClientRestart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void ApplyCharacterAppearance(const FMSCharacterData& CharacterData) override;
 
 	// 이동, 카메라 줌 인/아웃 함수
 	void Move(const FInputActionValue& Value);

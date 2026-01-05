@@ -296,13 +296,6 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
-
-	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-	const FMSCharacterData* Data = CharacterData->FindCharacterData(PS->GetSelectedCharacterID());
-	if (Data)
-	{
-		ApplyCharacterAppearance(*Data);
-	}
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
@@ -873,9 +866,26 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 		}
 	}
 
-	FName NewCharacterID = NAME_None;
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
+
+	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Data is nullptr"))
+	// 저장 데이터 없을 시 
+	// 시작 스킬 획득
+	for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
+	{
+		if (*StartSkillData.SkillAbilty)
+		{
+			PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
+
+			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));
+			AcquireSkill(StartSkillData.SkillId);
+		}
+	}
+	return;
+
+	FName NewCharacterID = NAME_None;
+	
 	auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
 	if (!LevelManager->ConsumeSelectedCharacter(PS->GetUniqueId(), NewCharacterID))
 	{
@@ -887,20 +897,7 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 	const FMSCharacterData* Data = CharacterData->FindCharacterData(NewCharacterID);
 	if (!Data)
 	{
-		MS_LOG(LogMSNetwork,Log,TEXT("%s"),TEXT("Data is nullptr"))
-		// 저장 데이터 없을 시 
-		// 시작 스킬 획득
-		for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
-		{
-			if (*StartSkillData.SkillAbilty)
-			{
-				PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
-
-				AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));
-				AcquireSkill(StartSkillData.SkillId);
-			}
-		}
-		return;
+		
 	}
 	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Data apply"))
 	// 초기 스탯 GE
@@ -941,23 +938,8 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 		AcquireSkill(Data->SecondarySkill.SkillId);
 	}
 
-	ApplyCharacterAppearance(*Data);
+	//ApplyCharacterAppearance(*Data);
 	PS->SetSelectedCharacterID(NewCharacterID);
-}
-
-void AMSPlayerCharacter::ApplyCharacterAppearance(const FMSCharacterData& CharacterData)
-{
-	// Material 교체
-	if (CharacterData.OverrideMaterial)
-	{
-		GetMesh()->SetMaterial(0, CharacterData.OverrideMaterial);
-	}
-
-	// 2️⃣ Material 교체
-	if (CharacterData.StaffMesh)
-	{
-		StaffMesh->SetStaticMesh(CharacterData.StaffMesh);
-	}
 }
 
 void AMSPlayerCharacter::ApplyPlayerStartEffects_Server()

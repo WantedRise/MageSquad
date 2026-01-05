@@ -10,13 +10,14 @@
 #include "MSCharacterInfoWidget.h"
 #include <Player/MSLobbyPlayerState.h>
 #include <Interfaces/CharacterAppearanceInterface.h>
+#include "Player/MSPlayerCharacter.h"
 
 void UMSCharacterSelectWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
     BuildCharacterSlots();
-    UpdatePlayerState();
+    //UpdatePlayerState();
 }
 
 void UMSCharacterSelectWidget::BuildCharacterSlots()
@@ -37,7 +38,8 @@ void UMSCharacterSelectWidget::BuildCharacterSlots()
       
             
         CharacterSlot->InitSlot(CharacterID, *Data);
-        CharacterSlot->OnClicked.AddUObject(this, &UMSCharacterSelectWidget::OnCharacterClicked);
+        CharacterSlot->InitSlot(CharacterData->GetAllCharacter()[Index]);
+        CharacterSlot->OnCharacterClicked.AddUObject(this, &UMSCharacterSelectWidget::OnCharacterSlotClicked);
         Index++;
     }
 
@@ -52,32 +54,38 @@ void UMSCharacterSelectWidget::BuildCharacterSlots()
     }
 }
 
-void UMSCharacterSelectWidget::OnCharacterClicked(FName CharacterID)
+// MSCharacterSelectWidget.cpp
+
+void UMSCharacterSelectWidget::OnCharacterSlotClicked(
+    TSubclassOf<AMSPlayerCharacter> ClickedPawnClass
+)
 {
-    UE_LOG(LogTemp, Log, TEXT("OnCharacterClicked"));
+    if (!ClickedPawnClass)
+        return;
+
+    // 같은 캐릭터 재클릭 방지
+    if (SelectedPawnClass == ClickedPawnClass)
+        return;
+
+    // 1️⃣ 로컬 선택 상태 갱신 (UI 즉시 반응)
+    SelectedPawnClass = ClickedPawnClass;
+
+    //UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+    //if (CharacterData)
+    //{
+    //    const auto* Data = CharacterData->FindCharacterData(CharacterID);
+    //    if (Data)
+    //    {
+    //        Text_Name->SetText(Data->CharacterName);
+    //        Text_Desc->SetText(Data->CharacterInfo);
+    //        UE_LOG(LogTemp, Log, TEXT("OnCharacterClicked Data"));
+    //        UE_LOG(LogTemp, Log, TEXT("OnCharacterClicked ServerSelectCharacter"));
+    //    }
+    //}
+
     AMSLobbyPlayerController* PC = GetOwningPlayer<AMSLobbyPlayerController>();
     if (!PC) return;
-
-    UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-    if (CharacterData)
-    {
-        const auto* Data = CharacterData->FindCharacterData(CharacterID);
-        if(Data)
-        {
-            Text_Name->SetText(Data->CharacterName);
-            Text_Desc->SetText(Data->CharacterInfo);
-            UE_LOG(LogTemp, Log, TEXT("OnCharacterClicked Data"));
-
-            if (CurrentCharacterID != CharacterID)
-            {
-                PC->ApplyCharacterPreview(*Data);
-            }
-            PC->ServerSelectCharacter(CharacterID);
-            UE_LOG(LogTemp, Log, TEXT("OnCharacterClicked ServerSelectCharacter"));
-        }
-    }
-
-    CurrentCharacterID = CharacterID;
+    PC->Server_SelectCharacter(ClickedPawnClass);
 }
 
 void UMSCharacterSelectWidget::ApplySelectedCharacter(FMSCharacterData Data)
@@ -101,21 +109,6 @@ void UMSCharacterSelectWidget::ApplySelectedCharacter(FMSCharacterData Data)
         InfoWidget->Update(CharacterID);
     }
     */
-}
-
-void UMSCharacterSelectWidget::UpdatePlayerState()
-{
-    AMSLobbyPlayerState* PS = GetOwningPlayerState<AMSLobbyPlayerState>();
-
-    if (!PS) return;
-
-    // 2️⃣ ⭐ 이미 값이 있으면 즉시 UI에 반영
-    const FName SelectedID = PS->GetSelectedCharacterID();
-    if (SelectedID != NAME_None)
-    {
-        UE_LOG(LogTemp, Log, TEXT("UpdatePlayerState"));
-        OnCharacterClicked(SelectedID);
-    }
 }
 
 
