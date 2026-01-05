@@ -63,7 +63,7 @@ void UMSCharacterDataSubsystem::Deinitialize()
  const FMSCharacterSelection* UMSCharacterDataSubsystem::FindSelectionByNetId(const FUniqueNetIdRepl& NetID)
  {
      const FName* TempCharacterID = SelectedCharacterIDByNetId.Find(NetID);
-
+     if (!TempCharacterID) return nullptr;
      for (const FMSCharacterSelection& Selection : PlayerCharacterClasses)
      {
          if (Selection.CharacterID == *TempCharacterID)

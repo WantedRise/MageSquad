@@ -171,6 +171,7 @@ void AMSGameMode::RestartPlayer(AController* NewPlayer)
 	const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByNetId(NetId);
 	if (!CharacterSelection || !CharacterSelection->PlayerCharacterClass)
 	{
+		Super::RestartPlayer(NewPlayer);
 		return;
 	}
 	FTransform SpawnTM = ChoosePlayerStart(NewPlayer)->GetActorTransform();
