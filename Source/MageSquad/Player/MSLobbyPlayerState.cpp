@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/MSLobbyPlayerState.h"
@@ -8,6 +8,7 @@
 #include "Net/UnrealNetwork.h"
 #include <System/MSSteamManagerSubsystem.h>
 #include <GameModes/MSLobbyGameMode.h>
+#include <System/MSLevelManagerSubsystem.h>
 
 AMSLobbyPlayerState::AMSLobbyPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -100,6 +101,20 @@ void AMSLobbyPlayerState::OnRep_IsReady()
 	{
 		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("OnLobbyReadyStateChanged "));
 		OnLobbyReadyStateChanged.Broadcast(bIsReady);
+	}
+}
+
+void AMSLobbyPlayerState::SetSelectedCharacter(FName CharacterID)
+{
+	SelectedCharacterID = CharacterID;
+	OnRep_SelectedCharacterID();
+}
+
+void AMSLobbyPlayerState::OnRep_SelectedCharacterID()
+{
+	if (OnCharacterChanged.IsBound())
+	{
+		OnCharacterChanged.Broadcast(SelectedCharacterID);
 	}
 }
 

@@ -7,6 +7,7 @@
 #include "Animation/WidgetAnimation.h"
 #include "GameStates/MSGameState.h"
 #include "Components/SizeBox.h"
+#include "Types/GameMissionTypes.h"
 
 void UMSMissionTrackerWidget::SetMissionTitle(FText InTitle)
 {
@@ -60,16 +61,30 @@ void UMSMissionTrackerWidget::UpdateRemainingTime()
     Text_Timer->SetText(FormattedTime);
 }
 
-void UMSMissionTrackerWidget::SetTargetHpProgress(float InNormalized)
+void UMSMissionTrackerWidget::UpdateProgress(const FMSMissionProgressUIData& Data)
 {
-    if (SizeBox_Other->GetVisibility() == ESlateVisibility::Visible)
+    switch (Data.MissionType)
     {
-        Progress_TargetHp->SetPercent(InNormalized);
-    }
-    else if(SizeBox_Boss->GetVisibility() == ESlateVisibility::Visible)
-    {
-        Progress_BossHp->SetPercent(InNormalized);
-        SetTextBossHp(InNormalized);
+    case EMissionType::Boss:
+        ShowBossProgress();
+        Progress_BossHp->SetPercent(Data.Normalized);
+        SetTextBossHp(Data.CurrentHp,Data.MaxHp);
+        break;
+    case EMissionType::FindTarget:
+        ShowFindTargetUI();
+        Text_FindTarget->SetText(
+            FText::FromString(
+                FString::Printf(
+                    TEXT("%d / %d"),
+                    Data.CurrentCount,
+                    Data.TargetCount
+                )
+            )
+        );
+        break;
+    default:
+        ShowDefaultProgress();
+        Progress_TargetHp->SetPercent(Data.Normalized);
     }
 }
 
@@ -81,20 +96,29 @@ void UMSMissionTrackerWidget::ShowDefaultProgress()
 {
     SizeBox_Boss->SetVisibility(ESlateVisibility::Collapsed);
     SizeBox_Other->SetVisibility(ESlateVisibility::Visible);
+    Text_FindTarget->SetVisibility(ESlateVisibility::Collapsed);
 }
 void UMSMissionTrackerWidget::ShowBossProgress()
 {
     SizeBox_Boss->SetVisibility(ESlateVisibility::Visible);
     SizeBox_Other->SetVisibility(ESlateVisibility::Collapsed);
+    Text_FindTarget->SetVisibility(ESlateVisibility::Collapsed);
+}
+void UMSMissionTrackerWidget::ShowFindTargetUI()
+{
+    Text_FindTarget->SetVisibility(ESlateVisibility::Visible);
+    SizeBox_Boss->SetVisibility(ESlateVisibility::Collapsed);
+    SizeBox_Other->SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UMSMissionTrackerWidget::SetTextBossHp(float InNormalized)
+
+void UMSMissionTrackerWidget::SetTextBossHp(float CurrentHp, float MaxHp)
 {
     if (!Text_BossHp) return;
 
     // 정수형(int32)으로 변환하여 출력
-    int32 Current = FMath::FloorToInt(50000.0 * InNormalized);
-    int32 Max = FMath::FloorToInt(50000.0);
+    int32 Current = FMath::FloorToInt(CurrentHp);
+    int32 Max = FMath::FloorToInt(MaxHp);
 
     // {0} / {1} 형태로 포맷 생성
     FText HpText = FText::Format(
@@ -104,6 +128,11 @@ void UMSMissionTrackerWidget::SetTextBossHp(float InNormalized)
     );
 
     Text_BossHp->SetText(HpText);
+}
+
+void UMSMissionTrackerWidget::UpdateFindCount(int32 Current, int32 Target)
+{
+    Text_FindTarget->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Current, Target)));
 }
 
 void UMSMissionTrackerWidget::StopMissionTimer()

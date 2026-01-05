@@ -6,6 +6,9 @@
 #include "GameFlow/Mission/MSMissionScript.h"
 #include "MSMissionCleanPaint.generated.h"
 
+
+struct FMSMissionProgressUIData;
+
 /*
 * 작성자: 이상준
 * 작성일: 2025-12-30
@@ -30,16 +33,16 @@ public:
     virtual void Deinitialize() override;
 
     // 남은 오염 비율 (1 = 전부 더러움, 0 = 전부 정화)
-    virtual float GetProgress() const override;
+    virtual void GetProgress(FMSMissionProgressUIData& OutData) const override;
 
-    virtual bool IsCompleted() const override
-    {
-        return GetProgress() >= 1.0f;
-    }
+    virtual bool IsCompleted() const override;
+
 
 private:
     // 정화 영역의 진행도 변경 시 호출되는 콜백
     void OnAreaProgressChanged(float);
+
+    void RecalculateCurrentPercent();
 
 private:
     UPROPERTY()
@@ -50,5 +53,7 @@ private:
     TArray<TWeakObjectPtr<class AMSInkAreaActor>> InkAreas;
 
     UPROPERTY(EditDefaultsOnly, Category = "Mission|CleanPaint")
-    float AreaCompleteThreshold = 0.94f;
+    float TargetPercent = 0.94f;
+
+    float CurrentPercent = 0.0f;
 };

@@ -12,6 +12,11 @@ void UMSMissionScript::Deinitialize()
 {
 }
 
+void UMSMissionScript::GetProgress(FMSMissionProgressUIData& OutData) const
+{
+
+}
+
 void UMSMissionScript::SetOwnerMissionComponent(UMSMissionComponent* InOwner)
 {
 	OwnerMissionComponent = InOwner;

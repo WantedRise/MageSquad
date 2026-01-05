@@ -24,6 +24,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "EngineUtils.h"
+#include "DataStructs/MSMissionProgressUIData.h"
 
 void AMSPlayerController::BeginPlay()
 {
@@ -633,16 +634,6 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 	Progress->SetVisibility(ESlateVisibility::Hidden);
 	Tracker->SetMissionTitle(MissionData.Title);
 	Tracker->SetMissionMessage(MissionData.Description);
-	switch (MissionData.MissionType)
-	{
-	case EMissionType::Boss:
-		Tracker->ShowBossProgress();
-		Tracker->SetTargetHpProgress(1.0f);
-		break;
-	default:
-		Tracker->ShowDefaultProgress();
-		break;
-	}
 
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
@@ -689,19 +680,21 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID, bool bSuccess)
 					}
 				}
 			}
+
+
 		}), DelayTime, false
 	);
 }
 
 // 서버에서 계산된 정규화된 진행 값을 UI에 반영
-void AMSPlayerController::OnMissionProgressChanged(float Normalized)
+void AMSPlayerController::OnMissionProgressChanged(const FMSMissionProgressUIData& Data)
 {
 	if (!HUDWidgetInstance) return;
 
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
 	if (!Tracker) return;
-
-	Tracker->SetTargetHpProgress(Normalized);
+	
+	Tracker->UpdateProgress(Data);
 }
 
 void AMSPlayerController::ClientShowLoadingWidget_Implementation()

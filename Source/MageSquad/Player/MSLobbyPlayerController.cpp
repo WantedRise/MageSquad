@@ -11,6 +11,9 @@
 #include "Widgets/Lobby/MSLobbyReadyWidget.h"
 #include "GameStates/MSLobbyGameState.h"
 #include <System/MSLevelManagerSubsystem.h>
+#include "Widgets/Lobby/MSCharacterSelectWidget.h"
+#include "DataStructs/MSCharacterData.h"
+#include <Interfaces/CharacterAppearanceInterface.h>
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -61,6 +64,18 @@ void AMSLobbyPlayerController::BeginPlay()
 	}
 }
 
+void AMSLobbyPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (LobbyMainWidget)
+	{
+		if (UMSCharacterSelectWidget* CharacterSelectWidget = LobbyMainWidget->GetCharacterSelectWidget())
+		{
+			CharacterSelectWidget->UpdatePlayerState();
+		}
+	}
+}
+
 void AMSLobbyPlayerController::CreateLobbyUI()
 {
 	if (LobbyMainWidget || !LobbyMainWidgetClass)
@@ -80,5 +95,32 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 		//InputMode.SetWidgetToFocus(LobbyMainWidget->TakeWidget());
 		//SetInputMode(InputMode);
 		bShowMouseCursor = true;
+	}
+}
+
+
+void AMSLobbyPlayerController::ServerSelectCharacter_Implementation(FName CharacterID)
+{
+	AMSLobbyPlayerState* PS = GetPlayerState<AMSLobbyPlayerState>();
+
+	if (!PS) return;
+
+	PS->SetSelectedCharacter(CharacterID);
+
+	if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	{
+		LevelManager->SaveSelectedCharacter(PS->GetUniqueId(), CharacterID);
+	}
+}
+
+// AMSLobbyPlayerController.cpp
+void AMSLobbyPlayerController::ApplyCharacterPreview(FMSCharacterData Data)
+{
+	APawn* PlayerPawn = GetPawn();
+	if (!PlayerPawn) return;
+	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("PlayerPawn"));
+	if (ICharacterAppearanceInterface* Appearance = Cast<ICharacterAppearanceInterface>(PlayerPawn))
+	{
+		Appearance->ApplyCharacterAppearance(Data);
 	}
 }

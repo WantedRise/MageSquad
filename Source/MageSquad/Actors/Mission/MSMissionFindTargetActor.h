@@ -1,0 +1,49 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "MSMissionFindTargetActor.generated.h"
+
+DECLARE_MULTICAST_DELEGATE(FOnTargetCollected);
+
+UCLASS()
+class MAGESQUAD_API AMSMissionFindTargetActor : public AActor
+{
+	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	AMSMissionFindTargetActor();
+
+	/** 수집 시 호출되는 델리게이트 */
+	FOnTargetCollected OnTargetCollected;
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+protected:
+	UPROPERTY(VisibleAnywhere)
+	class USphereComponent* Collision;
+
+	UFUNCTION()
+	void OnOverlapBegin(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Float")
+	float FloatHeight = 25.f;
+
+	UPROPERTY(EditAnywhere, Category = "Float")
+	float FloatSpeed = 1.5f;
+
+	FVector BaseLocation;
+	float RunningTime = 0.f;
+};

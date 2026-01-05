@@ -5,6 +5,7 @@
 #include "DataStructs/MSGameMissionData.h"
 #include "GameStates/MSGameState.h"
 #include <System/MSMissionDataSubsystem.h>
+#include "DataStructs/MSMissionProgressUIData.h"
 
 // Sets default values for this component's properties
 UMSMissionComponent::UMSMissionComponent()
@@ -81,6 +82,8 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
     if (!IsServer())
         return;
 
+    CurrentMissionData = MissionRow;
+
     if (MissionScript)
     {
         // 기존 미션은 실패처리 하거나 단순 정리만 수행
@@ -110,9 +113,8 @@ void UMSMissionComponent::UpdateMission()
     if (!IsServer() || !MissionScript || !OwnerGameState)
         return;
 
-    const float Progress = MissionScript->GetProgress();
-
-    OwnerGameState->SetMissionProgress(Progress);
+    MissionScript->GetProgress(CurrentProgress);
+    OwnerGameState->SetMissionProgress(CurrentProgress);
 
     if (MissionScript->IsCompleted())
     {
@@ -141,11 +143,6 @@ void UMSMissionComponent::BindGameStateDelegates()
         );
     }
     // Todo : HandleMissionProgressChanged OnMissionFinished 둘 다 안쓰이는 중
-    OwnerGameState->OnMissionProgressChanged.AddUObject(
-        this,
-        &UMSMissionComponent::HandleMissionProgressChanged
-    );
-
     OwnerGameState->OnMissionFinished.AddUObject(
         this,
         &UMSMissionComponent::OnMissionFinished
@@ -164,13 +161,6 @@ void UMSMissionComponent::HandleMissionChanged(int32 MissionID)
     if (!MissionData) return;
 
     StartMission(*MissionData);
-}
-
-void UMSMissionComponent::HandleMissionProgressChanged(float Progress)
-{
-    // Client:
-    // - ProgressBar 갱신
-
 }
 
 void UMSMissionComponent::OnMissionFinished(int32 MissionID, bool bSuccess)

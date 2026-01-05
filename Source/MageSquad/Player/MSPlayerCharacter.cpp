@@ -39,6 +39,9 @@
 #include "Net/UnrealNetwork.h"
 
 #include "MSGameplayTags.h"
+#include <System/MSCharacterDataSubsystem.h>
+#include "MageSquad.h"
+#include <System/MSLevelManagerSubsystem.h>
 
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
@@ -172,6 +175,8 @@ void AMSPlayerCharacter::BeginPlay()
 		// 거리 표기 비활성화
 		DirectionIndicatorComponent->bShowDistance = false;
 	}
+
+
 }
 
 void AMSPlayerCharacter::Tick(float DeltaSecond)
@@ -291,6 +296,13 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
+
+	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	const FMSCharacterData* Data = CharacterData->FindCharacterData(PS->GetSelectedCharacterID());
+	if (Data)
+	{
+		ApplyCharacterAppearance(*Data);
+	}
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
@@ -860,20 +872,91 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbilityClass));
 		}
 	}
-	// 시작 스킬 획득
-	for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
+
+	FName NewCharacterID = NAME_None;
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	if (!PS) return;
+	auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
+	if (!LevelManager->ConsumeSelectedCharacter(PS->GetUniqueId(), NewCharacterID))
 	{
-		if (*StartSkillData.SkillAbilty)
+		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("UniqueID can't find"))
+		return;
+	}
+
+	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+	const FMSCharacterData* Data = CharacterData->FindCharacterData(NewCharacterID);
+	if (!Data)
+	{
+		MS_LOG(LogMSNetwork,Log,TEXT("%s"),TEXT("Data is nullptr"))
+		// 저장 데이터 없을 시 
+		// 시작 스킬 획득
+		for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
 		{
-			// PlayerState 가져오기
-			AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
-			if (!PS) return;
+			if (*StartSkillData.SkillAbilty)
+			{
+				PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
 
-			PS->FindSkillRowBySkillIDAndAdd(StartSkillData.SkillId);
-
-			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));
-			AcquireSkill(StartSkillData.SkillId);
+				AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(StartSkillData.SkillAbilty));
+				AcquireSkill(StartSkillData.SkillId);
+			}
 		}
+		return;
+	}
+	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Data apply"))
+	// 초기 스탯 GE
+	if (Data->InitialStatEffect)
+	{
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(
+			Data->InitialStatEffect->GetDefaultObject<UGameplayEffect>(),
+			1.0f,
+			AbilitySystemComponent->MakeEffectContext()
+		);
+	}
+	// 스킬 부여
+	if (Data->PassiveSkill.SkillAbilty)
+	{
+		// PlayerState에 스킬 등록
+		PS->FindSkillRowBySkillIDAndAdd(Data->PassiveSkill.SkillId);
+		// GAS Ability 부여
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Data->PassiveSkill.SkillAbilty, Data->PassiveSkill.SkillLevel, INDEX_NONE, this));
+		// UI / 로직용
+		AcquireSkill(Data->PassiveSkill.SkillId);
+	}
+	if (Data->PrimarySkill.SkillAbilty)
+	{
+		// PlayerState에 스킬 등록
+		PS->FindSkillRowBySkillIDAndAdd(Data->PrimarySkill.SkillId);
+		// GAS Ability 부여
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Data->PrimarySkill.SkillAbilty, Data->PrimarySkill.SkillLevel, INDEX_NONE, this));
+		// UI / 로직용
+		AcquireSkill(Data->PrimarySkill.SkillId);
+	}
+	if (Data->SecondarySkill.SkillAbilty)
+	{
+		// PlayerState에 스킬 등록
+		PS->FindSkillRowBySkillIDAndAdd(Data->SecondarySkill.SkillId);
+		// GAS Ability 부여
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Data->SecondarySkill.SkillAbilty, Data->SecondarySkill.SkillLevel, INDEX_NONE, this));
+		// UI / 로직용
+		AcquireSkill(Data->SecondarySkill.SkillId);
+	}
+
+	ApplyCharacterAppearance(*Data);
+	PS->SetSelectedCharacterID(NewCharacterID);
+}
+
+void AMSPlayerCharacter::ApplyCharacterAppearance(const FMSCharacterData& CharacterData)
+{
+	// Material 교체
+	if (CharacterData.OverrideMaterial)
+	{
+		GetMesh()->SetMaterial(0, CharacterData.OverrideMaterial);
+	}
+
+	// 2️⃣ Material 교체
+	if (CharacterData.StaffMesh)
+	{
+		StaffMesh->SetStaticMesh(CharacterData.StaffMesh);
 	}
 }
 

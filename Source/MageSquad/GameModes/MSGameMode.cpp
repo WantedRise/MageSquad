@@ -15,7 +15,8 @@
 #include "System/MSLevelManagerSubsystem.h"
 #include "System/MSMissionDataSubsystem.h"
 #include <Player/MSPlayerController.h>
-
+#include <System/MSCharacterDataSubsystem.h>
+#include "OnlineSubsystemTypes.h"
 
 AMSGameMode::AMSGameMode()
 {
@@ -140,4 +141,14 @@ void AMSGameMode::NotifyClientsShowLoadingWidget()
 			PC->ClientShowLoadingWidget();
 		}
 	}
+}
+
+void AMSGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+}
+
+void AMSGameMode::RestartPlayer(AController* NewPlayer)
+{
+	Super::RestartPlayer(NewPlayer);
 }

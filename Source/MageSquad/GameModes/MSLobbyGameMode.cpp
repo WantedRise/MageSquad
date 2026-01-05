@@ -11,6 +11,7 @@
 #include "GameStates/MSLobbyGameState.h"
 #include <System/MSLevelManagerSubsystem.h>
 #include "Player/MSLobbyPlayerController.h"
+#include <System/MSCharacterDataSubsystem.h>
 
 AMSLobbyGameMode::AMSLobbyGameMode()
 {
@@ -27,8 +28,24 @@ void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
             //호스트 표시
             PS->SetHost(true);
         }
+
+        // 이미 값이 있으면 건드리지 않음
+        if (PS->GetSelectedCharacterID() != NAME_None)
+            return;
+
+        UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+        if (!CharacterData) return;
+
+        const FName DefaultCharacterID = CharacterData->GetDefaultCharacterID();
+
+        if (DefaultCharacterID == NAME_None)
+            return;
+
+        // ⭐ 디폴트 캐릭터 설정
+        PS->SetSelectedCharacter(DefaultCharacterID);
     }
 }
+
 AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
     UWorld* World = GetWorld();

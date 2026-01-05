@@ -8,11 +8,11 @@
 #include "DA_PlayerStartUpData.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/08
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/08
  *
- * ÇÃ·¹ÀÌ¾î ½ÃÀÛ µ¥ÀÌÅÍ ¿¡¼Â Å¬·¡½º
- * ÇÃ·¹ÀÌ¾î°¡ °ÔÀÓ ½ÃÀÛ ½Ã ºÎ¿©¹Ş´Â ±âº» ¾îºô¸®Æ¼ / ÀÌÆåÆ®¸¦ Á¤ÀÇÇÏ´Â µ¥ÀÌÅÍ ¿¡¼Â
+ * í”Œë ˆì´ì–´ ì‹œì‘ ë°ì´í„° ì—ì…‹ í´ë˜ìŠ¤
+ * í”Œë ˆì´ì–´ê°€ ê²Œì„ ì‹œì‘ ì‹œ ë¶€ì—¬ë°›ëŠ” ê¸°ë³¸ ì–´ë¹Œë¦¬í‹° / ì´í™íŠ¸ë¥¼ ì •ì˜í•˜ëŠ” ë°ì´í„° ì—ì…‹
  */
 UCLASS()
 class MAGESQUAD_API UDA_PlayerStartUpData : public UDataAsset
@@ -20,7 +20,7 @@ class MAGESQUAD_API UDA_PlayerStartUpData : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	// ÇÃ·¹ÀÌ¾î ½ÃÀÛ ¾îºô¸®Æ¼/ÀÌÆåÆ® µ¥ÀÌÅÍ
+	// í”Œë ˆì´ì–´ ì‹œì‘ ì–´ë¹Œë¦¬í‹°/ì´í™íŠ¸ ë°ì´í„°
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | StartUp")
 	FPlayerStartAbilityData PlayerStartAbilityData;
 };

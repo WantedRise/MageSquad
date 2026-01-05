@@ -10,6 +10,8 @@
 #include "GameStates/MSGameState.h"
 #include "Abilities/GameplayAbility.h"
 #include "Net/UnrealNetwork.h"
+#include <System/MSCharacterDataSubsystem.h>
+#include "MageSquad.h"
 
 AMSPlayerState::AMSPlayerState()
 {
@@ -33,6 +35,7 @@ void AMSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME(AMSPlayerState, bUIReady);
 	DOREPLIFETIME(AMSPlayerState, bIsAlive);
+	DOREPLIFETIME(AMSPlayerState, SelectedCharacterID);
 }
 
 void AMSPlayerState::SetUIReady(bool bReady)
@@ -570,4 +573,9 @@ void AMSPlayerState::SetAliveState_Server(bool bInAlive)
 void AMSPlayerState::OnRep_IsAlive()
 {
 	OnAliveStateChanged.Broadcast(bIsAlive);
+}
+
+void AMSPlayerState::SetSelectedCharacterID(FName InCharacterID)
+{
+	SelectedCharacterID = InCharacterID;
 }

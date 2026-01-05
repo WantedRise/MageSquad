@@ -7,6 +7,8 @@
 #include "GameplayEffectTypes.h"
 #include "MSMissionKillTargetScript.generated.h"
 
+struct FMSMissionProgressUIData;
+
 /** 
  * 작성자: 이상준	
  * 작성일: 25/12/30
@@ -26,7 +28,7 @@ public:
     virtual void Initialize(UWorld* World) override;
     virtual void Deinitialize() override;
     //미션 진행도 반환
-    virtual float GetProgress() const override;
+    virtual void GetProgress(FMSMissionProgressUIData& OutData) const override;
     //미션 완료 여부 판단
     virtual bool IsCompleted() const override;
 private:
@@ -39,5 +41,6 @@ private:
     TWeakObjectPtr<class AMSBaseEnemy> EliteMonster;
     float Progress = 0.f;
     float TimeLimit = -1.f;
-    float MaxHP;
+    float MaxHp;
+    float CurrentHp;
 };
