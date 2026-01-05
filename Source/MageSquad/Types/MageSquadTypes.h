@@ -127,6 +127,10 @@ struct MAGESQUAD_API FMSPlayerSkillSlotNet
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
 	FGameplayTag SkillEventTag;
 
+	// 스킬 쿨다운 태그
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
+	FGameplayTag SkillCooldownTag;
+
 	// 스킬의 원본 쿨타임
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom | Skill")
 	float BaseCoolTime = 0.f;

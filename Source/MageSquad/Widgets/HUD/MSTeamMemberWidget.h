@@ -22,6 +22,9 @@ class MAGESQUAD_API UMSTeamMemberWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	// 팀 스킬 슬롯 위젯 클래스를 설정하는 생성자
+	UMSTeamMemberWidget(const FObjectInitializer& ObjectInitializer);
+
 	// HUD 데이터 갱신 함수 (HUDDataComponent로부터 값을 읽어 UI를 갱신)
 	void UpdateFromHUDData(const class UMSHUDDataComponent* HUDData);
 
@@ -29,6 +32,7 @@ public:
 	void UpdateHealth(float InHealth, float InMaxHealth);
 	void UpdateName(const FText& InName);
 	void UpdatePortrait(UTexture2D* InPortrait);
+	void UpdateSkills(const class UMSHUDDataComponent* HUDData);
 
 private:
 	// 체력 비율 계산 함수
@@ -47,5 +51,16 @@ protected:
 	// 팀원 아이콘 위젯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UImage> TeamPortraitIconWidget;
+
+	// 팀원 스킬 슬롯 위젯
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UHorizontalBox> SkillListWidget;
 	/* ======================== BindWidget ======================== */
+
+	// 스킬 슬롯 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Skill")
+	TSubclassOf<class UMSSkillSlotWidget> SkillSlotWidgetClass;
+
+	// 팀원 스킬 슬롯 위젯 목록
+	TArray<TObjectPtr<class UMSSkillSlotWidget>> TeamSkillWidgets;
 };

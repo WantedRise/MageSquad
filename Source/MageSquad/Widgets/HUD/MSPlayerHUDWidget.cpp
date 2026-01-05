@@ -8,12 +8,14 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 
 #include "Components/Player/MSHUDDataComponent.h"
 
 #include "Widgets/HUD/MSTeamMemberWidget.h"
+#include "Widgets/HUD/MSSkillSlotWidget.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -22,6 +24,8 @@
 #include "Player/MSPlayerState.h"
 
 #include "GameStates/MSGameState.h"
+
+#include "MSGameplayTags.h"
 
 void UMSPlayerHUDWidget::NativeConstruct()
 {
@@ -42,6 +46,14 @@ void UMSPlayerHUDWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UMSPlayerHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	// 스킬 쿨다운 업데이트
+	UpdateCooldowns(InDeltaTime);
+}
+
 void UMSPlayerHUDWidget::InitializeHUD()
 {
 	// 이미 바인딩 되어 있으면 그대로 유지(재진입 안전)
@@ -49,14 +61,22 @@ void UMSPlayerHUDWidget::InitializeHUD()
 	{
 		RefreshLocalHealthUI(CachedHealth, CachedMaxHealth, false);
 		RefreshSharedExperienceUI();
+
+		// 로컬 스킬 바인딩도 시도
+		if (!bBoundLocalSkills)
+		{
+			TryBindLocalSkills();
+		}
+
 		return;
 	}
 
 	// 바인딩 시도
 	const bool bLocalHealthOk = TryBindLocalHealth();
 	const bool bSharedDataOk = TryBindSharedData();
+	const bool bLocalSkillsOk = TryBindLocalSkills();
 
-	if (bLocalHealthOk && bSharedDataOk)
+	if (bLocalHealthOk && bSharedDataOk && bLocalSkillsOk)
 	{
 		// 바인딩 재시도 타이머 종료
 		ClearRebindTimer();
@@ -197,6 +217,72 @@ bool UMSPlayerHUDWidget::TryBindSharedData()
 	return true;
 }
 
+bool UMSPlayerHUDWidget::TryBindLocalSkills()
+{
+	if (bBoundLocalSkills) return true;
+
+	// 기본 전제로 PC, Pawn, ASC가 준비되어 있어야 함
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return false;
+
+	APawn* Pawn = PC->GetPawn();
+	if (!Pawn) return false;
+
+	AMSPlayerCharacter* Character = Cast<AMSPlayerCharacter>(Pawn);
+	if (!Character) return false;
+
+	if (!Character->IsLocallyControlled()) return false;
+
+	// HUD 데이터 컴포넌트 찾기
+	UMSHUDDataComponent* HUDData = Character->FindComponentByClass<UMSHUDDataComponent>();
+	if (!HUDData) return false;
+
+	// ASC가 유효하지 않으면 종료
+	if (!LocalASC.IsValid()) return false;
+
+	// ASC에서 아직 ActorInfo가 준비되지 않았으면 바인딩하지 않음
+	if (!LocalASC->GetOwnerActor() || !LocalASC->GetAvatarActor()) return false;
+
+	// 중복 바인딩 방지를 위해 기존 바인딩을 해제
+	UnbindLocalSkills();
+
+	// 로컬 플레이어 캐릭터 캐시 업데이트
+	CachedLocalCharacter = Character;
+
+	// 스킬 슬롯 데이터 초기화
+	SkillSlotNativeDatas.Init(FMSHUDSkillSlotNativeData(), TotalSlots);
+
+	// 현재 쿨타임 감소 비율 캐시
+	CurrentCDR = LocalASC->GetNumericAttribute(UMSPlayerAttributeSet::GetCooldownReductionAttribute());
+
+	// 델리게이트 바인딩(핸들을 보관해 정확히 해제)
+	// 스킬 슬롯 배열 변경 바인딩
+	SkillSlotsUpdatedHandle = Character->OnSkillSlotsUpdated.AddUObject(
+		this, &UMSPlayerHUDWidget::HandleSkillSlotsUpdated);
+
+	// 패시브 스킬 쿨다운 시작 바인딩
+	SkillCooldownStartedHandle = Character->OnSkillCooldownStarted.AddUObject(
+		this, &UMSPlayerHUDWidget::StartCooldownForSlot);
+
+	// HUD 데이터 컴포넌트의 팀 스킬 슬롯 데이터 업데이트 바인딩
+	SkillSlotDataUpdatedHandle = HUDData->OnSkillSlotDataUpdated.AddUObject(
+		this, &UMSPlayerHUDWidget::HandleTeamSkillSlotUpdated);
+
+	// 쿨타임 감소 속성 변경 바인딩
+	CooldownReductionChangedHandle = LocalASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetCooldownReductionAttribute())
+		.AddUObject(this, &UMSPlayerHUDWidget::OnLocalCooldownReductionChanged);
+
+	// 내부 배열을 초기화하기 위해 현재 슬롯 정보를 읽어 업데이트
+	HandleSkillSlotsUpdated();
+
+	// 팀 스킬 슬롯 데이터를 즉시 갱신하여 아이콘/레벨 UI 설정
+	HandleTeamSkillSlotUpdated();
+
+	bBoundLocalSkills = true;
+
+	return true;
+}
+
 void UMSPlayerHUDWidget::StartTeamPoll()
 {
 	if (bTeamPolling) return;
@@ -265,6 +351,52 @@ void UMSPlayerHUDWidget::UnbindSharedData()
 	}
 
 	CachedGameState = nullptr;
+}
+
+void UMSPlayerHUDWidget::UnbindLocalSkills()
+{
+	if (!bBoundLocalSkills) return;
+
+	// 캐시된 캐릭터가 유효하면 델리게이트를 해제
+	if (CachedLocalCharacter.IsValid())
+	{
+		AMSPlayerCharacter* Character = CachedLocalCharacter.Get();
+		if (SkillSlotsUpdatedHandle.IsValid())
+		{
+			Character->OnSkillSlotsUpdated.Remove(SkillSlotsUpdatedHandle);
+			SkillSlotsUpdatedHandle.Reset();
+		}
+		if (SkillCooldownStartedHandle.IsValid())
+		{
+			Character->OnSkillCooldownStarted.Remove(SkillCooldownStartedHandle);
+			SkillCooldownStartedHandle.Reset();
+		}
+
+		// HUD 데이터 컴포넌트에서 이벤트 해제
+		UMSHUDDataComponent* HUDData = Character->FindComponentByClass<UMSHUDDataComponent>();
+		if (HUDData)
+		{
+			if (SkillSlotDataUpdatedHandle.IsValid())
+			{
+				HUDData->OnSkillSlotDataUpdated.Remove(SkillSlotDataUpdatedHandle);
+				SkillSlotDataUpdatedHandle.Reset();
+			}
+		}
+	}
+
+	// ASC에서 쿨타임 감소 델리게이트 바인딩 해제
+	if (LocalASC.IsValid() && CooldownReductionChangedHandle.IsValid())
+	{
+		LocalASC->GetGameplayAttributeValueChangeDelegate(UMSPlayerAttributeSet::GetCooldownReductionAttribute())
+			.Remove(CooldownReductionChangedHandle);
+		CooldownReductionChangedHandle.Reset();
+	}
+
+	// 각 스킬 슬롯의 상태 데이터 초기화
+	SkillSlotNativeDatas.Empty();
+
+	CachedLocalCharacter = nullptr;
+	bBoundLocalSkills = false;
 }
 
 void UMSPlayerHUDWidget::ClearRebindTimer()
@@ -442,8 +574,9 @@ void UMSPlayerHUDWidget::TickRebind()
 	// 바인딩 시도
 	const bool bLocalHealthOk = TryBindLocalHealth();
 	const bool bSharedDataOk = TryBindSharedData();
+	const bool bLocalSkillsOk = TryBindLocalSkills();
 
-	if (bLocalHealthOk && bSharedDataOk)
+	if (bLocalHealthOk && bSharedDataOk && bLocalSkillsOk)
 	{
 		// 바인딩 재시도 타이머 종료
 		ClearRebindTimer();
@@ -500,5 +633,286 @@ void UMSPlayerHUDWidget::OnSharedLivesChanged(int32 NewLives)
 	if (SharedLivesTextWidget)
 	{
 		SharedLivesTextWidget->SetText(FText::AsNumber(NewLives));
+	}
+}
+
+void UMSPlayerHUDWidget::InitializeSkillBar()
+{
+	// 이미 슬롯 배열이 초기화 된 경우 종료
+	if (SkillSlotWidgets.Num() == 7) return;
+
+	// 슬롯 위젯 인스턴스 배열을 초기화하고 멤버를 순서대로 채움
+	SkillSlotWidgets.Empty();
+	SkillSlotWidgets.Reserve(7);
+	SkillSlotWidgets.Add(SlotActiveLeftWidget);
+	SkillSlotWidgets.Add(SlotActiveRightWidget);
+	SkillSlotWidgets.Add(SlotPassive01Widget);
+	SkillSlotWidgets.Add(SlotPassive02Widget);
+	SkillSlotWidgets.Add(SlotPassive03Widget);
+	SkillSlotWidgets.Add(SlotPassive04Widget);
+	SkillSlotWidgets.Add(SlotBlinkWidget);
+}
+
+void UMSPlayerHUDWidget::HandleTeamSkillSlotUpdated()
+{
+	if (!CachedLocalCharacter.IsValid()) return;
+
+	UMSHUDDataComponent* HUDData = CachedLocalCharacter->FindComponentByClass<UMSHUDDataComponent>();
+	if (!HUDData) return;
+
+	const TArray<FMSHUDSkillSlotData>& ViewData = HUDData->GetSkillSlotData();
+	const int32 NumSlots = ViewData.Num();
+
+	// 슬롯 바가 초기화되지 않았다면 초기화 시도
+	InitializeSkillBar();
+
+	for (int32 i = 0; i < NumSlots; ++i)
+	{
+		if (!SkillSlotWidgets.IsValidIndex(i))
+		{
+			continue;
+		}
+
+		UMSSkillSlotWidget* SlotWidget = SkillSlotWidgets[i];
+		if (!SlotWidget)
+		{
+			continue;
+		}
+
+		const FMSHUDSkillSlotData& Data = ViewData[i];
+		if (!Data.bIsValid)
+		{
+			// 빈 슬롯: 아이콘과 레벨 숨김
+			SlotWidget->SetEmpty();
+		}
+		else
+		{
+			// 유효한 스킬: 아이콘/레벨 바인딩
+			SlotWidget->BindSkill(Data);
+		}
+	}
+}
+
+void UMSPlayerHUDWidget::HandleSkillSlotsUpdated()
+{
+	// 스킬 슬롯 배열(Net 데이터)이 변경되면 내부 쿨타임/타입/태그 정보를 갱신한다
+	if (!CachedLocalCharacter.IsValid()) return;
+
+	AMSPlayerCharacter* Character = CachedLocalCharacter.Get();
+	const TArray<FMSPlayerSkillSlotNet>& Slots = Character->GetSkillSlots();
+
+	// 배열 크기 보정
+	if (SkillSlotNativeDatas.Num() != TotalSlots)
+	{
+		SkillSlotNativeDatas.Init(FMSHUDSkillSlotNativeData(), TotalSlots);
+	}
+
+	// 공격/패시브 슬롯 정보 채우기
+	for (int32 i = 0; i < 6; ++i)
+	{
+		if (Slots.IsValidIndex(i) && Slots[i].IsValid())
+		{
+			SkillSlotNativeDatas[i].SkillTypes = static_cast<uint8>(Slots[i].SkillType);
+			SkillSlotNativeDatas[i].BaseCoolTime = Slots[i].BaseCoolTime;
+
+			// 스킬 이벤트 태그를 저장해 둔다. 액티브/패시브 구분 없이 사용
+			// 쿨다운 태그 설정: 패시브는 사용하지 않으며, 액티브 스킬은 SkillCooldownTag를 사용한다
+			if (Slots[i].SkillType == 1)
+			{
+				// 패시브 스킬은 별도의 쿨다운 태그를 사용하지 않는다
+				SkillSlotNativeDatas[i].SkillCooldownTags = FGameplayTag();
+			}
+			else
+			{
+				// 액티브(2,3) 스킬은 슬록 데이터의 쿨다운 태그를 사용한다.
+				if (Slots[i].SkillCooldownTag.IsValid())
+				{
+					SkillSlotNativeDatas[i].SkillCooldownTags = Slots[i].SkillCooldownTag;
+				}
+			}
+		}
+		else
+		{
+			SkillSlotNativeDatas[i].SkillTypes = 0;
+			SkillSlotNativeDatas[i].BaseCoolTime = 0.f;
+			SkillSlotNativeDatas[i].SkillCooldownTags = FGameplayTag();
+		}
+	}
+
+	// 블링크 슬롯 정보 설정 (인덱스 6)
+	{
+		const int32 BlinkIndex = 6;
+
+		// 블링크는 항상 고정 스킬. 타입을 3으로 구분(우클릭 액티브와 동일 범주로 처리)
+		SkillSlotNativeDatas[BlinkIndex].SkillTypes = 3;
+		SkillSlotNativeDatas[BlinkIndex].BaseCoolTime = 0.f; // 쿨타임은 ASC에서 조회
+		SkillSlotNativeDatas[BlinkIndex].SkillCooldownTags = MSGameplayTags::Player_Cooldown_Blink;
+	}
+
+	// 패시브 쿨다운 지속시간 계산 (현재 CDR 반영)
+	for (int32 i = 0; i < 6; ++i)
+	{
+		if (SkillSlotNativeDatas[i].SkillTypes == 1)
+		{
+			const float NewDuration = FMath::Max(0.05f, SkillSlotNativeDatas[i].BaseCoolTime * (1.f - CurrentCDR));
+
+			// 만약 슬롯이 이미 쿨타임 진행 중이면 진행률을 유지하여 시작 시간을 조정
+			if (SkillSlotNativeDatas[i].bSlotOnCooldown)
+			{
+				const float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+				const float Elapsed = CurrentTime - SkillSlotNativeDatas[i].CooldownStartTime;
+				const float OldDuration = SkillSlotNativeDatas[i].CooldownDuration;
+				float PercentElapsed = 0.f;
+				if (OldDuration > UE_KINDA_SMALL_NUMBER)
+				{
+					PercentElapsed = FMath::Clamp(Elapsed / OldDuration, 0.f, 1.f);
+				}
+				SkillSlotNativeDatas[i].CooldownDuration = NewDuration;
+				const float NewElapsed = PercentElapsed * NewDuration;
+				SkillSlotNativeDatas[i].CooldownStartTime = CurrentTime - NewElapsed;
+			}
+			else
+			{
+				if (SkillSlotNativeDatas[i].CooldownDuration)
+				{
+					SkillSlotNativeDatas[i].CooldownDuration = NewDuration;
+				}
+			}
+		}
+	}
+}
+
+void UMSPlayerHUDWidget::OnLocalCooldownReductionChanged(const FOnAttributeChangeData& Data)
+{
+	// 쿨감 비율 변경 시 패시브 쿨다운 재계산
+	const float NewCDR = FMath::Clamp(Data.NewValue, 0.f, 0.95f);
+
+	// 변경 전과 동일하면 무시
+	if (FMath::IsNearlyEqual(NewCDR, CurrentCDR)) return;
+	CurrentCDR = NewCDR;
+
+	// 패시브 슬롯의 쿨다운 지속시간을 재계산하고 진행률 유지
+	for (int32 i = 0; i < SkillSlotNativeDatas.Num(); ++i)
+	{
+		if (SkillSlotNativeDatas[i].SkillTypes == 1)
+		{
+			const float NewDuration = FMath::Max(0.05f, SkillSlotNativeDatas[i].BaseCoolTime * (1.f - CurrentCDR));
+			if (SkillSlotNativeDatas[i].bSlotOnCooldown)
+			{
+				const float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+				const float Elapsed = CurrentTime - SkillSlotNativeDatas[i].CooldownStartTime;
+				const float OldDuration = SkillSlotNativeDatas[i].CooldownDuration;
+				float PercentElapsed = 0.f;
+				if (OldDuration > UE_KINDA_SMALL_NUMBER)
+				{
+					PercentElapsed = FMath::Clamp(Elapsed / OldDuration, 0.f, 1.f);
+				}
+				SkillSlotNativeDatas[i].CooldownDuration = NewDuration;
+				const float NewElapsed = PercentElapsed * NewDuration;
+				SkillSlotNativeDatas[i].CooldownStartTime = CurrentTime - NewElapsed;
+			}
+			else
+			{
+				SkillSlotNativeDatas[i].CooldownDuration = NewDuration;
+			}
+		}
+	}
+}
+
+void UMSPlayerHUDWidget::StartCooldownForSlot(uint8 SlotIndex, float Duration)
+{
+	// 패시브 스킬 쿨타임 시작. 서버에서 전달된 최종 지속시간을 사용한다
+	const int32 Index = static_cast<int32>(SlotIndex);
+	const float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+	SkillSlotNativeDatas[Index].bSlotOnCooldown = true;
+	SkillSlotNativeDatas[Index].CooldownStartTime = CurrentTime;
+	SkillSlotNativeDatas[Index].CooldownDuration = Duration;
+}
+
+void UMSPlayerHUDWidget::UpdateCooldowns(float DeltaTime)
+{
+	if (!bBoundLocalSkills) return;
+
+	// 현재 시간
+	const float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+
+	for (int32 i = 0; i < TotalSlots; ++i)
+	{
+		float RemainingPercent = 0.f;
+
+		// 패시브 스킬 (SkillType == 1)
+		if (SkillSlotNativeDatas[i].SkillTypes == 1)
+		{
+			if (SkillSlotNativeDatas[i].bSlotOnCooldown)
+			{
+				const float StartTime = SkillSlotNativeDatas[i].CooldownStartTime;
+				const float Duration = SkillSlotNativeDatas[i].CooldownDuration;
+				const float Elapsed = CurrentTime - StartTime;
+				if (Duration > KINDA_SMALL_NUMBER)
+				{
+					const float Fraction = FMath::Clamp(Elapsed / Duration, 0.f, 1.f);
+					RemainingPercent = 1.f - Fraction;
+					if (Fraction >= 1.f)
+					{
+						// 쿨다운 종료
+						SkillSlotNativeDatas[i].bSlotOnCooldown = false;
+						RemainingPercent = 0.f;
+					}
+				}
+				else
+				{
+					// 지속시간이 0이면 즉시 쿨다운 종료
+					SkillSlotNativeDatas[i].bSlotOnCooldown = false;
+					RemainingPercent = 0.f;
+				}
+			}
+			else
+			{
+				// 쿨다운 중이 아니면 0
+				RemainingPercent = 0.f;
+			}
+		}
+		else
+		{
+			// 액티브/블링크 스킬. ASC에서 남은 쿨타임 조회
+			if (SkillSlotNativeDatas[i].SkillCooldownTags.IsValid() && LocalASC.IsValid())
+			{
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(SkillSlotNativeDatas[i].SkillCooldownTags);
+
+				float TimeRemaining = 0.f;
+				float TotalDuration = 0.f;
+
+				FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(TagContainer);
+				TArray<TPair<float, float>> TimeRemainingAndDuration = LocalASC->GetActiveEffectsTimeRemainingAndDuration(Query);
+				
+				if (TimeRemainingAndDuration.Num() > 0)
+				{
+					TPair<float, float> Time = TimeRemainingAndDuration[0];
+					TimeRemaining = Time.Key;
+					TotalDuration = Time.Value;
+				}
+
+				if (TotalDuration > UE_KINDA_SMALL_NUMBER)
+				{
+					RemainingPercent = FMath::Clamp(TimeRemaining / TotalDuration, 0.f, 1.f);
+				}
+				else
+				{
+					RemainingPercent = 0.f;
+				}
+			}
+			else
+			{
+				// 유효한 스킬 태그가 없으면 쿨다운 없음
+				RemainingPercent = 0.f;
+			}
+		}
+
+		// 슬롯 위젯이 준비되어 있으면 머티리얼 파라미터를 갱신한다
+		if (SkillSlotWidgets.IsValidIndex(i) && SkillSlotWidgets[i])
+		{
+			SkillSlotWidgets[i]->SetCooldownPercent(RemainingPercent);
+		}
 	}
 }

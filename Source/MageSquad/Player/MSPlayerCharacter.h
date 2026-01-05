@@ -10,6 +10,12 @@
 #include "Types/MageSquadTypes.h"
 #include "MSPlayerCharacter.generated.h"
 
+// 스킬 슬롯 업데이트 이벤트 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnSkillSlotsUpdated);
+
+// 스킬 쿨다운 시작 이벤트 델리게이트
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSkillCooldownStarted, uint8 /*SlotIndex*/, float /*Duration*/);
+
 /**
  * 스킬 슬롯 인덱스(고정)
  */
@@ -178,10 +184,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Custom | Skill")
 	const TArray<FMSPlayerSkillSlotNet>& GetSkillSlots() const { return SkillSlots; }
 
+	// 스킬 런타임 데이터 배열 반환 함수
+	const TArray<TObjectPtr<UMSSkillSlotRuntimeData>>& GetSkillRuntimeData() const { return SkillRuntimeData; }
+
+	// 클라이언트에게 로컬 스킬 쿨다운이 시작되었음을 알리는 함수
+	UFUNCTION(Client, Reliable)
+	void ClientRPCStartSkillCooldown(uint8 SlotIndex, float Duration);
+
 protected:
-	// 스킬 슬롯 변경 OnRep 함수
+	// 스킬 슬롯 업데이트 OnRep 함수
 	UFUNCTION()
 	void OnRep_SkillSlots();
+
+	// 스킬 슬롯 업데이트 이벤트 함수
+	void NotifySkillSlotsUpdated();
 
 private:
 	// 서버: 스킬 획득 내부 처리 함수
@@ -225,6 +241,13 @@ private:
 
 	// 속성 변경에 따른 콜백 함수
 	void OnCooldownReductionChanged(const FOnAttributeChangeData& Data);
+
+public:
+	// 스킬 슬롯 업데이트 이벤트 객체
+	FOnSkillSlotsUpdated OnSkillSlotsUpdated;
+
+	// 스킬 쿨다운 시작 이벤트 객체
+	FOnSkillCooldownStarted OnSkillCooldownStarted;
 
 protected:
 	// 스킬 슬롯

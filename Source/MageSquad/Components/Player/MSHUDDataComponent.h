@@ -13,6 +13,30 @@ DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnPublicHealthChanged, float, float, flo
 // DisplayName 변경 이벤트 (변경된 이름)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDisplayNameChanged, const FText&);
 
+// 스킬 슬롯 데이터 변경 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnSkillSlotDataUpdated);
+
+
+// HUD에서 팀원의 스킬 슬롯을 표시하기 위해 복제되는 최소 데이터 구조체
+USTRUCT(BlueprintType)
+struct FMSHUDSkillSlotData
+{
+	GENERATED_BODY()
+
+	// 슬롯에 유효한 스킬이 있는지 여부
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	bool bIsValid = false;
+
+	// 스킬 아이콘. 스킬이 없다면 null
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	TSoftObjectPtr<UMaterialInterface> Icon = nullptr;
+
+	// 스킬 레벨. 유효하지 않은 경우 0
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	int32 Level = 0;
+};
+
+
 /**
  * 작성자: 김준형
  * 작성일: 25/12/18
@@ -44,14 +68,24 @@ public:
 	const FText& GetDisplayName() const { return RepDisplayName; }
 	UTexture2D* GetPortraitIcon() const { return RepPortraitIcon; }
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// 현재 복제된 스킬 슬롯 데이터 Getter 함수
+	const TArray<FMSHUDSkillSlotData>& GetSkillSlotData() const { return RepSkillSlots; }
+
+	// 소유자의 스킬 슬롯 데이터 갱신 함수
+	void RefreshSkillSlotsFromOwner();
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// 모든 공개 데이터 변경 시 호출
 	UFUNCTION()
 	void OnRep_PublicData();
+
+	// 스킬 슬롯 데이터 변경 시 호출
+	UFUNCTION()
+	void OnRep_SkillSlotData();
 
 private:
 	// ASC에서 초기값을 읽어 Rep 변수에 반영하는 함수
@@ -68,11 +102,14 @@ private:
 	void HandleMaxHealthChanged(const struct FOnAttributeChangeData& Data);
 
 public:
-	// 복제된 값이 변경되면 호출되는 이벤트 (C++ 전용)
+	// 복제된 값이 변경되면 호출되는 이벤트
 	FOnPublicHealthChanged OnPublicHealthChanged;
 
-	// DisplayName 변경 이벤트 (C++ 전용)
+	// DisplayName 변경 이벤트
 	FOnDisplayNameChanged OnDisplayNameChanged;
+
+	// 스킬 슬롯 데이터 변경 이벤트
+	FOnSkillSlotDataUpdated OnSkillSlotDataUpdated;
 
 protected:
 	// 현재 체력
@@ -90,6 +127,10 @@ protected:
 	// 플레이어 아이콘
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_PublicData)
 	TObjectPtr<UTexture2D> RepPortraitIcon;
+
+	// 스킬 슬롯 데이터
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | HUD", ReplicatedUsing = OnRep_SkillSlotData)
+	TArray<FMSHUDSkillSlotData> RepSkillSlots;
 
 	// 바인딩 델리게이트 핸들(중복 바인딩/정확한 해제 목적)
 	FDelegateHandle HealthChangedHandle;
