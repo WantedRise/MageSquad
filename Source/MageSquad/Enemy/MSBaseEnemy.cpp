@@ -95,7 +95,7 @@ void AMSBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	ENetMode NetMode = GetWorld()->GetNetMode();
+	// ENetMode NetMode = GetWorld()->GetNetMode();
 	// UE_LOG(LogTemp, Error, TEXT("[Enemy BeginPlay] %s - NetMode: %d, HasAuthority: %s"), 
 	// 	*GetName(),
 	// 	(int32)NetMode,
@@ -109,6 +109,22 @@ void AMSBaseEnemy::BeginPlay()
 	if (ASC && !ASC->AbilityActorInfo.IsValid())
 	{
 		ASC->InitAbilityActorInfo(this, this);
+	}
+	
+	auto* SigManager = USignificanceManager::Get(GetWorld());
+	if (SigManager)
+	{
+		// "Enemy"라는 태그로 자신을 등록하고, 위에서 만든 함수를 연결
+		SigManager->RegisterObject(
+			this, 
+			"Enemy", 
+			&AMSBaseEnemy::CalculateSignificance, // 여기에 만든 함수 위치를 전달
+			USignificanceManager::EPostSignificanceType::Sequential,
+			[this](USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView) {
+				// 중요도가 변했을 때 실행될 로직 (예: 틱 빈도 조절)
+				this->OnSignificanceChanged(ObjectInfo, OldSig, NewSig, bInView);
+			}
+		);
 	}
 }
 
@@ -224,6 +240,67 @@ void AMSBaseEnemy::OnRep_MonsterID()
 	}
 }
 
+float AMSBaseEnemy::CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo,
+	const FTransform& Viewpoint)
+{
+	AActor* Owner = Cast<AActor>(ObjectInfo->GetObject());
+	if (!Owner)
+	{
+		return 0.0f;
+	}
+
+	float DistanceSq = FVector::DistSquared(Owner->GetActorLocation(), Viewpoint.GetLocation());
+    
+	// 20미터 이내: 1.0, 40미터 이내: 0.5, 그 외: 0.1
+	if (DistanceSq < FMath::Square(2000.0f))
+	{
+		return 1.0f;
+	}
+	if (DistanceSq < FMath::Square(4000.0f))
+	{
+		return 0.5f;
+	}
+    
+	return 0.1f;
+	
+}
+
+void AMSBaseEnemy::OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, 
+	float NewSig, bool bInView)
+{
+	// 1. 중요도가 아주 낮으면(0.1 이하) 틱을 아예 꺼버림
+	if (NewSig <= 0.1f)
+	{
+		//SetActorTickEnabled(false);
+		if (GetMesh()) 
+		{
+			GetMesh()->SetComponentTickEnabled(false);
+		}
+		if (UCapsuleComponent* Cap = GetCapsuleComponent())
+		{
+			Cap->SetGenerateOverlapEvents(false);
+		}
+		
+		GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.25f;
+	}
+	else
+	{
+		// 2. 중요도가 높으면 다시 틱을 켬
+		//SetActorTickEnabled(true);
+		if (GetMesh())
+		{
+			GetMesh()->SetComponentTickEnabled(true);
+		}
+		
+		if (UCapsuleComponent* Cap = GetCapsuleComponent())
+		{
+			Cap->SetGenerateOverlapEvents(true);
+		}
+		
+		GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.0f;
+	}
+}
+
 void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 {
 	bIsInPool = bInPooling;
@@ -234,6 +311,11 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 		{
 			Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			Cap->SetGenerateOverlapEvents(false);
+			
+			// if (GetCharacterMovement())
+			// {
+			// 	GetCharacterMovement()->PrimaryComponentTick.SetTickFunctionEnable(false);
+			// }
 		}
 		else
 		{
@@ -242,6 +324,11 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 
 			// 캡슐 오브젝트 타입을 확실히 MSEnemy로 유지
 			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnemy
+			
+			// if (GetCharacterMovement())
+			// {
+			// 	GetCharacterMovement()->PrimaryComponentTick.SetTickFunctionEnable(true);
+			// }
 		}
 	}
 }

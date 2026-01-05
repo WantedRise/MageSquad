@@ -26,6 +26,7 @@ class MAGESQUAD_API AMSGameMode : public AGameMode
 public:
 	AMSGameMode();
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 	
 

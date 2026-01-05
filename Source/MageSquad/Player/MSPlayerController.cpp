@@ -24,6 +24,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "EngineUtils.h"
+#include "SignificanceManager.h"
 
 void AMSPlayerController::BeginPlay()
 {
