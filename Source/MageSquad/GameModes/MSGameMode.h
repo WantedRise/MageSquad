@@ -27,8 +27,6 @@ public:
 	AMSGameMode();
 	virtual void BeginPlay() override;
 
-	
-
 public:
 	// GameState에서 GameFlow 생성 시 참조용
 	TSubclassOf<class UMSGameFlowBase> GetGameFlowClass() const;

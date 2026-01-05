@@ -9,6 +9,7 @@
 #include "AbilitySystem/Tasks/MSAT_PlayMontageAndWaitForEvent.h"
 #include "Actors/Indicator/MSIndicatorActor.h"
 #include "Enemy/MSBossEnemy.h"
+#include "Kismet/GameplayStatics.h"
 
 UMSGA_Boss_Sevarog_Meteor::UMSGA_Boss_Sevarog_Meteor()
 {
@@ -144,4 +145,17 @@ void UMSGA_Boss_Sevarog_Meteor::OnIndicatorSpawned(AMSIndicatorActor* Indicator,
 	//     CueParams.Location = Location;
 	//     SourceASC->ExecuteGameplayCue(MSGameplayTags::GameplayCue_Meteor_Warning, CueParams);
 	// }
+	
+	if (CompleteParticle)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, Indicator->GetActorLocation());
+		// if (UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, SpawnLocation))
+		// {
+		// 	PSC->CustomTimeDilation = 2.0f;
+		// }
+	}
+	if (CompleteSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), CompleteSound, Indicator->GetActorLocation());
+	}
 }

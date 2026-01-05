@@ -100,7 +100,6 @@ void AMSIndicatorActor::ApplyMaterialParams()
 
 	case EIndicatorShape::Rectangle:
 		DynamicMaterial->SetScalarParameterValue(TEXT("AspectRatio"), CachedParams.Length / CachedParams.Width);
-		//DecalComponent->DecalSize = FVector(CachedParams.Length * 0.5f, CachedParams.Width * 0.5f, 100.f);
 		float HalfLength = CachedParams.Length * 0.5f;
 		float HalfWidth = CachedParams.Width * 0.5f;
 		SetActorLocation(GetActorLocation() + (GetActorUpVector() * HalfLength)); // 데칼 회전때문에 Forward가 아닌 UpVector 이용
@@ -135,7 +134,6 @@ void AMSIndicatorActor::OnFillComplete()
 
 bool AMSIndicatorActor::GetDamageInfo(UAbilitySystemComponent*& OutASC, TSubclassOf<UGameplayEffect>& OutDamageEffect) const
 {
-	// 1. 직접 설정된 값이 있으면 사용
 	if (SourceAbilitySystemComponent.IsValid() && DamageEffectClass)
 	{
 		OutASC = SourceAbilitySystemComponent.Get();
@@ -143,21 +141,18 @@ bool AMSIndicatorActor::GetDamageInfo(UAbilitySystemComponent*& OutASC, TSubclas
 		return true;
 	}
 
-	// 2. Owner 체크
 	if (!IndicatorOwner.IsValid())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("GetDamageInfo: IndicatorOwner is invalid"));
 		return false;
 	}
 
-	// 3. 인터페이스 구현 체크
 	if (!IndicatorOwner->Implements<UMSIndicatorDamageInterface>())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("GetDamageInfo: Owner [%s] does not implement IMSIndicatorDamageInterface"), *IndicatorOwner->GetName());
 		return false;
 	}
 
-	// 4. 인터페이스로 조회
 	OutASC = IMSIndicatorDamageInterface::Execute_GetIndicatorSourceASC(IndicatorOwner.Get());
 	OutDamageEffect = IMSIndicatorDamageInterface::Execute_GetIndicatorDamageEffect(IndicatorOwner.Get());
 
@@ -197,7 +192,6 @@ TArray<AActor*> AMSIndicatorActor::SpawnTargetActorAndPerformTargeting()
 	AMSTargetActor_IndicatorBase* TargetActor = World->SpawnActor<AMSTargetActor_IndicatorBase>(
 		TargetActorClass,
 		GetActorLocation(),
-		//GetActorRotation(),
 		SpawnRotation,
 		SpawnParams);
 
