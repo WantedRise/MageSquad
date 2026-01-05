@@ -4,35 +4,49 @@
 #include "Widgets/Lobby/MSCharacterSlotWidget.h"
 #include "DataStructs/MSCharacterData.h"
 #include "Components/Image.h"
+#include <Player/MSLobbyCharacter.h>
+#include <System/MSCharacterDataSubsystem.h>
+#include "DataAssets/Player/DA_CharacterData.h"
+#include <Player/MSPlayerCharacter.h>
 
 
-void UMSCharacterSlotWidget::InitSlot(FName InCharacterID, const FMSCharacterData& Data)
+void UMSCharacterSlotWidget::InitSlot(FName InCharacterId)
 {
-    CharacterID = InCharacterID;
-    if (Data.Portrait)
+    CharacterId = InCharacterId;
+
+    if (UGameInstance* GI = GetGameInstance())
     {
-        Image_Portrait->SetBrushFromTexture(Data.Portrait);
+        if (UMSCharacterDataSubsystem* CharacterData = GI->GetSubsystem<UMSCharacterDataSubsystem>())
+        {
+            const FMSCharacterSelection* Selection = CharacterData->FindSelectionByCharacterId(CharacterId);
+
+            if (!Selection || !Selection->PlayerCharacterClass)
+                return;
+
+            //Pawn CDO에서 DataAsset 가져오기
+            const AMSPlayerCharacter* PlayerCDO =Cast<AMSPlayerCharacter>(Selection->PlayerCharacterClass->GetDefaultObject());
+
+            if (!PlayerCDO)
+                return;
+
+            auto* PlayerStartUpData = PlayerCDO->GetPlayerStartUpData();
+
+            if (!PlayerStartUpData)
+                return;
+
+            if (Image_Portrait && PlayerStartUpData->Portrait)
+            {
+                Image_Portrait->SetBrushFromTexture(
+                    PlayerStartUpData->Portrait
+                );
+            }
+        }
     }
-}
-
-void UMSCharacterSlotWidget::InitSlot(TSubclassOf<AMSPlayerCharacter> InClass)
-{
-    PawnClass = InClass;
-    /*if (Data.Portrait)
-    {
-        Image_Portrait->SetBrushFromTexture(Data.Portrait);
-    }*/
 }
 
 void UMSCharacterSlotWidget::HiddenPortrait()
 {
     Image_Portrait->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void UMSCharacterSlotWidget::HandleClicked()
-{
-    //OnClicked.Broadcast(CharacterID);
-    OnCharacterClicked.Broadcast(PawnClass);
 }
 
 FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
@@ -41,8 +55,7 @@ FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
 {
     if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
     {
-        //OnClicked.Broadcast(CharacterID);
-        OnCharacterClicked.Broadcast(PawnClass);
+        OnClicked.Broadcast(CharacterId);
         return FReply::Handled();
     }
 

@@ -869,9 +869,6 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
 	if (!PS) return;
 
-	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Data is nullptr"))
-	// 저장 데이터 없을 시 
-	// 시작 스킬 획득
 	for (FStartSkillData StartSkillData : PlayerData.StartSkillDatas)
 	{
 		if (*StartSkillData.SkillAbilty)
@@ -882,64 +879,6 @@ void AMSPlayerCharacter::GivePlayerStartAbilities_Server()
 			AcquireSkill(StartSkillData.SkillId);
 		}
 	}
-	return;
-
-	FName NewCharacterID = NAME_None;
-	
-	auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>();
-	if (!LevelManager->ConsumeSelectedCharacter(PS->GetUniqueId(), NewCharacterID))
-	{
-		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("UniqueID can't find"))
-		return;
-	}
-
-	UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-	const FMSCharacterData* Data = CharacterData->FindCharacterData(NewCharacterID);
-	if (!Data)
-	{
-		
-	}
-	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("Data apply"))
-	// 초기 스탯 GE
-	if (Data->InitialStatEffect)
-	{
-		AbilitySystemComponent->ApplyGameplayEffectToSelf(
-			Data->InitialStatEffect->GetDefaultObject<UGameplayEffect>(),
-			1.0f,
-			AbilitySystemComponent->MakeEffectContext()
-		);
-	}
-	// 스킬 부여
-	if (Data->PassiveSkill.SkillAbilty)
-	{
-		// PlayerState에 스킬 등록
-		PS->FindSkillRowBySkillIDAndAdd(Data->PassiveSkill.SkillId);
-		// GAS Ability 부여
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Data->PassiveSkill.SkillAbilty, Data->PassiveSkill.SkillLevel, INDEX_NONE, this));
-		// UI / 로직용
-		AcquireSkill(Data->PassiveSkill.SkillId);
-	}
-	if (Data->PrimarySkill.SkillAbilty)
-	{
-		// PlayerState에 스킬 등록
-		PS->FindSkillRowBySkillIDAndAdd(Data->PrimarySkill.SkillId);
-		// GAS Ability 부여
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Data->PrimarySkill.SkillAbilty, Data->PrimarySkill.SkillLevel, INDEX_NONE, this));
-		// UI / 로직용
-		AcquireSkill(Data->PrimarySkill.SkillId);
-	}
-	if (Data->SecondarySkill.SkillAbilty)
-	{
-		// PlayerState에 스킬 등록
-		PS->FindSkillRowBySkillIDAndAdd(Data->SecondarySkill.SkillId);
-		// GAS Ability 부여
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Data->SecondarySkill.SkillAbilty, Data->SecondarySkill.SkillLevel, INDEX_NONE, this));
-		// UI / 로직용
-		AcquireSkill(Data->SecondarySkill.SkillId);
-	}
-
-	//ApplyCharacterAppearance(*Data);
-	PS->SetSelectedCharacterID(NewCharacterID);
 }
 
 void AMSPlayerCharacter::ApplyPlayerStartEffects_Server()

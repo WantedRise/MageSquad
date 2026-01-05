@@ -20,38 +20,19 @@ public:
     virtual void Deinitialize() override;
 
 public:
-    /** CharacterID → Character Data */
-    const FMSCharacterData* FindCharacterData(FName CharacterID) const;
-
     FName GetDefaultCharacterID() const;
+    const TArray<struct FMSCharacterSelection>& GetAllCharacter() const;
 
-    /** 전체 캐릭터 데이터 반환 (UI용) */
-    const TMap<FName, const FMSCharacterData*>& GetAllCharacters() const
-    {
-        return CachedCharacterData;
-    }
-    const TArray<TSubclassOf<class AMSPlayerCharacter>>& GetAllCharacter() const;
-    const TMap<FUniqueNetIdRepl, TSubclassOf<class AMSPlayerCharacter>>& GetAllPlayerCharacter() const;
-
-    /** 로비에서 캐릭터 선택 저장 */
-    void CacheSelectedCharacterForPlayer(const FUniqueNetIdRepl& NetId, TSubclassOf<class AMSPlayerCharacter> SelectedClass);
-
-    /** 인게임에서 캐릭터 선택 복원 */
-    bool PopCachedSelectedCharacterForPlayer(const FUniqueNetIdRepl& NetId, TSubclassOf<class AMSPlayerCharacter>& OutSelectedClass);
-    void CacheSelectedCharacterForLobby(const FUniqueNetIdRepl& NetId, TSubclassOf<class AMSLobbyCharacter> SelectedClass);
-    bool PopCachedSelectedCharacterForLobby(const FUniqueNetIdRepl& NetId, TSubclassOf<class AMSLobbyCharacter>& OutSelectedClass);
+    void CacheSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterId);
+    const FMSCharacterSelection* FindSelectionByCharacterId(FName InCharacterId) const;
+    const FMSCharacterSelection* FindSelectionByNetId(const FUniqueNetIdRepl& NetId);
 private:
     /** DT_Character */
     UPROPERTY()
     UDataTable* CharacterDataTable;
 
-    /** 캐시 (CharacterID → Row Ptr) */
-    TMap<FName, const FMSCharacterData*> CachedCharacterData;
-    TArray<TSubclassOf<class AMSPlayerCharacter>> PlayerCharacterClasses;
-    TArray<TSubclassOf<class AMSLobbyCharacter>> LobbyCharacterClasses;
-    TMap<FUniqueNetIdRepl, TSubclassOf<class AMSPlayerCharacter>> CachedSelectedCharacters;
-    TMap<FUniqueNetIdRepl, TSubclassOf<class AMSLobbyCharacter>> CachedSelectedLobbyCharacters;
-private:
-    void LoadCharacterDataTable();
-    void BuildCache();
+    UPROPERTY(EditDefaultsOnly)
+    TArray<FMSCharacterSelection> PlayerCharacterClasses;
+    // 플레이어별 선택 상태
+    TMap<FUniqueNetIdRepl, FName> SelectedCharacterIDByNetId;
 };

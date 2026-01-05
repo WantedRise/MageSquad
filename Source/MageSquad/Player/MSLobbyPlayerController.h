@@ -24,7 +24,6 @@ class MAGESQUAD_API AMSLobbyPlayerController : public APlayerController
 	
 public:
 	AMSLobbyPlayerController();
-
 public:
 	
 	//로컬 플레이어의 준비 상태 변경 요청을 서버에 전달한다.
@@ -32,7 +31,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRequestSetReady(bool bNewReady);
 	UFUNCTION(Server, Reliable)
-	void Server_SelectCharacter(TSubclassOf<AMSPlayerCharacter> SelectedClass);
+	void Server_SelectCharacter(FName InCharacterId);
 protected:
 	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;

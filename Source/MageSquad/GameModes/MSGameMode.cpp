@@ -17,6 +17,7 @@
 #include <Player/MSPlayerController.h>
 #include <System/MSCharacterDataSubsystem.h>
 #include "OnlineSubsystemTypes.h"
+#include "DataAssets/Player/DA_CharacterData.h"
 
 AMSGameMode::AMSGameMode()
 {
@@ -161,18 +162,21 @@ void AMSGameMode::RestartPlayer(AController* NewPlayer)
 
 	const FUniqueNetIdRepl NetId = PS->GetUniqueId();
 	auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-	if (!NetId.IsValid() || !CharacterDataManager || CharacterDataManager->GetAllPlayerCharacter().Num() <= 0)
+	if (!NetId.IsValid() || !CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
 	{
 		Super::RestartPlayer(NewPlayer);
 		return;
 	}
 
-	TSubclassOf<AMSPlayerCharacter> Test;
-	CharacterDataManager->PopCachedSelectedCharacterForPlayer(NetId, Test);
+	const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByNetId(NetId);
+	if (!CharacterSelection || !CharacterSelection->PlayerCharacterClass)
+	{
+		return;
+	}
 	FTransform SpawnTM = ChoosePlayerStart(NewPlayer)->GetActorTransform();
 
 	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
-		Test,
+		CharacterSelection->PlayerCharacterClass,
 		SpawnTM
 	);
 

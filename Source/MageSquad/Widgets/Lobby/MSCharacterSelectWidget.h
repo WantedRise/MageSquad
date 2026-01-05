@@ -21,8 +21,7 @@ protected:
 
 private:
     void BuildCharacterSlots();
-    void OnCharacterSlotClicked(TSubclassOf<class AMSPlayerCharacter> ClickedPawnClass);
-    void ApplySelectedCharacter(FMSCharacterData Data);
+    void OnCharacterSlotClicked(FName InCharacterId);
     void HandleCharacterChanged(FName CharacterID);
     
 protected:

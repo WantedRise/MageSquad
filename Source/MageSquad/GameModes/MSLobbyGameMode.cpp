@@ -43,6 +43,18 @@ void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
         //// ⭐ 디폴트 캐릭터 설정
         //PS->SetSelectedCharacter(DefaultCharacterID);
+
+        auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+        if (!CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
+        {
+            return;
+        }
+
+        const FUniqueNetIdRepl NetId = PS->GetUniqueId();
+        if (!NetId.IsValid())
+            return;
+
+        CharacterDataManager->CacheSelectedCharacter(NetId, CharacterDataManager->GetDefaultCharacterID());
     }
 }
 

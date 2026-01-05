@@ -29,33 +29,8 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UMSLevelManagerSubsystem::Deinitialize()
 {
-
     Super::Deinitialize();
 }
-
-void UMSLevelManagerSubsystem::SaveSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterID)
-{
-	PendingSelectedCharacters.Add(NetId, CharacterID);
-	
-	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::SaveSelectedCharacter() %s"), *NetId.GetUniqueNetId().Get()->ToString());
-}
-
-bool UMSLevelManagerSubsystem::ConsumeSelectedCharacter(const FUniqueNetIdRepl& NetId, FName& OutCharacterID)
-{
-	if (FName* Found = PendingSelectedCharacters.Find(NetId))
-	{
-		OutCharacterID = *Found;
-		PendingSelectedCharacters.Remove(NetId);
-
-		UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::ConsumeSelectedCharacter() %s"), *NetId.GetUniqueNetId().Get()->ToString());
-
-		return true;
-	}
-
-	return false;
-}
-
-
 
 void UMSLevelManagerSubsystem::TravelToLoadingLevel()
 {

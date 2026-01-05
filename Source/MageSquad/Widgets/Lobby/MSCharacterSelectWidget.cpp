@@ -11,6 +11,7 @@
 #include <Player/MSLobbyPlayerState.h>
 #include <Interfaces/CharacterAppearanceInterface.h>
 #include "Player/MSPlayerCharacter.h"
+#include "DataAssets/Player/DA_CharacterData.h"
 
 void UMSCharacterSelectWidget::NativeConstruct()
 {
@@ -23,23 +24,18 @@ void UMSCharacterSelectWidget::NativeConstruct()
 void UMSCharacterSelectWidget::BuildCharacterSlots()
 {
     UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-
-    const auto& Characters = CharacterData->GetAllCharacters();
+    const auto& CharacterSelections = CharacterData->GetAllCharacter();
 
     const int32 TotalSlots = Columns * Rows;
     int32 Index = 0;
-    for (const auto& Pair : Characters)
+    for (const FMSCharacterSelection& Selection : CharacterSelections)
     {
-        FName CharacterID = Pair.Key;
-        const FMSCharacterData* Data = Pair.Value;
-
         UMSCharacterSlotWidget* CharacterSlot = CreateWidget<UMSCharacterSlotWidget>(this, SlotWidgetClass);
         CharacterGrid->AddChildToUniformGrid(CharacterSlot, Index / Columns, Index % Columns);
-      
-            
-        CharacterSlot->InitSlot(CharacterID, *Data);
-        CharacterSlot->InitSlot(CharacterData->GetAllCharacter()[Index]);
-        CharacterSlot->OnCharacterClicked.AddUObject(this, &UMSCharacterSelectWidget::OnCharacterSlotClicked);
+
+        
+        CharacterSlot->InitSlot(Selection.CharacterID);
+        CharacterSlot->OnClicked.AddUObject(this, &UMSCharacterSelectWidget::OnCharacterSlotClicked);
         Index++;
     }
 
@@ -50,25 +46,15 @@ void UMSCharacterSelectWidget::BuildCharacterSlots()
         if (!EmptySlot) continue;
         EmptySlot->HiddenPortrait();
         CharacterGrid->AddChildToUniformGrid(EmptySlot,Index / Columns,Index % Columns);
-        
     }
 }
 
 // MSCharacterSelectWidget.cpp
 
-void UMSCharacterSelectWidget::OnCharacterSlotClicked(
-    TSubclassOf<AMSPlayerCharacter> ClickedPawnClass
-)
+void UMSCharacterSelectWidget::OnCharacterSlotClicked(FName InCharacterId)
 {
-    if (!ClickedPawnClass)
+    if (NAME_None == InCharacterId)
         return;
-
-    // 같은 캐릭터 재클릭 방지
-    if (SelectedPawnClass == ClickedPawnClass)
-        return;
-
-    // 1️⃣ 로컬 선택 상태 갱신 (UI 즉시 반응)
-    SelectedPawnClass = ClickedPawnClass;
 
     //UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
     //if (CharacterData)
@@ -82,35 +68,12 @@ void UMSCharacterSelectWidget::OnCharacterSlotClicked(
     //        UE_LOG(LogTemp, Log, TEXT("OnCharacterClicked ServerSelectCharacter"));
     //    }
     //}
-
+    UE_LOG(LogTemp, Log, TEXT("GetOwningPlayer"));
     AMSLobbyPlayerController* PC = GetOwningPlayer<AMSLobbyPlayerController>();
     if (!PC) return;
-    PC->Server_SelectCharacter(ClickedPawnClass);
+    PC->Server_SelectCharacter(InCharacterId);
+    UE_LOG(LogTemp, Log, TEXT("GetOwningPlayer aa"));
 }
-
-void UMSCharacterSelectWidget::ApplySelectedCharacter(FMSCharacterData Data)
-{
-    /*
-    // 1️⃣ 슬롯 UI 선택 상태 갱신
-    for (UMSCharacterSlotWidget* Slot : AllSlots)
-    {
-        if (!Slot)
-            continue;
-
-        const bool bIsSelected =
-            (Slot->GetCharacterID() == CharacterID);
-
-        Slot->SetSelected(bIsSelected);
-    }
-
-    // 2️⃣ 우측 정보 패널 갱신
-    if (InfoWidget)
-    {
-        InfoWidget->Update(CharacterID);
-    }
-    */
-}
-
 
 void UMSCharacterSelectWidget::HandleCharacterChanged(FName CharacterID)
 {

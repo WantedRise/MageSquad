@@ -16,6 +16,8 @@
 #include <Interfaces/CharacterAppearanceInterface.h>
 #include <System/MSCharacterDataSubsystem.h>
 #include "Player/MSPlayerCharacter.h"
+#include "DataAssets/Player/DA_CharacterData.h"
+#include "Player/MSLobbyCharacter.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -100,11 +102,9 @@ void AMSLobbyPlayerController::CreateLobbyUI()
 	}
 }
 
-void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(
-	TSubclassOf<AMSPlayerCharacter> SelectedClass
-)
+void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(FName InCharacterId)
 {
-	if (!SelectedClass)
+	if (InCharacterId == NAME_None)
 		return;
 
 	auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
@@ -113,28 +113,25 @@ void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(
 		return;
 	}
 
-	FTransform TM = GetPawn()
-		? GetPawn()->GetActorTransform()
-		: FTransform::Identity;
+	FTransform TM = GetPawn() ? GetPawn()->GetActorTransform() : FTransform::Identity;
 
 	if (APawn* PlayerOldPawn = GetPawn())
 	{
 		PlayerOldPawn->Destroy();
 	}
 
-	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
-		SelectedClass,
-		TM
-	);
-
-	Possess(NewPawn);
+	if (const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByCharacterId(InCharacterId))
+	{
+		if (CharacterSelection->LobbyCharacterClass)
+		{
+			APawn* NewPawn = GetWorld()->SpawnActor<APawn>(CharacterSelection->LobbyCharacterClass, TM);
+			Possess(NewPawn);
+		}
+	}
 
 	const FUniqueNetIdRepl NetId = PlayerState->GetUniqueId();
 	if (!NetId.IsValid())
 		return;
 
-	UMSCharacterDataSubsystem* Cache = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-	if (!Cache) return;
-	Cache->CacheSelectedCharacterForPlayer(NetId, SelectedClass);
-
+	CharacterDataManager->CacheSelectedCharacter(NetId, InCharacterId);
 }
