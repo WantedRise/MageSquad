@@ -214,7 +214,7 @@ void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indic
 	Params.EffectContext = ContextHandle;
 	Params.Location = Indicator->GetActorLocation(); // 재생될 위치
 	Params.RawMagnitude = 1.0f;       // 필요시 강도 전달
-
+	
 	// 5. 실행
 	AbilitySystemComponent->ExecuteGameplayCue(
 		FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), 

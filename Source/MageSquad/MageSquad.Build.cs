@@ -10,10 +10,10 @@ public class MageSquad : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
 
-        // ÇÁ·ÎÁ§Æ® °ø°³ Æú´õ °æ·Î Ãß°¡
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
         PublicIncludePaths.Add("MageSquad");
 
-        // ¸ðµâ Ãß°¡
+        // ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
         PublicDependencyModuleNames.AddRange(new string[] {
             "AIModule",
             "StateTreeModule",
@@ -35,7 +35,8 @@ public class MageSquad : ModuleRules
             "PreLoadScreen",
             "Paper2D",
             "OnlineSubsystem",
-            "OnlineSubsystemSteam"
+            "OnlineSubsystemSteam",
+            "SignificanceManager"
         });
     }
 }

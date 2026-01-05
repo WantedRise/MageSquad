@@ -6,11 +6,12 @@
 #include "AbilitySystemInterface.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "GameFramework/Character.h"
+#include "SignificanceManager.h"
 #include "MSBaseEnemy.generated.h"
 
 /*
  * 작성자 : 임희섭
- * 작성일 : 2025/12/08
+ * 작성일 : 2025/12/12
  * 몬스터들의 Base 클래스
  * 몬스터들의 공통 특성을 정의한다. 
  */
@@ -103,6 +104,14 @@ public: /*Setter*/
 	{
 		ProjectileDataClass = InProjectileDataClass;
 	}
+	
+public:
+	// 시그니컨스 매니저가 호출할 계산 함수
+	static float CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint);
+	
+	// 중요도가 변경되었을 때 호출될 커스텀 함수
+	// 매개변수: 정보객체, 이전 중요도, 새로운 중요도, 화면에 보이는지 여부
+	void OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView);
 
 private:
 	// 발사체 원본 데이터 클래스

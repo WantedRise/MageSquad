@@ -3,12 +3,34 @@
 
 #include "Actors/Wave/MSWaveBlock.h"
 
+#include "Components/BoxComponent.h"
+
 // Sets default values
 AMSWaveBlock::AMSWaveBlock()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+
+	BoxCollision = CreateDefaultSubobject<UBoxComponent>("Box");
+	RootComponent = BoxCollision;
+
+	Mesh1 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh1");
+	Mesh1->SetupAttachment(RootComponent);
+	Mesh2 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh2");
+	Mesh2->SetupAttachment(RootComponent);
+	Mesh3 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh3");
+	Mesh3->SetupAttachment(RootComponent);
+	Mesh4 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh4");
+	Mesh4->SetupAttachment(RootComponent);
+	Mesh5 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh5");
+	Mesh5->SetupAttachment(RootComponent);
+	Mesh6 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh6");
+	Mesh6->SetupAttachment(RootComponent);
+	Mesh7 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh7");
+	Mesh7->SetupAttachment(RootComponent);
+	Mesh8 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh8");
+	Mesh8->SetupAttachment(RootComponent);
 }
 
 void AMSWaveBlock::ActivateBlock()
@@ -27,7 +49,7 @@ void AMSWaveBlock::DeactivateBlock()
 void AMSWaveBlock::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	// 이 액터에 붙은 모든 컴포넌트를 순회
 	TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
 	GetComponents<USkeletalMeshComponent>(SkeletalMeshComponents);
@@ -36,24 +58,88 @@ void AMSWaveBlock::BeginPlay()
 	{
 		if (MeshComp)
 		{
-			// 1. 틱 시스템 자체는 허용 (애니메이션 업데이트를 위해)
-			MeshComp->PrimaryComponentTick.bCanEverTick = true;
-			MeshComp->PrimaryComponentTick.bStartWithTickEnabled = true;
+			// 틱 시스템 자체는 허용 (애니메이션 업데이트를 위해)
+			// MeshComp->PrimaryComponentTick.bCanEverTick = true;
+			// MeshComp->PrimaryComponentTick.bStartWithTickEnabled = true;
 
-			// 2. 핵심: 화면에 보일 때만 포즈를 계산하도록 설정
 			// 이 설정이 되어 있으면 화면 밖에서는 틱이 돌아도 무거운 애니메이션 계산을 생략합니다.
 			MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-        
-			// 3. (추가) 애니메이션 시퀀스가 루프 중인지 확인
-			MeshComp->SetPlayRate(1.0f);
 		}
+	}
+
+	auto* SigManager = USignificanceManager::Get(GetWorld());
+	if (SigManager)
+	{
+		// "Enemy"라는 태그로 자신을 등록하고, 위에서 만든 함수를 연결
+		SigManager->RegisterObject(
+			this,
+			"WaveBlock",
+			&AMSWaveBlock::CalculateSignificance, // 여기에 만든 함수 위치를 전달
+			USignificanceManager::EPostSignificanceType::Sequential,
+			[this](USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView)
+			{
+				this->OnSignificanceChanged(ObjectInfo, OldSig, NewSig, bInView);
+			}
+		);
 	}
 }
 
-// Called every frame
-void AMSWaveBlock::Tick(float DeltaTime)
+float AMSWaveBlock::CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo,
+                                          const FTransform& Viewpoint)
 {
-	Super::Tick(DeltaTime);
+	AActor* Owner = Cast<AActor>(ObjectInfo->GetObject());
+	if (!Owner)
+	{
+		return 0.0f;
+	}
 
+	// 플레이어와 적 사이의 거리 계산
+	float DistanceSq = FVector::DistSquared(Owner->GetActorLocation(), Viewpoint.GetLocation());
+
+	// 뱀서류 예시 기준 (10미터 이내: 1.0, 30미터 이내: 0.5, 그 외: 0.1)
+	if (DistanceSq < FMath::Square(3500.0f))
+	{
+		return 1.0f;
+	}
+	if (DistanceSq < FMath::Square(5500.0f))
+	{
+		return 0.5f;
+	}
+
+	return 0.1f;
 }
 
+void AMSWaveBlock::OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig,
+                                         float NewSig, bool bInView)
+{
+	// 1. 중요도가 아주 낮으면(0.1 이하) 틱을 아예 꺼버림
+
+	bool IsCulling = NewSig <= 0.5f;
+
+	Mesh1->SetComponentTickEnabled(!IsCulling);
+	Mesh2->SetComponentTickEnabled(!IsCulling);
+	Mesh3->SetComponentTickEnabled(!IsCulling);
+	Mesh4->SetComponentTickEnabled(!IsCulling);
+	Mesh5->SetComponentTickEnabled(!IsCulling);
+	Mesh6->SetComponentTickEnabled(!IsCulling);
+	Mesh7->SetComponentTickEnabled(!IsCulling);
+	Mesh8->SetComponentTickEnabled(!IsCulling);
+
+	Mesh1->SetVisibility(!IsCulling);
+	Mesh2->SetVisibility(!IsCulling);
+	Mesh3->SetVisibility(!IsCulling);
+	Mesh4->SetVisibility(!IsCulling);
+	Mesh5->SetVisibility(!IsCulling);
+	Mesh6->SetVisibility(!IsCulling);
+	Mesh7->SetVisibility(!IsCulling);
+	Mesh8->SetVisibility(!IsCulling);
+
+	Mesh1->bPauseAnims = IsCulling;
+	Mesh2->bPauseAnims = IsCulling;
+	Mesh3->bPauseAnims = IsCulling;
+	Mesh4->bPauseAnims = IsCulling;
+	Mesh5->bPauseAnims = IsCulling;
+	Mesh6->bPauseAnims = IsCulling;
+	Mesh7->bPauseAnims = IsCulling;
+	Mesh8->bPauseAnims = IsCulling;
+}

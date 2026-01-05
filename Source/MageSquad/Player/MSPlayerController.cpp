@@ -24,6 +24,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "EngineUtils.h"
+#include "SignificanceManager.h"
 
 void AMSPlayerController::BeginPlay()
 {
@@ -149,6 +150,32 @@ void AMSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AMSPlayerController, SpectateTargetActor, COND_OwnerOnly);
+}
+
+void AMSPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	// 로컬 플레이어만 실행 (각 클라이언트에서 자기 화면 기준으로)
+	if (!IsLocalController())
+	{
+		return;
+	}
+    
+	if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
+	{
+		TArray<FTransform> TransformArray;
+        
+		if (APawn* MyPawn = GetPawn())
+		{
+			TransformArray.Add(MyPawn->GetTransform());
+		}
+        
+		if (TransformArray.Num() > 0)
+		{
+			SigManager->Update(TArrayView<FTransform>(TransformArray));
+		}
+	}
 }
 
 void AMSPlayerController::EnsureHUDCreated()
