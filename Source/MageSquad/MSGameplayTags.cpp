@@ -71,6 +71,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_SharkFin, "Skill.Ability.SharkFin");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_IceNova, "Skill.Ability.IceNova");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_OrbitBlade, "Skill.Ability.OrbitBlade");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_ChainBolt, "Skill.Ability.ChainBolt");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Ability_PoisonPlant, "Skill.Ability.PoisonPlant");
 
 	/* Skill Event Tags */
@@ -82,6 +83,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_SharkFin, "Skill.Event.SharkFin");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_IceNova, "Skill.Event.IceNova");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_OrbitBlade, "Skill.Event.OrbitBlade");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_ChainBolt, "Skill.Event.ChainBolt");
 	UE_DEFINE_GAMEPLAY_TAG(Skill_Event_PoisonPlant, "Skill.Event.PoisonPlant");
 
 	/* Skill Cooldown Tags */
