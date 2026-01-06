@@ -232,7 +232,6 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		Params.SpawnCollisionHandlingOverride =
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		// 맵 밖으로 스폰 (비활성 상태)
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
 			FVector(0, 0, 100.0f),
@@ -242,8 +241,10 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 
 		if (Enemy)
 		{
-			//  풀링 모드 설정 (AI Controller 생성 방지)
+			//  풀링 모드 설정
 			Enemy->SetPoolingMode(true);
+			// 풀링된 Enemy는 DORM_Initial로 설정하여 클라이언트에 리플리케이트되지 않도록 함
+			Enemy->SetNetDormancy(DORM_Initial);
 			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
@@ -492,14 +493,15 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 		       *MonsterID.ToString());
 	}
 
-	// 활성화
-	ActivateEnemy(Enemy, Location);
 
 	// 몬스터 ID 설정
 	Enemy->SetMonsterID(MonsterID);
 
 	// DataTable 데이터로 초기화
 	InitializeEnemyFromData(Enemy, MonsterID);
+	
+	// 활성화
+	ActivateEnemy(Enemy, Location);
 
 	// Active 풀에 추가
 	Pool->ActiveEnemies.Add(Enemy);
@@ -904,20 +906,21 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// 풀링 모드 해제
 	Enemy->SetPoolingMode(false);
 
-	// 네트워크 상태 활성화
-	Enemy->SetNetDormancy(DORM_Awake);
-	Enemy->FlushNetDormancy();
-	Enemy->SetReplicateMovement(true);
-
 	// 위치 설정
-	Enemy->SetActorLocation(Location);
-	Enemy->SetActorRotation(FRotator::ZeroRotator);
-
+	if (Location != FVector())
+	{
+		Enemy->SetActorLocation(Location);
+		Enemy->SetActorRotation(FRotator::ZeroRotator);
+	}
+	
 	//  가시성/충돌 활성화
 	Enemy->SetActorHiddenInGame(false);
 	Enemy->SetActorEnableCollision(true);
-
-	// 네트워크 업데이트 강제
+	
+	// 리플리케이션 활성화
+	Enemy->SetReplicates(true);
+	Enemy->SetReplicateMovement(true);
+	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->ForceNetUpdate();
 
 	// 디버그 로그
@@ -974,7 +977,6 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	// Hidden 처리
 	Enemy->SetActorHiddenInGame(true);
 	// 콜리전은 Dead Ability에서 몽타주 시작과 동시에 처리
-	//Enemy->SetActorEnableCollision(false);
 	Enemy->SetActorTickEnabled(false);
 
 	// Movement 정리
@@ -1006,6 +1008,10 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 
 	//  GAS 초기화
 	ResetEnemyGASState(Enemy);
+	
+	// 리플리케이션 완전히 끄기
+	Enemy->SetReplicates(false);
+	Enemy->SetReplicateMovement(false);
 
 	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
 	// 	Enemy->GetIsReplicated()

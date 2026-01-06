@@ -194,7 +194,7 @@ public:
 	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
 
 	/** Enemy 활성화 (위치 설정, AI 시작) */
-	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location) const;
+	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location = FVector()) const;
 
 	// 타일맵 찾기 및 캐싱
 	AMSSpawnTileMap* GetSpawnTileMap();
