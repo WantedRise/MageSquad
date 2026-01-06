@@ -45,6 +45,7 @@ void UMSGA_Tornado::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 	RuntimeData.Damage = SkillDamage;
 	RuntimeData.DamageEffect = DamageEffect;
+	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.LifeTime = SkillDuration;
 	RuntimeData.Radius = SkillRadius;
 	RuntimeData.DamageInterval = 0.5f;

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,10 +7,10 @@
 #include "MSGA_Lightning.generated.h"
 
 /**
-*  작성자: 박세찬
- * 작성일: 26/01/01
+*  ?묒꽦?? 諛뺤꽭李?
+ * ?묒꽦?? 26/01/01
  * 
- * 몬스터 위치에 낙뢰
+ * 紐ъ뒪???꾩튂???숇ː
  */
 UCLASS()
 class MAGESQUAD_API UMSGA_Lightning : public UMSGA_SkillBase
@@ -27,31 +27,25 @@ public:
 		const FGameplayEventData* TriggerEventData) override;
 	
 protected:
-	// Lightning 스킬 ID는 2
+	// Lightning ?ㅽ궗 ID??2
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CurrentSkillID = 2;
 	
-	// 피해량
+	// ?쇳빐??
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillDamage = 20.f;
 
-	// 투사체 개수
+	// ?ъ궗泥?媛쒖닔
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 ProjectileNumber = 1;
 	
-	// 범위
+	// 踰붿쐞
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillRadius = 200.f;
 	
-	// 발사체 원본 데이터 클래스
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
 	
-	// 데미지 전달 GE
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<UGameplayEffect> DamageEffect;
 	
-	// 범위 안의 랜덤 몬스터 선택
+	// 踰붿쐞 ?덉쓽 ?쒕뜡 紐ъ뒪???좏깮
 	UFUNCTION()
 	void FindRandomEnemyTargets(
 		const UWorld* World,

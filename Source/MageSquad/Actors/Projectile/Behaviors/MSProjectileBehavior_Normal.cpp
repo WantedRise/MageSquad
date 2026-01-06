@@ -117,6 +117,23 @@ void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
 	
 	// GameplayEffect 적용
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+
+	for (const TSubclassOf<UGameplayEffect>& ExtraEffect : RuntimeData.Effects)
+	{
+		if (!ExtraEffect)
+		{
+			continue;
+		}
+
+		FGameplayEffectSpecHandle ExtraSpec =
+			TargetASC->MakeOutgoingSpec(ExtraEffect, 1.f, Context);
+		if (!ExtraSpec.IsValid())
+		{
+			continue;
+		}
+
+		TargetASC->ApplyGameplayEffectSpecToSelf(*ExtraSpec.Data.Get());
+	}
 	
 
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();

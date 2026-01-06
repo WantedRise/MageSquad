@@ -174,4 +174,21 @@ void UMSProjectileBehavior_AreaPeriodic::ApplyDamageToTarget(AActor* Target, flo
 
 	// 타겟에게 적용
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+	for (const TSubclassOf<UGameplayEffect>& ExtraEffect : RuntimeData.Effects)
+	{
+		if (!ExtraEffect)
+		{
+			continue;
+		}
+
+		FGameplayEffectSpecHandle ExtraSpec =
+			TargetASC->MakeOutgoingSpec(ExtraEffect, 1.f, Context);
+		if (!ExtraSpec.IsValid())
+		{
+			continue;
+		}
+
+		TargetASC->ApplyGameplayEffectSpecToSelf(*ExtraSpec.Data.Get());
+	}
 }

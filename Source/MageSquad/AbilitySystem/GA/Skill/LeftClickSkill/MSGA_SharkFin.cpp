@@ -88,6 +88,7 @@ void UMSGA_SharkFin::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.Damage = SkillListRow.SkillDamage;
 	RuntimeData.DamageInterval = 0.5f;
 	RuntimeData.DamageEffect = DamageEffect;
+	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.Radius = Range;
 	RuntimeData.LifeTime = 4.f;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_TrailDoT::StaticClass();
