@@ -41,7 +41,7 @@ void UMSGA_EnemySpawn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EnemySpawnTask->OnCompleted.AddDynamic(this, &UMSGA_EnemySpawn::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
 		EnemySpawnTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemySpawn::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		EnemySpawnTask->ReadyForActivation();
-
+		
 		Owner->Multicast_PlaySpawnCutscene(true);
 
 		// UE_LOG(LogTemp, Warning, TEXT("[%s] SpawnStart"),

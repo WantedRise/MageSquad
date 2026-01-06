@@ -113,8 +113,7 @@ void AMSBaseEnemy::BeginPlay()
 		ASC->InitAbilityActorInfo(this, this);
 	}
 
-	auto* SigManager = USignificanceManager::Get(GetWorld());
-	if (SigManager)
+	if (auto* SigManager = USignificanceManager::Get(GetWorld()))
 	{
 		// "Enemy"라는 태그로 자신을 등록하고, 위에서 만든 함수를 연결
 		SigManager->RegisterObject(
@@ -206,13 +205,7 @@ void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
 	{
 		return;
 	}
-
-	// 	UE_LOG(LogTemp, Error, TEXT("[SetMonsterID] %s | Old: %s -> New: %s | HasAuth: %d"), 
-	// *GetName(),
-	// *CurrentMonsterID.ToString(),
-	// *NewMonsterID.ToString(),
-	// HasAuthority());
-
+	
 	CurrentMonsterID = NewMonsterID;
 
 	if (HasAuthority())
@@ -274,39 +267,31 @@ float AMSBaseEnemy::CalculateSignificance(USignificanceManager::FManagedObjectIn
 void AMSBaseEnemy::OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig,
                                          float NewSig, bool bInView)
 {
-	if (NewSig <= 0.1f)
+	// 렌더링 최적화 - 모든 머신에서 실행
+	if (GetMesh() && bCanOptimization)
 	{
-		if (GetMesh())
-		{
-			GetMesh()->SetComponentTickEnabled(false);
-		}
+		bool bShouldTickMesh = (NewSig >= 0.1f) || bInView;
+		GetMesh()->SetComponentTickEnabled(bShouldTickMesh);
+	}
 
-		// 콜리전 변경, 오버랩 이벤트, Movement Tick 간격 등 게임 플레이에 관련된 부분은 서버에서만 처리
-		if (HasAuthority())
+	// 게임플레이 로직 - 서버에서만 실행
+	if (HasAuthority())
+	{
+		if (NewSig <= 0.1f && !bInView)
 		{
 			if (UCapsuleComponent* Cap = GetCapsuleComponent())
 			{
 				Cap->SetGenerateOverlapEvents(false);
 			}
-
-			GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.25f;
+			//GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.25f;
 		}
-	}
-	else
-	{
-		if (GetMesh())
-		{
-			GetMesh()->SetComponentTickEnabled(true);
-		}
-
-		if (HasAuthority())
+		else
 		{
 			if (UCapsuleComponent* Cap = GetCapsuleComponent())
 			{
 				Cap->SetGenerateOverlapEvents(true);
 			}
-
-			GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.0f;
+			//GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.0f;
 		}
 	}
 }

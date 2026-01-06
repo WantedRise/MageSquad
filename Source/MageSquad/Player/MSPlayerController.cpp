@@ -156,24 +156,46 @@ void AMSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void AMSPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	// 로컬 플레이어만 실행 (각 클라이언트에서 자기 화면 기준으로)
-	if (!IsLocalController())
+    
+	// 서버에서는 모든 플레이어 위치로 업데이트
+	if (HasAuthority())
 	{
-		return;
+		if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
+		{
+			TArray<FTransform> TransformArray;
+            
+			// 모든 플레이어의 위치를 수집
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+			{
+				if (const APlayerController* PC = It->Get())
+				{
+					if (APawn* OwnerPawn = PC->GetPawn())
+					{
+						TransformArray.Add(OwnerPawn->GetActorTransform());
+					}
+				}
+			}
+            
+			if (TransformArray.Num() > 0)
+			{
+				SigManager->Update(TArrayView<FTransform>(TransformArray));
+			}
+		}
+		return; // 서버는 여기서 끝
 	}
     
-	if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
+	// 클라이언트는 렌더링 최적화용으로만 사용
+	if (IsLocalController())
 	{
-		TArray<FTransform> TransformArray;
-        
-		if (APawn* MyPawn = GetPawn())
+		if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
 		{
-			TransformArray.Add(MyPawn->GetTransform());
-		}
-        
-		if (TransformArray.Num() > 0)
-		{
+			TArray<FTransform> TransformArray;
+            
+			FVector ViewLocation;
+			FRotator ViewRotation;
+			GetPlayerViewPoint(ViewLocation, ViewRotation);
+            
+			TransformArray.Add(FTransform(ViewRotation, ViewLocation));
 			SigManager->Update(TArrayView<FTransform>(TransformArray));
 		}
 	}

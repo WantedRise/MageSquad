@@ -70,10 +70,24 @@ public: /*Getter*/
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetDamageEffectClass() const { return DamageEffectClass; }
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetCooldownEffectClass() const { return CooldownEffectClass; }
 	FORCEINLINE TSubclassOf<class UProjectileStaticData> GetProjectileDataClass() const { return ProjectileDataClass; }
+	
+	public: /*Setter*/
+    	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass)
+    	{
+    		ProjectileDataClass = InProjectileDataClass;
+    	}
 
 protected:
 	UFUNCTION()
 	void OnRep_MonsterID();
+	
+public:
+	// 시그니컨스 매니저가 호출할 계산 함수
+	static float CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint);
+	
+	// 중요도가 변경되었을 때 호출될 커스텀 함수
+	// 매개변수: 정보객체, 이전 중요도, 새로운 중요도, 화면에 보이는지 여부
+	void OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView);
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
@@ -98,23 +112,14 @@ protected:
 	TSubclassOf<class UGameplayEffect> CooldownEffectClass;
 	
 	bool bIsInPool = false;
-
-public: /*Setter*/
-	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass)
-	{
-		ProjectileDataClass = InProjectileDataClass;
-	}
 	
-public:
-	// 시그니컨스 매니저가 호출할 계산 함수
-	static float CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint);
-	
-	// 중요도가 변경되었을 때 호출될 커스텀 함수
-	// 매개변수: 정보객체, 이전 중요도, 새로운 중요도, 화면에 보이는지 여부
-	void OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView);
+	UPROPERTY()
+	uint8 bCanOptimization = true;
 
 private:
 	// 발사체 원본 데이터 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
+	
+
 };

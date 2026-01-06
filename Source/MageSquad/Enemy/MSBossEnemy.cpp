@@ -127,12 +127,14 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 
 	if (bStart)
 	{
+		bCanOptimization = false; // 스폰 시에는 거리 최적화 x
 		// 카메라 전환: 보스 본인(this)을 뷰 타겟으로 설정
 		OriginalViewTarget = PC->GetViewTarget();
 		PC->SetViewTargetWithBlend(this, 0.5f, VTBlend_Cubic, 0.f, true);
 	}
 	else
 	{
+		bCanOptimization = true; // 스폰 시에는 거리 최적화 x
 		// 원래 카메라로 복귀
 		if (OriginalViewTarget)
 		{

@@ -26,10 +26,10 @@ bool UBTDecorator_CheckHasTag::CalculateRawConditionValue(UBehaviorTreeComponent
 	for (const auto& Tag : GameplayTags)
 	{
 		Result = OwnerPawn->GetAbilitySystemComponent()->HasMatchingGameplayTag(Tag);
-		UE_LOG(LogTemp, Log, TEXT("Tag: [%s] | Result: %s"), 
-				*Tag.ToString(), 
-				Result ? TEXT("True") : TEXT("False")
-			);
+		// UE_LOG(LogTemp, Log, TEXT("Tag: [%s] | Result: %s"), 
+		// 		*Tag.ToString(), 
+		// 		Result ? TEXT("True") : TEXT("False")
+		// 	);
 	}
 	
 	
