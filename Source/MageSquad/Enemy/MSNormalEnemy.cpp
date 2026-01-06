@@ -6,6 +6,7 @@
 #include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AIController/MSNormalAIController.h"
 #include "MSGameplayTags.h"
+#include "Components/CapsuleComponent.h"
 
 AMSNormalEnemy::AMSNormalEnemy()
 {
@@ -24,6 +25,7 @@ AMSNormalEnemy::AMSNormalEnemy()
 	
 	// @Todo : 스케일 조정 나중에 DataTable에서 반영하도록 변경
 	SetActorScale3D(FVector(1.3f,1.3f,1.3f));
+	GetCapsuleComponent()->SetCapsuleRadius(100.f);
 }
 
 void AMSNormalEnemy::BeginPlay()

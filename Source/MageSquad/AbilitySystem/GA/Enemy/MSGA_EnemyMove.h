@@ -42,7 +42,7 @@ public:
 protected:
 	// 블루프린트에서 조정 가능
 	UPROPERTY(EditDefaultsOnly, Category = "Move")
-	float AcceptanceRadius = 50.f;
+	float AcceptanceRadius = 5.f;
 
 private:
 	float GetTargetUpdateInterval() const;

@@ -29,7 +29,6 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 	{
 		return;
 	}
-	// }
 	
 	RunAI();
 }
@@ -41,7 +40,6 @@ void AMSBaseAIController::RunAI()
 		return;
 	}
 	
-	// 블랙보드 컴포넌트 받아오기.
 	UBlackboardComponent* BB = Blackboard.Get();
 	
 	// BehaviorTree에 연결된 BlackboardAsset 사용

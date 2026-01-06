@@ -7,7 +7,9 @@
 #include "MSAT_EnemyMove.generated.h"
 
 /**
- * 
+ * 작성자 : 임희섭
+ * 작성일 : 2026/01/06
+ * Enemy가 움직일 때 Target Actor를 계속 탐지하고 변경하기 위한 Ability Task
  */
 UCLASS()
 class MAGESQUAD_API UMSAT_EnemyMove : public UAbilityTask

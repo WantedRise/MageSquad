@@ -73,7 +73,7 @@ void UMSAT_EnemyMove::OnDestroy(bool bInOwnerFinished)
 
 void UMSAT_EnemyMove::UpdateMoveTarget()
 {
-	UBlackboardComponent* BB = CachedAIC->GetBlackboardComponent();
+	const UBlackboardComponent* BB = CachedAIC->GetBlackboardComponent();
 	if (!BB)
 	{
 		OnTargetLost.Broadcast();
