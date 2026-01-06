@@ -37,7 +37,16 @@ public:
 		bool bReplicateEndAbility, 
 		bool bWasCancelled) override;
 	
+
+	
+protected:
+	// 블루프린트에서 조정 가능
+	UPROPERTY(EditDefaultsOnly, Category = "Move")
+	float AcceptanceRadius = 50.f;
+
 private:
+	float GetTargetUpdateInterval() const;
+	
 	UFUNCTION()
 	void OnCompleteCallback();
 	UFUNCTION()

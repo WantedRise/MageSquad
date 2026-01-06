@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "MSGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/Tasks/MSAT_EnemyMove.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
 #include "Enemy/AIController/MSBaseAIController.h"
@@ -27,11 +28,15 @@ void UMSGA_EnemyMove::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	// AI Controller를 통한 이동 시작
-	if (AMSBaseAIController* AIC = Cast<AMSBaseAIController>(ActorInfo->OwnerActor->GetInstigatorController()))
-	{
-		AIC->MoveToActor(Cast<AActor>(AIC->GetBlackboardComponent()->GetValueAsObject(AIC->GetTargetActorKey()))); 
-	}
+	// Move Task 생성 (서버에서만 Tick 실행됨)
+	UMSAT_EnemyMove* MoveTask = UMSAT_EnemyMove::CreateTask(
+		this,
+		AcceptanceRadius,
+		GetTargetUpdateInterval());
+    
+	MoveTask->OnTargetReached.AddDynamic(this, &UMSGA_EnemyMove::OnCompleteCallback);
+	MoveTask->OnTargetLost.AddDynamic(this, &UMSGA_EnemyMove::OnInterruptedCallback);
+	MoveTask->ReadyForActivation();
 	
 	if (UAnimMontage* MoveMontage = Owner->GetMoveMontage())
 	{
@@ -62,6 +67,26 @@ void UMSGA_EnemyMove::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	{
 		AIC->StopMovement();
 	}
+}
+
+float UMSGA_EnemyMove::GetTargetUpdateInterval() const
+{
+	if (!Owner)
+	{
+		return 0.25f;
+	}
+	
+	return 0.3f;    // 일반: 느린 반응 (대량 스폰 최적화)
+	
+	// switch (Owner->GetEnemyTier())
+	// {
+	// case EEnemyTier::Boss:
+	// 	return 0.1f;    // 보스: 빠른 반응
+	// case EEnemyTier::Elite:
+	// 	return 0.2f;    // 엘리트: 중간
+	// case EEnemyTier::Normal:
+	// default:
+	// }
 }
 
 void UMSGA_EnemyMove::OnCompleteCallback()
