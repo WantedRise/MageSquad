@@ -65,7 +65,7 @@ void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable
 		Params
 	);
 
-	InOwnerGameState->OnBossSpawnCutsceneStateChanged.AddDynamic(WaveManager, &AMSWaveManager::SetWavePaused);
+	InOwnerGameState->OnBossSpawnCutsceneStateChanged.AddUObject(WaveManager, &AMSWaveManager::SetWavePaused);
 }
 
 void UMSGameFlowPvE::OnEnterState(EGameFlowState NewState)

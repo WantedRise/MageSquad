@@ -36,7 +36,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnSharedLivesChanged, int32 /*NewLives*/);
 DECLARE_MULTICAST_DELEGATE(FOnSharedLivesDepleted);
 
 // 파라미터로 연출 시작(true)인지 종료(false)인지를 넘김 - 임희섭
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnBossSpawnCutsceneStateChanged, bool, bIsStart);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnBossSpawnCutsceneStateChanged, bool /*Result*/);
 
 struct FMSMissionProgressUIData;
 

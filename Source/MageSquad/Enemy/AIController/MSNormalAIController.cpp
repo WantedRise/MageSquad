@@ -5,6 +5,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "GameStates/MSGameState.h"
+#include "Navigation/PathFollowingComponent.h"
 
 AMSNormalAIController::AMSNormalAIController()
 {
@@ -20,7 +21,7 @@ void AMSNormalAIController::BeginPlay()
 	{
 		if (AMSGameState* GS = Cast<AMSGameState>(GetWorld()->GetGameState()))
 		{
-			GS->OnBossSpawnCutsceneStateChanged.AddDynamic(this, &ThisClass::HandleGlobalFreeze);
+			GS->OnBossSpawnCutsceneStateChanged.AddUObject(this, &ThisClass::HandleGlobalFreeze);
 		}
 	}
 }
@@ -44,10 +45,22 @@ void AMSNormalAIController::HandleGlobalFreeze(bool bGlobalFreeze)
 {
 	if (bGlobalFreeze)
 	{
+		// 현재 이동 요청 일시정지
+		if (UPathFollowingComponent* PathComp = GetPathFollowingComponent())
+		{
+			PathComp->PauseMove();
+		}
+		
 		StopAI();
 	}
 	else
 	{
 		RunAI();
+		
+		// 이동 재개
+		if (UPathFollowingComponent* PathComp = GetPathFollowingComponent())
+		{
+			PathComp->ResumeMove();
+		}
 	}
 }

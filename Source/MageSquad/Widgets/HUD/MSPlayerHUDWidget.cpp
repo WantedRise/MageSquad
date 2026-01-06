@@ -203,7 +203,7 @@ void UMSPlayerHUDWidget::TryBindGameState()
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
 		// 성공적으로 찾았을 때 바인딩
-		GS->OnBossSpawnCutsceneStateChanged.AddDynamic(this, &ThisClass::SetHudVisibility);
+		GS->OnBossSpawnCutsceneStateChanged.AddUObject(this, &ThisClass::SetHudVisibility);
 	}
 	else
 	{

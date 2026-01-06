@@ -22,7 +22,7 @@ public:
 	virtual void BeginPlay() override;	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void PostInitializeComponents() override;	
-// 	
+
 // public: /*Setter*/
 // 	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass) { ProjectileDataClass = InProjectileDataClass;}
 // 	
