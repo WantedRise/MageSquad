@@ -11,6 +11,7 @@
 #include "Interfaces/MSHitReactableInterface.h"
 
 #include "MSGameplayTags.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UMSEnemyAttributeSet::UMSEnemyAttributeSet()
 {
@@ -74,6 +75,7 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 {
 	Super::PostGameplayEffectExecute(Data);
 
+#pragma region Health
 	// Clamp Health to [0, MaxHealth]
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
@@ -119,4 +121,17 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			}
 		}
 	}
+#pragma endregion 
+	
+#pragma region MoveSpeed
+	if (Data.EvaluatedData.Attribute == GetMoveSpeedAttribute())
+	{
+		// 받은 피해량 출력 이벤트 전달
+		UAbilitySystemComponent* TargetASC = &Data.Target;
+		if (AMSBaseEnemy* Target = Cast<AMSBaseEnemy>(TargetASC->GetOwnerActor()))
+		{
+			Target->GetCharacterMovement()->MaxWalkSpeed = GetMoveSpeed();
+		}
+	}
+#pragma endregion
 }
