@@ -40,12 +40,12 @@ void UMSCharacterDataSubsystem::Deinitialize()
      return PlayerCharacterClasses;
  }
 
- void UMSCharacterDataSubsystem::CacheSelectedCharacter(const FUniqueNetIdRepl& NetId,FName CharacterId)
+ void UMSCharacterDataSubsystem::CacheSelectedCharacter(const FUniqueNetIdRepl& NetId,FName CharacterID)
  {
-     if (!NetId.IsValid() || CharacterId.IsNone())
+     if (!NetId.IsValid() || CharacterID.IsNone())
          return;
 
-     SelectedCharacterIDByNetId.FindOrAdd(NetId) = CharacterId;
+     SelectedCharacterIDByNetId.FindOrAdd(NetId) = CharacterID;
  }
 
  const FMSCharacterSelection* UMSCharacterDataSubsystem::FindSelectionByCharacterId(FName InCharacterId) const

@@ -84,6 +84,19 @@ void AMSWaveBlock::BeginPlay()
 	}
 }
 
+void AMSWaveBlock::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (USignificanceManager* SigManager = USignificanceManager::Get(World))
+		{
+			SigManager->UnregisterObject(this);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 float AMSWaveBlock::CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo,
                                           const FTransform& Viewpoint)
 {

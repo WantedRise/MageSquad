@@ -23,7 +23,7 @@ public:
     FName GetDefaultCharacterID() const;
     const TArray<struct FMSCharacterSelection>& GetAllCharacter() const;
 
-    void CacheSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterId);
+    void CacheSelectedCharacter(const FUniqueNetIdRepl& NetId, FName CharacterID);
     const FMSCharacterSelection* FindSelectionByCharacterId(FName InCharacterId) const;
     const FMSCharacterSelection* FindSelectionByNetId(const FUniqueNetIdRepl& NetId);
 private:

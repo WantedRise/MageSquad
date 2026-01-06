@@ -12,6 +12,8 @@
 #include <System/MSLevelManagerSubsystem.h>
 #include "Player/MSLobbyPlayerController.h"
 #include <System/MSCharacterDataSubsystem.h>
+#include "DataAssets/Player/DA_CharacterData.h"
+#include "Player/MSLobbyCharacter.h"
 
 AMSLobbyGameMode::AMSLobbyGameMode()
 {
@@ -152,4 +154,39 @@ void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
             break;
         }
     }
+}
+
+void AMSLobbyGameMode::RestartPlayer(AController* NewPlayer)
+{
+    AMSLobbyPlayerState* PS = NewPlayer->GetPlayerState<AMSLobbyPlayerState>();
+    if (!PS)
+    {
+        Super::RestartPlayer(NewPlayer);
+        return;
+    }
+
+    const FUniqueNetIdRepl NetId = PS->GetUniqueId();
+    auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+    if (!NetId.IsValid() || !CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
+    {
+        Super::RestartPlayer(NewPlayer);
+        return;
+    }
+
+    const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByNetId(NetId);
+    if (!CharacterSelection || !CharacterSelection->LobbyCharacterClass)
+    {
+        Super::RestartPlayer(NewPlayer);
+        return;
+    }
+
+    FTransform SpawnTM = ChoosePlayerStart(NewPlayer)->GetTransform();
+
+
+    APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
+        CharacterSelection->LobbyCharacterClass,
+        SpawnTM
+    );
+    NewPlayer->Possess(NewPawn);
+    MS_LOG(LogMSNetwork, Log, TEXT("%s"), *NewPawn->GetActorRotation().ToString());
 }

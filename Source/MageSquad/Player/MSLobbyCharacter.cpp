@@ -12,6 +12,7 @@
 #include "DataStructs/MSCharacterData.h"
 #include <System/MSCharacterDataSubsystem.h>
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AMSLobbyCharacter::AMSLobbyCharacter()
@@ -37,6 +38,7 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
 	StaffMesh->bReceivesDecals = false;
 
+	GetCharacterMovement()->bOrientRotationToMovement = false;
 }
 
 // Called when the game starts or when spawned
@@ -88,7 +90,7 @@ void AMSLobbyCharacter::PossessedBy(AController* NewController)
 	}
 
 	InitializeLobbyCharacterFromPlayerState();
-
+	MS_LOG(LogMSNetwork, Log, TEXT("PossessedBy %s"), *GetActorRotation().ToString());
 }
 
 void AMSLobbyCharacter::OnRep_PlayerState()

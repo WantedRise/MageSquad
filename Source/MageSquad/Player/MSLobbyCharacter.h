@@ -34,7 +34,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	//UI를 갱신 및 델리게이드 바인딩
 	virtual void OnRep_PlayerState() override;
-	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
