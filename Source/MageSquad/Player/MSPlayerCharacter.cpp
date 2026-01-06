@@ -670,6 +670,7 @@ void AMSPlayerCharacter::EquipSkillFromRow_Server(const FMSSkillList& Row)
 	Slot.SkillID = Row.SkillID;
 	Slot.SkillLevel = Row.SkillLevel;
 	Slot.SkillEventTag = Row.SkillEventTag;
+	Slot.SkillCooldownTag = Row.SkillCooldownTag;
 	Slot.BaseCoolTime = Row.CoolTime;
 
 	// 스킬 런타임 데이터에 초기화 
