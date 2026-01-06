@@ -107,7 +107,7 @@ void UMSAT_EnemyMove::UpdateMoveTarget()
 	{
 		CachedAIC->StopMovement();
 		OnTargetReached.Broadcast();
-		EndTask();
+		//EndTask();
 		return;
 	}
 

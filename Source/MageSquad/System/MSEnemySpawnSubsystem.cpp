@@ -214,7 +214,7 @@ void UMSEnemySpawnSubsystem::PrewarmPools()
 
 	// 각 풀 사전 생성
 	PrewarmPool(NormalEnemyPool);
-	PrewarmPool(EliteEnemyPool);
+	//PrewarmPool(EliteEnemyPool);
 	PrewarmPool(BossEnemyPool);
 }
 

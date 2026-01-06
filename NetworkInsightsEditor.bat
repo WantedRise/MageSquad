@@ -1,1 +1,1 @@
-UnrealEditor.exe %cd%\MageSquad.uproject -NetTrace=1 -tracehost=localhost -Trace=Net
+UnrealEditor.exe %cd%\MageSquad.uproject -NetTrace=1 -tracehost=localhost -trace=Net
