@@ -11,9 +11,7 @@
 #include "Types/MageSquadTypes.h"
 
 UMSAN_SpawnIndicator::UMSAN_SpawnIndicator()
-{
-	IndicatorCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.AttackIndicator"));
-    
+{	
 	// 기본 파라미터
 	IndicatorParams.Shape = EIndicatorShape::Cone;
 	IndicatorParams.Radius = 500.f;
@@ -25,8 +23,10 @@ void UMSAN_SpawnIndicator::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
     const FAnimNotifyEventReference& EventReference)
 {
     Super::Notify(MeshComp, Animation, EventReference);
-    
-    if (!MeshComp)
+ 
+	IndicatorCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.Indicator"));
+   
+	if (!MeshComp)
     {
         return;
     }
