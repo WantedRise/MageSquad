@@ -409,8 +409,6 @@ void AMSGameState::ProcessLevelUps_Server()
 		SharedXPRequired = GetRequiredXPForLevel_Server(SharedLevel, ActivePlayerCount);
 		SharedXPRequired = FMath::Max(1.f, SharedXPRequired);
 
-
-
 		/* ======== 서버 측 레벨업 알림 지점 ======== */
 		OnSharedLevelUp.Broadcast(SharedLevel);
 
