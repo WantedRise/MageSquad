@@ -5,10 +5,43 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayEffectTypes.h"
+#include "Components/Player/MSHUDDataComponent.h"
 #include "MSPlayerHUDWidget.generated.h"
 
 // 대미지를 받았을 때 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTakeDamaged);
+
+// 로컬 스킬 슬롯 데이터 구조체
+USTRUCT(BlueprintType)
+struct FMSHUDSkillSlotLocalData
+{
+	GENERATED_BODY()
+
+	// 스킬 시작 시간
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	float CooldownStartTime = 0.f;
+
+	// 스킬 쿨다운 지속시간
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	float CooldownDuration = 0.f;
+
+	// 스킬이 현재 쿨다운 중인지 표시
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	bool bSlotOnCooldown = false;
+
+	// 스킬 기본 쿨타임
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	float BaseCoolTime = 0.f;
+
+	// 스킬 타입
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	uint8 SkillTypes = 0;
+
+	// 스킬 쿨타임 태그
+	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
+	FGameplayTag SkillCooldownTags = FGameplayTag();
+};
+
 
 /**
  * 작성자: 김준형
@@ -16,9 +49,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTakeDamaged);
  *
  * 플레이어 HUD 위젯
  * - 로컬 체력바
- * - 팀원 상태(자신 제외)
+ * - 팀원 상태(자신 제외) + 팀원 스킬
  * - 공유 경험치/레벨
- * - 로컬 스킬/쿨다운(예정)
+ * - 로컬 스킬 슬롯 + 쿨타임 시각화
  */
 UCLASS()
 class MAGESQUAD_API UMSPlayerHUDWidget : public UUserWidget
@@ -28,6 +61,8 @@ class MAGESQUAD_API UMSPlayerHUDWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
 
 	// HUD 위젯 초기화 함수
 	UFUNCTION(BlueprintCallable, Category = "Custom | HUD")
@@ -54,16 +89,19 @@ public:
 
 protected:
 	// 바인딩 시도 함수 (바인딩 성공 여부에 따라 결괏값 반환)
-	bool TryBindLocalHealth();
-	bool TryBindSharedData();
+	bool TryBindLocalHealth(); // 현재/최대 체력 바인딩
+	bool TryBindSharedData(); // 공유 자원 바인딩
+	bool TryBindLocalSkills(); // 로컬 스킬 바인딩
 	void TryBindGameState();
 
 	// 팀 데이터 갱신 시작 함수
 	void StartTeamPoll();
 
 	// 바인딩된 델리게이트/타이머 정리 함수
-	void UnbindLocalHealth();
-	void UnbindSharedData();
+	void UnbindLocalHealth(); // 현재/최대 체력 바인딩 해제
+	void UnbindSharedData(); // 공유 자원 바인딩 해제
+	void UnbindLocalSkills(); // 로컬 스킬 바인딩 해제
+
 	void ClearRebindTimer();
 	void ClearTeamPollTimer();
 
@@ -178,19 +216,6 @@ private:
 	float CachedHealth = 0.f;
 	float CachedMaxHealth = 0.f;
 
-	/* ======================== Delegate Handles ======================== */
-	// 현재/최대 체력 바인딩 델리게이트 핸들(중복 바인딩/정확한 해제 목적)
-	FDelegateHandle HealthChangedHandle;
-	FDelegateHandle MaxHealthChangedHandle;
-
-	// 공유 경험치/레벨 바인딩 델리게이트 핸들(중복 바인딩/정확한 해제 목적)
-	FDelegateHandle SharedExpChangedHandle;
-	FDelegateHandle SharedLevelUpHandle;
-
-	// 공유 목숨 변경 이벤트 델리게이트 핸들
-	FDelegateHandle SharedLivesChangedHandle;
-	/* ======================== Delegate Handles ======================== */
-
 	// 현재 바인딩 상태
 	bool bBoundLocalASC = false;
 
@@ -210,6 +235,22 @@ private:
 	// 공유 데이터 갱신 타이머
 	FTimerHandle TeamPollTimer;
 
+	/* ======================== Delegate Handles ======================== */
+	// 현재/최대 체력 바인딩 델리게이트 핸들(중복 바인딩/정확한 해제 목적)
+	FDelegateHandle HealthChangedHandle;
+	FDelegateHandle MaxHealthChangedHandle;
+
+	// 공유 경험치/레벨 바인딩 델리게이트 핸들(중복 바인딩/정확한 해제 목적)
+	FDelegateHandle SharedExpChangedHandle;
+	FDelegateHandle SharedLevelUpHandle;
+
+	// 공유 목숨 변경 이벤트 델리게이트 핸들
+	FDelegateHandle SharedLivesChangedHandle;
+	/* ======================== Delegate Handles ======================== */
+
+	// 로컬 플레이어 캐릭터 캐시
+	TWeakObjectPtr<class AMSPlayerCharacter> CachedLocalCharacter;
+
 	// [팀 멤버 / 데이터 위젯 인스턴스] 캐시
 	TMap<TWeakObjectPtr<AActor>, TObjectPtr<class UMSTeamMemberWidget>> TeamMembers;
 
@@ -219,4 +260,100 @@ private:
 	// 캐시된 GameState
 	UPROPERTY(Transient)
 	TObjectPtr<class AMSGameState> CachedGameState = nullptr;
+
+
+
+	/*****************************************************
+	* Skill Slot Section
+	*****************************************************/
+protected:
+	// Tick에서 호출하여 쿨다운 진행률을 계산하고 이벤트를 전달하는 함수
+	void UpdateCooldowns(float DeltaTime);
+
+	// 슬롯 위젯 인스턴스 배열 초기화 함수
+	void InitializeSkillBar();
+
+	// HUD에 표시하는 스킬 슬롯 데이터 변경 시 호출되는 콜백 함수
+	void HandleSkillSlotDataUpdated();
+
+	// 스킬 슬롯 배열 변경 시 호출되는 콜백 함수 (내부 쿨타임/타입/태그 정보 갱신)
+	void HandleSkillSlotsUpdated();
+
+	// 능력치 쿨타임 감소 속성 변경 콜백 함수
+	void OnLocalCooldownReductionChanged(const FOnAttributeChangeData& Data);
+
+	// 스킬 쿨다운 시작 콜백 함수
+	void StartCooldownForSlot(uint8 SlotIndex, float Duration);
+
+	// 블링크 스킬 쿨다운 시작 콜백 함수
+	void HandleBlinkSkillCooldownStarted();
+
+	// 로컬 스킬 슬롯 데이터를 기반으로 액티브/패시브 스킬 슬롯의 인덱스 목록을 갱신하는 함수
+	void BuildSlotTypeIndices();
+
+	// 현재 캐시된 쿨다운 감소 비율(CurrentCDR)을 기반으로 패시브 슬롯의 쿨타임 지속시간을 재계산하는 함수
+	void RecalculatePassiveDurations();
+
+protected:
+	// 로컬 HUD용 개별 스킬 슬롯 위젯
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotActiveLeftWidget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotActiveRightWidget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotPassive01Widget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotPassive02Widget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotPassive03Widget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotPassive04Widget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UMSSkillSlotWidget> SlotBlinkWidget;
+
+	// 슬롯 위젯 인스턴스 배열
+	// 0: ActiveLeft, 1: ActiveRight, 2~5: Passive01~04
+	TArray<TObjectPtr<class UMSSkillSlotWidget>> SkillSlotWidgets;
+
+	// 블링크 슬롯 위젯 인스턴스
+	TObjectPtr<class UMSSkillSlotWidget> BlinkSkillSlotWidget;
+
+	// 블링크 스킬 아이콘
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Skill")
+	TSoftObjectPtr<UMaterialInterface> BlinkSkillIcon;
+
+private:
+	// 스킬 슬롯 크기. 항상 6칸 (0~1번 슬롯은 액티브, 2~5번 슬롯은 패시브)
+	const int32 TotalSlots = 6;
+
+	// 스킬 슬롯 바인딩 상태
+	bool bBoundLocalSkills = false;
+
+	// 현재 스킬 쿨다운 감소 비율 캐시. (0 ~ 0.95 사이)
+	float CurrentCDR = 0.f;
+
+	// 로컬 스킬 슬롯 데이터
+	TArray<FMSHUDSkillSlotLocalData> SkillSlotLocalDatas;
+
+	// 액티브 스킬 슬롯의 인덱스 배열
+	TArray<int32> ActiveSlotIndices;
+
+	// 패시브 스킬 슬롯의 인덱스 배열
+	TArray<int32> PassiveSlotIndices;
+
+	// 스킬 슬롯 업데이트, 쿨다운 시작, 스킬 데이터 업데이트, 쿨다운 변경 델리게이트 핸들
+	FDelegateHandle SkillSlotsUpdatedHandle;
+	FDelegateHandle SkillCooldownStartedHandle;
+	FDelegateHandle SkillSlotDataUpdatedHandle;
+	FDelegateHandle CooldownReductionChangedHandle;
+
+	FDelegateHandle BlinkSkillCooldownStartedHandle;
+
+	FMSHUDSkillSlotData BlinkSkillSlotData;
 };

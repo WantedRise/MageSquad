@@ -7,6 +7,9 @@
 #include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 
+#include "Player/MSPlayerCharacter.h"
+#include "Types/MageSquadTypes.h"
+
 #include "Net/UnrealNetwork.h"
 
 UMSHUDDataComponent::UMSHUDDataComponent()
@@ -80,6 +83,57 @@ void UMSHUDDataComponent::BindPortraitIcon_Server(UTexture2D* InPortrait)
 	OnRep_PublicData();
 }
 
+void UMSHUDDataComponent::RefreshSkillSlotsFromOwner()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+
+	AMSPlayerCharacter* Character = Cast<AMSPlayerCharacter>(GetOwner());
+	if (!Character) return;
+
+	// 플레이어의 스킬 슬롯 정보와 런타임 데이터 가져오기
+	const TArray<FMSPlayerSkillSlotNet>& Slots = Character->GetSkillSlots();
+	const TArray<TObjectPtr<UMSSkillSlotRuntimeData>>& Runtimes = Character->GetSkillRuntimeData();
+
+	// RepSkillSlots의 크기 보정
+	const int32 TotalSlots = 6;
+	if (RepSkillSlots.Num() != TotalSlots)
+	{
+		RepSkillSlots.SetNum(TotalSlots);
+	}
+
+	// 공격 스킬 슬롯 갱신 (패시브, 액티브)
+	for (int32 i = 0; i < 6; ++i)
+	{
+		// 스킬 슬롯 데이터 초기화
+		FMSHUDSkillSlotData& OutData = RepSkillSlots[i];
+		if (Slots.IsValidIndex(i) && Slots[i].IsValid())
+		{
+			OutData.bIsValid = true;
+			OutData.Level = Slots[i].SkillLevel;
+
+			// 런타임 데이터가 유효하면 아이콘 설정
+			if (Runtimes.IsValidIndex(i) && Runtimes[i] != nullptr)
+			{
+				OutData.Icon = Runtimes[i]->SkillRow.SkillIcon;
+			}
+			else
+			{
+				OutData.Icon.Reset();
+			}
+		}
+		// 유효하지 않은 슬롯은 기본값
+		else
+		{
+			OutData.bIsValid = false;
+			OutData.Level = 0;
+			OutData.Icon.Reset();
+		}
+	}
+
+	// 서버에서도 즉시 브로드캐스트하여 로컬 UI를 갱신
+	OnRep_SkillSlotData();
+}
+
 void UMSHUDDataComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -93,6 +147,7 @@ void UMSHUDDataComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(UMSHUDDataComponent, RepMaxHealth);
 	DOREPLIFETIME(UMSHUDDataComponent, RepDisplayName);
 	DOREPLIFETIME(UMSHUDDataComponent, RepPortraitIcon);
+	DOREPLIFETIME(UMSHUDDataComponent, RepSkillSlots);
 }
 
 void UMSHUDDataComponent::PullHealthFromASC()
@@ -140,4 +195,10 @@ void UMSHUDDataComponent::OnRep_PublicData()
 
 	// DisplayName 갱신 이벤트 호출
 	BroadcastDisplayName();
+}
+
+void UMSHUDDataComponent::OnRep_SkillSlotData()
+{
+	// 스킬 슬롯 데이터가 업데이트되면 HUD/팀 UI에 알림
+	OnSkillSlotDataUpdated.Broadcast();
 }

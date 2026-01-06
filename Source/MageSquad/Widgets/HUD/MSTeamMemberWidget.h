@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Player/MSHUDDataComponent.h"
 #include "MSTeamMemberWidget.generated.h"
 
 /**
@@ -29,10 +30,14 @@ public:
 	void UpdateHealth(float InHealth, float InMaxHealth);
 	void UpdateName(const FText& InName);
 	void UpdatePortrait(UTexture2D* InPortrait);
+	void UpdateSkills(const class UMSHUDDataComponent* HUDData);
 
 private:
 	// 체력 비율 계산 함수
 	static float CalcHealthPct(float InHealth, float InMaxHealth);
+
+	// 스킬 위젯 추가하는 함수
+	void AddSkillWidget(const FMSHUDSkillSlotData& Data, const int32 SlotIndex);
 
 protected:
 	/* ======================== BindWidget ======================== */
@@ -47,5 +52,20 @@ protected:
 	// 팀원 아이콘 위젯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UImage> TeamPortraitIconWidget;
+
+	// 팀원 스킬 슬롯 위젯 (패시브)
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UHorizontalBox> PassiveSkillListWidget;
+
+	// 팀원 스킬 슬롯 위젯 (액티브)
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UHorizontalBox> ActiveSkillListWidget;
 	/* ======================== BindWidget ======================== */
+
+	// 스킬 슬롯 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Skill")
+	TSubclassOf<class UMSSkillSlotWidget> SkillSlotWidgetClass;
+
+	// 팀원 스킬 슬롯 위젯 목록
+	TArray<TObjectPtr<class UMSSkillSlotWidget>> TeamSkillWidgets;
 };
