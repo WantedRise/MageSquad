@@ -56,6 +56,7 @@ protected:
 	// 바인딩 시도 함수 (바인딩 성공 여부에 따라 결괏값 반환)
 	bool TryBindLocalHealth();
 	bool TryBindSharedData();
+	void TryBindGameState();
 
 	// 팀 데이터 갱신 시작 함수
 	void StartTeamPoll();
@@ -92,6 +93,9 @@ protected:
 
 	// 공유 목숨 변경 콜백 함수
 	void OnSharedLivesChanged(int32 NewLives);
+	
+	UFUNCTION()
+	void SetHudVisibility(bool Result);
 
 public:
 	// 대미지를 받았을 때 이벤트 델리게이트
@@ -100,6 +104,10 @@ public:
 
 protected:
 	/* ======================== BindWidget ======================== */
+	// HUD의 요소들을 가지고 있는 메인 캔버스
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UCanvasPanel> MainCanvas;
+	
 	// 로컬 체력 바 위젯
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UProgressBar> LocalHealthBarWidget;

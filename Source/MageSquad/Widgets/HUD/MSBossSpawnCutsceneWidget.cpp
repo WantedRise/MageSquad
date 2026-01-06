@@ -15,8 +15,7 @@ void UMSBossSpawnCutsceneWidget::NativeConstruct()
 
 void UMSBossSpawnCutsceneWidget::TryBindToGameState()
 {
-	AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>();
-	if (GS)
+	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
 		// 성공적으로 찾았을 때 바인딩
 		GS->OnBossSpawnCutsceneStateChanged.AddDynamic(this, &ThisClass::HandleBossSpawnEvent);
@@ -42,7 +41,7 @@ void UMSBossSpawnCutsceneWidget::HandleBossSpawnEvent(bool bStart)
 	}
 	else
 	{
-		// 종료 시 역재생 혹은 다른 로직
+		// 종료 시 역재생
 		PlayAnimation(CutSceneAnim, 0.f, 1, EUMGSequencePlayMode::Reverse);
 	}
 }

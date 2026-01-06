@@ -208,6 +208,10 @@ void AMSPlayerController::NotifyHUDReinitialize()
 				GS->OnMissionFinished.AddUObject(this, &AMSPlayerController::OnMissionFinished);
 			if (false == GS->OnMissionProgressChanged.IsBoundToObject(this))
 				GS->OnMissionProgressChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
+			if (false == GS->OnBossSpawnCutsceneStateChanged.IsBoundToObject(this))
+			{
+				//GS->OnBossSpawnCutsceneStateChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
+			}
 		}
 	}
 }

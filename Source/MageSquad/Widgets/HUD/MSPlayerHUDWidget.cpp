@@ -6,10 +6,9 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
-#include "Components/VerticalBoxSlot.h"
 
-#include "AbilitySystem/ASC/MSPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
+#include "Components/CanvasPanel.h"
 
 #include "Components/Player/MSHUDDataComponent.h"
 
@@ -18,7 +17,6 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Player/MSPlayerCharacter.h"
-#include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
 
 #include "GameStates/MSGameState.h"
@@ -55,6 +53,9 @@ void UMSPlayerHUDWidget::InitializeHUD()
 	// 바인딩 시도
 	const bool bLocalHealthOk = TryBindLocalHealth();
 	const bool bSharedDataOk = TryBindSharedData();
+	
+	// 보스 스폰 시 HUD를 감추기 위한 추가 바인딩, 델리게이트 구조로 인해 호출 구조를 맞추지 못함 - 임희섭
+	TryBindGameState();
 
 	if (bLocalHealthOk && bSharedDataOk)
 	{
@@ -195,6 +196,20 @@ bool UMSPlayerHUDWidget::TryBindSharedData()
 	RefreshSharedExperienceUI();
 
 	return true;
+}
+
+void UMSPlayerHUDWidget::TryBindGameState()
+{
+	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+	{
+		// 성공적으로 찾았을 때 바인딩
+		GS->OnBossSpawnCutsceneStateChanged.AddDynamic(this, &ThisClass::SetHudVisibility);
+	}
+	else
+	{
+		// 아직 GameState가 NULL이면 다음 프레임에 다시 시도 (성공할 때까지)
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UMSPlayerHUDWidget::TryBindGameState);
+	}
 }
 
 void UMSPlayerHUDWidget::StartTeamPoll()
@@ -501,4 +516,11 @@ void UMSPlayerHUDWidget::OnSharedLivesChanged(int32 NewLives)
 	{
 		SharedLivesTextWidget->SetText(FText::AsNumber(NewLives));
 	}
+}
+
+void UMSPlayerHUDWidget::SetHudVisibility(bool Result)
+{
+	UE_LOG(LogTemp, Log, TEXT("Hud Set Visibility : %s"), Result ? TEXT("Ture") : TEXT("False"));
+	ESlateVisibility NewVisibility = Result ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible;
+	MainCanvas->SetVisibility(NewVisibility);
 }
