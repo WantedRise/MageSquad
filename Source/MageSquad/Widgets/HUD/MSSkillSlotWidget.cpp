@@ -60,8 +60,8 @@ void UMSSkillSlotWidget::BindSkill(const FMSHUDSkillSlotData& Data)
 			// 초기 스킬 쿨다운 퍼센트 파라미터 설정. 사용 가능 상태(0)
 			IconMID->SetScalarParameterValue(FName(TEXT("CoolDownRemainingPercent")), 0.f);
 
-			// 머티리얼을 브러시로 설정
-			FSlateBrush Brush;
+			// 기존 브러시를 유지한 채 리소스만 교체
+			FSlateBrush Brush = IconImageWidget->GetBrush();
 			Brush.SetResourceObject(IconMID);
 			IconImageWidget->SetBrush(Brush);
 			IconImageWidget->SetVisibility(ESlateVisibility::Visible);

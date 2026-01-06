@@ -277,6 +277,9 @@ protected:
 	// 스킬 쿨다운 시작 콜백 함수
 	void StartCooldownForSlot(uint8 SlotIndex, float Duration);
 
+	// 블링크 스킬 쿨다운 시작 콜백 함수
+	void HandleBlinkSkillCooldownStarted();
+
 	// 로컬 스킬 슬롯 데이터를 기반으로 액티브/패시브 스킬 슬롯의 인덱스 목록을 갱신하는 함수
 	void BuildSlotTypeIndices();
 
