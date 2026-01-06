@@ -30,6 +30,4 @@ protected:
 
 private:
     FName CharacterID;
-    int32 CharacterIndex;
-    TSubclassOf<class AMSLobbyCharacter> PawnClass;
 };

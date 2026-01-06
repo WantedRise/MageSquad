@@ -141,13 +141,12 @@ void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(FName InCha
 
 void AMSLobbyPlayerController::SwitchToCharacterCamera()
 {
-	if (!GetPawn()) return;
-
+	if (!GetPawn() || !GetViewTarget() || GetViewTarget() == GetPawn()) return;
+	
 	FViewTargetTransitionParams Params;
 	Params.BlendTime = 0.4f;
 	Params.BlendFunction = EViewTargetBlendFunction::VTBlend_EaseInOut;
 	Params.BlendExp = 2.f;
-
 	SetViewTarget(GetPawn(), Params);
 }
 

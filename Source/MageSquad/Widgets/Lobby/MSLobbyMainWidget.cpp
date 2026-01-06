@@ -54,9 +54,10 @@ void UMSLobbyMainWidget::OnClickedSelectCharacterButton()
     {
         SetScaleButton(Button_Lobby, 1.0f);
     }
-    
+
     if (AMSLobbyPlayerController* PC = GetOwningPlayer<AMSLobbyPlayerController>())
     {
+        UE_LOG(LogTemp, Log, TEXT("SwitchToCharacterCamera"));
         PC->SwitchToCharacterCamera();
     }
 }
