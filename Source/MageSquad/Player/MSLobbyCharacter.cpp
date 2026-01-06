@@ -13,6 +13,8 @@
 #include <System/MSCharacterDataSubsystem.h>
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 // Sets default values
 AMSLobbyCharacter::AMSLobbyCharacter()
@@ -39,6 +41,23 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 	StaffMesh->bReceivesDecals = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+	SpringArm->SetRelativeRotation(FRotator(-13.f, 194.f, 0.0f));
+	SpringArm->TargetOffset = FVector(0.f, 130.f, 0.f);
+	//SpringArm->bEnableCameraLag = true;
+	//SpringArm->CameraLagSpeed = 4.f;
+	//SpringArm->TargetArmLength = TargetArmLength;
+	//SpringArm->bUsePawnControlRotation = false;
+	//SpringArm->bInheritPitch = false;
+	//SpringArm->bInheritRoll = false;
+	//SpringArm->bInheritYaw = false;
+	//SpringArm->bDoCollisionTest = false;
+
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	//Camera->bUsePawnControlRotation = false;
 }
 
 // Called when the game starts or when spawned
@@ -59,6 +78,11 @@ void AMSLobbyCharacter::BeginPlay()
 		{
 			UpdateHostUI(PS->IsHost());
 			UpdateUserNickNameUI(PS->GetUserNickName());
+			UpdateReadyStatusUI(PS->IsReady());
+			if (false == PS->OnLobbyReadyStateChanged.IsBoundToObject(this))
+			{
+				PS->OnLobbyReadyStateChanged.AddUObject(this, &AMSLobbyCharacter::UpdateReadyStatusUI);
+			}
 		}
 	}
 }
