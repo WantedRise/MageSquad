@@ -43,10 +43,10 @@ AMSBaseEnemy::AMSBaseEnemy()
 	bReplicates = true;
 	ACharacter::SetReplicateMovement(true); // Movement 리플리케이트 (기본값)
 	bNetLoadOnClient = true;
-	bAlwaysRelevant = true;
+	bAlwaysRelevant = false;
 	SetNetCullDistanceSquared(0.f); // 리플레케이션 거리 무한 // 스폰할 때 무한으로
-	SetNetUpdateFrequency(500.f);
-	NetDormancy = DORM_Never; // Dormancy 완전 비활성화
+	SetNetUpdateFrequency(100.f);
+	NetDormancy = DORM_Initial; 
 
 	// RVO 설정
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
@@ -242,7 +242,7 @@ void AMSBaseEnemy::OnRep_MonsterID()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: for %s"), *CurrentMonsterID.ToString());
 		//  클라이언트에서도 InitializeEnemyFromData 호출
-		SpawnSystem->ActivateEnemy(this, FVector(0.f, 0.f, 0.f));
+		SpawnSystem->ActivateEnemy(this);
 		SpawnSystem->InitializeEnemyFromData(this, CurrentMonsterID);
 	}
 }

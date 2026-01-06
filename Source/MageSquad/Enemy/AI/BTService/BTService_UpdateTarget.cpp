@@ -47,6 +47,14 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 		// 월드에 있는 Player 액터를 검색해서 배열에 추가
 		for (AMSPlayerCharacter* Player : TActorRange<AMSPlayerCharacter>(GetWorld()))
 		{
+			if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
+			{
+				if (ASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead))
+				{
+					continue;
+				}
+			}
+			
 			FoundActors.Add(Player);	
 		}
 		

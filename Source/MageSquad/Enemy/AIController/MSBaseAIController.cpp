@@ -29,16 +29,6 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 	{
 		return;
 	}
-	
-	// RVO 설정 확인 (Pawn의 Movement Component)
-	// if (ACharacter* OwnerCharacter = Cast<ACharacter>(InPawn))
-	// {
-	// 	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
-	// 	if (MoveComp && !MoveComp->bUseRVOAvoidance)
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("%s: RVO Avoidance is not enabled!"),   
-	// 			   *InPawn->GetName());
-	// 	}
 	// }
 	
 	RunAI();
@@ -46,6 +36,11 @@ void AMSBaseAIController::OnPossess(APawn* InPawn)
 
 void AMSBaseAIController::RunAI()
 {
+	if (GetNetMode() == NM_Client)
+	{
+		return;
+	}
+	
 	// 블랙보드 컴포넌트 받아오기.
 	UBlackboardComponent* BB = Blackboard.Get();
 	
@@ -65,6 +60,11 @@ void AMSBaseAIController::RunAI()
 
 void AMSBaseAIController::StopAI()
 {
+	if (GetNetMode() == NM_Client)
+	{
+		return;
+	}
+	
 	// 실행 중인 BT 컴포넌트 받아서 중단
 	if (UBehaviorTreeComponent* BT = Cast<UBehaviorTreeComponent>(BrainComponent))
 	{
