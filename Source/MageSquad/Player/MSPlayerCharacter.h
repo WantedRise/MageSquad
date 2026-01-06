@@ -16,6 +16,9 @@ DECLARE_MULTICAST_DELEGATE(FOnSkillSlotsUpdated);
 // 스킬 쿨다운 시작 이벤트 델리게이트
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSkillCooldownStarted, uint8 /*SlotIndex*/, float /*Duration*/);
 
+// 블링크 스킬 쿨다운 시작 이벤트 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnBlinkSkillCooldownStarted);
+
 /**
  * 스킬 슬롯 인덱스(고정)
  */
@@ -35,9 +38,9 @@ enum class EMSSkillSlotIndex : uint8
  * 작성일: 25/12/08
  *
  * 플레이어 캐릭터 클래스
- * - 기본 이동 및 스킬 자동 발사
- * - 이동 스킬(점멸)
- * - 경험치 / 스킬 슬롯 시스템
+ * - 기본 이동 및 카메라
+ * - 공유 경험치/레벨
+ * - 전투/비전투 스킬 슬롯 시스템
  */
 UCLASS()
 class MAGESQUAD_API AMSPlayerCharacter : public ACharacter, public IAbilitySystemInterface
@@ -196,9 +199,6 @@ protected:
 	UFUNCTION()
 	void OnRep_SkillSlots();
 
-	// 스킬 슬롯 업데이트 이벤트 함수
-	void NotifySkillSlotsUpdated();
-
 private:
 	// 서버: 스킬 획득 내부 처리 함수
 	void AcquireSkill_Server(int32 SkillID);
@@ -277,8 +277,16 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerRPCTriggerAbilityEvent(FGameplayTag EventTag);
 
+	// 클라이언트에게 로컬 블링크 스킬 쿨다운이 시작되었음을 알리는 함수
+	UFUNCTION(Client, Reliable)
+	void ClientRPCStartBlinkSkillCooldown();
+
+public:
+	// 블링크 스킬 쿨다운 시작 이벤트 객체
+	FOnBlinkSkillCooldownStarted OnBlinkSkillCooldownStarted;
+
 protected:
-	// 이동 스킬 이벤트 태그
+	// 블링크 스킬 이벤트 태그
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Tags")
 	FGameplayTag BlinkEventTag;
 

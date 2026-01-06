@@ -129,6 +129,9 @@ void UMSHUDDataComponent::RefreshSkillSlotsFromOwner()
 			OutData.Icon.Reset();
 		}
 	}
+
+	// 서버에서도 즉시 브로드캐스트하여 로컬 UI를 갱신
+	OnRep_SkillSlotData();
 }
 
 void UMSHUDDataComponent::BeginPlay()

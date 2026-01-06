@@ -467,7 +467,7 @@ void AMSPlayerCharacter::AcquireSkill(int32 SkillID)
 
 void AMSPlayerCharacter::ClientRPCStartSkillCooldown_Implementation(uint8 SlotIndex, float Duration)
 {
-	// 로컬 HUD가 패시브 스킬 쿨다운을 시작할 수 있도록 브로드캐스트
+	// 로컬 HUD가 스킬 쿨다운을 시작할 수 있도록 브로드캐스트
 	// 모든 클라이언트에 전송되지만, 로컬 컨트롤된 폰만 HUD 갱신에 반응
 	OnSkillCooldownStarted.Broadcast(SlotIndex, Duration);
 }
@@ -588,11 +588,15 @@ bool AMSPlayerCharacter::SendSkillActive_Server(int32 SlotIndex)
 	// 스킬 어빌리티 이벤트 트리거
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Slot.SkillEventTag, Payload);
 
-	// 패시브 스킬인 경우, 클라이언트 HUD에서 쿨다운을 표시하도록 RPC 호출
+	// 클라이언트 HUD에서 쿨다운을 표시하도록 RPC 호출
 	if (Slot.SkillType == 1)
 	{
 		const float Duration = ComputeFinalInterval(Slot.BaseCoolTime);
 		ClientRPCStartSkillCooldown(static_cast<uint8>(SlotIndex), Duration);
+	}
+	else
+	{
+		ClientRPCStartSkillCooldown(static_cast<uint8>(SlotIndex), 0);
 	}
 
 	return true;
@@ -824,6 +828,9 @@ void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)
 		FGameplayEventData Payload;
 		Payload.EventTag = EventTag;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
+
+		// 블링크 쿨다운 시작을 HUD에 알림
+		ClientRPCStartBlinkSkillCooldown();
 	}
 	// 클라이언트 로직
 	else
@@ -831,6 +838,12 @@ void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)
 		// 서버에게 트리거 요청
 		ServerRPCTriggerAbilityEvent(EventTag);
 	}
+}
+
+void AMSPlayerCharacter::ClientRPCStartBlinkSkillCooldown_Implementation()
+{
+	// 블링크 쿨다운 시작을 HUD에 알림
+	OnBlinkSkillCooldownStarted.Broadcast();
 }
 
 void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTag EventTag)
@@ -842,6 +855,8 @@ void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTa
 	FGameplayEventData Payload;
 	Payload.EventTag = EventTag;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
+
+	ClientRPCStartBlinkSkillCooldown();
 }
 
 void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerData)

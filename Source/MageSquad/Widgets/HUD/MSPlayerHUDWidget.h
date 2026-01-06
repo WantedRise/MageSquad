@@ -5,38 +5,39 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayEffectTypes.h"
+#include "Components/Player/MSHUDDataComponent.h"
 #include "MSPlayerHUDWidget.generated.h"
 
 // 대미지를 받았을 때 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTakeDamaged);
 
-// 스킬 슬롯의 상태 데이터 구조체
+// 로컬 스킬 슬롯 데이터 구조체
 USTRUCT(BlueprintType)
-struct FMSHUDSkillSlotNativeData
+struct FMSHUDSkillSlotLocalData
 {
 	GENERATED_BODY()
 
-	// 슬롯의 시작 시간
+	// 스킬 시작 시간
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
 	float CooldownStartTime = 0.f;
 
-	// 슬롯의 쿨다운 지속시간
+	// 스킬 쿨다운 지속시간
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
 	float CooldownDuration = 0.f;
 
-	// 슬롯이 현재 쿨다운 중인지 표시
+	// 스킬이 현재 쿨다운 중인지 표시
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
 	bool bSlotOnCooldown = false;
 
-	// 슬롯의 스킬 기본 쿨타임
+	// 스킬 기본 쿨타임
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
 	float BaseCoolTime = 0.f;
 
-	// 슬롯의 스킬 타입
+	// 스킬 타입
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
 	uint8 SkillTypes = 0;
 
-	// 슬롯의 스킬 쿨타임 태그
+	// 스킬 쿨타임 태그
 	UPROPERTY(BlueprintReadOnly, Category = "Custom | SkillSlotData")
 	FGameplayTag SkillCooldownTags = FGameplayTag();
 };
@@ -48,9 +49,9 @@ struct FMSHUDSkillSlotNativeData
  *
  * 플레이어 HUD 위젯
  * - 로컬 체력바
- * - 팀원 상태(자신 제외)
+ * - 팀원 상태(자신 제외) + 팀원 스킬
  * - 공유 경험치/레벨
- * - 스킬 슬롯 + 쿨타임 시각화
+ * - 로컬 스킬 슬롯 + 쿨타임 시각화
  */
 UCLASS()
 class MAGESQUAD_API UMSPlayerHUDWidget : public UUserWidget
@@ -258,23 +259,29 @@ private:
 	* Skill Slot Section
 	*****************************************************/
 protected:
+	// Tick에서 호출하여 쿨다운 진행률을 계산하고 이벤트를 전달하는 함수
+	void UpdateCooldowns(float DeltaTime);
+
 	// 슬롯 위젯 인스턴스 배열 초기화 함수
 	void InitializeSkillBar();
 
-	// 팀 스킬 슬롯 데이터 변경 시 호출되는 콜백 함수
-	void HandleTeamSkillSlotUpdated();
+	// HUD에 표시하는 스킬 슬롯 데이터 변경 시 호출되는 콜백 함수
+	void HandleSkillSlotDataUpdated();
 
-	// 스킬 슬롯 배열 변경 시 호출되는 콜백 함수
+	// 스킬 슬롯 배열 변경 시 호출되는 콜백 함수 (내부 쿨타임/타입/태그 정보 갱신)
 	void HandleSkillSlotsUpdated();
 
-	// 쿨타임 감소 속성 변경 콜백 함수
+	// 능력치 쿨타임 감소 속성 변경 콜백 함수
 	void OnLocalCooldownReductionChanged(const FOnAttributeChangeData& Data);
 
-	// 패시브 스킬 쿨다운 시작 콜백 함수
+	// 스킬 쿨다운 시작 콜백 함수
 	void StartCooldownForSlot(uint8 SlotIndex, float Duration);
 
-	// Tick에서 호출하여 쿨다운 진행률을 계산하고 이벤트를 전달
-	void UpdateCooldowns(float DeltaTime);
+	// 로컬 스킬 슬롯 데이터를 기반으로 액티브/패시브 스킬 슬롯의 인덱스 목록을 갱신하는 함수
+	void BuildSlotTypeIndices();
+
+	// 현재 캐시된 쿨다운 감소 비율(CurrentCDR)을 기반으로 패시브 슬롯의 쿨타임 지속시간을 재계산하는 함수
+	void RecalculatePassiveDurations();
 
 protected:
 	// 로컬 HUD용 개별 스킬 슬롯 위젯
@@ -299,26 +306,43 @@ protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UMSSkillSlotWidget> SlotBlinkWidget;
 
-	// 슬롯 위젯 인스턴스 배열. 항상 7개(6개 공격/패시브 + 1개 블링크)이며 위의 멤버를 순서대로 저장
-	// 0: ActiveLeft, 1: ActiveRight, 2~5: Passive01~04, 6: Blink
+	// 슬롯 위젯 인스턴스 배열
+	// 0: ActiveLeft, 1: ActiveRight, 2~5: Passive01~04
 	TArray<TObjectPtr<class UMSSkillSlotWidget>> SkillSlotWidgets;
 
+	// 블링크 슬롯 위젯 인스턴스
+	TObjectPtr<class UMSSkillSlotWidget> BlinkSkillSlotWidget;
+
+	// 블링크 스킬 아이콘
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Skill")
+	TSoftObjectPtr<UMaterialInterface> BlinkSkillIcon;
+
 private:
-	// 스킬 슬롯 크기. 항상 7칸 (0~5: 공격 스킬, 6: 블링크)
-	const int32 TotalSlots = 7;
+	// 스킬 슬롯 크기. 항상 6칸 (0~1번 슬롯은 액티브, 2~5번 슬롯은 패시브)
+	const int32 TotalSlots = 6;
 
 	// 스킬 슬롯 바인딩 상태
 	bool bBoundLocalSkills = false;
 
-	// 각 스킬 슬롯의 상태 데이터
-	TArray<FMSHUDSkillSlotNativeData>& SkillSlotNativeDatas;
-
 	// 현재 스킬 쿨다운 감소 비율 캐시. (0 ~ 0.95 사이)
 	float CurrentCDR = 0.f;
+
+	// 로컬 스킬 슬롯 데이터
+	TArray<FMSHUDSkillSlotLocalData> SkillSlotLocalDatas;
+
+	// 액티브 스킬 슬롯의 인덱스 배열
+	TArray<int32> ActiveSlotIndices;
+
+	// 패시브 스킬 슬롯의 인덱스 배열
+	TArray<int32> PassiveSlotIndices;
 
 	// 스킬 슬롯 업데이트, 쿨다운 시작, 스킬 데이터 업데이트, 쿨다운 변경 델리게이트 핸들
 	FDelegateHandle SkillSlotsUpdatedHandle;
 	FDelegateHandle SkillCooldownStartedHandle;
 	FDelegateHandle SkillSlotDataUpdatedHandle;
 	FDelegateHandle CooldownReductionChangedHandle;
+
+	FDelegateHandle BlinkSkillCooldownStartedHandle;
+
+	FMSHUDSkillSlotData BlinkSkillSlotData;
 };

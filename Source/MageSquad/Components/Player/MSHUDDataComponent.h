@@ -17,7 +17,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnDisplayNameChanged, const FText&);
 DECLARE_MULTICAST_DELEGATE(FOnSkillSlotDataUpdated);
 
 
-// HUD에서 팀원의 스킬 슬롯을 표시하기 위해 복제되는 최소 데이터 구조체
+// HUD에서 스킬 슬롯을 표시하기 위해 복제되는 최소 데이터 구조체
 USTRUCT(BlueprintType)
 struct FMSHUDSkillSlotData
 {

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Player/MSHUDDataComponent.h"
 #include "MSTeamMemberWidget.generated.h"
 
 /**
@@ -22,9 +23,6 @@ class MAGESQUAD_API UMSTeamMemberWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// 팀 스킬 슬롯 위젯 클래스를 설정하는 생성자
-	UMSTeamMemberWidget(const FObjectInitializer& ObjectInitializer);
-
 	// HUD 데이터 갱신 함수 (HUDDataComponent로부터 값을 읽어 UI를 갱신)
 	void UpdateFromHUDData(const class UMSHUDDataComponent* HUDData);
 
@@ -37,6 +35,9 @@ public:
 private:
 	// 체력 비율 계산 함수
 	static float CalcHealthPct(float InHealth, float InMaxHealth);
+
+	// 스킬 위젯 추가하는 함수
+	void AddSkillWidget(const FMSHUDSkillSlotData& Data, const int32 SlotIndex);
 
 protected:
 	/* ======================== BindWidget ======================== */
@@ -52,9 +53,13 @@ protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
 	TObjectPtr<class UImage> TeamPortraitIconWidget;
 
-	// 팀원 스킬 슬롯 위젯
+	// 팀원 스킬 슬롯 위젯 (패시브)
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
-	TObjectPtr<class UHorizontalBox> SkillListWidget;
+	TObjectPtr<class UHorizontalBox> PassiveSkillListWidget;
+
+	// 팀원 스킬 슬롯 위젯 (액티브)
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Transient)
+	TObjectPtr<class UHorizontalBox> ActiveSkillListWidget;
 	/* ======================== BindWidget ======================== */
 
 	// 스킬 슬롯 위젯 클래스
