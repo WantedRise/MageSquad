@@ -24,6 +24,14 @@ void AMSIndicatorActor::Initialize(const FAttackIndicatorParams& Params)
 {
 	CachedParams = Params;
 	ElapsedTime = 0.f;
+	
+	// 서버에서 Rectangle 위치 보정 - 클라에 자동 연동
+	if (HasAuthority() && Params.Shape == EIndicatorShape::Rectangle)
+	{
+		float HalfLength = Params.Length * 0.5f;
+		SetActorLocation(GetActorLocation() + (GetActorUpVector() * HalfLength));
+	}
+    
 	ApplyMaterialParams();
 }
 
@@ -102,7 +110,7 @@ void AMSIndicatorActor::ApplyMaterialParams()
 		DynamicMaterial->SetScalarParameterValue(TEXT("AspectRatio"), CachedParams.Length / CachedParams.Width);
 		float HalfLength = CachedParams.Length * 0.5f;
 		float HalfWidth = CachedParams.Width * 0.5f;
-		SetActorLocation(GetActorLocation() + (GetActorUpVector() * HalfLength)); // 데칼 회전때문에 Forward가 아닌 UpVector 이용
+
 		DecalComponent->DecalSize = FVector(500.f, HalfWidth, HalfLength);
 		break;
 	}

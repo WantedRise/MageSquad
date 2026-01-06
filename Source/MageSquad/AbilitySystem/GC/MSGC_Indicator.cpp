@@ -19,6 +19,12 @@
  		return false;
  	}
  	
+ 	if (!GetOwner()->HasAuthority())
+ 	{
+ 		// 클라이언트: Replicated Actor를 사용하므로 직접 스폰하지 않음
+ 		return false;
+ 	}
+ 	
  	// EffectContext에서 파라미터 추출
  	FAttackIndicatorParams IndicatorParams;
     
