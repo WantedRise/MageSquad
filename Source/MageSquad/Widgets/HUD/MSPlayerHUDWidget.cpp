@@ -73,7 +73,7 @@ void UMSPlayerHUDWidget::InitializeHUD()
 	const bool bLocalHealthOk = TryBindLocalHealth();
 	const bool bSharedDataOk = TryBindSharedData();
 	const bool bLocalSkillsOk = TryBindLocalSkills();
-	
+
 	// 보스 스폰 시 HUD를 감추기 위한 추가 바인딩, 델리게이트 구조로 인해 호출 구조를 맞추지 못함 - 임희섭
 	TryBindGameState();
 

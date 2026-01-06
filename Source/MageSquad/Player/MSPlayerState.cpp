@@ -21,8 +21,8 @@ AMSPlayerState::AMSPlayerState()
 	AbilitySystemComponent = CreateDefaultSubobject<UMSPlayerAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 
-	// Minimal 모드는 클라이언트에는 필요한 정보만 복제하여 네트워크 부하를 줄임
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	// Mixed 모드 설정으로 클라이언트에 일부는 최소 복제, 일부는 전체 복제되도록 설정
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UMSPlayerAttributeSet>(TEXT("AttributeSet"));
 
