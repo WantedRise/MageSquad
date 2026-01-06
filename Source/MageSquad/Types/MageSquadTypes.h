@@ -447,6 +447,11 @@ public:
 			{
 				Flags |= 0x04;
 			}
+			// 0x08: Indicator Effect
+			if (bHasEffectAssets)
+			{
+				Flags |= 0x08;
+			}
 		}
 
 		Ar.SerializeBits(&Flags, 4); // 2->4로 확장 - 임희섭
@@ -514,6 +519,12 @@ public:
 			Ar << ParticleAsset; 
 			Ar << SoundAsset;
 			bHasEffectAssets = true;
+		}
+		else if (Ar.IsLoading())
+		{
+			ParticleAsset = nullptr;
+			SoundAsset = nullptr;
+			bHasIndicatorParams = false;
 		}
 		return true;
 	}

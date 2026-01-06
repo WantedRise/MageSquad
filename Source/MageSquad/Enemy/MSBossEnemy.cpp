@@ -41,6 +41,8 @@ AMSBossEnemy::AMSBossEnemy()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
+	
+	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 }
 
 void AMSBossEnemy::BeginPlay()

@@ -4,12 +4,13 @@
 #include "AbilitySystem/GA/Enemy/MSGA_Boss_Sevarog_Meteor.h"
 
 #include "AbilitySystemComponent.h"
+#include "MageSquad.h"
 #include "MSGameplayTags.h"
 #include "AbilitySystem/Tasks/MSAT_ChaseAndSpawnMeteor.h"
 #include "AbilitySystem/Tasks/MSAT_PlayMontageAndWaitForEvent.h"
 #include "Actors/Indicator/MSIndicatorActor.h"
 #include "Enemy/MSBossEnemy.h"
-#include "Kismet/GameplayStatics.h"
+#include "Types/MageSquadTypes.h"
 
 UMSGA_Boss_Sevarog_Meteor::UMSGA_Boss_Sevarog_Meteor()
 {
@@ -20,7 +21,7 @@ UMSGA_Boss_Sevarog_Meteor::UMSGA_Boss_Sevarog_Meteor()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Pattern1);
-	
+
 	// 기본 Indicator 파라미터 설정
 	IndicatorParams.Shape = EIndicatorShape::Circle;
 	IndicatorParams.Radius = 200.f;
@@ -28,23 +29,24 @@ UMSGA_Boss_Sevarog_Meteor::UMSGA_Boss_Sevarog_Meteor()
 }
 
 void UMSGA_Boss_Sevarog_Meteor::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+                                                const FGameplayAbilityActorInfo* ActorInfo,
+                                                const FGameplayAbilityActivationInfo ActivationInfo,
+                                                const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	
+
 	// CommitAbility 체크 (쿨다운, 코스트 등)
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
+
 	if (UAnimMontage* Pattern1Montage = Owner->GetPattern1Montage())
 	{
 		FGameplayTagContainer Tags;
 		Tags.AddTag(FGameplayTag::RequestGameplayTag("Enemy.Event.NormalAttack"));
-		
+
 		// Todo : 추후에 페이즈 전환 관련 델리게이트로 빼서 관리할 예정
 		FName StartSectionName = NAME_None;
 		// if (Owner->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
@@ -52,7 +54,7 @@ void UMSGA_Boss_Sevarog_Meteor::ActivateAbility(const FGameplayAbilitySpecHandle
 		// 	StartSectionName = TEXT("Phase2");
 		// }
 
-		UMSAT_PlayMontageAndWaitForEvent* Pattern1Task = 
+		UMSAT_PlayMontageAndWaitForEvent* Pattern1Task =
 			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, Pattern1Montage, Tags, 1.f, StartSectionName);
 
 		Pattern1Task->OnCompleted.AddDynamic(this, &UMSGA_Boss_Sevarog_Meteor::OnCompleteCallback);
@@ -63,15 +65,17 @@ void UMSGA_Boss_Sevarog_Meteor::ActivateAbility(const FGameplayAbilitySpecHandle
 }
 
 void UMSGA_Boss_Sevarog_Meteor::CancelAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateCancelAbility)
+                                              const FGameplayAbilityActorInfo* ActorInfo,
+                                              const FGameplayAbilityActivationInfo ActivationInfo,
+                                              bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
 void UMSGA_Boss_Sevarog_Meteor::EndAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility, bool bWasCancelled)
+                                           const FGameplayAbilityActorInfo* ActorInfo,
+                                           const FGameplayAbilityActivationInfo ActivationInfo,
+                                           bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -121,7 +125,7 @@ void UMSGA_Boss_Sevarog_Meteor::OnEventReceivedCallback(FGameplayTag EventTag, F
 		MeteorDamageEffect,
 		CompleteParticle,
 		CompleteSound);
-	
+
 	ChaseTask->OnChaseComplete.AddDynamic(this, &UMSGA_Boss_Sevarog_Meteor::OnChaseComplete);
 	ChaseTask->OnIndicatorSpawned.AddDynamic(this, &UMSGA_Boss_Sevarog_Meteor::OnIndicatorSpawned);
 	ChaseTask->ReadyForActivation();
@@ -134,28 +138,42 @@ void UMSGA_Boss_Sevarog_Meteor::OnIndicatorSpawned(AMSIndicatorActor* Indicator,
 		return;
 	}
 
-	// 추가 처리 (사운드, VFX 등)
 	// Task에서 이미 데미지 정보를 설정하므로 여기서는 추가 이펙트만 처리
+	FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
+
+	if (CompleteParticle == nullptr)
+	{
+		UE_LOG(LogMSNetwork, Log, TEXT("Meteor Particle is null"));
+		return;
+	}
 	
-	// 예: GameplayCue 발동
-	// UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
-	// if (SourceASC)
+	Context->SetEffectAssets(CompleteParticle, CompleteSound);
+
+	FGameplayEffectContextHandle ContextHandle(Context);
+
+	FGameplayCueParameters Params;
+	Params.EffectContext = ContextHandle;
+	Params.Location = Indicator->GetActorLocation(); // 재생될 위치
+	Params.RawMagnitude = 1.0f; // 필요시 강도 전달
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		ASC->ExecuteGameplayCue(
+			FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"),
+			Params
+		);
+	}
+
+	// if (CompleteParticle)
 	// {
-	//     FGameplayCueParameters CueParams;
-	//     CueParams.Location = Location;
-	//     SourceASC->ExecuteGameplayCue(MSGameplayTags::GameplayCue_Meteor_Warning, CueParams);
+	// 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, Indicator->GetActorLocation());
+	// 	// if (UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, SpawnLocation))
+	// 	// {
+	// 	// 	PSC->CustomTimeDilation = 2.0f;
+	// 	// }
 	// }
-	
-	if (CompleteParticle)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, Indicator->GetActorLocation());
-		// if (UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, SpawnLocation))
-		// {
-		// 	PSC->CustomTimeDilation = 2.0f;
-		// }
-	}
-	if (CompleteSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), CompleteSound, Indicator->GetActorLocation());
-	}
+	// if (CompleteSound)
+	// {
+	// 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), CompleteSound, Indicator->GetActorLocation());
+	// }
 }

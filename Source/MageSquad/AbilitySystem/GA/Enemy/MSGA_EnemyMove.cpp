@@ -19,8 +19,6 @@ UMSGA_EnemyMove::UMSGA_EnemyMove()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Move);
-	
-	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Move)	;
 }
 
 void UMSGA_EnemyMove::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

@@ -206,7 +206,6 @@ void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indic
 	FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
 	
 	Context->SetEffectAssets(CompleteParticle, CompleteSound);
-	// Context->AddInstigator(GetAvatarActorFromActorInfo(), GetAvatarActorFromActorInfo()); // 필요한 경우
 	
 	FGameplayEffectContextHandle ContextHandle(Context);
 	
@@ -215,11 +214,12 @@ void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indic
 	Params.Location = Indicator->GetActorLocation(); // 재생될 위치
 	Params.RawMagnitude = 1.0f;       // 필요시 강도 전달
 	
-	// 5. 실행
-	AbilitySystemComponent->ExecuteGameplayCue(
-		FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), 
-		Params
-	);
+	// AbilitySystemComponent->ExecuteGameplayCue(
+	// 	FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), 
+	// 	Params
+	// );
+	
+	//AbilitySystemComponent->AddGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), Params);
 	
 	--ActiveIndicatorCount;
     

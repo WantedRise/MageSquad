@@ -112,34 +112,22 @@ float AMSWaveBlock::CalculateSignificance(USignificanceManager::FManagedObjectIn
 void AMSWaveBlock::OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig,
                                          float NewSig, bool bInView)
 {
-	// 1. 중요도가 아주 낮으면(0.1 이하) 틱을 아예 꺼버림
-
 	bool IsCulling = NewSig <= 0.5f;
 
-	Mesh1->SetComponentTickEnabled(!IsCulling);
-	Mesh2->SetComponentTickEnabled(!IsCulling);
-	Mesh3->SetComponentTickEnabled(!IsCulling);
-	Mesh4->SetComponentTickEnabled(!IsCulling);
-	Mesh5->SetComponentTickEnabled(!IsCulling);
-	Mesh6->SetComponentTickEnabled(!IsCulling);
-	Mesh7->SetComponentTickEnabled(!IsCulling);
-	Mesh8->SetComponentTickEnabled(!IsCulling);
+	// Mesh들을 배열에 담아 처리
+	UMeshComponent* Meshes[] = { Mesh1, Mesh2, Mesh3, Mesh4, Mesh5, Mesh6, Mesh7, Mesh8 };
 
-	Mesh1->SetVisibility(!IsCulling);
-	Mesh2->SetVisibility(!IsCulling);
-	Mesh3->SetVisibility(!IsCulling);
-	Mesh4->SetVisibility(!IsCulling);
-	Mesh5->SetVisibility(!IsCulling);
-	Mesh6->SetVisibility(!IsCulling);
-	Mesh7->SetVisibility(!IsCulling);
-	Mesh8->SetVisibility(!IsCulling);
-
-	Mesh1->bPauseAnims = IsCulling;
-	Mesh2->bPauseAnims = IsCulling;
-	Mesh3->bPauseAnims = IsCulling;
-	Mesh4->bPauseAnims = IsCulling;
-	Mesh5->bPauseAnims = IsCulling;
-	Mesh6->bPauseAnims = IsCulling;
-	Mesh7->bPauseAnims = IsCulling;
-	Mesh8->bPauseAnims = IsCulling;
+	for (UMeshComponent* Mesh : Meshes)
+	{
+		if (IsValid(Mesh))
+		{
+			Mesh->SetComponentTickEnabled(!IsCulling);
+			Mesh->SetVisibility(!IsCulling);
+            
+			if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(Mesh))
+			{
+				SkelMesh->bPauseAnims = IsCulling;
+			}
+		}
+	}
 }

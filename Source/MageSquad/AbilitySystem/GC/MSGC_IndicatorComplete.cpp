@@ -2,6 +2,8 @@
 
 
 #include "AbilitySystem/GC/MSGC_IndicatorComplete.h"
+
+#include "MageSquad.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -9,12 +11,14 @@
 
 UMSGC_IndicatorComplete::UMSGC_IndicatorComplete()
 {
-	GameplayCueTag = FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete");
+	//GameplayCueTag = FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete");
 }
 
 bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const
 {
 	Super::OnExecute_Implementation(Target, Parameters);
+	
+	UE_LOG(LogMSNetwork, Log, TEXT("UMSGC_IndicatorComplete::OnExecute_Implementation"));
 
 	const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get());
     
@@ -26,6 +30,7 @@ bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGa
 		if (Context->ParticleAsset)
 		{
 			ParticleToPlay = Context->ParticleAsset;
+			UE_LOG(LogMSNetwork, Log, TEXT("ParticleToPlay = Context->ParticleAsset;"));
 		}
 		if (Context->SoundAsset)
 		{
@@ -41,14 +46,14 @@ bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGa
 	
 	SpawnLocation.Z = 0.f;
 
-	// if (ParticleToPlay)
-	// {
-	// 	UGameplayStatics::SpawnEmitterAtLocation(Target->GetWorld(), ParticleToPlay, SpawnLocation);
-	// }
-	// if (SoundToPlay)
-	// {
-	// 	UGameplayStatics::PlaySoundAtLocation(Target->GetWorld(), SoundToPlay, SpawnLocation);
-	// }
+	if (ParticleToPlay)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(Target->GetWorld(), ParticleToPlay, SpawnLocation);
+	}
+	if (SoundToPlay)
+	{
+		UGameplayStatics::PlaySoundAtLocation(Target->GetWorld(), SoundToPlay, SpawnLocation);
+	}
 
 	return true;
 }
