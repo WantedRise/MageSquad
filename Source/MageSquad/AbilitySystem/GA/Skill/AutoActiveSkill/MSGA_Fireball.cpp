@@ -42,6 +42,7 @@ void UMSGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 	RuntimeData.Damage = SkillDamage;
 	RuntimeData.DamageEffect = DamageEffect;
+	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.Radius = SkillRadius;
 	RuntimeData.LifeTime = 5.f;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Explosive::StaticClass();

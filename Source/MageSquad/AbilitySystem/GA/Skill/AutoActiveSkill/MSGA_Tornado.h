@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -24,27 +24,19 @@ public:
 		const FGameplayEventData* TriggerEventData) override;
 	
 protected:
-	// Tornado 스킬 ID는 3
+	// Tornado ?ㅽ궗 ID??3
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CurrentSkillID = 3;
 	
-	// 피해량
+	// ?쇳빐??
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillDamage = 10.f;
 	
-	// 범위
+	// 踰붿쐞
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillRadius = 200.f;
 	
-	// 지속시간
+	// 吏?띿떆媛?
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillDuration = 8.f;
-	
-	// 발사체 원본 데이터 클래스
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
-	
-	// 데미지 전달 GE
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-	TSubclassOf<UGameplayEffect> DamageEffect;
 };
