@@ -561,4 +561,10 @@ struct FMSLevelUpChoicePair
 
 	UPROPERTY(BlueprintReadOnly)
 	UMaterialInterface* SkillLevelUpIcon = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	FText SkillName;
+
+	UPROPERTY(BlueprintReadOnly)
+	FText SkillDescription;
 };
