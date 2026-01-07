@@ -23,6 +23,8 @@ class MAGESQUAD_API UMSTeamMemberWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+
 	// HUD 데이터 갱신 함수 (HUDDataComponent로부터 값을 읽어 UI를 갱신)
 	void UpdateFromHUDData(const class UMSHUDDataComponent* HUDData);
 
@@ -36,8 +38,15 @@ private:
 	// 체력 비율 계산 함수
 	static float CalcHealthPct(float InHealth, float InMaxHealth);
 
-	// 스킬 위젯 추가하는 함수
-	void AddSkillWidget(const FMSHUDSkillSlotData& Data, const int32 SlotIndex);
+	// 팀원 스킬 슬롯 위젯 초기화 함수
+	void EnsureSkillSlotsInitialized();
+
+	/*
+	* 슬롯 인덱스에 해당하는 위젯에 데이터를 반영하는 함수
+	* @param SlotIndex: 스킬 슬롯
+	* @param Data: HUD에서 스킬 슬롯을 표시하기 위해 복제되는 최소 데이터
+	*/
+	void UpdateSkillSlotWidget(const int32 SlotIndex, const FMSHUDSkillSlotData* Data);
 
 protected:
 	/* ======================== BindWidget ======================== */
@@ -67,5 +76,10 @@ protected:
 	TSubclassOf<class UMSSkillSlotWidget> SkillSlotWidgetClass;
 
 	// 팀원 스킬 슬롯 위젯 목록
+	UPROPERTY(Transient)
 	TArray<TObjectPtr<class UMSSkillSlotWidget>> TeamSkillWidgets;
+
+private:
+	// 슬롯 초기화 완료 여부
+	bool bSkillSlotsInitialized = false;
 };

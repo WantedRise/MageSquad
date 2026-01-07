@@ -10,6 +10,14 @@
 
 #include "Widgets/HUD/MSSkillSlotWidget.h"
 
+void UMSTeamMemberWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	// 팀원 스킬 슬롯을 1회 생성/부착 후, 이후에는 데이터만 갱신
+	EnsureSkillSlotsInitialized();
+}
+
 void UMSTeamMemberWidget::UpdateFromHUDData(const UMSHUDDataComponent* HUDData)
 {
 	if (!HUDData) return;
@@ -60,37 +68,20 @@ void UMSTeamMemberWidget::UpdatePortrait(UTexture2D* InPortrait)
 
 void UMSTeamMemberWidget::UpdateSkills(const UMSHUDDataComponent* HUDData)
 {
+	if (!HUDData) return;
+
+	// 팀원 스킬 슬롯 위젯 한번 더 보정
+	EnsureSkillSlotsInitialized();
+	if (!bSkillSlotsInitialized) return;
+
 	// 팀원의 복제된 스킬 슬롯 데이터를 가져옴
 	const TArray<FMSHUDSkillSlotData>& ViewData = HUDData->GetSkillSlotData();
 
-	// 기존 스킬 목록 초기화
-	PassiveSkillListWidget->ClearChildren();
-	ActiveSkillListWidget->ClearChildren();
-	TeamSkillWidgets.Empty();
-
-	// 0~1번 슬롯은 액티브, 2~5번 슬롯은 패시브로 간주
-	const int32 NumView = ViewData.Num();
-
-	// 액티브 스킬: Index 0~1
-	for (int32 i = 0; i < 2 && i < NumView; ++i)
+	// 슬롯 인덱스에 해당하는 위젯에 데이터를 반영
+	for (int32 SlotIndex = 0; SlotIndex < 6; ++SlotIndex)
 	{
-		const FMSHUDSkillSlotData& Data = ViewData[i];
-		if (Data.bIsValid)
-		{
-			// 스킬 위젯 추가
-			AddSkillWidget(Data, i);
-		}
-	}
-
-	// 패시브 스킬: Index 2~5
-	for (int32 i = 2; i < 6 && i < NumView; ++i)
-	{
-		const FMSHUDSkillSlotData& Data = ViewData[i];
-		if (Data.bIsValid)
-		{
-			// 스킬 위젯 추가
-			AddSkillWidget(Data, i);
-		}
+		const FMSHUDSkillSlotData* SlotData = ViewData.IsValidIndex(SlotIndex) ? &ViewData[SlotIndex] : nullptr;
+		UpdateSkillSlotWidget(SlotIndex, SlotData);
 	}
 }
 
@@ -99,40 +90,71 @@ float UMSTeamMemberWidget::CalcHealthPct(float InHealth, float InMaxHealth)
 	return (InMaxHealth > 0.f) ? FMath::Clamp(InHealth / InMaxHealth, 0.f, 1.f) : 0.f;
 }
 
-void UMSTeamMemberWidget::AddSkillWidget(const FMSHUDSkillSlotData& Data, const int32 SlotIndex)
+void UMSTeamMemberWidget::EnsureSkillSlotsInitialized()
 {
+	if (bSkillSlotsInitialized) return;
+
+	// 팀원 스킬 슬롯 위젯 클래스 가져오기
 	TSubclassOf<UMSSkillSlotWidget> WidgetClass = SkillSlotWidgetClass;
 	if (!WidgetClass)
 	{
 		WidgetClass = UMSSkillSlotWidget::StaticClass();
 	}
 
-	// 새 스킬 슬롯 위젯 생성
-	UMSSkillSlotWidget* NewSlot = CreateWidget<UMSSkillSlotWidget>(GetWorld(), WidgetClass);
-	if (NewSlot) return;
+	// 팀원 스킬 슬롯 동적 생성
+	// - 슬롯 위젯은 먼저 패널에 AddChild되어 Construct가 완료된 뒤에 BindSkill을 호출해야 함
+	TeamSkillWidgets.Reset(6);
+	ActiveSkillListWidget->ClearChildren();
+	PassiveSkillListWidget->ClearChildren();
 
-	// 스킬 데이터가 유효하면 아이콘과 레벨을 바인딩하고 쿨다운을 초기화
-	if (Data.bIsValid)
+	for (int32 SlotIndex = 0; SlotIndex < 6; ++SlotIndex)
 	{
-		NewSlot->BindSkill(Data);
-		NewSlot->SetCooldownPercent(0.f);
-	}
-	else
-	{
-		// 비어있는 슬롯은 빈 상태로 설정
+		// 스킬 슬롯 생성
+		UMSSkillSlotWidget* NewSlot = CreateWidget<UMSSkillSlotWidget>(GetOwningPlayer(), WidgetClass);
+		if (!NewSlot)
+		{
+			// 부분 생성된 경우가 있다면 정리
+			ActiveSkillListWidget->ClearChildren();
+			PassiveSkillListWidget->ClearChildren();
+			TeamSkillWidgets.Reset();
+			return;
+		}
+
+		// 스킬 슬롯 위젯에 추가 (패시브, 액티브 구분)
+		if (SlotIndex > 1)
+		{
+			PassiveSkillListWidget->AddChild(NewSlot);
+		}
+		else
+		{
+			ActiveSkillListWidget->AddChild(NewSlot);
+		}
+
 		NewSlot->SetEmpty();
+		TeamSkillWidgets.Add(NewSlot);
 	}
 
-	// 스킬 슬롯 위젯에 추가 (패시브, 액티브 구분)
-	if (SlotIndex > 1)
+	bSkillSlotsInitialized = true;
+}
+
+void UMSTeamMemberWidget::UpdateSkillSlotWidget(const int32 SlotIndex, const FMSHUDSkillSlotData* Data)
+{
+	if (!TeamSkillWidgets.IsValidIndex(SlotIndex)) return;
+
+	// 팀원 스킬 슬롯 위젯 목록에서 해당 슬롯 인덱스의 위젯 가져오기
+	UMSSkillSlotWidget* SlotWidget = TeamSkillWidgets[SlotIndex];
+	if (!SlotWidget) return;
+
+	// 유효한 스킬 데이터면 바인딩, 아니면 Empty
+	if (Data && Data->bIsValid)
 	{
-		PassiveSkillListWidget->AddChild(NewSlot);
+		SlotWidget->BindSkill(*Data);
+
+		// 팀원 쿨다운은 별도 복제가 없으므로 0으로 초기화
+		SlotWidget->SetCooldownPercent(0.f);
 	}
 	else
 	{
-		ActiveSkillListWidget->AddChild(NewSlot);
+		SlotWidget->SetEmpty();
 	}
-
-	// 캐시 목록에 보관
-	TeamSkillWidgets.Add(NewSlot);
 }
