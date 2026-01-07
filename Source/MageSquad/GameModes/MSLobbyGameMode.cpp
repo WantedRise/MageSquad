@@ -65,19 +65,67 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
     UWorld* World = GetWorld();
     if (World)
     {
-        //플레이어 슬롯을 스폰 위치로 지정
-        for (AMSLobbyPlayerSlot* PlayerSlot : TActorRange<AMSLobbyPlayerSlot>(World))
+        if (PlayerSlots.Num() <= 0)
+        {
+            //플레이어 슬롯을 스폰 위치로 지정
+            for (AMSLobbyPlayerSlot* PlayerSlot : TActorRange<AMSLobbyPlayerSlot>(World))
+            {
+                PlayerSlots.Add(PlayerSlot);
+            }
+        }
+
+        for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
         {
             if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
             {
                 PlayerSlot->SetController(Player);
                 PlayerSlot->HiddenInviteWidgetComponent();
-                
+
                 return PlayerSlot;
             }
         }
     }
 	return nullptr;
+}
+
+void AMSLobbyGameMode::SetHiddenPlayerSlots()
+{
+    for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
+    {
+        if (IsValid(PlayerSlot))
+        {
+            PlayerSlot->HiddenInviteWidgetComponent();
+        }
+    }
+}
+
+void AMSLobbyGameMode::SetShowPlayerSlots()
+{
+    for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
+    {
+        if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
+        {
+            PlayerSlot->ShowInviteWidgetComponent();
+        }
+    }
+}
+
+void AMSLobbyGameMode::SetShowTargetPlayerSlot(AController* Target) const
+{
+    for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
+    {
+        if (IsValid(PlayerSlot) && Target == PlayerSlot->GetController())
+        {
+            PlayerSlot->ShowInviteWidgetComponent();
+        }
+    }
+}
+
+void AMSLobbyGameMode::Logout(AController* Exiting)
+{
+    Super::Logout(Exiting);
+
+    SetShowTargetPlayerSlot(Exiting);
 }
 
 void AMSLobbyGameMode::HandleReadyCountdownFinished()

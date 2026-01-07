@@ -50,12 +50,12 @@ public:
 	//준비상태 UI 업데이트 
 	UFUNCTION()
 	void UpdateReadyStatusUI(bool bReady);
-
+	class UCameraComponent* GetPlayerCameraComponent() const;
 protected:
 	void InitializeLobbyCharacterFromPlayerState();
     UPROPERTY()
     TObjectPtr<UMaterial> Widget3DPassThroughMaterial;
-
+	
 protected:
 	// 로비 캐릭터 머리 위에 표시되는 플레이어 정보 UI 컴포넌트
 	// (닉네임, 준비 상태, 호스트 여부 등 표시)

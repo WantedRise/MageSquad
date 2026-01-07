@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Widgets/Lobby/MSLobbyPlayerSlotWidget.h"
@@ -11,7 +11,10 @@ void UMSLobbyPlayerSlotWidget::NativeConstruct()
 	Super::NativeConstruct();
 	if (Button_Invite)
 	{
-		Button_Invite->OnClicked.AddDynamic(this, &UMSLobbyPlayerSlotWidget::ShowFriendList);
+		if (!Button_Invite->OnClicked.IsBound())
+		{
+			Button_Invite->OnClicked.AddDynamic(this, &UMSLobbyPlayerSlotWidget::ShowFriendList);
+		}
 	}
 }
 void UMSLobbyPlayerSlotWidget::ShowFriendList()

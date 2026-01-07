@@ -35,14 +35,17 @@ public:
 
 	void SwitchToCharacterCamera();
 	void SwitchToLobbyCamera();
+	void RequestExitLobby();
 protected:
 	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;
 	virtual void OnRep_PlayerState() override;
+	virtual void BeginPlayingState() override;
 protected:
 	//로비 메인 UI 위젯을 생성하고 화면에 표시
 	void CreateLobbyUI();
-	
+	UFUNCTION(Server, Reliable)
+	void Server_RequestExitLobby();
 	
 	
 protected:
@@ -52,4 +55,6 @@ protected:
 	class UMSLobbyMainWidget* LobbyMainWidget;
 	UPROPERTY()
 	class AActor* LobbyCameraActor;
+	UPROPERTY()
+	class ACameraActor* CharacterCameraActor;
 };

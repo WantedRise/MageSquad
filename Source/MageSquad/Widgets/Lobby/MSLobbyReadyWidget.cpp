@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Widgets/Lobby/MSLobbyReadyWidget.h"
@@ -73,7 +73,7 @@ void UMSLobbyReadyWidget::ApplyReadyStateUI(ELobbyReadyPhase NewLobbyReadyPhase)
 void UMSLobbyReadyWidget::OnReadyButtonClicked()
 {
     AMSLobbyPlayerController* PC = Cast<AMSLobbyPlayerController>(GetWorld()->GetFirstPlayerController());
-
+    //Button_Ready->SetStyle(EButton);
     if (PC)
     {
         UE_LOG(LogMSNetwork, Log, TEXT("OnReadyButtonClicked"));

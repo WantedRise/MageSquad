@@ -25,6 +25,7 @@ void UMSLevelManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     LobbyLevelURL = TEXT("LobbyLevel?listen");
 	GameLevelURL = TEXT("GameLevel");
     LoadingLevelURL = TEXT("LoadingLevel");
+	MainmenuLevelURL = TEXT("MainmenuLevel");
 }
 
 void UMSLevelManagerSubsystem::Deinitialize()
