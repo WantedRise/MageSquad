@@ -29,6 +29,7 @@ AMSItemOrb::AMSItemOrb()
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshComp->SetCollisionProfileName(TEXT("NoCollision"));
 	MeshComp->SetGenerateOverlapEvents(false);
+	MeshComp->bReceivesDecals = false;
 
 	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
 	CollisionComp->SetupAttachment(RootComp);

@@ -73,15 +73,15 @@ protected:
 
 	// 떠오르는 연출 시간
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float FloatUpTime = 0.20f;
+	float FloatUpTime = 0.35f;
 
 	// 플레이어로 빨려들어가는 속도 (클수록 빠름)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float AttractInterpSpeed = 8.f;
+	float AttractInterpSpeed = 6.f;
 
 	// 오브 획득 후 Destroy까지 지연 시간 (연출 재생 시간 확보)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	float DestroyDelay = 0.5f;
+	float DestroyDelay = 1.f;
 
 protected:
 	// 중복 획득 방지 플래그 (서버에서만 true로 설정)
