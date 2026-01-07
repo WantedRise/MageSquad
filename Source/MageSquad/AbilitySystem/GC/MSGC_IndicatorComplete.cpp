@@ -48,7 +48,10 @@ bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGa
 
 	if (ParticleToPlay)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(Target->GetWorld(), ParticleToPlay, SpawnLocation);
+		if (UParticleSystemComponent* SpawnParticle = UGameplayStatics::SpawnEmitterAtLocation(Target->GetWorld(), ParticleToPlay, SpawnLocation))
+		{
+			SpawnParticle->CustomTimeDilation = 0.5f;
+		}
 	}
 	if (SoundToPlay)
 	{

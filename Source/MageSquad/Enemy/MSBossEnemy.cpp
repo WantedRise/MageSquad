@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/MSDirectionIndicatorComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameStates/MSGameState.h"
 #include "Net/UnrealNetwork.h"
@@ -44,6 +45,9 @@ AMSBossEnemy::AMSBossEnemy()
 	Camera->bUsePawnControlRotation = false;
 	
 	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	MoveComp->AvoidanceWeight = 0.1f;
 	
 	DirectionIndicatorComponent = CreateDefaultSubobject<UMSDirectionIndicatorComponent>(TEXT("DirectionTexture"));
 }
