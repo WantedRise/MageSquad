@@ -117,6 +117,7 @@ void AMSLobbyGameMode::SetShowTargetPlayerSlot(AController* Target) const
         if (IsValid(PlayerSlot) && Target == PlayerSlot->GetController())
         {
             PlayerSlot->ShowInviteWidgetComponent();
+            PlayerSlot->SetController(nullptr);
         }
     }
 }
