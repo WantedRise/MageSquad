@@ -202,6 +202,7 @@ float UMSAT_ChaseAndSpawnMeteor::GetGroundZ(const FVector& Location) const
 
 void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indicator, const TArray<AActor*>& HitActors)
 {
+	// Todo : 인디케이터 완료 시 스폰할 목적으로 적은 코드였으나 위치를 옮김
 	// 컨텍스트 객체 생성 (New로 생성하지만 핸들이 관리하므로 메모리는 안전)
 	// FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
 	//
@@ -209,7 +210,7 @@ void UMSAT_ChaseAndSpawnMeteor::HandleIndicatorComplete(AMSIndicatorActor* Indic
 	//
 	// FGameplayEffectContextHandle ContextHandle(Context);
 	//
-	// FGameplayCueParameters Params;
+	// FGameplayCueParameters Params; 
 	// Params.EffectContext = ContextHandle;
 	// Params.Location = Indicator->GetActorLocation(); // 재생될 위치
 	// Params.RawMagnitude = 1.0f;       // 필요시 강도 전달
