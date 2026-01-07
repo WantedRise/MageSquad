@@ -15,37 +15,44 @@ UCLASS()
 class MAGESQUAD_API UMSGA_EnemyDead : public UMSGA_EnemyBaseAbility
 {
 	GENERATED_BODY()
-	
+
 public:
 	UMSGA_EnemyDead();
-	
+
 public:
 	virtual void ActivateAbility(
-		const FGameplayAbilitySpecHandle Handle, 
-		const FGameplayAbilityActorInfo* ActorInfo, 
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData) override;	
-	
+		const FGameplayEventData* TriggerEventData) override;
+
 	virtual void CancelAbility(
-		const FGameplayAbilitySpecHandle Handle, 
-		const FGameplayAbilityActorInfo* ActorInfo, 
-		const FGameplayAbilityActivationInfo ActivationInfo, 
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicateCancelAbility) override;
-	
+
 	virtual void EndAbility(
-		const FGameplayAbilitySpecHandle Handle, 
-		const FGameplayAbilityActorInfo* ActorInfo, 
-		const FGameplayAbilityActivationInfo ActivationInfo, 
-		bool bReplicateEndAbility, 
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
-	
+
 private:
 	UFUNCTION()
 	void OnCompleteCallback();
 	UFUNCTION()
 	void OnInterruptedCallback();
-	
+
 private:
+	// 김준형 수정: 적 사망 시 드롭할 아이템 오브 클래스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AMSExperienceOrb> ExpReward;	
+	TSubclassOf<class AMSExperienceOrb> ExpReward;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AMSMagnetOrb> MagnetReward;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AMSPotionOrb> PotionReward;
 };
