@@ -8,6 +8,7 @@
 #include "AIController/MSBossAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/MSDirectionIndicatorComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameStates/MSGameState.h"
 #include "Net/UnrealNetwork.h"
@@ -43,6 +44,8 @@ AMSBossEnemy::AMSBossEnemy()
 	Camera->bUsePawnControlRotation = false;
 	
 	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	
+	DirectionIndicatorComponent = CreateDefaultSubobject<UMSDirectionIndicatorComponent>(TEXT("DirectionTexture"));
 }
 
 void AMSBossEnemy::BeginPlay()
@@ -52,6 +55,12 @@ void AMSBossEnemy::BeginPlay()
 	SetActorScale3D(FVector(2.f, 2.f, 2.f));	
 	
 	ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_Tier_Boss);
+	
+	if (DirectionIndicatorComponent)
+	{
+		DirectionIndicatorComponent->bShowDistance = false;
+		DirectionIndicatorComponent->bRequiresActivation = false;
+	}
 }
 
 void AMSBossEnemy::SetPoolingMode(const bool bInPooling)
@@ -62,6 +71,8 @@ void AMSBossEnemy::SetPoolingMode(const bool bInPooling)
 	{
 		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsSpawndKey(), !bInPooling);
 	}
+	
+	DirectionIndicatorComponent->bRequiresActivation = !bInPooling;
 }
 
 void AMSBossEnemy::SetPhase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh)

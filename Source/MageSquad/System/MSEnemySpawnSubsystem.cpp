@@ -17,6 +17,7 @@
 #include "Engine/World.h"
 #include "Actors/TileMap/MSSpawnTileMap.h"
 #include "EngineUtils.h"
+#include "Components/MSDirectionIndicatorComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -150,6 +151,11 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		if (!RowData->AnimationSet.IsNull())
 		{
 			CachedData.AnimationSet = RowData->AnimationSet.LoadSynchronous();
+		}
+		
+		if (!RowData->IndicatorImage.IsNull())
+		{
+			CachedData.IndicatorImage = RowData->IndicatorImage.LoadSynchronous();
 		}
 
 		// 스탯 복사
@@ -587,10 +593,22 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 
 		// 비어있지 않은 방향들 수집
 		TArray<TArray<FMSSpawnTile>*> ValidDirections;
-		if (NorthTiles.Num() > 0) ValidDirections.Add(&NorthTiles);
-		if (SouthTiles.Num() > 0) ValidDirections.Add(&SouthTiles);
-		if (EastTiles.Num() > 0) ValidDirections.Add(&EastTiles);
-		if (WestTiles.Num() > 0) ValidDirections.Add(&WestTiles);
+		if (NorthTiles.Num() > 0)
+		{
+			ValidDirections.Add(&NorthTiles);
+		}
+		if (SouthTiles.Num() > 0)
+		{
+			ValidDirections.Add(&SouthTiles);
+		}
+		if (EastTiles.Num() > 0)
+		{
+			ValidDirections.Add(&EastTiles);
+		}
+		if (WestTiles.Num() > 0)
+		{
+			ValidDirections.Add(&WestTiles);
+		}
 
 		if (ValidDirections.Num() == 0)
 		{
@@ -607,6 +625,7 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 		return true;
 	}
 
+#pragma region Non Tilemap
 	// 타일맵이 없을때는 기존 NavMesh 방식 
 	// 나중에 껐을 때 스폰이 제대로 이루어지지 않는 현상 테스트용으로 남겨둠
 
@@ -654,75 +673,8 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 
 	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
 	return false;
+#pragma endregion 
 }
-
-// bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(FVector& OutLocation)
-// {
-// 	if (!NavSystem)
-// 	{
-// 		NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-// 		if (!NavSystem)
-// 		{
-// 			return false;
-// 		}
-// 	}
-//
-// 	// 플레이어 위치 기준
-// 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-// 	if (!PlayerPawn)
-// 	{
-// 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No player pawn found"));
-// 		return false;
-// 	}
-//
-// 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-// 	if (!PC)
-// 	{
-// 		return false;
-// 	}
-//
-// 	// 카메라 정보
-// 	FVector CameraLocation;
-// 	FRotator CameraRotation;
-// 	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-//
-// 	// 뷰포트 크기
-// 	int32 ViewportSizeX, ViewportSizeY;
-// 	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-//
-// 	constexpr int32 MaxAttempts = 30; // 위치 찾는 시도 횟수
-// 	constexpr float OffScreenMargin = 1000.f; // 화면 밖 여유 거리
-//
-// 	for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
-// 	{
-// 		// 화면 가장자리 4방향 중 랜덤 선택
-// 		FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
-//
-// 		// 스크린 좌표를 월드 좌표로 역변환
-// 		FVector WorldLocation, WorldDirection;
-// 		if (PC->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
-// 		{
-// 			// 카메라에서 일정 거리만큼 떨어진 지점 계산
-// 			const float SpawnDistance = FMath::FRandRange(4000.0f, 5000.0f);
-// 			FVector CandidateLocation = WorldLocation + WorldDirection * SpawnDistance;
-//
-// 			// 플레이어 높이 기준으로 조정
-// 			CandidateLocation.Z = PlayerPawn->GetActorLocation().Z;
-//
-// 			// NavMesh 검증
-// 			FNavLocation NavLoc;
-// 			if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
-// 			{
-// 				OutLocation = NavLoc.Location;
-// 				OutLocation.Z = 92.f;
-// 				return true;
-// 			}
-// 		}
-// 	}
-//
-// 	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
-// 	return false;
-// }
 
 bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location)
 {
@@ -844,15 +796,20 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 		// 렌더링 상태 강제 업데이트 및 재등록
 		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
-	
-		UE_LOG(LogTemp, Error, TEXT("%s : EnemySetting : SkeletalMeshSet Success"), HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]"));
 	}
 
 	// 애니메이션 설정
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
 		Enemy->SetAnimData(Data->AnimationSet);
-		UE_LOG(LogTemp, Error, TEXT("%s : EnemySetting : AnimDataSet Success"), HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]"));
+	}
+	
+	if (Data->IndicatorImage)
+	{
+		if (AMSBossEnemy* Boss = Cast<AMSBossEnemy>(Enemy))
+		{
+			Boss->GetDirectionIndicatorComponent()->OverrideIcon = Data->IndicatorImage;
+		}
 	}
 
 	// GAS 속성 초기화
@@ -923,13 +880,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->ForceNetUpdate();
 
-	// 디버그 로그
-	// UE_LOG(LogTemp, Error, TEXT("★★★ ActivateEnemy: %s | bReplicates: %d | Dormancy: %d ★★★"),
-	// 	*Enemy->GetName(),
-	// 	Enemy->GetIsReplicated(),
-	// 	(int32)Enemy->NetDormancy
-	// );
-
 	//  RVO 재활성화
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
@@ -961,7 +911,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	{
 		// 컨트롤러가 없으면 생성
 		Enemy->SpawnDefaultController();
-		UE_LOG(LogTemp, Error, TEXT("Spawn Default Controller"));
 	}
 }
 
@@ -1012,10 +961,6 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	// 리플리케이션 완전히 끄기
 	Enemy->SetReplicates(false);
 	Enemy->SetReplicateMovement(false);
-
-	// UE_LOG(LogTemp, Warning, TEXT("DeactivateEnemy - AFTER: bReplicates: %d"),
-	// 	Enemy->GetIsReplicated()
-	// );
 }
 
 void UMSEnemySpawnSubsystem::ResetEnemyGASState(AMSBaseEnemy* Enemy)

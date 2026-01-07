@@ -51,4 +51,7 @@ struct FMSEnemyStaticData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftObjectPtr<USkeletalMesh> Phase2SkeletalMesh;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UTexture2D> IndicatorImage;
 };
