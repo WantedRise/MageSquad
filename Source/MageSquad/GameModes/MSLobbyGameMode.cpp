@@ -76,6 +76,10 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 
         for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
         {
+            if (Player->IsLocalPlayerController())
+            {
+                PlayerSlot->SetController(nullptr);
+            }
             if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
             {
                 PlayerSlot->SetController(Player);
