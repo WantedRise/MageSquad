@@ -55,7 +55,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 	// RVO 설정
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	MoveComp->bUseRVOAvoidance = true;
-	MoveComp->AvoidanceConsiderationRadius = 1000.0f;
+	MoveComp->AvoidanceConsiderationRadius = 300.0f;
 	MoveComp->AvoidanceWeight = 0.5f;
 	MoveComp->SetAvoidanceGroup(1);
 	MoveComp->SetGroupsToAvoidMask(1); // 그룹 1의 다른 Enemy들을 회피
