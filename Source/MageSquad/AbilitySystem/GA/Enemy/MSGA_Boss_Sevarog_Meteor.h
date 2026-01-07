@@ -72,7 +72,7 @@ protected:
 
 	// Indicator 스폰 간격
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
-	float SpawnInterval = 0.5f;
+	float SpawnInterval = 1.f;
 
 	// Indicator 파라미터 (Shape, Radius, Duration 등)
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor")

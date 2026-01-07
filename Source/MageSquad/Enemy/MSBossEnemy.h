@@ -8,8 +8,6 @@
 #include "Interfaces/MSIndicatorDamageInterface.h"
 #include "MSBossEnemy.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossCutsceneStateChanged, bool, bIsStarting);
-
 /**
  * 작성자 : 임희섭
  * 작성일 : 2025/12/12
@@ -32,7 +30,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticast_TransitionToPhase2();
+	void Multicast_TransitionToPhase2();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlaySpawnCutscene(bool bStart);
@@ -40,10 +38,6 @@ public:
 public:
 	UFUNCTION()
 	void OnRep_Phase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh);
-
-public:
-	UPROPERTY(BlueprintAssignable)
-	FOnBossCutsceneStateChanged OnBossCutsceneStateChanged;
 
 public: /*Getter*/
 	FORCEINLINE UAnimMontage* GetSpawnMontage() const { return Cast<UDA_EnemyBossAnimationSet>(AnimData)->SpawnAnim; }
@@ -69,6 +63,7 @@ public: /*Getter*/
 
 	FORCEINLINE USkeletalMesh* GetPhase2SkeletalMesh() const { return Phase2SkeletalMesh; }
 	FORCEINLINE class UCameraComponent* GetBossCamera() const { return Camera; }
+	FORCEINLINE class USpringArmComponent* GetBossSpringArm() const {return SpringArm; }
 
 protected:
 	virtual UAbilitySystemComponent* GetIndicatorSourceASC_Implementation() const override;

@@ -26,6 +26,10 @@ AMSBaseEnemy::AMSBaseEnemy()
 
 	// 메시의 콜리전은 NoCollision으로 설정
 	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
+	GetMesh()->bDeferKinematicBoneUpdate = true;
+	GetMesh()->bEnableUpdateRateOptimizations = true; // 거리에 따른 업데이트 빈도 조절
+	GetMesh()->bPropagateCurvesToFollowers = true; // 불필요한 커브 복사 중단
+	GetMesh()->SetTickGroup(TG_DuringPhysics);
 
 	// Enemy 전용 콜리전으로 설정
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MSEnemy"));
@@ -69,6 +73,10 @@ AMSBaseEnemy::AMSBaseEnemy()
 
 	// 곡선 이동을 위한 설정
 	MoveComp->bRequestedMoveUseAcceleration = true;
+	
+	// 바닥의 높이가 변하지 않으므로 성능상 끔
+	MoveComp->bAlwaysCheckFloor = false;  
+	MoveComp->bComponentShouldUpdatePhysicsVolume = false;
 
 	// 액터 태그 설정
 	Tags.AddUnique(TEXT("Enemy"));
@@ -273,8 +281,7 @@ void AMSBaseEnemy::OnSignificanceChanged(USignificanceManager::FManagedObjectInf
 		bool bShouldTickMesh = (NewSig >= 0.1f) || bInView;
 		GetMesh()->SetComponentTickEnabled(bShouldTickMesh);
 	}
-
-	// 게임플레이 로직 - 서버에서만 실행
+	
 	if (HasAuthority())
 	{
 		if (NewSig <= 0.1f && !bInView)
@@ -283,7 +290,6 @@ void AMSBaseEnemy::OnSignificanceChanged(USignificanceManager::FManagedObjectInf
 			{
 				Cap->SetGenerateOverlapEvents(false);
 			}
-			//GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.25f;
 		}
 		else
 		{
@@ -291,7 +297,6 @@ void AMSBaseEnemy::OnSignificanceChanged(USignificanceManager::FManagedObjectInf
 			{
 				Cap->SetGenerateOverlapEvents(true);
 			}
-			//GetCharacterMovement()->PrimaryComponentTick.TickInterval = 0.0f;
 		}
 	}
 }
@@ -306,11 +311,6 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 		{
 			Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			Cap->SetGenerateOverlapEvents(false);
-
-			// if (GetCharacterMovement())
-			// {
-			// 	GetCharacterMovement()->PrimaryComponentTick.SetTickFunctionEnable(false);
-			// }
 		}
 		else
 		{
@@ -318,12 +318,7 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 			Cap->SetGenerateOverlapEvents(true);
 
 			// 캡슐 오브젝트 타입을 확실히 MSEnemy로 유지
-			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnemy
-
-			// if (GetCharacterMovement())
-			// {
-			// 	GetCharacterMovement()->PrimaryComponentTick.SetTickFunctionEnable(true);
-			// }
+			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnem
 		}
 	}
 }
