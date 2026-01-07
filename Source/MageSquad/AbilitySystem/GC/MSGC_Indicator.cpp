@@ -7,7 +7,7 @@
 
  AMSGC_Indicator::AMSGC_Indicator()
  {
- 	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.AttackIndicator"));
+ 	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.Indicator"));
  }
 
  bool AMSGC_Indicator::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
@@ -40,11 +40,9 @@
  		}
  	}
 
- 	// 위치와 회전 설정
  	FVector SpawnLocation = Parameters.Location;
  	FRotator SpawnRotation = Parameters.Normal.Rotation();
 
- 	// 스폰
  	AMSIndicatorActor* Indicator = GetWorld()->SpawnActor<AMSIndicatorActor>(
 		 IndicatorActorClass,
 		 SpawnLocation,

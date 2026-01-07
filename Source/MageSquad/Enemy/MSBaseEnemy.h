@@ -70,12 +70,12 @@ public: /*Getter*/
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetDamageEffectClass() const { return DamageEffectClass; }
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetCooldownEffectClass() const { return CooldownEffectClass; }
 	FORCEINLINE TSubclassOf<class UProjectileStaticData> GetProjectileDataClass() const { return ProjectileDataClass; }
-	
-	public: /*Setter*/
-    	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass)
-    	{
-    		ProjectileDataClass = InProjectileDataClass;
-    	}
+
+public: /*Setter*/
+	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass)
+	{
+		ProjectileDataClass = InProjectileDataClass;
+	}
 
 protected:
 	UFUNCTION()
@@ -120,6 +120,4 @@ private:
 	// 발사체 원본 데이터 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class UProjectileStaticData> ProjectileDataClass;
-	
-
 };

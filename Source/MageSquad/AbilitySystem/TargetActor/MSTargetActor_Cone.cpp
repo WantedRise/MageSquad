@@ -14,10 +14,6 @@ TArray<AActor*> AMSTargetActor_Cone::PerformOverlapCheck()
     const FVector OverlapLocation = GetActorLocation();
     const float Radius = CachedParams.Radius;
 
-    // 디버깅용: 파라미터 확인
-    // UE_LOG(LogTemp, Log, TEXT("Cone Check: Loc=%s, Radius=%f, Angle=%f, Channel=%d"), 
-    //     *OverlapLocation.ToString(), Radius, CachedParams.Angle, TargetCollisionChannel.GetValue());
-
     FCollisionShape SphereShape = FCollisionShape::MakeSphere(Radius);
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(this);
@@ -41,7 +37,10 @@ TArray<AActor*> AMSTargetActor_Cone::PerformOverlapCheck()
             AActor* HitActor = Overlap.GetActor();
             
             // 유효성 검사 (BaseClass)
-            if (!IsValidTarget(HitActor)) continue;
+            if (!IsValidTarget(HitActor)) 
+            {
+                continue;
+            }
 
             // 각도 검사
             if (IsActorInCone(HitActor))
@@ -96,7 +95,7 @@ void AMSTargetActor_Cone::DrawDebugTargetArea(bool bHasHit) const
     const float Radius = CachedParams.Radius;
     const float HalfAngleDeg = CachedParams.Angle * 0.5f;
     
-    // [중요] 디버그 드로잉도 실제 계산과 동일하게 Pitch를 무시해야 정확한 범위가 보임
+    // 디버그 드로잉도 실제 계산과 동일하게 Pitch를 무시해야 정확한 범위가 보임
     FRotator Rotation = GetActorRotation();
     Rotation.Pitch = 0.f;
     const FVector ForwardDir = Rotation.Vector();
@@ -109,7 +108,6 @@ void AMSTargetActor_Cone::DrawDebugTargetArea(bool bHasHit) const
     const FVector RightEnd = Location + RightDir * Radius;
     const FVector ForwardEnd = Location + ForwardDir * Radius;
 
-    // 색상 결정 (삼항 연산자)
     FColor DebugColor = bHasHit ? FColor::Green : FColor::Red;
 
     DrawDebugLine(GetWorld(), Location, LeftEnd, DebugColor, false, DebugDrawDuration, 0, 2.f);

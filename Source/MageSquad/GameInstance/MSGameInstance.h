@@ -7,7 +7,7 @@
 #include "MSGameInstance.generated.h"
 
 /**
- * ╟тюс ╥╧╨╖©║╪╜ ╩Г©Кго╢б ╟тюс юн╫╨ео╫╨ е╛╥║╫╨
+ * О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫о╢О©╫ О©╫О©╫О©╫О©╫ О©╫н╫О©╫О©╫о╫О©╫ е╛О©╫О©╫О©╫О©╫
  */
 UCLASS()
 class MAGESQUAD_API UMSGameInstance : public UGameInstance
@@ -15,6 +15,5 @@ class MAGESQUAD_API UMSGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
-	// ╟тюс юн╫╨ео╫╨ цй╠Бх╜ гт╪Ж
 	virtual void Init() override;
 };
