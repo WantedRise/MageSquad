@@ -156,14 +156,14 @@ void AMSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void AMSPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-    
+
 	// 서버에서는 모든 플레이어 위치로 업데이트
 	if (HasAuthority())
 	{
 		if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
 		{
 			TArray<FTransform> TransformArray;
-            
+
 			// 모든 플레이어의 위치를 수집
 			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 			{
@@ -175,7 +175,7 @@ void AMSPlayerController::Tick(float DeltaTime)
 					}
 				}
 			}
-            
+
 			if (TransformArray.Num() > 0)
 			{
 				SigManager->Update(TArrayView<FTransform>(TransformArray));
@@ -183,18 +183,18 @@ void AMSPlayerController::Tick(float DeltaTime)
 		}
 		return; // 서버는 여기서 끝
 	}
-    
+
 	// 클라이언트는 렌더링 최적화용으로만 사용
 	if (IsLocalController())
 	{
 		if (USignificanceManager* SigManager = USignificanceManager::Get(GetWorld()))
 		{
 			TArray<FTransform> TransformArray;
-            
+
 			FVector ViewLocation;
 			FRotator ViewRotation;
 			GetPlayerViewPoint(ViewLocation, ViewRotation);
-            
+
 			TransformArray.Add(FTransform(ViewRotation, ViewLocation));
 			SigManager->Update(TArrayView<FTransform>(TransformArray));
 		}
@@ -746,7 +746,7 @@ void AMSPlayerController::OnMissionProgressChanged(const FMSMissionProgressUIDat
 
 	auto* Tracker = HUDWidgetInstance->GetMissionTrackerWidget();
 	if (!Tracker) return;
-	
+
 	Tracker->UpdateProgress(Data);
 }
 
@@ -756,5 +756,24 @@ void AMSPlayerController::ClientShowLoadingWidget_Implementation()
 	if (LevelManager)
 	{
 		LevelManager->ShowLoadingWidget();
+	}
+}
+
+void AMSPlayerController::ClientRPCShowEndGameWidget_Implementation(TSubclassOf<UUserWidget> WidgetClass, int32 ZOrder)
+{
+	if (!IsLocalController() || !WidgetClass) return;
+
+	// 기존 위젯 있으면 교체(승리/패배 전환 등)
+	if (EndGameWidget)
+	{
+		EndGameWidget->RemoveFromParent();
+		EndGameWidget = nullptr;
+	}
+
+	// 위젯 생성 및 표시
+	EndGameWidget = CreateWidget<UUserWidget>(this, WidgetClass);
+	if (EndGameWidget)
+	{
+		EndGameWidget->AddToViewport(ZOrder);
 	}
 }

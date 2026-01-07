@@ -148,7 +148,7 @@ public:
 protected:
 	// 생존 중인 팀원 탐색 후 관전 사이클을 돌리는 함수
 	void CycleSpectateTarget(int32 Direction);
-	
+
 	// 관전 대상 변경 OnRep 함수. 로컬 클라이언트에서만 카메라 전환 수행
 	UFUNCTION()
 	void OnRep_SpectateTargetActor();
@@ -229,4 +229,18 @@ public:
 	/** 현재 떠있는 패널 인스턴스 */
 	UPROPERTY(Transient)
 	TObjectPtr<UMSLevelUpPanel> LevelUpPanelInstance = nullptr;
+
+
+	/*****************************************************
+	* End Game Section
+	*****************************************************/
+public:
+	// 게임 종료 위젯 표시 함수
+	UFUNCTION(Client, Reliable)
+	void ClientRPCShowEndGameWidget(TSubclassOf<class UUserWidget> WidgetClass, int32 ZOrder = 500);
+
+protected:
+	// 게임 종료 위젯 인스턴스
+	UPROPERTY(Transient)
+	TObjectPtr<class UUserWidget> EndGameWidget;
 };
