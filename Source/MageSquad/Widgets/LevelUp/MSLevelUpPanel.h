@@ -10,6 +10,8 @@
 #include "Containers/Ticker.h"
 #include "MSLevelUpPanel.generated.h"
 
+class UTextBlock;
+
 /**
  * 작성자 : 박세찬
  * 작성일 : 25/12/22

@@ -4,6 +4,7 @@
 #include "Widgets/LevelUp/MSLevelUpPanel.h"
 
 #include "Components/TextBlock.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "Player/MSPlayerController.h"
 
 void UMSLevelUpPanel::InitPanel(int32 InSessionId, const TArray<FMSLevelUpChoicePair>& InChoices)
@@ -31,19 +32,26 @@ void UMSLevelUpPanel::InitPanel(int32 InSessionId, const TArray<FMSLevelUpChoice
 	}
 
 	// 선택지 카드 생성
-	for (const FMSLevelUpChoicePair& Choice : InChoices)
+const int32 ChoiceCount = InChoices.Num();
+for (int32 Index = 0; Index < ChoiceCount; ++Index)
+{
+	const FMSLevelUpChoicePair& Choice = InChoices[Index];
+	UMSLevelUpChoice* ChoiceWidget = CreateWidget<UMSLevelUpChoice>(PC, ChoiceWidgetClass);
+	if (!ChoiceWidget)
 	{
-		UMSLevelUpChoice* ChoiceWidget = CreateWidget<UMSLevelUpChoice>(PC, ChoiceWidgetClass);
-		if (!ChoiceWidget)
-		{
-			continue;
-		}
-
-		ChoiceWidget->InitChoice(SessionId, Choice);
-		ChoiceWidget->OnChoiceClicked.AddDynamic(this, &UMSLevelUpPanel::HandleChoiceClicked);
-
-		ChoiceContainer->AddChild(ChoiceWidget);
+		continue;
 	}
+
+	ChoiceWidget->InitChoice(SessionId, Choice);
+	ChoiceWidget->OnChoiceClicked.AddDynamic(this, &UMSLevelUpPanel::HandleChoiceClicked);
+
+	UPanelSlot* PanelSlot = ChoiceContainer->AddChild(ChoiceWidget);
+	if (UHorizontalBoxSlot* HSlot = Cast<UHorizontalBoxSlot>(PanelSlot))
+	{
+		const float RightPadding = (Index < ChoiceCount - 1) ? 75.f : 0.f;
+		HSlot->SetPadding(FMargin(0.f, 0.f, RightPadding, 0.f));
+	}
+}
 }
 
 void UMSLevelUpPanel::ClosePanel()
@@ -68,7 +76,24 @@ void UMSLevelUpPanel::HandleChoiceClicked(const FMSLevelUpChoicePair& Picked)
 	bHasPicked = true;
 
 	// ✅ UI는 닫지 말고 입력만 막기(대기 상태)
-	SetIsEnabled(false);
+	if (ChoiceContainer)
+	{
+		const int32 ChildCount = ChoiceContainer->GetChildrenCount();
+		for (int32 Index = 0; Index < ChildCount; ++Index)
+		{
+			if (UMSLevelUpChoice* ChoiceWidget =
+				Cast<UMSLevelUpChoice>(ChoiceContainer->GetChildAt(Index)))
+			{
+				const FMSLevelUpChoicePair WidgetChoice = ChoiceWidget->GetChoice();
+				const bool bIsPicked =
+					(WidgetChoice.SkillTag == Picked.SkillTag) &&
+					(WidgetChoice.UpgradeTag == Picked.UpgradeTag);
+
+				ChoiceWidget->SetSelected(bIsPicked);
+				ChoiceWidget->SetInteractionEnabled(false);
+			}
+		}
+	}
 	
 	APlayerController* PC = GetOwningPlayer();
 	if (!PC)

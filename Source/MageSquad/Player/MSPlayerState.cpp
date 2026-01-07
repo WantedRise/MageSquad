@@ -312,6 +312,7 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 			FMSLevelUpChoicePair Acquire;
 			Acquire.SkillTag = SkillTag;
 			Acquire.UpgradeTag = FGameplayTag(); // ✅ Invalid = Acquire로 해석
+			Acquire.SkillLevelUpIcon = Row->SkillLevelUpIcon;
 			AcquireCandidates.Add(Acquire);
 			continue; // 미보유는 업그레이드 후보로 내려가지 않음
 		}
@@ -337,6 +338,7 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 			FMSLevelUpChoicePair Pair;
 			Pair.SkillTag = SkillTag;
 			Pair.UpgradeTag = UpgradeInfo.Tag;
+			Pair.SkillLevelUpIcon = Row->SkillLevelUpIcon;
 			UpgradeCandidates.Add(Pair);
 		}
 	}

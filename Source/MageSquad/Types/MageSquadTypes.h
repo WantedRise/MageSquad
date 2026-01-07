@@ -8,6 +8,8 @@
 #include "SkillData/MSSkillList.h"
 #include "MageSquadTypes.generated.h"
 
+class UMaterialInterface;
+
 /**
  * 작성자: 김준형
  * 작성일: 25/12/15
@@ -551,9 +553,12 @@ struct FMSLevelUpChoicePair
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FGameplayTag SkillTag;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FGameplayTag UpgradeTag;
+
+	UPROPERTY(BlueprintReadOnly)
+	UMaterialInterface* SkillLevelUpIcon = nullptr;
 };
