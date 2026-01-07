@@ -43,6 +43,8 @@ protected:
 	void OnHoveredLobbyButton();
 	UFUNCTION()
 	void OnUnHoveredLobbyButton();
+	UFUNCTION()
+	void OnExitClicked();
 	void SetScaleButton(class UButton* InButton, float SetSize);
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -53,6 +55,8 @@ public:
 	class UButton* Button_Select;
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Button_Lobby;
-
+	UPROPERTY(meta = (BindWidget))
+	class UButton* Button_Exit;
+	
 	EButtonState ButtonState = EButtonState::Lobby;
 };

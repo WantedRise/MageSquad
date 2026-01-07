@@ -5,6 +5,7 @@
 #include <System/MSCharacterDataSubsystem.h>
 #include "MSCharacterSlotWidget.h"
 #include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
 #include "Components/TextBlock.h"
 #include <Player/MSLobbyPlayerController.h>
 #include "MSCharacterInfoWidget.h"
@@ -19,8 +20,8 @@ void UMSCharacterSelectWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    BuildCharacterSlots();
     GetSkillData();
+    BuildCharacterSlots();
 }
 
 void UMSCharacterSelectWidget::GetSkillData()
@@ -50,6 +51,7 @@ const FMSSkillList* UMSCharacterSelectWidget::FindSkillRows(int32 InSkillID)
 void UMSCharacterSelectWidget::BuildCharacterSlots()
 {
     UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+    check(CharacterData);
     const auto& CharacterSelections = CharacterData->GetAllCharacter();
 
     const int32 TotalSlots = Columns * Rows;
@@ -57,30 +59,54 @@ void UMSCharacterSelectWidget::BuildCharacterSlots()
     for (const FMSCharacterSelection& Selection : CharacterSelections)
     {
         UMSCharacterSlotWidget* CharacterSlot = CreateWidget<UMSCharacterSlotWidget>(this, SlotWidgetClass);
-        CharacterGrid->AddChildToUniformGrid(CharacterSlot, Index / Columns, Index % Columns);
+        UUniformGridSlot* NewSlot = CharacterGrid->AddChildToUniformGrid(CharacterSlot, Index / Columns, Index % Columns);
 
-        
         CharacterSlot->InitSlot(Selection.CharacterID);
         CharacterSlot->OnClicked.AddUObject(this, &UMSCharacterSelectWidget::OnCharacterSlotClicked);
+        CharacterSlots.Add(CharacterSlot);
         Index++;
     }
 
-    for (; Index < TotalSlots; ++Index)
+   /* for (; Index < TotalSlots; ++Index)
     {
         UMSCharacterSlotWidget* EmptySlot = CreateWidget<UMSCharacterSlotWidget>(this, SlotWidgetClass);
 
         if (!EmptySlot) continue;
         EmptySlot->HiddenPortrait();
         CharacterGrid->AddChildToUniformGrid(EmptySlot,Index / Columns,Index % Columns);
+    }*/
+
+    //초기 세팅
+    const FName DefualtCharacterID = CharacterData->GetDefaultCharacterID();
+    if (DefualtCharacterID != NAME_None)
+    {
+        OnCharacterSlotClicked(DefualtCharacterID);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("[UMSCharacterSelectWidget] No CharacterData"));
     }
 }
 
-// MSCharacterSelectWidget.cpp
+void UMSCharacterSelectWidget::SetVisibleCharacterSlotBorder(FName InCharacterId)
+{
+    for (UMSCharacterSlotWidget* CharacterSlot : CharacterSlots)
+    {
+        const bool bIsSelected = (CharacterSlot->GetCharacterID() == InCharacterId);
+        CharacterSlot->SetSelectedSlot(bIsSelected);
+    }
+
+    // 선택된 캐릭터 ID 처리
+    CurrentCharacterID = InCharacterId;
+}
 
 void UMSCharacterSelectWidget::OnCharacterSlotClicked(FName InCharacterId)
 {
     if (NAME_None == InCharacterId || CurrentCharacterID == InCharacterId)
         return;
+
+    SetVisibleCharacterSlotBorder(InCharacterId);
+
     if (UGameInstance* GI = GetGameInstance())
     {
         if (UMSCharacterDataSubsystem* CharacterData = GI->GetSubsystem<UMSCharacterDataSubsystem>())

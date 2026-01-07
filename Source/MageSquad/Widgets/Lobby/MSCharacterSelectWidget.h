@@ -22,6 +22,7 @@ protected:
 private:
     void GetSkillData();
     void BuildCharacterSlots();
+    void SetVisibleCharacterSlotBorder(FName InCharacterId);
     void OnCharacterSlotClicked(FName InCharacterId);
     const FMSSkillList* FindSkillRows(int32 InSkillID);
 protected:
@@ -50,4 +51,6 @@ protected:
     class UDataTable* SkillListDataTable;
 
     TArray<FMSSkillList*> AllSkillRows;
+    UPROPERTY()
+    TArray<UMSCharacterSlotWidget*> CharacterSlots;
 };

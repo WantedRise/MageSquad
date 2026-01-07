@@ -25,12 +25,18 @@ public:
 	//AMSLobbyPlayerState에 호스트 여부와 플레이어 닉네임 지정
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void RestartPlayer(AController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 	//로비에서 각 플레이어의 시작 위치를 결정
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
+	void SetHiddenPlayerSlots();
+	void SetShowPlayerSlots();
+	void SetShowTargetPlayerSlot(AController* Target) const;
 public:
 	//준비 카운트다운 완료 시 인게임 레벨로 전환
 	void HandleReadyCountdownFinished();
 	//플레이어 준비 상태 변경 시 호출되어 전체 준비 상태를 재계산
 	void HandlePlayerReadyStateChanged();
-
+private:
+	UPROPERTY()
+	TArray<class AMSLobbyPlayerSlot*> PlayerSlots;
 };

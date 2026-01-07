@@ -57,6 +57,7 @@ AMSLobbyCharacter::AMSLobbyCharacter()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	Camera->bAutoActivate = false;
 	//Camera->bUsePawnControlRotation = false;
 }
 
@@ -136,6 +137,11 @@ void AMSLobbyCharacter::InitializeLobbyCharacterFromPlayerState()
 		// PlayerState의 Ready 상태 변경 → Ready / Cancel UI 토글
 		PS->OnLobbyReadyStateChanged.AddUObject(this, &AMSLobbyCharacter::UpdateReadyStatusUI);
 	}
+}
+
+UCameraComponent* AMSLobbyCharacter::GetPlayerCameraComponent() const
+{
+	return Camera;
 }
 
 // Called every frame

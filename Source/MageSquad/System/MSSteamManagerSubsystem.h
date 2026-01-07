@@ -42,6 +42,8 @@ public:
 
 	//세션의 소유자인지 확인하는 함수
 	bool IsPlayerHostingSession();
+
+	void LeaveSession();
 protected:
 
 	void OnEndSessionComplete(FName SessionName, bool bWasSuccessful);

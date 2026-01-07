@@ -19,6 +19,8 @@
 #include "DataAssets/Player/DA_CharacterData.h"
 #include "Player/MSLobbyCharacter.h"
 #include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
+#include "GameModes/MSLobbyGameMode.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -83,6 +85,23 @@ void AMSLobbyPlayerController::OnRep_PlayerState()
 	}
 }
 
+void AMSLobbyPlayerController::BeginPlayingState()
+{
+	Super::BeginPlayingState();
+	if (!IsLocalController()) return;
+	if (!GetPawn()) return;
+	AMSLobbyCharacter* LobbyCharacter = Cast<AMSLobbyCharacter>(GetPawn());
+	if (!LobbyCharacter) return;
+	check(LobbyCharacter->GetPlayerCameraComponent());
+	FTransform CameraWorldTransform = LobbyCharacter->GetPlayerCameraComponent()->GetComponentTransform();
+	// 월드 카메라 생성
+	FActorSpawnParameters SpawnParams;
+	CharacterCameraActor = GetWorld()->SpawnActor<ACameraActor>(CameraWorldTransform.GetLocation(), CameraWorldTransform.Rotator(), SpawnParams);
+	UCameraComponent* CameraComp = CharacterCameraActor->GetCameraComponent();
+	check(CameraComp);
+	CameraComp->bConstrainAspectRatio = false;
+}
+
 void AMSLobbyPlayerController::CreateLobbyUI()
 {
 	if (LobbyMainWidget || !LobbyMainWidgetClass)
@@ -143,16 +162,30 @@ void AMSLobbyPlayerController::SwitchToCharacterCamera()
 {
 	if (!GetPawn() || !GetViewTarget() || GetViewTarget() == GetPawn()) return;
 	
+	if (HasAuthority() && IsLocalController())
+	{
+		AMSLobbyGameMode* LobbyGM = GetWorld()->GetAuthGameMode<AMSLobbyGameMode>();
+		check(LobbyGM);
+		LobbyGM->SetHiddenPlayerSlots();
+	}
+
 	FViewTargetTransitionParams Params;
 	Params.BlendTime = 0.4f;
 	Params.BlendFunction = EViewTargetBlendFunction::VTBlend_EaseInOut;
 	Params.BlendExp = 2.f;
-	SetViewTarget(GetPawn(), Params);
+	SetViewTarget(CharacterCameraActor, Params);
 }
 
 void AMSLobbyPlayerController::SwitchToLobbyCamera()
 {
 	if (!LobbyCameraActor) return;
+
+	if (HasAuthority() && IsLocalController())
+	{
+		AMSLobbyGameMode* LobbyGM = GetWorld()->GetAuthGameMode<AMSLobbyGameMode>();
+		check(LobbyGM);
+		LobbyGM->SetShowPlayerSlots();
+	}
 
 	FViewTargetTransitionParams Params;
 	Params.BlendTime = 0.4f;
@@ -160,4 +193,35 @@ void AMSLobbyPlayerController::SwitchToLobbyCamera()
 	Params.BlendExp = 2.f;
 
 	SetViewTarget(LobbyCameraActor, Params);
+}
+
+void AMSLobbyPlayerController::RequestExitLobby()
+{
+	if (HasAuthority())
+	{
+		// Host (Listen Server)
+		if (GetWorld())
+		{
+			GetWorld()->GetAuthGameMode()->ReturnToMainMenuHost();
+		}
+	}
+	else
+	{
+		// Client
+		Server_RequestExitLobby();
+	}
+}
+
+void AMSLobbyPlayerController::Server_RequestExitLobby_Implementation()
+{
+	// Client 세션 Leave 후 메인메뉴 이동
+	if (UMSSteamManagerSubsystem* SteamManagerSubsystem = GetGameInstance()->GetSubsystem<UMSSteamManagerSubsystem>())
+	{
+		SteamManagerSubsystem->LeaveSession();
+	}
+
+	if (UMSLevelManagerSubsystem* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
+	{
+		ClientTravel(LevelManager->GetMainmenuLevelURL(), TRAVEL_Absolute);
+	}
 }

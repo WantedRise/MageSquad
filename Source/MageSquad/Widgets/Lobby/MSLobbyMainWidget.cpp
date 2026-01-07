@@ -4,6 +4,9 @@
 #include "Widgets/Lobby/MSLobbyMainWidget.h"
 #include "Player/MSLobbyPlayerController.h"
 #include "Components/Button.h"
+#include "MSCharacterSelectWidget.h"
+#include "MSLobbyReadyWidget.h"
+
 UMSLobbyMainWidget::UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
@@ -12,6 +15,8 @@ UMSLobbyMainWidget::UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializ
 
 void UMSLobbyMainWidget::NativeConstruct()
 {
+    check(MSCharacterSelect);
+    MSCharacterSelect->SetVisibility(ESlateVisibility::Collapsed);
     Super::NativeConstruct();
 
     if (Button_Select)
@@ -37,6 +42,10 @@ void UMSLobbyMainWidget::NativeConstruct()
     {
         UE_LOG(LogTemp, Warning, TEXT("Button_Lobby is nullptr"));
     }
+    if (Button_Exit)
+    {
+        Button_Exit->OnClicked.AddDynamic(this, &UMSLobbyMainWidget::OnExitClicked);
+    }
     ButtonState = EButtonState::Lobby;
     SetScaleButton(Button_Lobby, 1.2f);
 }
@@ -49,6 +58,12 @@ void UMSLobbyMainWidget::OnClickedSelectCharacterButton()
         return;
     }
     ButtonState = EButtonState::SelectCharacter;
+    //세팅 : 보일것 감출것
+    check(MSCharacterSelect);
+    MSCharacterSelect->SetVisibility(ESlateVisibility::Visible);
+
+    check(WBP_MSLobbyReady);
+    WBP_MSLobbyReady->SetVisibility(ESlateVisibility::Collapsed);
 
     if (Button_Lobby)
     {
@@ -95,6 +110,11 @@ void UMSLobbyMainWidget::OnClickedLobbyButton()
         return;
     }
     ButtonState = EButtonState::Lobby;
+
+    check(MSCharacterSelect);
+    MSCharacterSelect->SetVisibility(ESlateVisibility::Collapsed);
+    check(WBP_MSLobbyReady);
+    WBP_MSLobbyReady->SetVisibility(ESlateVisibility::Visible);
 
     if (Button_Select)
     {
@@ -149,4 +169,16 @@ void UMSLobbyMainWidget::SetScaleButton(UButton* InButton,float SetSize)
         Style.Normal.OutlineSettings.Color = FSlateColor(FLinearColor::Black);
         InButton->SetStyle(Style);
     }
+    //Button_MainMenu
+}
+
+void UMSLobbyMainWidget::OnExitClicked()
+{
+    APlayerController* PC = GetOwningPlayer();
+    if (!PC) return;
+
+    AMSLobbyPlayerController* LobbyPC = Cast<AMSLobbyPlayerController>(PC);
+    if (!LobbyPC) return;
+
+    LobbyPC->RequestExitLobby();
 }

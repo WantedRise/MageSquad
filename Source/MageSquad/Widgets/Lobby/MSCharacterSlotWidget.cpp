@@ -8,7 +8,7 @@
 #include <System/MSCharacterDataSubsystem.h>
 #include "DataAssets/Player/DA_CharacterData.h"
 #include <Player/MSPlayerCharacter.h>
-
+#include "Components/Border.h"
 
 void UMSCharacterSlotWidget::InitSlot(FName InCharacterID)
 {
@@ -60,4 +60,15 @@ FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
     }
 
     return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
+void UMSCharacterSlotWidget::SetSelectedSlot(bool bSelected)
+{
+    if (Border_Select)
+    {
+        FLinearColor CurrentColor = Border_Select->GetBrushColor();
+        bSelected ? CurrentColor.A = 1 : CurrentColor.A = 0;
+       
+        Border_Select->SetBrushColor(CurrentColor);
+    }
 }

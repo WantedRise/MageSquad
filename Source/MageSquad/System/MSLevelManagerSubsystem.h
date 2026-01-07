@@ -28,11 +28,11 @@ public:
     void TravelToLoadingLevel();
     //클라 실제 게임 레벨로 이동
     void TravelToGameLevel();
+    void TravelToMainLevel();
     //서버에서 로비를 호스트하고 모든 클라이언트를 로비로 이동
     void HostGameAndTravelToLobby();
-
     
-
+    FString GetMainmenuLevelURL() { return MainmenuLevelURL; }
     FString GetGameLevelURL() { return GameLevelURL; }
     //로딩 위젯 표시
     void ShowLoadingWidget();
@@ -59,4 +59,6 @@ private:
     //실제 게임 플레이 레벨 URL
     UPROPERTY(VisibleAnywhere)
     FString GameLevelURL;
+    UPROPERTY(VisibleAnywhere)
+    FString MainmenuLevelURL;
 };

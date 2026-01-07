@@ -132,15 +132,16 @@ void UMSSteamManagerSubsystem::DestroySteamSession()
 
 void UMSSteamManagerSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	UE_LOG(LogMSNetwork, Warning, TEXT("Session '%s' OnDestroySessionComplete! %s"), *SessionName.ToString(),bWasSuccessful?TEXT("true"):TEXT("false"));
-	if (bWasSuccessful && AcceptedInviteResult.IsValid())
-	{
-		// 여기서 메인메뉴로 가지 말고 바로 Join
-		SessionInterface->JoinSession(0, SESSION_NAME_GAME, AcceptedInviteResult);
-		return;
-	}
+	//필요없는 코드
+	//UE_LOG(LogMSNetwork, Warning, TEXT("Session '%s' OnDestroySessionComplete! %s"), *SessionName.ToString(),bWasSuccessful?TEXT("true"):TEXT("false"));
+	//if (bWasSuccessful && AcceptedInviteResult.IsValid())
+	//{
+	//	// 여기서 메인메뉴로 가지 말고 바로 Join
+	//	SessionInterface->JoinSession(0, SESSION_NAME_GAME, AcceptedInviteResult);
+	//	return;
+	//}
 
-	UGameplayStatics::OpenLevel(GetWorld(), TEXT("MainmenuLevel"));
+	//UGameplayStatics::OpenLevel(GetWorld(), TEXT("MainmenuLevel"));
 }
 
 void UMSSteamManagerSubsystem::ShowFriendInvitationScreen()
@@ -313,4 +314,33 @@ int32 UMSSteamManagerSubsystem::GetMaxPlayer()
         }
     }
 	return 1;
+}
+
+void UMSSteamManagerSubsystem::LeaveSession()
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (!Subsystem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LeaveSession: OnlineSubsystem not found"));
+		return;
+	}
+
+	if (!SessionInterface.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LeaveSession: SessionInterface invalid"));
+		return;
+	}
+
+	// 세션이 존재하지 않으면 그냥 무시
+	FNamedOnlineSession* Session = SessionInterface->GetNamedSession(NAME_GameSession);
+	if (!Session)
+	{
+		UE_LOG(LogTemp, Log, TEXT("LeaveSession: No active session"));
+		return;
+	}
+
+	// ⭐ Client는 DestroySession 호출해도 문제 없음
+	SessionInterface->DestroySession(NAME_GameSession);
+
+	UE_LOG(LogTemp, Log, TEXT("LeaveSession: DestroySession requested"));
 }

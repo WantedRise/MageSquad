@@ -25,4 +25,11 @@ public:
     class UTextBlock* Text_Title;
     UPROPERTY(meta = (BindWidget))
     class UImage* Image_Icon;
+    UPROPERTY(meta = (BindWidget))
+    class UHorizontalBox* HorizontalBox_Title;
+    UPROPERTY(meta = (BindWidget))
+    class UImage* Image_divider;
+    
+    UPROPERTY(Transient)
+    TObjectPtr<class UMaterialInstanceDynamic> SkillIconMID;
 };
