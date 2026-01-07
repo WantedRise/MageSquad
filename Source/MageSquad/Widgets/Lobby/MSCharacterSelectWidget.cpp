@@ -122,7 +122,7 @@ void UMSCharacterSelectWidget::OnCharacterSlotClicked(FName InCharacterId)
             if (!PlayerCDO)
                 return;
 
-            auto* PlayerStartUpData = PlayerCDO->GetPlayerStartUpData();
+            const UDA_PlayerStartUpData* PlayerStartUpData = PlayerCDO->GetPlayerStartUpData();
 
             if (!PlayerStartUpData)
                 return;
