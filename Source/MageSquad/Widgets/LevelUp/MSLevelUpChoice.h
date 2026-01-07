@@ -7,7 +7,6 @@
 #include "MSLevelUpChoice.generated.h"
 
 class UButton;
-class UTextBlock;
 class UImage;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLevelUpChoiceClicked, const FMSLevelUpChoicePair&, Choice);
@@ -22,6 +21,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitChoice(int32 InSessionId, const FMSLevelUpChoicePair& InChoice);
 
+	UFUNCTION(BlueprintCallable)
+	void SetSelected(bool bInSelected);
+
+	UFUNCTION(BlueprintCallable)
+	void SetInteractionEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnSelectionChanged(bool bInSelected);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnInteractionEnabledChanged(bool bEnabled);
+
 	/** 패널이 바인딩해서 클릭을 받음 */
 	UPROPERTY(BlueprintAssignable)
 	FOnLevelUpChoiceClicked OnChoiceClicked;
@@ -31,6 +42,12 @@ public:
 	
 	UFUNCTION(BlueprintPure)
 	int32 GetSessionId() const { return SessionId; }
+
+	UFUNCTION(BlueprintPure)
+	bool IsSelected() const { return bSelected; }
+
+	UFUNCTION(BlueprintPure)
+	bool IsInteractionEnabled() const { return bInteractionEnabled; }
 	
 protected:
 	virtual void NativeOnInitialized() override;
@@ -41,15 +58,13 @@ protected:
 	
 protected:
 	/** 전체 클릭 영역(필수) */
-	UPROPERTY(meta=(BindWidget))
-	UButton* Button_Choice = nullptr;
+UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+UButton* Button_Choice = nullptr;
 
 	/** 아래는 없어도 동작하게 Optional */
-	UPROPERTY(meta=(BindWidgetOptional))
-	UTextBlock* Text_SkillName = nullptr;
+ 
 
-	UPROPERTY(meta=(BindWidgetOptional))
-	UTextBlock* Text_UpgradeName = nullptr;
+ 
 
 
 private:
@@ -58,4 +73,10 @@ private:
 
 	UPROPERTY()
 	FMSLevelUpChoicePair Choice;
+
+	UPROPERTY()
+	bool bSelected = false;
+
+	UPROPERTY()
+	bool bInteractionEnabled = true;
 };

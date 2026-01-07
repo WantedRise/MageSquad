@@ -68,7 +68,24 @@ void UMSLevelUpPanel::HandleChoiceClicked(const FMSLevelUpChoicePair& Picked)
 	bHasPicked = true;
 
 	// ✅ UI는 닫지 말고 입력만 막기(대기 상태)
-	SetIsEnabled(false);
+	if (ChoiceContainer)
+	{
+		const int32 ChildCount = ChoiceContainer->GetChildrenCount();
+		for (int32 Index = 0; Index < ChildCount; ++Index)
+		{
+			if (UMSLevelUpChoice* ChoiceWidget =
+				Cast<UMSLevelUpChoice>(ChoiceContainer->GetChildAt(Index)))
+			{
+				const FMSLevelUpChoicePair WidgetChoice = ChoiceWidget->GetChoice();
+				const bool bIsPicked =
+					(WidgetChoice.SkillTag == Picked.SkillTag) &&
+					(WidgetChoice.UpgradeTag == Picked.UpgradeTag);
+
+				ChoiceWidget->SetSelected(bIsPicked);
+				ChoiceWidget->SetInteractionEnabled(false);
+			}
+		}
+	}
 	
 	APlayerController* PC = GetOwningPlayer();
 	if (!PC)

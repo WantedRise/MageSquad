@@ -57,6 +57,9 @@ public:
 	// 스킬 아이콘 머티리얼 (소프트 레퍼런스)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftObjectPtr<UMaterialInterface> SkillIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMaterialInterface* SkillLevelUpIcon = nullptr;
 	
 	// 스킬 GA (소프트 레퍼런스)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

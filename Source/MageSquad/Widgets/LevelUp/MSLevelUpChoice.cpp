@@ -1,7 +1,6 @@
 #include "Widgets/LevelUp/MSLevelUpChoice.h"
 
 #include "Components/Button.h"
-#include "Components/TextBlock.h"
 #include "Components/Image.h"
 
 void UMSLevelUpChoice::NativeOnInitialized()
@@ -24,14 +23,32 @@ void UMSLevelUpChoice::InitChoice(int32 InSessionId, const FMSLevelUpChoicePair&
 	Choice = InChoice;
 
 	// 기본 표시(최소 구현): 태그 문자열 그대로 보여주기
-	if (Text_SkillName)
+}
+
+void UMSLevelUpChoice::SetSelected(bool bInSelected)
+{
+	if (bSelected == bInSelected)
 	{
-		Text_SkillName->SetText(FText::FromString(Choice.SkillTag.ToString()));
+		return;
 	}
-	if (Text_UpgradeName)
+
+	bSelected = bInSelected;
+	OnSelectionChanged(bSelected);
+}
+
+void UMSLevelUpChoice::SetInteractionEnabled(bool bEnabled)
+{
+	if (bInteractionEnabled == bEnabled)
 	{
-		Text_UpgradeName->SetText(FText::FromString(Choice.UpgradeTag.ToString()));
+		return;
 	}
+
+	bInteractionEnabled = bEnabled;
+	if (Button_Choice)
+	{
+		Button_Choice->SetIsEnabled(bInteractionEnabled);
+	}
+	OnInteractionEnabledChanged(bInteractionEnabled);
 }
 
 void UMSLevelUpChoice::HandleClicked()
