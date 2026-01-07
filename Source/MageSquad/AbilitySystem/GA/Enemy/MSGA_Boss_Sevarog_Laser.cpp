@@ -38,10 +38,10 @@ void UMSGA_Boss_Sevarog_Laser::ActivateAbility(const FGameplayAbilitySpecHandle 
 		
 		// Todo : 추후에 페이즈 전환 관련 델리게이트로 빼서 관리할 예정
 		FName StartSectionName = NAME_None;
-		// if (Owner->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
-		// {
-		// 	StartSectionName = TEXT("Phase2");
-		// }
+		if (Owner->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
+		{
+			StartSectionName = TEXT("Phase2");
+		}
 
 		UMSAT_PlayMontageAndWaitForEvent* Pattern2Task = 
 			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, Pattern2Montage, Tags, 1.f, StartSectionName);

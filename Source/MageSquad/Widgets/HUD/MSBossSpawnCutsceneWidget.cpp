@@ -19,7 +19,6 @@ void UMSBossSpawnCutsceneWidget::TryBindToGameState()
 	{
 		// 성공적으로 찾았을 때 바인딩
 		GS->OnBossSpawnCutsceneStateChanged.AddUObject(this, &ThisClass::HandleBossSpawnEvent);
-		//UE_LOG(LogTemp, Warning, TEXT("HUD Construct: Binding Success!"));
 	}
 	else
 	{
@@ -38,6 +37,7 @@ void UMSBossSpawnCutsceneWidget::HandleBossSpawnEvent(bool bStart)
 	if (bStart)
 	{
 		PlayAnimation(CutSceneAnim);
+		PlayAnimation(BossNameAnim);
 	}
 	else
 	{
