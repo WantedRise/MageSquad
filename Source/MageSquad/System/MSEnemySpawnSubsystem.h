@@ -11,7 +11,6 @@
 /*
  * 작성자 : 임희섭
  * 작성일 : 2025/12/15
- * 리팩토링 : 2025/12/15
  * 
  * 몬스터 스폰 관리 전용 서브시스템
  * - 오브젝트 풀링 기반 효율적인 스폰 관리
@@ -89,6 +88,9 @@ struct FMSCachedEnemyData
 	// GAS 관련
 	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAbilityData> EnemyAbilities;
+	
+	UPROPERTY()
+	TObjectPtr<class UTexture2D> IndicatorImage;
 };
 
 /**
@@ -152,7 +154,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn", meta = (WorldContext = "WorldContextObject"))
 	static UMSEnemySpawnSubsystem* Get(UObject* WorldContextObject);
-	
 	
 	/** 외부에서 Enemy 사망 시 호출하여 풀로 반환 */
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Pool")
@@ -231,7 +232,6 @@ private:
 	TArray<APlayerController*> GetAllPlayerControllers() const;
 
 private:
-	
 	/** 몬스터 정적 데이터 테이블 */
 	UPROPERTY(EditDefaultsOnly, Category = "Monster Data")
 	TObjectPtr<UDataTable> MonsterStaticDataTable;
