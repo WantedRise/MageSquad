@@ -21,6 +21,9 @@ class MAGESQUAD_API UMSFunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	// 액터의 ASC를 가져오는 함수
+	static class UAbilitySystemComponent* NativeGetAbilitySystemComponentFromActor(AActor* InActor);
+
 	// 액터의 플레이어 ASC를 가져오는 함수
 	static class UMSPlayerAbilitySystemComponent* NativeGetPlayerAbilitySystemComponentFromActor(AActor* InActor);
 

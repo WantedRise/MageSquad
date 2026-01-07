@@ -17,14 +17,14 @@
 #include "MSGameplayTags.h"
 #include "Actors/Projectile/MSEnemyProjectile.h"
 
-UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySystemComponentFromActor(AActor* InActor)
+UAbilitySystemComponent* UMSFunctionLibrary::NativeGetAbilitySystemComponentFromActor(AActor* InActor)
 {
 	if (!InActor) return nullptr;
 
 	// #1: Actor가 ASC를 제공하는 경우
 	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(InActor))
 	{
-		return Cast<UMSPlayerAbilitySystemComponent>(ASI->GetAbilitySystemComponent());
+		return ASI->GetAbilitySystemComponent();
 	}
 
 	// #2: Pawn이면 PlayerState에서 ASC 찾기
@@ -32,7 +32,7 @@ UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySyste
 	{
 		if (AMSPlayerState* MSPS = Cast<AMSPlayerState>(Pawn->GetPlayerState()))
 		{
-			return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
+			return MSPS->GetAbilitySystemComponent();
 		}
 	}
 
@@ -41,14 +41,26 @@ UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySyste
 	{
 		if (AMSPlayerState* MSPS = Cast<AMSPlayerState>(PC->PlayerState))
 		{
-			return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
+			return MSPS->GetAbilitySystemComponent();
 		}
 	}
 
 	// #4: PlayerState 자체라면 ASC 반환
 	if (AMSPlayerState* MSPS = Cast<AMSPlayerState>(InActor))
 	{
-		return Cast<UMSPlayerAbilitySystemComponent>(MSPS->GetAbilitySystemComponent());
+		return MSPS->GetAbilitySystemComponent();
+	}
+
+	return nullptr;
+}
+
+UMSPlayerAbilitySystemComponent* UMSFunctionLibrary::NativeGetPlayerAbilitySystemComponentFromActor(AActor* InActor)
+{
+	if (!InActor) return nullptr;
+
+	if (UAbilitySystemComponent* ASC = NativeGetAbilitySystemComponentFromActor(InActor))
+	{
+		return Cast<UMSPlayerAbilitySystemComponent>(ASC);
 	}
 
 	return nullptr;
