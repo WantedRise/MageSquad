@@ -18,6 +18,9 @@
 #include <System/MSCharacterDataSubsystem.h>
 #include "OnlineSubsystemTypes.h"
 #include "DataAssets/Player/DA_CharacterData.h"
+#include "Blueprint/UserWidget.h"
+
+#include "EngineUtils.h"
 
 AMSGameMode::AMSGameMode()
 {
@@ -32,6 +35,10 @@ void AMSGameMode::BeginPlay()
 	GetGameState<AMSGameState>()->OnSharedLivesDepleted.AddLambda(
 		[&]()
 		{
+			// 플레이어 전원 사망 플래그 설정
+			bAllPlayersDead = true;
+
+			// 로비로 트래블 실행
 			ExecuteTravelToLobby();
 		}
 	);
@@ -72,6 +79,53 @@ void AMSGameMode::OnMissionFinished(int32 MissionID, bool bSuccess)
 
 void AMSGameMode::ExecuteTravelToLobby()
 {
+	if (!HasAuthority()) return;
+
+	// 중복 호출 방지(이미 예약되었으면 무시)
+	if (bTravelScheduled) return;
+	bTravelScheduled = true;
+
+	// 승/패 판단은 질문에 적힌 주석 그대로 따릅니다.
+	const bool bIsVictory = (bAllPlayersDead == true);
+
+	// 모든 플레이어에게 승리/패배 위젯 표시
+	ShowEndGameWidgetToAllPlayers(bIsVictory);
+
+	// 5초 뒤 트래블 예약
+	GetWorldTimerManager().SetTimer(
+		TravelToLobbyTimerHandle,
+		this,
+		&AMSGameMode::TravelToLobby_Internal,
+		TravelDelaySeconds,
+		false
+	);
+}
+
+void AMSGameMode::ShowEndGameWidgetToAllPlayers(bool bIsVictory)
+{
+	// 표시할 위젯 클래스 선택
+	const TSubclassOf<UUserWidget> WidgetClassToShow = bIsVictory ? GameVictoryWidgetClass : GameOverWidgetClass;
+	if (!WidgetClassToShow) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 모든 플레이어 컨트롤러 순회
+	for (TActorIterator<AMSPlayerController> It(World); It; ++It)
+	{
+		AMSPlayerController* PC = *It;
+		if (!PC) continue;
+
+		// 위젯 표시 RPC 호출
+		const int32 EndGameWidgetZOrder = 500;
+		PC->ClientRPCShowEndGameWidget(WidgetClassToShow, EndGameWidgetZOrder);
+	}
+}
+
+void AMSGameMode::TravelToLobby_Internal()
+{
+	if (!HasAuthority()) return;
+
 	if (auto* LevelManager = GetGameInstance()->GetSubsystem<UMSLevelManagerSubsystem>())
 	{
 		LevelManager->HostGameAndTravelToLobby();
@@ -148,7 +202,7 @@ void AMSGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	
+
 }
 
 void AMSGameMode::RestartPlayer(AController* NewPlayer)
