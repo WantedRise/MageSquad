@@ -93,6 +93,20 @@ struct FMSCachedEnemyData
 	TObjectPtr<class UTexture2D> IndicatorImage;
 };
 
+// 스폰 요청을 큐로 관리하기 위해 제작하는 요청 큐
+USTRUCT()
+struct FMSPendingSpawnRequest
+{
+	GENERATED_BODY()
+
+	FName MonsterID;
+	FVector Location;
+    
+	FMSPendingSpawnRequest() = default;
+	FMSPendingSpawnRequest(const FName& InID, const FVector& InLoc)
+		: MonsterID(InID), Location(InLoc) {}
+};
+
 /**
  * 몬스터 스폰 서브시스템
  */
@@ -123,24 +137,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn")
 	AMSBaseEnemy* SpawnMonsterByID(const FName& MonsterID, const FVector& Location);
 	
-	// 스케일링된 최대 몬스터 수 반환
-	int32 GetScaledMaxActiveMonsters() const;
-	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnInterval(float NewInterval);
 
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetMaxActiveMonsters(int32 NewMax);
-
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
-	void SetSpawnRadius(float NewRadius);
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnCountPerTick(int InSpawnCountPerTick);
-
-	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
-	void SetMonsterDataTable(UDataTable* NewDataTable);
-	
 	
 	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	int32 GetCurrentActiveCount() const { return CurrentActiveCount; }
@@ -151,6 +155,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Monster Spawn|Info")
 	bool IsSpawning() const { return bIsSpawning; }
 	
+	/** DataTable 데이터로 Enemy 초기화 (메시, 애니메이션, GAS) */
+	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
+
+	/** Enemy 활성화 (위치 설정, AI 시작) */
+	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location = FVector()) const;
+
+	// 타일맵 찾기 및 캐싱
+	AMSSpawnTileMap* GetSpawnTileMap();
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn", meta = (WorldContext = "WorldContextObject"))
 	static UMSEnemySpawnSubsystem* Get(UObject* WorldContextObject);
@@ -179,8 +191,13 @@ private:
 	AMSBaseEnemy* SpawnMonsterInternal(const FName& MonsterID, const FVector& Location);
 
 	/** TileMap 기반 랜덤 스폰 위치 검색 */
-	bool GetRandomSpawnLocation(APlayerController* TargetPlayer, FVector& OutLocation);
-
+	bool GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation);
+	
+	/** 캐싱된 타일 목록에서 랜덤 위치 선택 */
+	bool GetRandomSpawnLocationFromTiles(
+		const TArray<struct FMSSpawnTile>& InvisibleTiles,
+		const FVector& PlayerLocation,
+		FVector& OutLocation);
 	/** 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
 	bool IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location);
 	
@@ -189,17 +206,13 @@ private:
 	
 	/** 화면 가장자리의 랜덤한 지점 반환 (화면 밖)*/
 	FVector2D GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY, float Margin);
-
-public:
-	/** DataTable 데이터로 Enemy 초기화 (메시, 애니메이션, GAS) */
-	void InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID);
-
-	/** Enemy 활성화 (위치 설정, AI 시작) */
-	void ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location = FVector()) const;
-
-	// 타일맵 찾기 및 캐싱
-	AMSSpawnTileMap* GetSpawnTileMap();
-private:
+	
+	/** 스폰 요청을 큐에 추가 */
+	void QueueSpawnRequest(const FName& MonsterID, const FVector& Location);
+    
+	/** 큐 처리 (타이머 콜백) */
+	void ProcessSpawnQueue();
+	
 	/** Enemy 비활성화 (숨김, 콜리전 끄기, AI 정지) */
 	void DeactivateEnemy(AMSBaseEnemy* Enemy);
 	
@@ -252,6 +265,20 @@ private:
 	UPROPERTY()
 	TMap<FName, FMSCachedEnemyData> CachedBossMonsterData;
 	
+	// 헤더에 캐시 변수 추가
+	TArray<FName> CachedNormalMonsterKeys;
+	
+	bool bNormalMonsterKeysCached = false;
+	
+	/** 대기 중인 스폰 요청 */
+	TArray<FMSPendingSpawnRequest> PendingSpawnQueue;
+    
+	/** 큐 처리 타이머 */
+	FTimerHandle SpawnQueueTimerHandle;
+    
+	/** 프레임당 최대 스폰 수 */
+	int32 MaxSpawnsPerFrame = 3;
+	
 	UPROPERTY()
 	FMSEnemyPool NormalEnemyPool;
 
@@ -267,11 +294,14 @@ private:
 	/** Enemy -> Pool 역참조 (O(1) 풀 검색) */
 	TMap<TObjectPtr<AMSBaseEnemy>, FMSEnemyPool*> EnemyToPoolMap;
 	
-	const int32 NormalEnemyPoolSize = 10;
+	const int32 NormalEnemyPoolSize = 100;
 
 	const int32 EliteEnemyPoolSize = 5;
 
 	const int32 BossEnemyPoolSize = 1;
+	
+	// 초기화 체크
+	bool bShouldSkipInitialization = false;
 	
 	/** 스폰 간격 (초) */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
@@ -280,10 +310,6 @@ private:
 	/** 최대 동시 활성 몬스터 수 */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	int32 MaxActiveMonsters = 50;
-
-	/** 플레이어 주변 스폰 반경 */
-	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
-	float SpawnRadius = 2000.0f;
 
 	/** 플레이어로부터 최소 스폰 거리 */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
@@ -296,10 +322,6 @@ private:
 	/* 스폰마다 몇 마리씩 스폰할 건지 정하는 변수*/
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	int SpawnCountPerTick = 1;
-
-	//~=============================================================================
-	// Runtime State
-	//~=============================================================================
 	
 	/** 스폰 타이머 핸들 */
 	FTimerHandle SpawnTimerHandle;
@@ -312,10 +334,6 @@ private:
 
 	/** 총 스폰된 몬스터 수 (누적) */
 	int32 TotalSpawnedCount = 0;
-
-	//~=============================================================================
-	// Navigation
-	//~=============================================================================
 	
 	UPROPERTY()
 	TObjectPtr<UNavigationSystemV1> NavSystem;

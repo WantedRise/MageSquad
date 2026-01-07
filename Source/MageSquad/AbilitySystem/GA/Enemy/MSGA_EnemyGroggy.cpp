@@ -86,7 +86,7 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 			
 			if (USkeletalMesh* NewMeshAsset = Owner->GetPhase2SkeletalMesh())
 			{
-				Owner->NetMulticast_TransitionToPhase2();
+				Owner->Multicast_TransitionToPhase2();
 				
 				if (HasAuthorityOrPredictionKey(CurrentActorInfo, &CurrentActivationInfo))
 				{

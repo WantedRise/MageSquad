@@ -10,7 +10,6 @@
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "NavigationSystem.h"
-#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Animation/Enemy/MSEnemyAnimInstance.h"
 #include "Enemy/AIController/MSBaseAIController.h"
@@ -32,7 +31,11 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		return;
 	}
 	
-	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")) || GetWorld()->GetName().Contains(TEXT("MainmenuLevel")))
+	const FString WorldName = GetWorld()->GetName();
+	bShouldSkipInitialization = WorldName.Contains(TEXT("LobbyLevel")) 
+							  || WorldName.Contains(TEXT("MainmenuLevel"));
+	
+	if (bShouldSkipInitialization)
 	{
 		return;
 	}
@@ -88,7 +91,7 @@ void UMSEnemySpawnSubsystem::InitializePool()
 		return;
 	}
 	
-	if (GetWorld()->GetName().Contains(TEXT("LobbyLevel")) || GetWorld()->GetName().Contains(TEXT("MainmenuLevel")))
+	if (bShouldSkipInitialization)
 	{
 		return;
 	}
@@ -174,8 +177,10 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 
 		// 풀 매핑
 		AssignMonsterToPool(RowName);
+		CachedNormalMonsterData.GetKeys(CachedNormalMonsterKeys);
 	}
-
+	
+	
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Loaded %d monster types from DataTable"), CachedMonsterData.Num());
 }
 
@@ -309,6 +314,13 @@ void UMSEnemySpawnSubsystem::StopSpawning()
 		GetWorld()->GetTimerManager().ClearTimer(SpawnTimerHandle);
 		SpawnTimerHandle.Invalidate();
 	}
+	
+	// 큐 타이머 정리
+	if (SpawnQueueTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(SpawnQueueTimerHandle);
+	}
+	PendingSpawnQueue.Empty();
 
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawning stopped"));
 }
@@ -361,30 +373,8 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterByID(const FName& MonsterID, c
 	return SpawnMonsterInternal(MonsterID, Location);
 }
 
-int32 UMSEnemySpawnSubsystem::GetScaledMaxActiveMonsters() const
-{
-	int32 PlayerCount = 0;
-
-	if (UWorld* World = GetWorld())
-	{
-		for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
-		{
-			if (It->Get())
-			{
-				++PlayerCount;
-			}
-		}
-	}
-
-	// 최소 1명
-	PlayerCount = FMath::Max(1, PlayerCount);
-
-	return MaxActiveMonsters * PlayerCount;
-}
-
 void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 {
-	// 서버 권한 체크
 	if (!HasAuthority())
 	{
 		return;
@@ -396,16 +386,35 @@ void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 		return;
 	}
 
-	// 인원수에 따른 최대 몬스터 수 스케일링
-	const int32 ScaledMaxMonsters = GetScaledMaxActiveMonsters();
-
-	// 최대 수량 체크
-	if (CurrentActiveCount >= ScaledMaxMonsters)
+	const int32 ScaledMaxMonsters = MaxActiveMonsters * AllPlayers.Num();
+	const int32 TotalPending = CurrentActiveCount + PendingSpawnQueue.Num();
+    
+	if (TotalPending >= ScaledMaxMonsters)
 	{
 		return;
 	}
 
-	// 각 플레이어별로 스폰
+	if (CachedNormalMonsterKeys.Num() == 0)
+	{
+		return;
+	}
+	// 타일 검색을 한 번만 수행
+	AMSSpawnTileMap* TileMap = GetSpawnTileMap();
+	if (!TileMap)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[SpawnTick] No TileMap"));
+		return;
+	}
+	
+	TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
+	UE_LOG(LogTemp, Log, TEXT("[SpawnTick] InvisibleTiles: %d"), InvisibleTiles.Num());
+	
+	if (InvisibleTiles.Num() == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[SpawnTick] No invisible tiles"));
+		return;
+	}
+
 	for (APlayerController* PC : AllPlayers)
 	{
 		if (!PC || !PC->GetPawn())
@@ -413,35 +422,17 @@ void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 			continue;
 		}
 
-		// 플레이어당 SpawnCountPerTick만큼 스폰
+		const FVector PlayerLocation = PC->GetPawn()->GetActorLocation();
+		
 		for (int32 i = 0; i < SpawnCountPerTick; ++i)
 		{
-			// 최대 수량 재체크
-			if (CurrentActiveCount >= ScaledMaxMonsters)
-			{
-				return;
-			}
-
-			// 랜덤 몬스터 타입 선택
-			TArray<FName> AllMonsterTypes;
-			CachedNormalMonsterData.GetKeys(AllMonsterTypes);
-
-			if (AllMonsterTypes.Num() == 0)
-			{
-				return;
-			}
-
-			const FName SelectedMonsterID = AllMonsterTypes[FMath::RandRange(0, AllMonsterTypes.Num() - 1)];
-
-			// 해당 플레이어 기준으로 스폰 위치 검색
 			FVector SpawnLocation;
-			if (!GetRandomSpawnLocation(PC, SpawnLocation))
+			// 캐싱된 타일 목록 전달
+			if (GetRandomSpawnLocationFromTiles(InvisibleTiles, PlayerLocation, SpawnLocation))
 			{
-				continue; // 이 플레이어는 스킵하고 다음 플레이어 진행
+				const FName MonsterID = CachedNormalMonsterKeys[FMath::RandRange(0, CachedNormalMonsterKeys.Num() - 1)];
+				QueueSpawnRequest(MonsterID, SpawnLocation);
 			}
-
-			// 스폰
-			SpawnMonsterInternal(SelectedMonsterID, SpawnLocation);
 		}
 	}
 }
@@ -525,7 +516,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	return Enemy;
 }
 
-bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPlayer, FVector& OutLocation)
+bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation)
 {
 	if (!TargetPlayer)
 	{
@@ -541,8 +532,6 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 	// 타일맵 시도
 	if (AMSSpawnTileMap* TileMap = GetSpawnTileMap())
 	{
-		TArray<APlayerController*> AllPlayers = GetAllPlayerControllers();
-
 		// 모든 플레이어에게 안 보이는 타일들 가져오기
 		TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
 
@@ -559,7 +548,7 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 		TArray<FMSSpawnTile> SouthTiles;  // -Y
 		TArray<FMSSpawnTile> EastTiles;   // +X
 		TArray<FMSSpawnTile> WestTiles;   // -X
-
+		
 		for (const FMSSpawnTile& Tile : InvisibleTiles)
 		{
 			FVector ToTile = Tile.Location - PlayerLocation;
@@ -590,7 +579,7 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 				}
 			}
 		}
-
+		
 		// 비어있지 않은 방향들 수집
 		TArray<TArray<FMSSpawnTile>*> ValidDirections;
 		if (NorthTiles.Num() > 0)
@@ -674,6 +663,60 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(APlayerController* TargetPla
 	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
 	return false;
 #pragma endregion 
+}
+
+bool UMSEnemySpawnSubsystem::GetRandomSpawnLocationFromTiles(const TArray<FMSSpawnTile>& InvisibleTiles,
+	const FVector& PlayerLocation, FVector& OutLocation)
+{
+	if (InvisibleTiles.Num() == 0)
+	{
+		return false;
+	}
+
+	// 4방향 인덱스 분류 (복사 대신 인덱스만 저장)
+	TArray<int32> DirectionIndices[4]; // 0:North, 1:South, 2:East, 3:West
+
+	for (int32 i = 0; i < InvisibleTiles.Num(); ++i)
+	{
+		const FVector ToTile = InvisibleTiles[i].Location - PlayerLocation;
+        
+		int32 DirIndex;
+		if (FMath::Abs(ToTile.X) > FMath::Abs(ToTile.Y))
+		{
+			DirIndex = (ToTile.X > 0) ? 2 : 3; // East : West
+		}
+		else
+		{
+			DirIndex = (ToTile.Y > 0) ? 0 : 1; // North : South
+		}
+        
+		DirectionIndices[DirIndex].Add(i);
+	}
+
+	// 유효한 방향 수집
+	TArray<int32> ValidDirections;
+	for (int32 Dir = 0; Dir < 4; ++Dir)
+	{
+		if (DirectionIndices[Dir].Num() > 0)
+		{
+			ValidDirections.Add(Dir);
+		}
+	}
+
+	if (ValidDirections.Num() == 0)
+	{
+		return false;
+	}
+
+	// 랜덤 방향 선택
+	const int32 SelectedDir = ValidDirections[FMath::RandRange(0, ValidDirections.Num() - 1)];
+	const TArray<int32>& SelectedIndices = DirectionIndices[SelectedDir];
+    
+	// 해당 방향에서 랜덤 타일 선택
+	const int32 TileIdx = SelectedIndices[FMath::RandRange(0, SelectedIndices.Num() - 1)];
+	OutLocation = InvisibleTiles[TileIdx].Location;
+    
+	return true;
 }
 
 bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location)
@@ -761,12 +804,73 @@ FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, 
 	return ScreenPoint;
 }
 
+void UMSEnemySpawnSubsystem::QueueSpawnRequest(const FName& MonsterID, const FVector& Location)
+{
+	
+	TRACE_CPUPROFILER_EVENT_SCOPE(Queue_Spawn_Request);
+	
+	PendingSpawnQueue.Emplace(MonsterID, Location);
+	
+	UE_LOG(LogTemp, Log, TEXT("[SpawnQueue] Queued: %s, Queue Size: %d, Timer Valid: %s"),
+	*MonsterID.ToString(), 
+	PendingSpawnQueue.Num(),
+	SpawnQueueTimerHandle.IsValid() ? TEXT("YES") : TEXT("NO"));
+
+	// 타이머가 없으면 시작
+	if (!SpawnQueueTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			SpawnQueueTimerHandle,
+			this,
+			&UMSEnemySpawnSubsystem::ProcessSpawnQueue,
+			0.2f,  // 매 프레임
+			true   // 반복
+		);
+	}
+}
+
+void UMSEnemySpawnSubsystem::ProcessSpawnQueue()
+{
+	UE_LOG(LogTemp, Log, TEXT("[SpawnQueue] Processing... Queue: %d, Active: %d"),
+	   PendingSpawnQueue.Num(), CurrentActiveCount);
+	TRACE_CPUPROFILER_EVENT_SCOPE(Spawn_Queue);
+	
+	if (PendingSpawnQueue.Num() == 0)
+	{
+		// 큐가 비면 타이머 정지 + 핸들 무효화
+		GetWorld()->GetTimerManager().ClearTimer(SpawnQueueTimerHandle);
+		SpawnQueueTimerHandle.Invalidate();  // <-- 이 줄 추가
+		return;
+	}
+
+	const int32 PlayerCount = FMath::Max(1, GetAllPlayerControllers().Num());
+	const int32 ScaledMaxMonsters = MaxActiveMonsters * PlayerCount;
+
+	const int32 SpawnCount = FMath::Min(MaxSpawnsPerFrame, PendingSpawnQueue.Num());
+    
+	for (int32 i = 0; i < SpawnCount; ++i)
+	{
+		if (CurrentActiveCount >= ScaledMaxMonsters)
+		{
+			PendingSpawnQueue.Empty();
+			GetWorld()->GetTimerManager().ClearTimer(SpawnQueueTimerHandle);
+			SpawnQueueTimerHandle.Invalidate();  // <-- 이 줄도 추가
+			return;
+		}
+
+		FMSPendingSpawnRequest Request = PendingSpawnQueue.Pop(false);
+		SpawnMonsterInternal(Request.MonsterID, Request.Location);
+	}
+}
+
 void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const FName& MonsterID)
 {
 	if (!Enemy)
 	{
 		return;
 	}
+	
+	TRACE_CPUPROFILER_EVENT_SCOPE(Initialize_Enemy_From_Data);
 
 	// 캐시된 데이터 가져오기
 	FMSCachedEnemyData* Data = CachedMonsterData.Find(MonsterID);
@@ -779,11 +883,6 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 	// 스켈레탈 메시 설정
 	if (Data->SkeletalMesh)
 	{
-		if (Enemy->GetMesh()->IsRegistered())
-		{
-			Enemy->GetMesh()->UnregisterComponent();
-		}
-
 		Enemy->GetMesh()->SetSkeletalMesh(Data->SkeletalMesh);
 		Enemy->SetPhase2SkeletalMesh(Data->Phase2SkeletalMesh);
 		
@@ -793,9 +892,6 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		{
 			Enemy->GetMesh()->SetMaterial(i, MeshMaterials[i].MaterialInterface);
 		}
-
-		// 렌더링 상태 강제 업데이트 및 재등록
-		Enemy->GetMesh()->RegisterComponent(); // 렌더링 시스템에 메시를 다시 등록
 	}
 
 	// 애니메이션 설정
@@ -839,14 +935,16 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 				Enemy->SetProjectileData(Data->ProjectileDataClass);
 			}
 
-			// 어빌리티 부여
-			ASC->ClearAllAbilities();
-			for (const TSubclassOf<UGameplayAbility>& AbilityClass : Data->EnemyAbilities->EnemyAbilities)
+			if (ASC->GetActivatableAbilities().Num() == 0)
 			{
-				if (AbilityClass)
+				// 어빌리티 부여
+				for (const TSubclassOf<UGameplayAbility>& AbilityClass : Data->EnemyAbilities->EnemyAbilities)
 				{
-					FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, Enemy);
-					ASC->GiveAbility(Spec);
+					if (AbilityClass)
+					{
+						FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, Enemy);
+						ASC->GiveAbility(Spec);
+					}
 				}
 			}
 		}
@@ -855,6 +953,8 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& Location) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Activate_Enemy);
+	
 	if (!Enemy)
 	{
 		return;
@@ -863,40 +963,29 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	// 풀링 모드 해제
 	Enemy->SetPoolingMode(false);
 
-	// 위치 설정
-	if (Location != FVector())
-	{
-		Enemy->SetActorLocation(Location);
-		Enemy->SetActorRotation(FRotator::ZeroRotator);
-	}
-	
 	//  가시성/충돌 활성화
 	Enemy->SetActorHiddenInGame(false);
-	Enemy->SetActorEnableCollision(true);
+	if (HasAuthority())
+	{
+		Enemy->SetActorEnableCollision(true);	
+		// 위치 설정
+		if (Location != FVector())
+		{
+			Enemy->SetActorLocation(Location);
+			Enemy->SetActorRotation(FRotator::ZeroRotator);
+		}
+	}
+
 	
 	// 리플리케이션 활성화
 	Enemy->SetReplicates(true);
 	Enemy->SetReplicateMovement(true);
 	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->ForceNetUpdate();
-
-	//  RVO 재활성화
+	
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
-		// Velocity 초기화
-		MovementComp->Velocity = FVector::ZeroVector;
-		MovementComp->UpdateComponentVelocity();
-
-		// RVO 재등록 (UID가 0이면 새로 할당됨)
-		MovementComp->SetAvoidanceEnabled(false);
-		MovementComp->SetAvoidanceEnabled(true);
-
-		// RVO 파라미터 재설정 (혹시 모를 초기화 대비)
-		MovementComp->bUseRVOAvoidance = true;
-		MovementComp->AvoidanceConsiderationRadius = 500.0f;
-		MovementComp->AvoidanceWeight = 0.5f;
-		MovementComp->SetAvoidanceGroup(1);
-		MovementComp->SetGroupsToAvoidMask(1);
+		MovementComp->SetComponentTickEnabled(true);
 	}
 
 	// AI 컨트롤러 시작
@@ -909,7 +998,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	}
 	else
 	{
-		// 컨트롤러가 없으면 생성
 		Enemy->SpawnDefaultController();
 	}
 }
@@ -933,17 +1021,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	{
 		MovementComp->StopMovementImmediately();
 		MovementComp->Velocity = FVector::ZeroVector;
-		
-		// SetAvoidanceEnabled 내부의 ensure(GetCharacterOwner()) 통과를 위함
-		if (MovementComp->GetCharacterOwner() != nullptr)
-		{
-			MovementComp->SetAvoidanceEnabled(false);
-		}
-		else 
-		{
-			// Owner가 없다면 RVO를 직접 끌 수 없으므로, bUseRVOAvoidance 변수를 직접 건드리는 방법도 있습니다.
-			MovementComp->bUseRVOAvoidance = false;
-		}
+		MovementComp->SetComponentTickEnabled(false);
 	}
 
 	// AI 정지
@@ -955,8 +1033,22 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		}
 	}
 
+
+	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
+	if (!ASC)
+	{
+		return;
+	}
+
+	// 모든 GameplayTag 제거
+	FGameplayTagContainer AllTags;
+	ASC->GetOwnedGameplayTags(AllTags);
+	ASC->RemoveLooseGameplayTags(AllTags);
+	//  모든 Ability 취소
+	ASC->CancelAllAbilities();
+	
 	//  GAS 초기화
-	ResetEnemyGASState(Enemy);
+	//ResetEnemyGASState(Enemy);
 	
 	// 리플리케이션 완전히 끄기
 	Enemy->SetReplicates(false);
@@ -1045,8 +1137,7 @@ void UMSEnemySpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
 	{
 		return;
 	}
-
-	// 풀 찾기 (O(1))
+	
 	FMSEnemyPool* OwningPool = FindPoolForEnemy(Enemy);
 	if (!OwningPool)
 	{
@@ -1055,7 +1146,7 @@ void UMSEnemySpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
 	}
 
 	// Active 풀에서 제거
-	OwningPool->ActiveEnemies.Remove(Enemy);
+	OwningPool->ActiveEnemies.RemoveSwap(Enemy);
 	EnemyToPoolMap.Remove(Enemy);
 	--CurrentActiveCount;
 
@@ -1131,61 +1222,9 @@ void UMSEnemySpawnSubsystem::SetMaxActiveMonsters(int32 NewMax)
 	MaxActiveMonsters = FMath::Max(1, NewMax);
 }
 
-void UMSEnemySpawnSubsystem::SetSpawnRadius(float NewRadius)
-{
-	SpawnRadius = FMath::Max(500.0f, NewRadius);
-}
-
 void UMSEnemySpawnSubsystem::SetSpawnCountPerTick(int InSpawnCountPerTick)
 {
 	SpawnCountPerTick = FMath::Max(1, InSpawnCountPerTick);
-}
-
-void UMSEnemySpawnSubsystem::SetMonsterDataTable(UDataTable* NewDataTable)
-{
-	if (!NewDataTable)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] SetMonsterDataTable: null table!"));
-		return;
-	}
-
-	// 기존 활성 몬스터 제거
-	ClearAllMonsters();
-
-	// 기존 풀의 Enemy들 제거
-	auto DestroyPoolEnemies = [](FMSEnemyPool& Pool)
-	{
-		for (AMSBaseEnemy* Enemy : Pool.FreeEnemies)
-		{
-			if (IsValid(Enemy))
-			{
-				Enemy->Destroy();
-			}
-		}
-		Pool.FreeEnemies.Empty();
-	};
-
-	DestroyPoolEnemies(NormalEnemyPool);
-	DestroyPoolEnemies(EliteEnemyPool);
-	DestroyPoolEnemies(BossEnemyPool);
-
-	// 캐시 정리
-	CachedMonsterData.Empty();
-	CachedNormalMonsterData.Empty();
-	CachedEliteMonsterData.Empty();
-	CachedBossMonsterData.Empty();
-	MonsterPoolMap.Empty();
-
-	// 새 DataTable 할당
-	MonsterStaticDataTable = NewDataTable;
-
-	// 데이터 다시 로드
-	LoadMonsterDataTable();
-
-	// 풀 재생성
-	PrewarmPools();
-
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] DataTable reloaded successfully"));
 }
 
 FMSEnemyPool* UMSEnemySpawnSubsystem::FindPoolForEnemy(AMSBaseEnemy* Enemy) const
@@ -1214,7 +1253,7 @@ AMSSpawnTileMap* UMSEnemySpawnSubsystem::GetSpawnTileMap()
 		return SpawnTileMap.Get();
 	}
 
-	for (TActorIterator<AMSSpawnTileMap> It(GetWorld()); It; ++It)
+	for (TActorIterator<AMSSpawnTileMap> It(GetWorld()); It; )
 	{
 		SpawnTileMap = *It;
 		return SpawnTileMap.Get();

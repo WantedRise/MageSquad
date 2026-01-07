@@ -115,6 +115,11 @@ void UMSGA_Boss_Sevarog_Meteor::OnEventReceivedCallback(FGameplayTag EventTag, F
 		return;
 	}
 
+	if (Owner->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2))
+	{
+		SpawnInterval = 0.5f;
+	}
+	
 	// 추적 + 스폰 태스크 시작
 	UMSAT_ChaseAndSpawnMeteor* ChaseTask = UMSAT_ChaseAndSpawnMeteor::CreateTask(
 		this,
