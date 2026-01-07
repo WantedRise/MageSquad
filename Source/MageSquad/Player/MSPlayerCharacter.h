@@ -356,30 +356,30 @@ private:
 
 
 	/*****************************************************
-	* Experience Section
+	* ItemOrb Section
 	*****************************************************/
 protected:
-	// 경험치 픽업 범위가 경험치 오브와 겹칠 때 호출 (서버 전용)
+	// 서버: 아이템 오브 픽업 오버랩 함수
 	UFUNCTION()
-	void OnExperiencePickupSphereBeginOverlap_Server(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnItemOrbPickup_Server(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 속성 변경 델리게이트 바인딩 함수
-	void UpdateExperiencePickupRange();
+	void UpdateOrbPickupRange();
 
 	// 속성 변경에 따른 콜백 함수
 	void OnPickupRangeModChanged(const FOnAttributeChangeData& Data);
 
 protected:
-	// 기본 경험치 픽업 반경
+	// 기본 아이템 오브 픽업 반경
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Experience")
-	float BaseExperiencePickupRange = 500.f;
+	float BaseItemOrbPickupRange = 500.f;
 
 	// 플레이어 능력치(AttributeSet)의 획득 반경 보정 속성 변경 델리게이트 핸들
 	FDelegateHandle AttributeSetPickupRangeModChangedHandle;
 
-	// 경험치 오브를 감지하는 픽업 콜리전
+	// 아이템 오브 픽업 콜리전
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Experience")
-	TObjectPtr<class USphereComponent> ExperiencePickupCollision;
+	TObjectPtr<class USphereComponent> ItemOrbPickupCollision;
 
 
 

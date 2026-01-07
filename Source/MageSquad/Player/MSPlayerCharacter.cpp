@@ -26,7 +26,7 @@
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
-#include "Actors/Experience/MSExperienceOrb.h"
+#include "Actors/Items/MSItemOrb.h"
 #include "Actors/Revival/MSTeamReviveActor.h"
 
 #include "Widgets/HUD/MSOverheadNameWidget.h"
@@ -98,12 +98,12 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	StaffMesh->PrimaryComponentTick.bStartWithTickEnabled = false;
 	StaffMesh->bReceivesDecals = false;
 
-	ExperiencePickupCollision = CreateDefaultSubobject<USphereComponent>(TEXT("ExperiencePickupCollision"));
-	ExperiencePickupCollision->SetupAttachment(RootComponent);
-	ExperiencePickupCollision->InitSphereRadius(BaseExperiencePickupRange);
-	ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ExperiencePickupCollision->SetGenerateOverlapEvents(false);
-	ExperiencePickupCollision->SetCollisionProfileName(TEXT("MSPlayerPickUp"));
+	ItemOrbPickupCollision = CreateDefaultSubobject<USphereComponent>(TEXT("ItemOrbPickupCollision"));
+	ItemOrbPickupCollision->SetupAttachment(RootComponent);
+	ItemOrbPickupCollision->InitSphereRadius(BaseItemOrbPickupRange);
+	ItemOrbPickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ItemOrbPickupCollision->SetGenerateOverlapEvents(false);
+	ItemOrbPickupCollision->SetCollisionProfileName(TEXT("MSPlayerPickUp"));
 
 	OverheadNameWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadNameWidgetComponent"));
 	OverheadNameWidgetComp->SetupAttachment(GetRootComponent());
@@ -139,22 +139,22 @@ void AMSPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	/*
-	* 경험치 픽업 판정 설정
-	* 경험치 픽업 판정은 서버에서만 수행
+	* 아이템 오브 픽업 판정 설정
+	* 아이템 오브 픽업 판정은 서버에서만 수행
 	*/
-	if (HasAuthority() && ExperiencePickupCollision)
+	if (HasAuthority() && ItemOrbPickupCollision)
 	{
-		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		ExperiencePickupCollision->SetGenerateOverlapEvents(true);
-		ExperiencePickupCollision->OnComponentBeginOverlap.AddDynamic(this, &AMSPlayerCharacter::OnExperiencePickupSphereBeginOverlap_Server);
+		ItemOrbPickupCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		ItemOrbPickupCollision->SetGenerateOverlapEvents(true);
+		ItemOrbPickupCollision->OnComponentBeginOverlap.AddDynamic(this, &AMSPlayerCharacter::OnItemOrbPickup_Server);
 
 		// 획득 반경 보정 속성 변경 델리게이트 바인딩
-		UpdateExperiencePickupRange();
+		UpdateOrbPickupRange();
 	}
-	else if (ExperiencePickupCollision)
+	else if (ItemOrbPickupCollision)
 	{
-		ExperiencePickupCollision->SetGenerateOverlapEvents(false);
-		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		ItemOrbPickupCollision->SetGenerateOverlapEvents(false);
+		ItemOrbPickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
 	// 머리 위에 띄울 이름 위젯 클래스 설정
@@ -942,19 +942,19 @@ void AMSPlayerCharacter::ApplyPlayerStartEffects_Server()
 	}
 }
 
-void AMSPlayerCharacter::OnExperiencePickupSphereBeginOverlap_Server(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AMSPlayerCharacter::OnItemOrbPickup_Server(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!HasAuthority()) return;
 
-	// 경험치 오브 액터로 캐스팅
-	AMSExperienceOrb* Orb = Cast<AMSExperienceOrb>(OtherActor);
+	// 아이템 오브 액터로 캐스팅
+	AMSItemOrb* Orb = Cast<AMSItemOrb>(OtherActor);
 	if (!Orb) return;
 
 	// 서버에서만 수집 처리(오브 내부에서 중복 획득 방지)
 	Orb->Collect_Server(this);
 }
 
-void AMSPlayerCharacter::UpdateExperiencePickupRange()
+void AMSPlayerCharacter::UpdateOrbPickupRange()
 {
 	if (!HasAuthority()) return;
 
@@ -985,12 +985,12 @@ void AMSPlayerCharacter::OnPickupRangeModChanged(const FOnAttributeChangeData& D
 		PickupRangeMod = AttributeSet->GetPickupRangeMod();
 	}
 
-	// 기본 경험치 픽업 반경 * 획득 반경 보정 비율로 최종 경험치 픽업 반경 계산
-	const float FinalExperiencePickupRange
-		= BaseExperiencePickupRange * (1.f + PickupRangeMod);
+	// 기본 픽업 반경 * 획득 반경 보정 비율로 최종 픽업 반경 계산
+	const float FinalItemOrbPickupRange
+		= BaseItemOrbPickupRange * (1.f + PickupRangeMod);
 
-	// 경험치 픽업 반경 업데이트
-	ExperiencePickupCollision->SetSphereRadius(FinalExperiencePickupRange);
+	// 아이템 오브 픽업 반경 업데이트
+	ItemOrbPickupCollision->SetSphereRadius(FinalItemOrbPickupRange);
 }
 
 void AMSPlayerCharacter::InitPublicHUDData_Server()
@@ -1368,13 +1368,13 @@ void AMSPlayerCharacter::OnDeathEnter_Server()
 		Capsule->SetGenerateOverlapEvents(false);
 	}
 
-	// 경험치 픽업 오버랩 비활성화
-	if (ExperiencePickupCollision)
+	// 아이템 오브 픽업 오버랩 비활성화
+	if (ItemOrbPickupCollision)
 	{
-		CachedPickupCollision = ExperiencePickupCollision->GetCollisionEnabled();
-		bCachedPickupOverlap = ExperiencePickupCollision->GetGenerateOverlapEvents();
-		ExperiencePickupCollision->SetGenerateOverlapEvents(false);
-		ExperiencePickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		CachedPickupCollision = ItemOrbPickupCollision->GetCollisionEnabled();
+		bCachedPickupOverlap = ItemOrbPickupCollision->GetGenerateOverlapEvents();
+		ItemOrbPickupCollision->SetGenerateOverlapEvents(false);
+		ItemOrbPickupCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
 	// 이동 정지
@@ -1419,11 +1419,11 @@ void AMSPlayerCharacter::OnRespawnExit_Server()
 		Capsule->SetGenerateOverlapEvents(bCachedCapsuleOverlap);
 	}
 
-	// 경험치 픽업 오버랩 복구
-	if (ExperiencePickupCollision)
+	// 아이템 오브 픽업 오버랩 복구
+	if (ItemOrbPickupCollision)
 	{
-		ExperiencePickupCollision->SetCollisionEnabled(CachedPickupCollision);
-		ExperiencePickupCollision->SetGenerateOverlapEvents(bCachedPickupOverlap);
+		ItemOrbPickupCollision->SetCollisionEnabled(CachedPickupCollision);
+		ItemOrbPickupCollision->SetGenerateOverlapEvents(bCachedPickupOverlap);
 	}
 
 	// 이동 복구
