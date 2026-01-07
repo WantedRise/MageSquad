@@ -10,15 +10,15 @@
 #include <Player/MSPlayerCharacter.h>
 
 
-void UMSCharacterSlotWidget::InitSlot(FName InCharacterId)
+void UMSCharacterSlotWidget::InitSlot(FName InCharacterID)
 {
-    CharacterId = InCharacterId;
+    CharacterID = InCharacterID;
 
     if (UGameInstance* GI = GetGameInstance())
     {
         if (UMSCharacterDataSubsystem* CharacterData = GI->GetSubsystem<UMSCharacterDataSubsystem>())
         {
-            const FMSCharacterSelection* Selection = CharacterData->FindSelectionByCharacterId(CharacterId);
+            const FMSCharacterSelection* Selection = CharacterData->FindSelectionByCharacterId(CharacterID);
 
             if (!Selection || !Selection->PlayerCharacterClass)
                 return;
@@ -55,7 +55,7 @@ FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
 {
     if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
     {
-        OnClicked.Broadcast(CharacterId);
+        OnClicked.Broadcast(CharacterID);
         return FReply::Handled();
     }
 

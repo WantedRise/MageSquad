@@ -88,6 +88,7 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
+	Camera->bAutoActivate = true;
 
 	StaffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Staff"));
 	StaffMesh->SetupAttachment(GetMesh(), StaffAttachSocketName);

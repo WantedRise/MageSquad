@@ -34,7 +34,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	//UI를 갱신 및 델리게이드 바인딩
 	virtual void OnRep_PlayerState() override;
-	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -71,4 +71,14 @@ protected:
 	// 지팡이 메시를 부착할 소켓 이름
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Weapon")
 	FName StaffAttachSocketName = TEXT("s_Staff");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
+	TObjectPtr<class UCameraComponent> Camera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
+	TObjectPtr<class USpringArmComponent> SpringArm;
+
+	// 현재 카메라 줌의 목표 길이 (SpringArm TargetArmLength의 목표값)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Camera")
+	float TargetArmLength = 357.f;
 };

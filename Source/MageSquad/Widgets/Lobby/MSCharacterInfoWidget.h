@@ -14,5 +14,15 @@ class MAGESQUAD_API UMSCharacterInfoWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	void Update(FName CharacterID);
+	void UpdateInfoWidget(FText Title, FText Name, FText Decs, UTexture2D* Icon);
+    void UpdateInfoWidget(FText Title, FText Name, FText Decs, TSoftObjectPtr <class UMaterialInterface> Icon);
+
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* Text_Decs;
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* Text_Name;
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* Text_Title;
+    UPROPERTY(meta = (BindWidget))
+    class UImage* Image_Icon;
 };

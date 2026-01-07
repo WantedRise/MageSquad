@@ -18,6 +18,7 @@
 #include "Player/MSPlayerCharacter.h"
 #include "DataAssets/Player/DA_CharacterData.h"
 #include "Player/MSLobbyCharacter.h"
+#include "Camera/CameraActor.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
@@ -65,6 +66,8 @@ void AMSLobbyPlayerController::BeginPlay()
 				false
 			);
 		}
+
+		LobbyCameraActor = GetViewTarget();
 	}
 }
 
@@ -134,4 +137,27 @@ void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(FName InCha
 		return;
 
 	CharacterDataManager->CacheSelectedCharacter(NetId, InCharacterId);
+}
+
+void AMSLobbyPlayerController::SwitchToCharacterCamera()
+{
+	if (!GetPawn() || !GetViewTarget() || GetViewTarget() == GetPawn()) return;
+	
+	FViewTargetTransitionParams Params;
+	Params.BlendTime = 0.4f;
+	Params.BlendFunction = EViewTargetBlendFunction::VTBlend_EaseInOut;
+	Params.BlendExp = 2.f;
+	SetViewTarget(GetPawn(), Params);
+}
+
+void AMSLobbyPlayerController::SwitchToLobbyCamera()
+{
+	if (!LobbyCameraActor) return;
+
+	FViewTargetTransitionParams Params;
+	Params.BlendTime = 0.4f;
+	Params.BlendFunction = EViewTargetBlendFunction::VTBlend_EaseInOut;
+	Params.BlendExp = 2.f;
+
+	SetViewTarget(LobbyCameraActor, Params);
 }

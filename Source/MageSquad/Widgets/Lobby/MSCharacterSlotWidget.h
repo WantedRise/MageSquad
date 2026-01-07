@@ -20,7 +20,7 @@ class MAGESQUAD_API UMSCharacterSlotWidget : public UUserWidget
 public:
     virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 public:
-    void InitSlot(FName InCharacterId);
+    void InitSlot(FName InCharacterID);
     void HiddenPortrait();
     FOnCharacterSlotClicked OnClicked;
 
@@ -29,7 +29,5 @@ protected:
     class UImage* Image_Portrait;
 
 private:
-    FName CharacterId;
-    int32 CharacterIndex;
-    TSubclassOf<class AMSLobbyCharacter> PawnClass;
+    FName CharacterID;
 };

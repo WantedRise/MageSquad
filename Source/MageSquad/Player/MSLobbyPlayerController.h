@@ -32,6 +32,9 @@ public:
 	void ServerRequestSetReady(bool bNewReady);
 	UFUNCTION(Server, Reliable)
 	void Server_SelectCharacter(FName InCharacterId);
+
+	void SwitchToCharacterCamera();
+	void SwitchToLobbyCamera();
 protected:
 	//로비 UI 생성과 카메라 설정
 	void BeginPlay() override;
@@ -40,9 +43,13 @@ protected:
 	//로비 메인 UI 위젯을 생성하고 화면에 표시
 	void CreateLobbyUI();
 	
+	
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<class UUserWidget> LobbyMainWidgetClass;
 	UPROPERTY()
 	class UMSLobbyMainWidget* LobbyMainWidget;
+	UPROPERTY()
+	class AActor* LobbyCameraActor;
 };

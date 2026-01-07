@@ -8,6 +8,12 @@
 
 class UMSCharacterSelectWidget;
 
+enum class EButtonState
+{
+	Lobby,
+	SelectCharacter
+};
+
 /*
 * 작성자: 이상준
 * 작성일: 2025-12-16
@@ -23,9 +29,30 @@ class MAGESQUAD_API UMSLobbyMainWidget : public UUserWidget
 public:
 	UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer);
 	UMSCharacterSelectWidget* GetCharacterSelectWidget() { return MSCharacterSelect; }
+	virtual void NativeConstruct() override;
+protected:
+	UFUNCTION()
+	void OnClickedSelectCharacterButton();
+	UFUNCTION()
+	void OnHoveredSelectCharacterButton();
+	UFUNCTION()
+	void OnUnHoveredSelectCharacterButton();
+	UFUNCTION()
+	void OnClickedLobbyButton();
+	UFUNCTION()
+	void OnHoveredLobbyButton();
+	UFUNCTION()
+	void OnUnHoveredLobbyButton();
+	void SetScaleButton(class UButton* InButton, float SetSize);
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UMSLobbyReadyWidget* WBP_MSLobbyReady;
 	UPROPERTY(meta = (BindWidget))
 	UMSCharacterSelectWidget* MSCharacterSelect;
+	UPROPERTY(meta = (BindWidget))
+	class UButton* Button_Select;
+	UPROPERTY(meta = (BindWidget))
+	class UButton* Button_Lobby;
+
+	EButtonState ButtonState = EButtonState::Lobby;
 };

@@ -7,7 +7,7 @@
 #include "MSCharacterSelectWidget.generated.h"
 
 struct FMSCharacterData;
-
+struct FMSSkillList;
 /**
  * 
  */
@@ -20,21 +20,23 @@ protected:
     virtual void NativeConstruct() override;
 
 private:
+    void GetSkillData();
     void BuildCharacterSlots();
     void OnCharacterSlotClicked(FName InCharacterId);
-    void HandleCharacterChanged(FName CharacterID);
-    
+    const FMSSkillList* FindSkillRows(int32 InSkillID);
 protected:
     UPROPERTY(meta = (BindWidget))
     class UUniformGridPanel* CharacterGrid;
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<class UMSCharacterSlotWidget> SlotWidgetClass;
     UPROPERTY(meta = (BindWidget))
-    class UMSCharacterInfoWidget* InfoWidget;
+    class UMSCharacterInfoWidget* SelectCharacterInfoWidget;
     UPROPERTY(meta = (BindWidget))
-    class UTextBlock* Text_Name;
+    class UMSCharacterInfoWidget* PassiveSkillInfoWidget;
     UPROPERTY(meta = (BindWidget))
-    class UTextBlock* Text_Desc;
+    class UMSCharacterInfoWidget* ActiveSkillLeftInfoWidget;
+    UPROPERTY(meta = (BindWidget))
+    class UMSCharacterInfoWidget* ActiveSkillRightInfoWidget;
 
     UPROPERTY(EditDefaultsOnly, Category = "Grid")
     int32 Columns = 4;
@@ -43,6 +45,9 @@ protected:
     int32 Rows = 1;
     
     FName CurrentCharacterID;
-    UPROPERTY()
-    TSubclassOf<class AMSPlayerCharacter> SelectedPawnClass;
+    // 스킬 데이터 테이블
+    UPROPERTY(EditDefaultsOnly, Category = "Skill")
+    class UDataTable* SkillListDataTable;
+
+    TArray<FMSSkillList*> AllSkillRows;
 };

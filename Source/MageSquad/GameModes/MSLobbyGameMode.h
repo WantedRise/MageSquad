@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -24,6 +24,7 @@ public:
 	AMSLobbyGameMode();
 	//AMSLobbyPlayerState에 호스트 여부와 플레이어 닉네임 지정
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void RestartPlayer(AController* NewPlayer) override;
 	//로비에서 각 플레이어의 시작 위치를 결정
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
 public:
