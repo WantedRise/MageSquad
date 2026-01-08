@@ -858,7 +858,7 @@ void UMSEnemySpawnSubsystem::ProcessSpawnQueue()
 			return;
 		}
 
-		FMSPendingSpawnRequest Request = PendingSpawnQueue.Pop(false);
+		FMSPendingSpawnRequest Request = PendingSpawnQueue.Pop(EAllowShrinking::No);
 		SpawnMonsterInternal(Request.MonsterID, Request.Location);
 	}
 }

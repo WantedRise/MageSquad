@@ -9,8 +9,8 @@
 
 AMSNormalAIController::AMSNormalAIController()
 {
-	BehaviorTreeAsset = LoadObject<UBehaviorTree>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/BT_NormalEnemy.BT_NormalEnemy"));
-	BlackBoardAsset = LoadObject<UBlackboardData>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/BB_NormalEnemy.BB_NormalEnemy"));
+	BehaviorTreeAsset = LoadObject<UBehaviorTree>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/Normal/BT_NormalEnemy.BT_NormalEnemy"));
+	BlackBoardAsset = LoadObject<UBlackboardData>(nullptr, TEXT("/Game/Blueprints/Enemies/AI/Normal/BB_NormalEnemy.BB_NormalEnemy"));
 }
 
 void AMSNormalAIController::BeginPlay()

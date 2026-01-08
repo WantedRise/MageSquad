@@ -39,6 +39,8 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
         }
     }
     
+    // Target을 WeakObjectPtr로 캡처
+    TWeakObjectPtr<AActor> WeakTarget = Target;
     FName LocalParamName = DissolveValueParameterName; 
     float Duration = DissolveDuration;
     float StartTime = Target->GetWorld()->GetTimeSeconds();
@@ -46,16 +48,20 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
     FTimerHandle TimerHandle;
     FTimerDelegate TimerDel;
 
-    // 람다 구현 (TimerHandle을 값으로 캡처하지 않고, TimerManager에서 직접 찾아 해제하거나 조건부 종료)
-    TimerDel.BindLambda([Target, WeakDynamicMaterials, LocalParamName, StartTime, Duration]()
+    TimerDel.BindLambda([WeakTarget, WeakDynamicMaterials, LocalParamName, StartTime, Duration]()
     {
-        if (!Target) return;
+        // Target 유효성 체크
+        AActor* TargetActor = WeakTarget.Get();
+        if (!TargetActor || !TargetActor->GetWorld())
+        {
+            return; // 타이머는 Target 파괴 시 자동 정리됨
+        }
 
-        float CurrentTime = Target->GetWorld()->GetTimeSeconds();
+        float CurrentTime = TargetActor->GetWorld()->GetTimeSeconds();
         float ElapsedTime = CurrentTime - StartTime;
         float Alpha = FMath::Clamp(ElapsedTime / Duration, -0.5f, 1.0f);
 
-        for (auto& WeakDMI : WeakDynamicMaterials)
+        for (const auto& WeakDMI : WeakDynamicMaterials)
         {
             if (WeakDMI.IsValid())
             {
@@ -63,10 +69,9 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
             }
         }
 
-        // 완료 시 타이머 종료
         if (Alpha >= 1.0f)
         {
-            Target->GetWorldTimerManager().ClearAllTimersForObject(Target);
+            TargetActor->GetWorldTimerManager().ClearAllTimersForObject(TargetActor);
         }
     });
 
