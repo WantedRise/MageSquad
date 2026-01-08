@@ -19,6 +19,10 @@ void UMSGA_EnemyBossBaseAbility::ActivateAbility(const FGameplayAbilitySpecHandl
 	
 	// 오너 지정
 	Owner = Cast<AMSBossEnemy>(GetActorInfo().AvatarActor.Get());
+	
+	// UE_LOG(LogTemp, Error, TEXT("[Enemy %s] - HasAuthority: %s"), 
+	// 	*GetName(),
+	// 	Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
 }
 
 void UMSGA_EnemyBossBaseAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,

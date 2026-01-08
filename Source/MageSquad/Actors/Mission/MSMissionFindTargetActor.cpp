@@ -4,6 +4,7 @@
 #include "Actors/Mission/MSMissionFindTargetActor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
+#include "Components/MSDirectionIndicatorComponent.h"
 
 AMSMissionFindTargetActor::AMSMissionFindTargetActor()
 {
@@ -15,6 +16,8 @@ AMSMissionFindTargetActor::AMSMissionFindTargetActor()
 
 	Collision->SetSphereRadius(80.f);
 	Collision->SetCollisionProfileName(TEXT("MSObstacleWave"));
+
+	DirectionIndicatorComponent = CreateDefaultSubobject<UMSDirectionIndicatorComponent>(TEXT("DirectionIndicatorComponent"));
 }
 
 void AMSMissionFindTargetActor::Tick(float DeltaTime)
@@ -38,6 +41,14 @@ void AMSMissionFindTargetActor::BeginPlay()
 	if (HasAuthority())
 	{
 		Collision->OnComponentBeginOverlap.AddDynamic(this,&AMSMissionFindTargetActor::OnOverlapBegin);
+	}
+
+
+	// 플레이어 방향 표시 인디케이터 설정
+	if (DirectionIndicatorComponent)
+	{
+		// 거리 표기 비활성화
+		DirectionIndicatorComponent->bShowDistance = false;
 	}
 }
 

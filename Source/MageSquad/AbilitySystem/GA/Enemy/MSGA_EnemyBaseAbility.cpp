@@ -18,6 +18,10 @@ void UMSGA_EnemyBaseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	
 	// 오너 지정
 	Owner = Cast<AMSBaseEnemy>(GetActorInfo().AvatarActor.Get());
+	
+	// UE_LOG(LogTemp, Error, TEXT("[Enemy %s] - HasAuthority: %s"), 
+	// *GetName(),
+	// Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
 }
 
 void UMSGA_EnemyBaseAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,

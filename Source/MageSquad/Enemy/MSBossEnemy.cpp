@@ -45,8 +45,8 @@ AMSBossEnemy::AMSBossEnemy()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
+	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	MoveComp->AvoidanceWeight = 0.1f;
 

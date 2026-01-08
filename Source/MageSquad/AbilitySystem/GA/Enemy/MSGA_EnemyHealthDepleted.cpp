@@ -7,6 +7,7 @@
 #include "MSGameplayTags.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/MSBaseEnemy.h"
+#include "Enemy/MSBossEnemy.h"
 #include "Enemy/AIController/MSBaseAIController.h"
 #include "Enemy/AIController/MSBossAIController.h"
 
@@ -17,9 +18,9 @@ UMSGA_EnemyHealthDepleted::UMSGA_EnemyHealthDepleted()
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
-	
 	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
+	
+	ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Event_HealthDepleted);
 }
 
 void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -30,7 +31,10 @@ void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle
 	
 	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
     
-	const bool bIsBoss = ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_Tier_Boss);
+	const bool bIsBossTag = ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_Tier_Boss);
+	const bool bIsBossClass = Owner->IsA(AMSBossEnemy::StaticClass());
+	const bool bIsBoss = bIsBossTag || bIsBossClass;
+	
 	const bool bIsPhase2 = ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Phase2);
 
 	if (!bIsBoss || bIsPhase2)
@@ -38,6 +42,11 @@ void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle
 		if (AMSBaseAIController* AIController = Cast<AMSBaseAIController>(Owner->GetController()))
 		{
 			AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsDeadKey(), true);
+			
+			if(Owner->IsA(AMSBossEnemy::StaticClass()))
+			{
+				UE_LOG(LogTemp, Error, TEXT("Boss Is Dead: Phase2 %s"), bIsPhase2 ? TEXT("true") : TEXT("false"));
+			}
 		}
 	}
 	else
@@ -45,6 +54,7 @@ void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle
 	 	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(Owner->GetController()))
 	 	{
 	 		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsGroggyKey(), true);
+	 		UE_LOG(LogTemp, Error, TEXT("Boss Is Groggy"));
 	 	}
 	}
 	
