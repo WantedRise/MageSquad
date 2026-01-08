@@ -185,12 +185,19 @@ private:
 	UPROPERTY()
 	TSet<TObjectPtr<class AMSPlayerState>> CompletedPlayers;
 
+	void BeginSkillLevelUpPhaseForPlayers(int32 SessionId);
+	void ScheduleSkillLevelUpStart(int32 SessionId);
+
 	void EndSkillLevelUpPhase(bool bByTimeout);
 	bool AreAllPlayersCompleted() const;
 
 private:
 	FTSTicker::FDelegateHandle SkillLevelUpTickerHandle;
 	bool TickSkillLevelUpPhase(float DeltaTime);
+
+	FTimerHandle SkillLevelUpStartDelayHandle;
+	TArray<int32> PendingSkillLevelUpSessions;
+	bool bSkillLevelUpStartPending = false;
 
 protected:
 	// 현재 레벨 변동 OnRep 함수
