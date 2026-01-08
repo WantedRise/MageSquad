@@ -57,12 +57,6 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 	RingOriginComp->SetGenerateOverlapEvents(false);
 	RingOriginComp->bReceivesDecals = false;
 	RingOriginComp->SetIsReplicated(false);
-
-	// 초기값
-	ServerProgress = 0.f;
-	RepProgressByte = 0;
-	CurrentReviver = nullptr;
-	ReviveDuration = 2.5f;
 }
 
 void AMSTeamReviveActor::BeginPlay()
@@ -184,6 +178,13 @@ void AMSTeamReviveActor::Tick_Server(float DeltaSeconds)
 		return;
 	}
 
+	// 이미 부활했거나 사망 상태가 아니라면 진행 중인 부활을 정리한다.
+	if (!DownedCharacter->GetIsDead())
+	{
+		Destroy();
+		return;
+	}
+
 	// 부활 대상 or 부활 진행자가 컷씬 상태인 경우 부활 중단
 	if (DownedCharacter->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Shared_State_CutScene))
 	{
@@ -290,6 +291,12 @@ void AMSTeamReviveActor::TryComplete_Server()
 	// 캐릭터 부활 진행
 	if (DownedCharacter)
 	{
+		// 부활 완료 시점에 이미 살아있으면 목숨 소모 없이 정리
+		if (!DownedCharacter->GetIsDead())
+		{
+			Destroy();
+			return;
+		}
 		DownedCharacter->ResetCharacterOnRespawn();
 	}
 

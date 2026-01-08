@@ -108,7 +108,7 @@ private:
 
 	// 현재 부활 진행자(디버그/관찰용, 로직은 서버에서만 사용)
 	UPROPERTY(Replicated)
-	TObjectPtr<APawn> CurrentReviver;
+	TObjectPtr<APawn> CurrentReviver = nullptr;
 
 	// 부활 진행 시간(초)
 	UPROPERTY(Replicated)
