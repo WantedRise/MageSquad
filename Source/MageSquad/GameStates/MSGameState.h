@@ -172,7 +172,7 @@ public:
 
 	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
 	UFUNCTION(BlueprintCallable)
-	void StartSkillLevelUpPhase(bool bIsSpellEnhancement = true);
+	void StartSkillLevelUpPhase(bool bIsSpellEnhancement = false);
 
 	void NotifySkillLevelUpCompleted(class AMSPlayerState* PS);
 
