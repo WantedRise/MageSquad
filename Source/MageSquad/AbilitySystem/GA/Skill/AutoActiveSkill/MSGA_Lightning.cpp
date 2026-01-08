@@ -59,6 +59,7 @@ void UMSGA_Lightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.LifeTime = 1.f;
 	RuntimeData.Radius = SkillRadius;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 	
 	for (auto& Target : Targets)
 	{

@@ -100,6 +100,7 @@ void UMSGA_PoisonPlant::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaPeriodic::StaticClass();
 	RuntimeData.DamageSequence = FinalDamageSequence;
 	RuntimeData.DamageInterval = DamageInterval;
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	UMSFunctionLibrary::LaunchProjectile(
 		this,

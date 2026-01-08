@@ -82,13 +82,14 @@ void UMSGA_IceNova::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
-	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
-	RuntimeData.Damage = SkillListRow.SkillDamage;
-	RuntimeData.DamageEffect = DamageEffect;
-	RuntimeData.Effects = AdditionalEffects;
-	RuntimeData.LifeTime = 1.5f;
-	RuntimeData.Radius = Range;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
+FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
+RuntimeData.Damage = SkillListRow.SkillDamage;
+RuntimeData.DamageEffect = DamageEffect;
+RuntimeData.Effects = AdditionalEffects;
+RuntimeData.LifeTime = 1.5f;
+RuntimeData.Radius = Range;
+RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
+ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FTransform SpawnTransform(FRotator::ZeroRotator, Avatar->GetActorLocation());
 

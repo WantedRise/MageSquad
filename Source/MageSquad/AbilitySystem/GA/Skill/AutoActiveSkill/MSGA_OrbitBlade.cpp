@@ -47,6 +47,7 @@ void UMSGA_OrbitBlade::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.Radius = Range;
 	RuntimeData.ProjectileSpeed = OrbitSpeedDeg;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_OrbitBlade::StaticClass();
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FVector Forward = Avatar->GetActorForwardVector();
 	const float StepAngle = 360.f / FMath::Max(1, ProjectileNum);
