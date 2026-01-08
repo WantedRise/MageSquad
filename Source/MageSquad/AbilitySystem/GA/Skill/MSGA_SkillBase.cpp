@@ -5,6 +5,7 @@
 #include "Player/MSPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSPlayerAttributeSet.h"
+#include "MSGameplayTags.h"
 
 UMSGA_SkillBase::UMSGA_SkillBase()
 {
@@ -40,6 +41,15 @@ void UMSGA_SkillBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	}
 
 	SkillListRow = *Found;
+	bIsEnhanced = false;
+	for (const FMSUpgradeInfo& UpgradeInfo : SkillListRow.UpgradeInfos)
+	{
+		if (UpgradeInfo.Tag == MSGameplayTags::Upgrade_Enhance && UpgradeInfo.Current > 0)
+		{
+			bIsEnhanced = true;
+			break;
+		}
+	}
 }
 
 void UMSGA_SkillBase::ApplyPlayerCritToRuntimeData(

@@ -86,7 +86,7 @@ private:
 
 public:
 	// 스킬 레벨업 시작
-	void BeginSkillLevelUp(int32 SessionId);
+	void BeginSkillLevelUp(int32 SessionId, bool bIsSpellEnhancement = false);
 
 	// 스킬 레벨업 적용
 	void ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLevelUpChoicePair& Picked);

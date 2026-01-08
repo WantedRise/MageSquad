@@ -99,6 +99,7 @@ namespace MSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Penetration, "Upgrade.Penetration");
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Range, "Upgrade.Range");
 	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Duration, "Upgrade.Duration");
+	UE_DEFINE_GAMEPLAY_TAG(Upgrade_Enhance, "Upgrade.Enhance");
 
 	/* Shared Tags */
 	UE_DEFINE_GAMEPLAY_TAG(Shared_Ability_DrawDamageNumber, "Shared.Ability.DrawDamageNumber");
