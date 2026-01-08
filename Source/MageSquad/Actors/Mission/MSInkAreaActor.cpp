@@ -3,6 +3,7 @@
 #include "Kismet/KismetRenderingLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "Components/MSDirectionIndicatorComponent.h"
 
 AMSInkAreaActor::AMSInkAreaActor()
 {
@@ -10,6 +11,8 @@ AMSInkAreaActor::AMSInkAreaActor()
     bReplicates = true;
     AreaMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AreaMesh"));
     RootComponent = AreaMesh;
+
+    DirectionIndicatorComponent = CreateDefaultSubobject<UMSDirectionIndicatorComponent>(TEXT("DirectionIndicatorComponent"));
 }
 
 void AMSInkAreaActor::BeginPlay()
@@ -40,6 +43,13 @@ void AMSInkAreaActor::BeginPlay()
     if (BrushPaintMaterial)
     {
         BrushMID = UMaterialInstanceDynamic::Create(BrushPaintMaterial, this);
+    }
+
+    // 플레이어 방향 표시 인디케이터 설정
+    if (DirectionIndicatorComponent)
+    {
+        // 거리 표기 비활성화
+        DirectionIndicatorComponent->bShowDistance = false;
     }
 }
 
