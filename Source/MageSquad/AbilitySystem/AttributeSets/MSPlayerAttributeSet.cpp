@@ -81,66 +81,64 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		// 현재 체력 변경량
 		const float DeltaHealth = NewHealth - CachedOldHealth;
 
-		// 현재 체력이 오른 경우 스킵
-		if (DeltaHealth > 0.f)
+		// 현재 체력이 회복된 경우, 체력 감소에 따른 로직 스킵
+		if (!(DeltaHealth > 0.f))
 		{
-			return;
-		}
-
-		/*
-		* 받은 피해량 출력 이벤트 전달 로직 (DamageFloater)
-		*/
-		{
-			//// 현재 체력 및 받은 피해량 계산
-			//const float NewHealth = GetHealth();
-			//const float DeltaHealth = NewHealth - CachedOldHealth;
-
-			//// 이벤트 데이터에 이벤트 태그 + 최종 피해량 저장
-			//FGameplayEventData Payload;
-			//Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
-			//Payload.EventMagnitude = DeltaHealth;
-
-			//// 치명타 포함 추가 태그 확인
-			//// EffectSpec에서 모든 태그를 가져와서 이벤트 데이터에 넘김
-			//FGameplayTagContainer SpecAssetTags;
-			//Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
-			//Payload.InstigatorTags = SpecAssetTags;
-
-			//// EffectContext도 함께 전달(가해자/히트 결과 등 확장 가능)
-			//Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
-
-			//// 받은 피해량 출력 이벤트 전달
-			//TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
-		}
-
-		/*
-		* 카메라 흔들림 수행 명령 로직
-		*/
-		{
-			// ASC와 AttributeSet은 PlayerState에서 가지고 있음.
-			// 따라서 ASC로 한 번 거쳐서 로컬 플레이어를 가져와야 함
-			AMSPlayerCharacter* MSOnwer = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor());
-			if (MSOnwer && MSOnwer->HasAuthority())
+			/*
+			* 받은 피해량 출력 이벤트 전달 로직 (DamageFloater)
+			*/
 			{
-				// 카메라 흔들림 강도 (경우에 따라 설정하기)
-				const float ShakeScale = 0.3f;
+				//// 현재 체력 및 받은 피해량 계산
+				//const float NewHealth = GetHealth();
+				//const float DeltaHealth = NewHealth - CachedOldHealth;
 
-				// 체력이 변경된 로컬 클라이언트에게 카메라 흔들림 수행하라고 명령
-				MSOnwer->ClientRPCPlayHealthShake(ShakeScale);
+				//// 이벤트 데이터에 이벤트 태그 + 최종 피해량 저장
+				//FGameplayEventData Payload;
+				//Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
+				//Payload.EventMagnitude = DeltaHealth;
+
+				//// 치명타 포함 추가 태그 확인
+				//// EffectSpec에서 모든 태그를 가져와서 이벤트 데이터에 넘김
+				//FGameplayTagContainer SpecAssetTags;
+				//Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
+				//Payload.InstigatorTags = SpecAssetTags;
+
+				//// EffectContext도 함께 전달(가해자/히트 결과 등 확장 가능)
+				//Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
+
+				//// 받은 피해량 출력 이벤트 전달
+				//TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
 			}
-		}
 
-		/*
-		* 부활/관전 로직
-		*/
-		{
-			if (NewHealth <= 0.f)
+			/*
+			* 카메라 흔들림 수행 명령 로직
+			*/
 			{
-				// 서버에서만 사망 처리
-				if (AMSPlayerCharacter* OwnerChar = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor()))
+				// ASC와 AttributeSet은 PlayerState에서 가지고 있음.
+				// 따라서 ASC로 한 번 거쳐서 로컬 플레이어를 가져와야 함
+				AMSPlayerCharacter* MSOnwer = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor());
+				if (MSOnwer && MSOnwer->HasAuthority())
 				{
-					// 캐릭터의 사망 처리 함수 호출
-					OwnerChar->SetCharacterOnDead_Server();
+					// 카메라 흔들림 강도 (경우에 따라 설정하기)
+					const float ShakeScale = 0.3f;
+
+					// 체력이 변경된 로컬 클라이언트에게 카메라 흔들림 수행하라고 명령
+					MSOnwer->ClientRPCPlayHealthShake(ShakeScale);
+				}
+			}
+
+			/*
+			* 부활/관전 로직
+			*/
+			{
+				if (NewHealth <= 0.f)
+				{
+					// 서버에서만 사망 처리
+					if (AMSPlayerCharacter* OwnerChar = Cast<AMSPlayerCharacter>(TargetASC->GetAvatarActor()))
+					{
+						// 캐릭터의 사망 처리 함수 호출
+						OwnerChar->SetCharacterOnDead_Server();
+					}
 				}
 			}
 		}

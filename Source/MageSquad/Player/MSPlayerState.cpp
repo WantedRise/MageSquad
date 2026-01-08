@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include <System/MSCharacterDataSubsystem.h>
 #include "MageSquad.h"
+#include "MSGameplayTags.h"
 
 AMSPlayerState::AMSPlayerState()
 {
@@ -249,7 +250,7 @@ void AMSPlayerState::GiveAbilityForSkillRow_Server(const FMSSkillList& Skill)
 		Skill.SkillLevel);
 }
 
-void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
+void AMSPlayerState::BeginSkillLevelUp(int32 SessionId, bool bIsSpellEnhancement)
 {
 	if (!HasAuthority())
 		return;
@@ -305,6 +306,9 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 		// -----------------------
 		if (!bOwned)
 		{
+			if (bIsSpellEnhancement)
+				continue;
+
 			// 슬롯이 없으면 습득 후보 자체를 만들지 않음
 			if (!bHasFreeSlot)
 				continue;
@@ -335,6 +339,12 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 				continue;
 
 			if (UpgradeInfo.Max > 0 && UpgradeInfo.Current >= UpgradeInfo.Max)
+				continue;
+
+			const bool bIsEnhanceTag = (UpgradeInfo.Tag == MSGameplayTags::Upgrade_Enhance);
+			if (bIsSpellEnhancement && !bIsEnhanceTag)
+				continue;
+			if (!bIsSpellEnhancement && bIsEnhanceTag)
 				continue;
 
 			FMSLevelUpChoicePair Pair;
@@ -400,7 +410,12 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId)
 
 	if (CurrentSkillChoices.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] Picked is empty"));
+		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] No choices; auto-complete"));
+		bSkillLevelUpCompleted = true;
+		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+		{
+			GS->NotifySkillLevelUpCompleted(this);
+		}
 		return;
 	}
 

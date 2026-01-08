@@ -233,9 +233,9 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 
 	if (PendingSkillLevelUpSessions.Num() > 0)
 	{
-		const int32 NextSessionId = PendingSkillLevelUpSessions[0];
+		const FPendingSkillLevelUpSession NextSession = PendingSkillLevelUpSessions[0];
 		PendingSkillLevelUpSessions.RemoveAt(0);
-		ScheduleSkillLevelUpStart(NextSessionId);
+		ScheduleSkillLevelUpStart(NextSession.SessionId, NextSession.bIsSpellEnhancement);
 	}
 }
 
@@ -290,7 +290,7 @@ void AMSGameState::OnRep_ActivePlayerCount()
 	BroadcastExperienceChanged();
 }
 
-void AMSGameState::StartSkillLevelUpPhase()
+void AMSGameState::StartSkillLevelUpPhase(bool bIsSpellEnhancement)
 {
 	if (!HasAuthority()) return;
 
@@ -305,14 +305,17 @@ void AMSGameState::StartSkillLevelUpPhase()
 
 	if (bSkillLevelUpPhaseActive || bSkillLevelUpStartPending)
 	{
-		PendingSkillLevelUpSessions.Add(LevelUpSessionId);
+		FPendingSkillLevelUpSession Pending;
+		Pending.SessionId = LevelUpSessionId;
+		Pending.bIsSpellEnhancement = bIsSpellEnhancement;
+		PendingSkillLevelUpSessions.Add(Pending);
 		return;
 	}
 
-	ScheduleSkillLevelUpStart(LevelUpSessionId);
+	ScheduleSkillLevelUpStart(LevelUpSessionId, bIsSpellEnhancement);
 }
 
-void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId)
+void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement)
 {
 	if (UWorld* World = GetWorld())
 	{
@@ -323,7 +326,8 @@ void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId)
 			FTimerDelegate::CreateUObject(
 				this,
 				&AMSGameState::BeginSkillLevelUpPhaseForPlayers,
-				SessionId
+				SessionId,
+				bIsSpellEnhancement
 			),
 			2.0f,
 			false
@@ -593,7 +597,7 @@ void AMSGameState::OnRep_SharedLives()
 	// 공유 목숨 변경 이벤트 브로드캐스트
 	OnSharedLivesChanged.Broadcast(SharedLives);
 }
-void AMSGameState::BeginSkillLevelUpPhaseForPlayers(int32 SessionId)
+void AMSGameState::BeginSkillLevelUpPhaseForPlayers(int32 SessionId, bool bIsSpellEnhancement)
 {
 	if (!HasAuthority())
 	{
@@ -617,7 +621,7 @@ void AMSGameState::BeginSkillLevelUpPhaseForPlayers(int32 SessionId)
 			continue;
 		}
 
-		MSPS->BeginSkillLevelUp(SessionId);
+		MSPS->BeginSkillLevelUp(SessionId, bIsSpellEnhancement);
 	}
 
 	// Ticker 시작 (Pause 영향 없음)
