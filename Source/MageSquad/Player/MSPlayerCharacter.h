@@ -479,9 +479,11 @@ protected:
 	// 사망 상태가 변경되었을 때 로컬 클라이언트에서 입력/카메라/UI 등을 처리하는 함수
 	void ApplyLocalDeathState(bool bNowDead);
 
-	// 사망 상태 변경 OnRep 함수
+	// 사망/관전 상태 변경 OnRep 함수
 	UFUNCTION()
 	void OnRep_IsDead();
+	UFUNCTION()
+	void OnRep_IsSpectating();
 
 protected:
 	// 사망 상태 여부
@@ -489,7 +491,7 @@ protected:
 	bool bIsDead = false;
 
 	// 관전 상태 여부
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_IsSpectating)
 	bool bIsSpectating = false;
 
 	// 팀 부활용 액터. 서버만 소유

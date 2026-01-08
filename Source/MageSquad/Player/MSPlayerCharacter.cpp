@@ -264,6 +264,8 @@ void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 	DOREPLIFETIME(AMSPlayerCharacter, PlayerData);
 	DOREPLIFETIME_CONDITION_NOTIFY(AMSPlayerCharacter, SkillSlots, COND_OwnerOnly, REPNOTIFY_Always);
+	DOREPLIFETIME(AMSPlayerCharacter, bIsDead);
+	DOREPLIFETIME(AMSPlayerCharacter, bIsSpectating);
 }
 
 void AMSPlayerCharacter::OnRep_PlayerState()
@@ -1462,6 +1464,18 @@ void AMSPlayerCharacter::ApplyLocalDeathState(bool bNowDead)
 void AMSPlayerCharacter::OnRep_IsDead()
 {
 	ApplyLocalDeathState(bIsDead);
+}
+
+void AMSPlayerCharacter::OnRep_IsSpectating()
+{
+	if (!IsLocallyControlled()) return;
+
+	// 관전 모드 상태가 복제될 때 로컬 카메라/HUD를 동기화 상태로 유지
+	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(GetController()))
+	{
+		AActor* Target = MSPC->GetSpectateTargetActor();
+		MSPC->SetSpectateViewTarget(Target ? Target : this);
+	}
 }
 
 
