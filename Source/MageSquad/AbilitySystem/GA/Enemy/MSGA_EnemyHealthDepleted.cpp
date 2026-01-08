@@ -18,6 +18,8 @@ UMSGA_EnemyHealthDepleted::UMSGA_EnemyHealthDepleted()
 	AbilityTriggers.Add(TriggerData);
 
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
+	
+	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
 }
 
 void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
