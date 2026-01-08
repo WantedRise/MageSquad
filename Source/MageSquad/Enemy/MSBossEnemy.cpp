@@ -159,6 +159,8 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 		Camera->SetComponentTickEnabled(false);
 		SpringArm->SetComponentTickEnabled(false);
 	}
+	
+	ForceNetUpdate();
 }
 
 void AMSBossEnemy::OnRep_Phase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh)

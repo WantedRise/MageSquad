@@ -2,8 +2,13 @@
 
 
 #include "Enemy/AIController/MSNormalAIController.h"
+
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardData.h"
+#include "Enemy/MSNormalEnemy.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameStates/MSGameState.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -51,16 +56,26 @@ void AMSNormalAIController::HandleGlobalFreeze(bool bGlobalFreeze)
 			PathComp->PauseMove();
 		}
 		
+		if (AMSNormalEnemy* OwnerEnemy = Cast<AMSNormalEnemy>(GetPawn()))
+		{
+			OwnerEnemy->GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		}
+		
 		StopAI();
 	}
 	else
 	{
 		RunAI();
-		
 		// 이동 재개
 		if (UPathFollowingComponent* PathComp = GetPathFollowingComponent())
 		{
 			PathComp->ResumeMove();
 		}
+		
+		if (AMSNormalEnemy* OwnerEnemy = Cast<AMSNormalEnemy>(GetPawn()))
+		{
+			const UMSEnemyAttributeSet* AttributeSet = Cast<UMSEnemyAttributeSet>(OwnerEnemy->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
+			OwnerEnemy->GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMoveSpeed();
+		}	
 	}
 }
