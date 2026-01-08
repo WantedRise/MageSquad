@@ -172,7 +172,7 @@ public:
 
 	// 스킬 레벨업 선택지 Phase 시작 (서버 전용)
 	UFUNCTION(BlueprintCallable)
-	void StartSkillLevelUpPhase();
+	void StartSkillLevelUpPhase(bool bIsSpellEnhancement = false);
 
 	void NotifySkillLevelUpCompleted(class AMSPlayerState* PS);
 
@@ -185,8 +185,8 @@ private:
 	UPROPERTY()
 	TSet<TObjectPtr<class AMSPlayerState>> CompletedPlayers;
 
-	void BeginSkillLevelUpPhaseForPlayers(int32 SessionId);
-	void ScheduleSkillLevelUpStart(int32 SessionId);
+	void BeginSkillLevelUpPhaseForPlayers(int32 SessionId, bool bIsSpellEnhancement);
+	void ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement);
 
 	void EndSkillLevelUpPhase(bool bByTimeout);
 	bool AreAllPlayersCompleted() const;
@@ -196,7 +196,12 @@ private:
 	bool TickSkillLevelUpPhase(float DeltaTime);
 
 	FTimerHandle SkillLevelUpStartDelayHandle;
-	TArray<int32> PendingSkillLevelUpSessions;
+	struct FPendingSkillLevelUpSession
+	{
+		int32 SessionId = 0;
+		bool bIsSpellEnhancement = false;
+	};
+	TArray<FPendingSkillLevelUpSession> PendingSkillLevelUpSessions;
 	bool bSkillLevelUpStartPending = false;
 
 protected:
