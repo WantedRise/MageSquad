@@ -11,82 +11,66 @@ UMSGC_Dissolve::UMSGC_Dissolve()
 
 bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const
 {
-	if (!Target)
-	{
-		return false;
-	}
+    if (!Target || !Target->GetWorld())
+    {
+        return false;
+    }
 
-	// Character의 Mesh 가져오기
-	ACharacter* Character = Cast<ACharacter>(Target);
-	if (!Character)
-	{
-		return false;
-	}
-
-	USkeletalMeshComponent* Mesh = Character->GetMesh();
-	if (!Mesh)
-	{
-		return false;
-	}
-
-	// Dynamic Material Instance 생성 또는 재사용
-	// 약참조(WeakObjectPtr) 배열을 생성
-	TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> WeakDynamicMaterials;
-	for (int32 i = 0; i < Mesh->GetNumMaterials(); ++i)
-	{
-		UMaterialInstanceDynamic* DMI = Cast<UMaterialInstanceDynamic>(Mesh->GetMaterial(i));
-		if (!DMI)
-		{
-			DMI = Mesh->CreateDynamicMaterialInstance(i);
-		}
-
-		if (DMI)
-		{
-			WeakDynamicMaterials.Add(DMI);
-			// HitFlash 적용
-			DMI->SetScalarParameterValue(DissolveParameterName, 1.0f);
-		}
-	}
-	
-	FName LocalParamName = DissolveValueParameterName; 
-	float Duration = DissolveDuration;
+    ACharacter* Character = Cast<ACharacter>(Target);
+    if (!Character)
+    {
+        return false;
+    }
     
-	// 시작 시간 기록
-	float StartTime = Target->GetWorld()->GetTimeSeconds();
-
-	// 타이머 핸들 선언 및 루프 타이머 시작
-	FTimerHandle* TimerHandle = new FTimerHandle(); // 람다 내부에서 자신을 해제하기 위해 포인터 사용 권장
+    USkeletalMeshComponent* Mesh = Character->GetMesh();
+    if (!Mesh)
+    {
+        return false;
+    }
     
-	// 매우 짧은 간격(0.01초 등)으로 반복 호출하여 보간 구현
-	Target->GetWorldTimerManager().SetTimer(
-		*TimerHandle,
-		[Target, WeakDynamicMaterials, LocalParamName, StartTime, Duration, TimerHandle]() mutable
-		{
-			float CurrentTime = Target->GetWorld()->GetTimeSeconds();
-			float ElapsedTime = CurrentTime - StartTime;
-            
-			// 0에서 1 사이의 알파값 계산
-			float Alpha = FMath::Clamp(ElapsedTime / Duration, -0.5f, 1.0f);
+    TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> WeakDynamicMaterials;
+    for (int32 i = 0; i < Mesh->GetNumMaterials(); ++i)
+    {
+        UMaterialInstanceDynamic* DMI = Mesh->CreateDynamicMaterialInstance(i);
+        if (DMI)
+        {
+            WeakDynamicMaterials.Add(DMI);
+            DMI->SetScalarParameterValue(DissolveParameterName, 1.0f);
+        }
+    }
+    
+    FName LocalParamName = DissolveValueParameterName; 
+    float Duration = DissolveDuration;
+    float StartTime = Target->GetWorld()->GetTimeSeconds();
 
-			// 모든 머티리얼에 값 적용
-			for (auto& WeakDMI : WeakDynamicMaterials)
-			{
-				if (WeakDMI.IsValid())
-				{
-					WeakDMI->SetScalarParameterValue(LocalParamName, Alpha);
-				}
-			}
+    FTimerHandle TimerHandle;
+    FTimerDelegate TimerDel;
 
-			// 완료 시 타이머 종료 및 핸들 메모리 해제
-			if (Alpha >= 1.0f)
-			{
-				Target->GetWorldTimerManager().ClearTimer(*TimerHandle);
-				delete TimerHandle;
-			}
-		},
-		0.01f,
-		true  
-	);
+    // 람다 구현 (TimerHandle을 값으로 캡처하지 않고, TimerManager에서 직접 찾아 해제하거나 조건부 종료)
+    TimerDel.BindLambda([Target, WeakDynamicMaterials, LocalParamName, StartTime, Duration]()
+    {
+        if (!Target) return;
 
-	return true;
+        float CurrentTime = Target->GetWorld()->GetTimeSeconds();
+        float ElapsedTime = CurrentTime - StartTime;
+        float Alpha = FMath::Clamp(ElapsedTime / Duration, -0.5f, 1.0f);
+
+        for (auto& WeakDMI : WeakDynamicMaterials)
+        {
+            if (WeakDMI.IsValid())
+            {
+                WeakDMI->SetScalarParameterValue(LocalParamName, Alpha);
+            }
+        }
+
+        // 완료 시 타이머 종료
+        if (Alpha >= 1.0f)
+        {
+            Target->GetWorldTimerManager().ClearAllTimersForObject(Target);
+        }
+    });
+
+    Target->GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.01f, true);
+
+    return true;
 }
