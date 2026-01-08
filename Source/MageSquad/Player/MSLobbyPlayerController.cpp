@@ -97,6 +97,8 @@ void AMSLobbyPlayerController::BeginPlayingState()
 	// 월드 카메라 생성
 	FActorSpawnParameters SpawnParams;
 	CharacterCameraActor = GetWorld()->SpawnActor<ACameraActor>(CameraWorldTransform.GetLocation(), CameraWorldTransform.Rotator(), SpawnParams);
+	CharacterCameraActor->SetReplicates(false);
+	CharacterCameraActor->SetReplicateMovement(false);
 	UCameraComponent* CameraComp = CharacterCameraActor->GetCameraComponent();
 	check(CameraComp);
 	CameraComp->bConstrainAspectRatio = false;
