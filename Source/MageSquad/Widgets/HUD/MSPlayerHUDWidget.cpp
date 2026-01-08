@@ -16,11 +16,13 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Player/MSPlayerCharacter.h"
+#include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
 
 #include "GameStates/MSGameState.h"
 
 #include "MSGameplayTags.h"
+#include "MSFunctionLibrary.h"
 
 void UMSPlayerHUDWidget::NativeConstruct()
 {
@@ -671,8 +673,43 @@ void UMSPlayerHUDWidget::OnSharedLivesChanged(int32 NewLives)
 void UMSPlayerHUDWidget::SetHudVisibility(bool Result)
 {
 	UE_LOG(LogTemp, Log, TEXT("Hud Set Visibility : %s"), Result ? TEXT("Ture") : TEXT("False"));
-	ESlateVisibility NewVisibility = Result ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible;
+
+	ESlateVisibility NewVisibility = ESlateVisibility::SelfHitTestInvisible;
+	if (Result)
+	{
+		// 컷씬 상태 태그 부여
+		UAbilitySystemComponent* AbilitySystemComponent = LocalASC.Get();
+		AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Shared_State_CutScene);
+
+		// 입력 모드 변경
+		GetOwningPlayer()->SetInputMode(FInputModeUIOnly());
+
+		NewVisibility = ESlateVisibility::Collapsed;
+	}
+	else
+	{
+		// 컷씬 상태 태그 제거
+		UAbilitySystemComponent* AbilitySystemComponent = LocalASC.Get();
+		AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Shared_State_CutScene);
+
+		// 입력 모드 변경
+		GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
+
+		NewVisibility = ESlateVisibility::SelfHitTestInvisible;
+	}
+
 	MainCanvas->SetVisibility(NewVisibility);
+
+	// 현재 관전 UI + 입력 맵핑 갱신
+	if (CachedLocalCharacter.IsValid())
+	{
+		AMSPlayerController* MSPC = Cast<AMSPlayerController>(CachedLocalCharacter->GetController());
+		if (MSPC)
+		{
+			SetSpectateUI(CachedLocalCharacter->GetSpectating(), UMSFunctionLibrary::GetTargetPlayerNameText(MSPC->GetSpectateTargetActor()));
+			MSPC->ApplyLocalInputState(CachedLocalCharacter->GetIsDead());
+		}
+	}
 }
 
 void UMSPlayerHUDWidget::UpdateCooldowns(float DeltaTime)

@@ -4,12 +4,14 @@
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "AbilitySystemComponent.h"
 
 #include "Player/MSPlayerCharacter.h"
 
 #include "GameStates/MSGameState.h"
 
 #include "Net/UnrealNetwork.h"
+#include "MSGameplayTags.h"
 
 AMSTeamReviveActor::AMSTeamReviveActor()
 {
@@ -179,6 +181,19 @@ void AMSTeamReviveActor::Tick_Server(float DeltaSeconds)
 	{
 		Destroy();
 		return;
+	}
+
+	// 부활 대상 or 부활 진행자가 컷씬 상태인 경우 부활 중단
+	if (DownedCharacter->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Shared_State_CutScene))
+	{
+		return;
+	}
+	if (CurrentReviver)
+	{
+		if (Cast<AMSPlayerCharacter>(CurrentReviver)->GetAbilitySystemComponent()->HasMatchingGameplayTag(MSGameplayTags::Shared_State_CutScene))
+		{
+			return;
+		}
 	}
 
 	// 부활 진행자 유효 검사 및 승계 처리
