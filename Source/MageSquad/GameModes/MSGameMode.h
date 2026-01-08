@@ -74,7 +74,7 @@ protected:
 
 	// 로비로 이동하기 전 대기 시간(게임 종료 위젯 표시 시간) (초)
 	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI")
-	float TravelDelaySeconds = 3.7f;
+	float TravelDelaySeconds = 3.85f;
 
 private:
 	FTimerHandle TravelToLobbyTimerHandle;
