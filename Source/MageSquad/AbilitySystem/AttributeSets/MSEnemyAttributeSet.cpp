@@ -68,13 +68,17 @@ void UMSEnemyAttributeSet::OnRep_AttackRange(const FGameplayAttributeData& OldVa
 void UMSEnemyAttributeSet::OnRep_DropExpValue(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UMSEnemyAttributeSet, DropExpValue, OldValue);
-	
 }
 
 void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-
+	
+	if (Data.Target.GetOwnerRole() != ROLE_Authority)
+	{
+		return;
+	}
+	
 #pragma region Health
 	// Clamp Health to [0, MaxHealth]
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
@@ -83,6 +87,7 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 		* 김준형
 		* 받은 피해량 출력 이벤트 전달 로직 구현
 		*/
+		//if (GetCurrentHealth() > 0.f)
 		{
 			// 현재 체력 및 받은 피해량 계산
 			const float NewHealth = GetCurrentHealth();
@@ -105,24 +110,23 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			// 받은 피해량 출력 이벤트 전달
 			UAbilitySystemComponent* TargetASC = &Data.Target;
 			TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
-		}
 
-		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
+			SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
 
-		if (GetCurrentHealth() <= 0.f)
-		{
-			if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))
+			if (GetCurrentHealth() <= 0.f)
 			{
-				// HP소모 이벤트 호출
-				FGameplayEventData Payload;
-				Payload.EventTag = MSGameplayTags::Enemy_Event_HealthDepleted;
-				UAbilitySystemComponent* TargetASC = &Data.Target;
-				TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+				if (AMSBaseEnemy* OwnerEnemy = Cast<AMSBaseEnemy>(GetOwningActor()))
+				{
+					// HP소모 이벤트 호출
+					FGameplayEventData HandleHealthPayload;
+					HandleHealthPayload.EventTag = MSGameplayTags::Enemy_Event_HealthDepleted;
+					TargetASC->HandleGameplayEvent(HandleHealthPayload.EventTag, &HandleHealthPayload);
+				}
 			}
 		}
 	}
-#pragma endregion 
-	
+#pragma endregion
+
 #pragma region MoveSpeed
 	if (Data.EvaluatedData.Attribute == GetMoveSpeedAttribute())
 	{
