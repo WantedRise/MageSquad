@@ -253,7 +253,7 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 		if (Enemy)
 		{
 			//  풀링 모드 설정
-			Enemy->SetPoolingMode(true);
+
 			// 풀링된 Enemy는 DORM_Initial로 설정하여 클라이언트에 리플리케이트되지 않도록 함
 			Enemy->SetNetDormancy(DORM_Initial);
 			DeactivateEnemy(Enemy);
@@ -978,7 +978,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 
 	
 	// 리플리케이션 활성화
-	Enemy->SetReplicates(true);
+	//Enemy->SetReplicates(true);
 	Enemy->SetReplicateMovement(true);
 	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->ForceNetUpdate();
@@ -1011,10 +1011,12 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 
 	Enemy->SetMonsterID(NAME_None);
 	
-	// Hidden 처리
-	Enemy->SetActorHiddenInGame(true);
-	// 콜리전은 Dead Ability에서 몽타주 시작과 동시에 처리
-	Enemy->SetActorTickEnabled(false);
+	Enemy->SetPoolingMode(true);
+	
+	// // Hidden 처리
+	// Enemy->SetActorHiddenInGame(true);
+	// // 콜리전은 Dead Ability에서 몽타주 시작과 동시에 처리
+	// Enemy->SetActorTickEnabled(false);
 
 	// Movement 정리
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
@@ -1051,7 +1053,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	//ResetEnemyGASState(Enemy);
 	
 	// 리플리케이션 완전히 끄기
-	Enemy->SetReplicates(false);
+	//Enemy->SetReplicates(false);
 	Enemy->SetReplicateMovement(false);
 }
 

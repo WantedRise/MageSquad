@@ -154,6 +154,7 @@ void AMSBaseEnemy::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 
 	//  MonsterID를 모든 클라이언트에 Replicate
 	DOREPLIFETIME_CONDITION_NOTIFY(AMSBaseEnemy, CurrentMonsterID, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AMSBaseEnemy, bIsInPool, COND_None, REPNOTIFY_Always);
 }
 
 bool AMSBaseEnemy::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget,
@@ -230,9 +231,7 @@ void AMSBaseEnemy::SetAnimData(UDA_EnemyAnimationSet* NewAnimData)
 
 void AMSBaseEnemy::OnRep_MonsterID()
 {
-	// 클라이언트에서 MonsterID 변경 시 자동 호출됨!
-	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: %s"), *CurrentMonsterID.ToString());
-
+	// 클라이언트에서 MonsterID 변경 시 자동 호출됨
 	if (CurrentMonsterID == NAME_None)
 	{
 		return;
@@ -246,6 +245,15 @@ void AMSBaseEnemy::OnRep_MonsterID()
 		SpawnSystem->ActivateEnemy(this);
 		SpawnSystem->InitializeEnemyFromData(this, CurrentMonsterID);
 	}
+}
+
+void AMSBaseEnemy::OnRep_IsInPool()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[%s] OnRep_IsInPool %s"), HasAuthority() ? TEXT("Server") : TEXT("Client"), *CurrentMonsterID.ToString());
+	
+	SetNetDormancy(bIsInPool ? DORM_DormantAll : DORM_Awake);
+	SetActorTickEnabled(!bIsInPool);
+	SetActorHiddenInGame(bIsInPool);
 }
 
 float AMSBaseEnemy::CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo,
