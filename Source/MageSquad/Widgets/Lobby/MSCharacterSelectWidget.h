@@ -18,7 +18,9 @@ class MAGESQUAD_API UMSCharacterSelectWidget : public UUserWidget
 
 protected:
     virtual void NativeConstruct() override;
-
+public:
+    void UpdateUI(const FUniqueNetIdRepl NetID);
+    void UpdateCharacterInfoByCharacterId(FName CharacterId);
 private:
     void GetSkillData();
     void BuildCharacterSlots();

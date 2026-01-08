@@ -70,18 +70,44 @@ void AMSLobbyPlayerController::BeginPlay()
 		}
 
 		LobbyCameraActor = GetViewTarget();
+
+		UpdateCharacterSelectWidget();
+	}
+}
+
+void AMSLobbyPlayerController::UpdateCharacterSelectWidget()
+{
+	if (!PlayerState)
+		return;
+
+	// NetId도 여기서 함께 체크 (클라에서 늦을 수 있음)
+	const FUniqueNetIdRepl NetId = PlayerState->GetUniqueId();
+	if (!NetId.IsValid())
+		return;
+
+	if (HasAuthority())
+	{
+		if (LobbyMainWidget)
+		{
+			if (UMSCharacterSelectWidget* CharacterSelectWidget = LobbyMainWidget->GetCharacterSelectWidget())
+			{
+				CharacterSelectWidget->UpdateUI(NetId);
+			}
+		}
+	}
+	// 위젯에 알림
+	else
+	{
+		Server_RequestCharacterID(NetId);
 	}
 }
 
 void AMSLobbyPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	if (LobbyMainWidget)
+	if (IsLocalController())
 	{
-		if (UMSCharacterSelectWidget* CharacterSelectWidget = LobbyMainWidget->GetCharacterSelectWidget())
-		{
-			//CharacterSelectWidget->UpdatePlayerState();
-		}
+		UpdateCharacterSelectWidget();
 	}
 }
 
@@ -158,6 +184,46 @@ void AMSLobbyPlayerController::Server_SelectCharacter_Implementation(FName InCha
 		return;
 
 	CharacterDataManager->CacheSelectedCharacter(NetId, InCharacterId);
+}
+
+void AMSLobbyPlayerController::Server_RequestCharacterID_Implementation(const FUniqueNetIdRepl& NetID)
+{
+	if (!NetID.IsValid())
+		return;
+
+	UMSCharacterDataSubsystem* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+
+	if (!CharacterDataManager)
+		return;
+
+	// 서버에서 유효한 캐릭터인지 검증
+	const FName* Selection = CharacterDataManager->FindCharacterID(NetID);
+
+	FName ResultCharacterID = NAME_None;
+
+	if (!Selection)
+	{
+		ResultCharacterID = CharacterDataManager->GetDefaultCharacterID();
+	}
+	else
+	{
+		ResultCharacterID = *Selection;
+	}
+	UE_LOG(LogTemp, Log, TEXT("ResultCharacterID %s"), *ResultCharacterID.ToString());
+	Client_OnCharacterSelected(*Selection);
+}
+
+void AMSLobbyPlayerController::Client_OnCharacterSelected_Implementation(const FName& InCharacterId)
+{
+	if (InCharacterId.IsNone())
+		return;
+	if (LobbyMainWidget)
+	{
+		if (UMSCharacterSelectWidget* CharacterSelectWidget = LobbyMainWidget->GetCharacterSelectWidget())
+		{
+			CharacterSelectWidget->UpdateCharacterInfoByCharacterId(InCharacterId);
+		}
+	}
 }
 
 void AMSLobbyPlayerController::SwitchToCharacterCamera()

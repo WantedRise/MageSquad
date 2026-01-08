@@ -30,66 +30,122 @@ void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
             //호스트 표시
             PS->SetHost(true);
         }
-        //삭제
-        //// 이미 값이 있으면 건드리지 않음
-        //if (PS->GetSelectedCharacterID() != NAME_None)
-        //    return;
-
-        //UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-        //if (!CharacterData) return;
-
-        //const FName DefaultCharacterID = CharacterData->GetDefaultCharacterID();
-
-        //if (DefaultCharacterID == NAME_None)
-        //    return;
-
-        //// ⭐ 디폴트 캐릭터 설정
-        //PS->SetSelectedCharacter(DefaultCharacterID);
-
-        auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-        if (!CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
-        {
-            return;
-        }
-
-        const FUniqueNetIdRepl NetId = PS->GetUniqueId();
-        if (!NetId.IsValid())
-            return;
-
-        CharacterDataManager->CacheSelectedCharacter(NetId, CharacterDataManager->GetDefaultCharacterID());
     }
 }
 
 AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
+    //if (!Player)
+    //    return Super::ChoosePlayerStart_Implementation(Player);
+
+    //UWorld* World = GetWorld();
+    //if (!World)
+    //    return Super::ChoosePlayerStart_Implementation(Player);
+
+    //// 슬롯 캐싱 (한 번만)
+    //if (PlayerSlots.IsEmpty())
+    //{
+    //    CachePlayerSlotsIfNeeded();
+    //}
+
+    //for (const TWeakObjectPtr<AMSLobbyPlayerSlot>& SlotPtr : PlayerSlots)
+    //{
+    //    if (!SlotPtr.IsValid())
+    //        continue;
+
+    //    AMSLobbyPlayerSlot* Slot = SlotPtr.Get();
+    //    // 안전
+    //}
+    //// 비어있는 슬롯 찾기
+    //for (AMSLobbyPlayerSlot* Slot : PlayerSlots)
+    //{
+    //    if (!IsValid(Slot))
+    //        continue;
+
+    //    if (Slot->GetController() == nullptr)
+    //    {
+    //        Slot->SetController(Player);
+    //        Slot->HiddenInviteWidgetComponent();
+    //        return Slot;
+    //    }
+    //}
+    //for (AMSLobbyPlayerSlot* Slot : TActorRange<AMSLobbyPlayerSlot>(World))
+    //{
+    //    if (IsValid(Slot))
+    //    {
+    //        // 슬롯은 "비어 있는 상태"로 시작
+    //        Slot->SetController(nullptr);
+    //        PlayerSlots.Add(Slot);
+    //    }
+    //}
+
+
+
     if (!Player)
-        return Super::ChoosePlayerStart_Implementation(Player);
-
-    UWorld* World = GetWorld();
-    if (!World)
-        return Super::ChoosePlayerStart_Implementation(Player);
-
-    // 슬롯 캐싱 (한 번만)
-    if (PlayerSlots.IsEmpty())
     {
-        for (AMSLobbyPlayerSlot* Slot : TActorRange<AMSLobbyPlayerSlot>(World))
-        {
-            if (IsValid(Slot))
-            {
-                Slot->SetController(nullptr); // ⭐ 여기서만 초기화
-                PlayerSlots.Add(Slot);
-            }
-        }
+        return Super::ChoosePlayerStart_Implementation(Player);
     }
 
-    // 비어있는 슬롯 찾기
-    for (AMSLobbyPlayerSlot* Slot : PlayerSlots)
+    // PlayerState & NetId 확인
+    AMSLobbyPlayerState* PS = Player->GetPlayerState<AMSLobbyPlayerState>();
+    if (!PS)
     {
-        if (!IsValid(Slot))
+        UE_LOG(LogTemp, Log, TEXT("ChoosePlayerStart_Implementation : PS is nullptr"));
+        return Super::ChoosePlayerStart_Implementation(Player);
+    }
+
+    const FUniqueNetIdRepl NetId = PS->GetUniqueId();
+    if (!NetId.IsValid())
+    {
+        UE_LOG(LogTemp, Log, TEXT("ChoosePlayerStart_Implementation : NetId is nullptr"));
+        return Super::ChoosePlayerStart_Implementation(Player);
+    }
+
+    UMSCharacterDataSubsystem* CharacterDataSubsystem = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
+    if (!CharacterDataSubsystem)
+    {
+        return Super::ChoosePlayerStart_Implementation(Player);
+    }
+
+    CachePlayerSlotsIfNeeded();
+    // =====================================================
+// 1️⃣ 이미 NetId에 매칭된 SlotIndex가 있는 경우
+// =====================================================
+    if (const int32* AssignedIndex = CharacterDataSubsystem->FindSlotIndex(NetId))
+    {
+        for (const TWeakObjectPtr<AMSLobbyPlayerSlot>& SlotPtr : PlayerSlots)
+        {
+            if (!SlotPtr.IsValid())
+                continue;
+
+            AMSLobbyPlayerSlot* Slot = SlotPtr.Get();
+            if (Slot->SlotIndex == *AssignedIndex)
+            {
+                Slot->SetController(Player);
+                Slot->HiddenInviteWidgetComponent();
+                return Slot;
+            }
+        }
+
+        // SlotIndex는 있는데 SlotActor가 없다면 (이론상 거의 없음)
+        UE_LOG(LogTemp, Warning,
+            TEXT("SlotIndex %d assigned but SlotActor not found"), *AssignedIndex);
+    }
+
+    // =====================================================
+    // 2️⃣ 처음 접속한 플레이어 → 빈 슬롯 배정
+    // =====================================================
+    for (const TWeakObjectPtr<AMSLobbyPlayerSlot>& SlotPtr : PlayerSlots)
+    {
+        if (!SlotPtr.IsValid())
             continue;
 
+        AMSLobbyPlayerSlot* Slot = SlotPtr.Get();
         if (Slot->GetController() == nullptr)
         {
+            // NetId ↔ SlotIndex 매핑
+            CharacterDataSubsystem->Assign(NetId, Slot->SlotIndex);
+
             Slot->SetController(Player);
             Slot->HiddenInviteWidgetComponent();
             return Slot;
@@ -100,50 +156,90 @@ AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
     return Super::ChoosePlayerStart_Implementation(Player);
 }
 
+void AMSLobbyGameMode::CachePlayerSlotsIfNeeded()
+{
+    if (!PlayerSlots.IsEmpty())
+        return;
+
+    UWorld* World = GetWorld();
+    if (!World)
+        return;
+
+    for (AMSLobbyPlayerSlot* Slot : TActorRange<AMSLobbyPlayerSlot>(World))
+    {
+        if (IsValid(Slot))
+        {
+            Slot->SetController(nullptr); // 월드 기준 초기화
+            PlayerSlots.Add(Slot);
+        }
+    }
+
+    PlayerSlots.Sort([](const TWeakObjectPtr<AMSLobbyPlayerSlot>& A, const TWeakObjectPtr<AMSLobbyPlayerSlot>& B)
+    {
+        if (!A.IsValid()) return false;
+        if (!B.IsValid()) return true;
+        return A->SlotIndex < B->SlotIndex;
+    });
+}
+
 void AMSLobbyGameMode::PostSeamlessTravel()
 {
     Super::PostSeamlessTravel();
-
-    UE_LOG(LogTemp, Log, TEXT("PostSeamlessTravel: Clear PlayerSlots"));
-
-    PlayerSlots.Empty();
 }
+
 void AMSLobbyGameMode::SetHiddenPlayerSlots()
 {
-    for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
+    for (const TWeakObjectPtr<AMSLobbyPlayerSlot>& SlotPtr : PlayerSlots)
     {
-        if (IsValid(PlayerSlot))
-        {
-            PlayerSlot->HiddenInviteWidgetComponent();
-        }
+        if (!SlotPtr.IsValid())
+            continue;
+
+        AMSLobbyPlayerSlot* Slot = SlotPtr.Get();
+        Slot->HiddenInviteWidgetComponent();
     }
 }
 
 void AMSLobbyGameMode::SetShowPlayerSlots()
 {
-    for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
+    for (const TWeakObjectPtr<AMSLobbyPlayerSlot>& SlotPtr : PlayerSlots)
     {
-        if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
+        if (!SlotPtr.IsValid())
+            continue;
+
+        AMSLobbyPlayerSlot* Slot = SlotPtr.Get();
+        if (nullptr == Slot->GetController())
         {
-            PlayerSlot->ShowInviteWidgetComponent();
+            Slot->ShowInviteWidgetComponent();
         }
     }
 }
 
 void AMSLobbyGameMode::SetShowTargetPlayerSlot(AController* Target) const
 {
-    for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
+    for (const TWeakObjectPtr<AMSLobbyPlayerSlot>& SlotPtr : PlayerSlots)
     {
-        if (IsValid(PlayerSlot) && Target == PlayerSlot->GetController())
+        if (!SlotPtr.IsValid())
+            continue;
+
+        AMSLobbyPlayerSlot* Slot = SlotPtr.Get();
+        if (Target == Slot->GetController())
         {
-            PlayerSlot->ShowInviteWidgetComponent();
-            PlayerSlot->SetController(nullptr);
+            Slot->ShowInviteWidgetComponent();
+            Slot->SetController(nullptr);
         }
     }
 }
 
 void AMSLobbyGameMode::Logout(AController* Exiting)
 {
+    if (AMSLobbyPlayerState* PS = Exiting->GetPlayerState<AMSLobbyPlayerState>())
+    {
+        if (UMSCharacterDataSubsystem* CharacterDataSubsystem = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>())
+        {
+            CharacterDataSubsystem->ReleaseByNetId(PS->GetUniqueId());
+        }
+    }
+
     Super::Logout(Exiting);
 
     SetShowTargetPlayerSlot(Exiting);
@@ -240,21 +336,26 @@ void AMSLobbyGameMode::RestartPlayer(AController* NewPlayer)
 
     const FUniqueNetIdRepl NetId = PS->GetUniqueId();
     auto* CharacterDataManager = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
-    if (!NetId.IsValid() || !CharacterDataManager || CharacterDataManager->GetAllCharacter().Num() <= 0)
+    if (!NetId.IsValid() || !CharacterDataManager)
     {
         Super::RestartPlayer(NewPlayer);
         return;
     }
 
     const FMSCharacterSelection* CharacterSelection = CharacterDataManager->FindSelectionByNetId(NetId);
-    if (!CharacterSelection || !CharacterSelection->LobbyCharacterClass)
+    if (!CharacterSelection)
     {
+        CharacterDataManager->CacheSelectedCharacter(NetId, CharacterDataManager->GetDefaultCharacterID());
+        CharacterSelection = CharacterDataManager->FindSelectionByNetId(NetId);
+    }
+    if (!CharacterSelection->LobbyCharacterClass)
+    {
+        UE_LOG(LogTemp, Log, TEXT("RestartPlayer : FMSCharacterSelection is nullptr"));
         Super::RestartPlayer(NewPlayer);
         return;
     }
 
     FTransform SpawnTM = ChoosePlayerStart(NewPlayer)->GetTransform();
-
 
     APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
         CharacterSelection->LobbyCharacterClass,
