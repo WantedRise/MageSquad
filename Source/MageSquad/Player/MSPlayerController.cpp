@@ -340,8 +340,13 @@ void AMSPlayerController::SetSpectateViewTarget(AActor* NewTarget)
 {
 	if (!NewTarget) return;
 
-	// 관전 전용 전환 연출
-	SetViewTargetWithBlend(NewTarget, SpectateBlendTime, SpectateBlendFunction);
+	// 현재 컷씬 재생중이라면 관전 타깃만 갱신하고 카메라 전환은 보류
+	PendingViewTarget = NewTarget;
+	if (!bBossCutsceneActive)
+	{
+		// 관전 전용 전환 연출
+		SetViewTargetWithBlend(NewTarget, SpectateBlendTime, SpectateBlendFunction);
+	}
 
 	// HUD 위젯에 관전 UI 레이아웃을 설정하도록 호출
 	if (HUDWidgetInstance)
@@ -349,6 +354,57 @@ void AMSPlayerController::SetSpectateViewTarget(AActor* NewTarget)
 		// 플레이어의 관전 상태를 전달
 		AMSPlayerCharacter* MSPlayer = Cast<AMSPlayerCharacter>(GetPawn());
 		HUDWidgetInstance->SetSpectateUI(MSPlayer ? MSPlayer->GetSpectating() : false, UMSFunctionLibrary::GetTargetPlayerNameText(NewTarget));
+	}
+}
+
+void AMSPlayerController::SetBossCutsceneActive(bool bActive)
+{
+	// 보스 컷씬 진행 여부 초기화
+	bBossCutsceneActive = bActive;
+
+	// 보스 컷씬 진행 여부에 따라 보류된 카메라 타깃 적용
+	if (!bBossCutsceneActive)
+	{
+		ApplyPendingViewTarget();
+	}
+}
+
+AActor* AMSPlayerController::GetDesiredViewTarget() const
+{
+	// 보류된 카메라가 있으면 보류된 카메라를 반환
+	if (PendingViewTarget.IsValid())
+	{
+		return PendingViewTarget.Get();
+	}
+
+	// 현재 관전 대상이 유효하면 현재 관전 대상 반환
+	if (SpectateTargetActor && IsValid(SpectateTargetActor))
+	{
+		return SpectateTargetActor.Get();
+	}
+
+	// 전환할 카메라가 없으면 본인 폰 반환
+	return GetPawn();
+}
+
+void AMSPlayerController::ApplyPendingViewTarget()
+{
+	// 보스 컷씬 진행중이면 종료
+	if (bBossCutsceneActive) return;
+
+	// 복귀할 카메라가 있다면 카메라 가져오기
+	AActor* Target = GetDesiredViewTarget();
+	if (!Target) return;
+
+	// 복귀할 카메라로 뷰 타깃 전환
+	SetViewTargetWithBlend(Target, SpectateBlendTime, SpectateBlendFunction);
+
+	// HUD 위젯에 관전 UI 레이아웃을 설정하도록 호출
+	if (HUDWidgetInstance)
+	{
+		// 플레이어의 관전 상태를 전달
+		AMSPlayerCharacter* MSPlayer = Cast<AMSPlayerCharacter>(GetPawn());
+		HUDWidgetInstance->SetSpectateUI(MSPlayer ? MSPlayer->GetSpectating() : false, UMSFunctionLibrary::GetTargetPlayerNameText(Target));
 	}
 }
 

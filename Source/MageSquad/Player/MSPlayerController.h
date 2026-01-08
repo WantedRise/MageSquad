@@ -138,6 +138,15 @@ public:
 	// 사망 상태에 따른 관전 입력 적용 함수
 	void ApplyLocalInputState(bool bDead);
 
+	// 보스 컷씬 시작/종료 상태 설정 (관전 카메라 전환과 충돌 방지)
+	void SetBossCutsceneActive(bool bActive);
+
+	// 현재 복귀해야 할 카메라 타깃 반환
+	AActor* GetDesiredViewTarget() const;
+
+	// 컷씬 종료 후 보류된 카메라 타깃 적용
+	void ApplyPendingViewTarget();
+
 	// 서버: 현재 관전 대상이 유효하지 않으면 자동으로 다음 대상으로 전환하는 함수
 	void EnsureValidSpectateTarget_Server();
 
@@ -202,6 +211,12 @@ private:
 	// - 서버가 이 값을 갱신하면, 소유 클라이언트에서 OnRep로 카메라 전환을 수행
 	UPROPERTY(ReplicatedUsing = OnRep_SpectateTargetActor)
 	TObjectPtr<AActor> SpectateTargetActor = nullptr;
+
+	// 컷씬 중 ViewTarget 변경을 보류하기 위한 캐시
+	TWeakObjectPtr<AActor> PendingViewTarget;
+
+	// 보스 컷씬 진행 여부
+	bool bBossCutsceneActive = false;
 
 
 

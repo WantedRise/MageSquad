@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/MSDirectionIndicatorComponent.h"
+#include "Player/MSPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameStates/MSGameState.h"
@@ -130,7 +131,7 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 		GS->OnBossSpawnCutsceneStateChanged.Broadcast(bStart);
 
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlaySpawnCutscene_Implementation"),
-		       HasAuthority() ? TEXT("Server") : TEXT("Client"));
+			HasAuthority() ? TEXT("Server") : TEXT("Client"));
 	}
 
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -142,6 +143,7 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 	if (bStart)
 	{
 		bCanOptimization = false; // 스폰 시에는 거리 최적화 x
+
 		// 카메라 전환: 보스 본인(this)을 뷰 타겟으로 설정
 		OriginalViewTarget = PC->GetViewTarget();
 		PC->SetViewTargetWithBlend(this, 0.5f, VTBlend_Cubic, 0.f, true);
@@ -149,16 +151,27 @@ void AMSBossEnemy::Multicast_PlaySpawnCutscene_Implementation(bool bStart)
 	else
 	{
 		bCanOptimization = true; // 스폰 시에는 거리 최적화 x
-		// 원래 카메라로 복귀
-		if (OriginalViewTarget)
+
+		// 복귀할 뷰 타깃을 가져옴
+		AActor* RestoreTarget = OriginalViewTarget;
+		if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(PC))
 		{
-			PC->SetViewTargetWithBlend(OriginalViewTarget, 1.0f, VTBlend_Cubic, 0.f, true);
+			// 원래 카메라로 복귀
+			RestoreTarget = MSPC->GetDesiredViewTarget();
+		}
+
+		// 복귀할 뷰 타깃으로 전환
+		if (RestoreTarget)
+		{
+			PC->SetViewTargetWithBlend(RestoreTarget, 1.0f, VTBlend_Cubic, 0.f, true);
 		}
 
 		// Tick 이용 종료
 		Camera->SetComponentTickEnabled(false);
 		SpringArm->SetComponentTickEnabled(false);
 	}
+
+	ForceNetUpdate();
 }
 
 void AMSBossEnemy::OnRep_Phase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh)
@@ -194,13 +207,13 @@ void AMSBossEnemy::TrySetMesh(USkeletalMesh* NewSkeletalMesh)
 			// 아직 GameState가 NULL이면 다음 프레임에 다시 시도 (성공할 때까지)
 			GetWorld()->GetTimerManager().SetTimerForNextTick(
 				FTimerDelegate::CreateWeakLambda(this, [this, NewSkeletalMesh]()
-				{
-					TrySetMesh(NewSkeletalMesh);
-				})
+					{
+						TrySetMesh(NewSkeletalMesh);
+					})
 			);
 		}
 	}
-	
+
 	else
 	{
 		Phase2SkeletalMesh = NewSkeletalMesh;

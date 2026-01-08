@@ -698,15 +698,23 @@ void UMSPlayerHUDWidget::SetHudVisibility(bool Result)
 		NewVisibility = ESlateVisibility::SelfHitTestInvisible;
 	}
 
+	// PC에 보스 컷씬 시작/종료 상태 설정
+	if (AMSPlayerController* MSPC = Cast<AMSPlayerController>(GetOwningPlayer()))
+	{
+		MSPC->SetBossCutsceneActive(Result);
+	}
+
 	MainCanvas->SetVisibility(NewVisibility);
 
-	// 현재 관전 UI + 입력 맵핑 갱신
 	if (CachedLocalCharacter.IsValid())
 	{
 		AMSPlayerController* MSPC = Cast<AMSPlayerController>(CachedLocalCharacter->GetController());
 		if (MSPC)
 		{
+			// 관전 UI 레이아웃 설정(설정/해제)
 			SetSpectateUI(CachedLocalCharacter->GetSpectating(), UMSFunctionLibrary::GetTargetPlayerNameText(MSPC->GetSpectateTargetActor()));
+			
+			// 사망 상태에 따른 관전 입력 적용
 			MSPC->ApplyLocalInputState(CachedLocalCharacter->GetIsDead());
 		}
 	}
