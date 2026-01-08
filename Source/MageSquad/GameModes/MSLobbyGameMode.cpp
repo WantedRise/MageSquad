@@ -62,36 +62,52 @@ void AMSLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 AActor* AMSLobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
+    if (!Player)
+        return Super::ChoosePlayerStart_Implementation(Player);
+
     UWorld* World = GetWorld();
-    if (World)
+    if (!World)
+        return Super::ChoosePlayerStart_Implementation(Player);
+
+    // 슬롯 캐싱 (한 번만)
+    if (PlayerSlots.IsEmpty())
     {
-        if (PlayerSlots.Num() <= 0)
+        for (AMSLobbyPlayerSlot* Slot : TActorRange<AMSLobbyPlayerSlot>(World))
         {
-            //플레이어 슬롯을 스폰 위치로 지정
-            for (AMSLobbyPlayerSlot* PlayerSlot : TActorRange<AMSLobbyPlayerSlot>(World))
+            if (IsValid(Slot))
             {
-                PlayerSlots.Add(PlayerSlot);
-            }
-        }
-
-        for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
-        {
-            if (Player->IsLocalPlayerController())
-            {
-                PlayerSlot->SetController(nullptr);
-            }
-            if (IsValid(PlayerSlot) && nullptr == PlayerSlot->GetController())
-            {
-                PlayerSlot->SetController(Player);
-                PlayerSlot->HiddenInviteWidgetComponent();
-
-                return PlayerSlot;
+                Slot->SetController(nullptr); // ⭐ 여기서만 초기화
+                PlayerSlots.Add(Slot);
             }
         }
     }
-	return nullptr;
+
+    // 비어있는 슬롯 찾기
+    for (AMSLobbyPlayerSlot* Slot : PlayerSlots)
+    {
+        if (!IsValid(Slot))
+            continue;
+
+        if (Slot->GetController() == nullptr)
+        {
+            Slot->SetController(Player);
+            Slot->HiddenInviteWidgetComponent();
+            return Slot;
+        }
+    }
+
+    // 슬롯이 없으면 fallback
+    return Super::ChoosePlayerStart_Implementation(Player);
 }
 
+void AMSLobbyGameMode::PostSeamlessTravel()
+{
+    Super::PostSeamlessTravel();
+
+    UE_LOG(LogTemp, Log, TEXT("PostSeamlessTravel: Clear PlayerSlots"));
+
+    PlayerSlots.Empty();
+}
 void AMSLobbyGameMode::SetHiddenPlayerSlots()
 {
     for (AMSLobbyPlayerSlot* PlayerSlot : PlayerSlots)
