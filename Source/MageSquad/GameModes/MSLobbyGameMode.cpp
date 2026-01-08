@@ -211,6 +211,10 @@ void AMSLobbyGameMode::HandlePlayerReadyStateChanged()
 
 void AMSLobbyGameMode::RestartPlayer(AController* NewPlayer)
 {
+    if (!NewPlayer)
+    {
+        return;
+    }
     AMSLobbyPlayerState* PS = NewPlayer->GetPlayerState<AMSLobbyPlayerState>();
     if (!PS)
     {
