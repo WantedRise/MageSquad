@@ -5,6 +5,7 @@
 
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
+#include "Actors/Projectile/Behaviors/MSPB_Lightning.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaInstant.h"
 #include "Engine/OverlapResult.h"
 #include "Types/MageSquadTypes.h"
@@ -58,7 +59,9 @@ void UMSGA_Lightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.LifeTime = 1.f;
 	RuntimeData.Radius = SkillRadius;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
+	RuntimeData.BehaviorClass = bIsEnhanced
+		? UMSPB_Lightning::StaticClass()
+		: UMSProjectileBehavior_AreaInstant::StaticClass();
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 	
 	for (auto& Target : Targets)

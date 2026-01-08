@@ -44,6 +44,7 @@ void UMSProjectileBehavior_Normal::OnBegin_Implementation()
 	MoveComp->Velocity = RuntimeData.ProjectileSpeed * Dir;
 
 	RemainingPenetration = RuntimeData.PenetrationCount;
+
 }
 
 void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
@@ -69,6 +70,7 @@ void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
 		RemainingPenetration,
 		(uint64)GFrameCounter,
 		*GetNameSafe(HitResult.GetComponent()));
+
 
 	// 데미지 / 치명타 계산
 	float FinalDamage = RuntimeData.Damage;

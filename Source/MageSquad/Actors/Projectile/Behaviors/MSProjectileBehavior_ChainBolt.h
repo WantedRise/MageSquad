@@ -22,6 +22,9 @@ private:
 	void HandleArrival();
 	AActor* FindClosestTarget(const FVector& Origin, float SearchRadius) const;
 	void ApplyDamageToTarget(AActor* Target, float DamageAmount);
+	void SpawnOptionalProjectilesAt(const FTransform& SpawnTransform);
+	void SpawnOptionalProjectilesAtStoredHits();
+	void HandleDelayedOptionalProjectiles();
 	void EndChain();
 
 private:
@@ -36,6 +39,12 @@ private:
 
 	UPROPERTY(Transient)
 	TSet<TWeakObjectPtr<AActor>> HitActors;
+
+	UPROPERTY(Transient)
+	TArray<FTransform> HitTransforms;
+
+	UPROPERTY(Transient)
+	FTimerHandle OptionalProjectileDelayHandle;
 
 	UPROPERTY(Transient)
 	int32 RemainingChains = 0;

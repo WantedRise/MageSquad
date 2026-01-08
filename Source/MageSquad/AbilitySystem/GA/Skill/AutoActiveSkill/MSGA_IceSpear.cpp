@@ -7,6 +7,7 @@
 #include "MSGameplayTags.h"
 #include "MSFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Actors/Projectile/Behaviors/MSPB_IceSpear.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
 
 UMSGA_IceSpear::UMSGA_IceSpear()
@@ -74,10 +75,17 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	CachedRuntimeData.Damage = SkillDamage;
 	CachedRuntimeData.LifeTime = 3.0f;
 	CachedRuntimeData.PenetrationCount = Penetration;
-	CachedRuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	CachedRuntimeData.BehaviorClass = bIsEnhanced
+		? UMSPB_IceSpear::StaticClass()
+		: UMSProjectileBehavior_Normal::StaticClass();
 	CachedRuntimeData.DamageEffect = DamageEffect;
 	CachedRuntimeData.Effects = AdditionalEffects;
 	ApplyPlayerCritToRuntimeData(ActorInfo, CachedRuntimeData);
+	UE_LOG(LogTemp, Log, TEXT("[IceSpear] Lv=%d Damage=%.2f Pen=%d Proj=%d"),
+		SkillListRow.SkillLevel,
+		CachedRuntimeData.Damage,
+		CachedRuntimeData.PenetrationCount,
+		ProjectileNumber);
 	// ===== 첫 발 발사 =====
 	FireNextProjectile();
 }

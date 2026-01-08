@@ -1,20 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Explosive.h"
-#include "Components/PrimitiveComponent.h"
+#include "Actors/Projectile/Behaviors/MSPB_Fireball.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Globals/MSAbilitySystemGlobals.h"
+#include "Components/PrimitiveComponent.h"
 #include "GameplayEffect.h"
 #include "MSGameplayTags.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "TimerManager.h"
 
-void UMSProjectileBehavior_Explosive::OnBegin_Implementation()
+void UMSPB_Fireball::OnBegin_Implementation()
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor)
@@ -50,7 +50,7 @@ void UMSProjectileBehavior_Explosive::OnBegin_Implementation()
 	MoveComp->Velocity = RuntimeData.ProjectileSpeed * Dir;
 }
 
-void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+void UMSPB_Fireball::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
 	if (bExploded)
 	{
@@ -86,6 +86,47 @@ void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Targe
 	}
 
 	OwnerActor->Multicast_StopAndHide(ExplosionOrigin);
+	ExplodeAt(ExplosionOrigin);
+
+	SecondExplosionOrigin = ExplosionOrigin;
+	if (UWorld* World = OwnerActor->GetWorld())
+	{
+		World->GetTimerManager().SetTimer(
+			SecondExplosionTimer,
+			this,
+			&UMSPB_Fireball::HandleSecondExplosion,
+			1.0f,
+			false
+		);
+	}
+}
+
+void UMSPB_Fireball::OnEnd_Implementation()
+{
+	if (UWorld* World = GetWorldSafe())
+	{
+		World->GetTimerManager().ClearTimer(SecondExplosionTimer);
+	}
+}
+
+void UMSPB_Fireball::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+{
+	if (!InOwner)
+	{
+		return;
+	}
+
+	InOwner->SetCollisionRadius(50.f);
+}
+
+void UMSPB_Fireball::ExplodeAt(const FVector& ExplosionOrigin)
+{
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
 	if (RuntimeData.OnHitVFX)
 	{
 		const float VfxScale = FMath::Max(0.01f, RuntimeData.Radius / 150.f);
@@ -98,15 +139,14 @@ void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Targe
 		);
 	}
 
-
 	const float Radius = RuntimeData.Radius;
 	UWorld* World = GetWorldSafe();
 	if (World && Radius > 0.f)
 	{
 		FCollisionObjectQueryParams ObjParams;
-		ObjParams.AddObjectTypesToQuery(ECC_GameTraceChannel3); // MSEnemy
+		ObjParams.AddObjectTypesToQuery(ECC_GameTraceChannel3);
 
-		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ExplosiveOverlap), false);
+		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(FireballOverlap), false);
 		QueryParams.AddIgnoredActor(OwnerActor);
 
 		TArray<FOverlapResult> Hits;
@@ -121,6 +161,7 @@ void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Targe
 
 		if (bAnyHit)
 		{
+			TSet<TWeakObjectPtr<AActor>> HitActors;
 			for (const FOverlapResult& H : Hits)
 			{
 				AActor* HitActor = H.GetActor();
@@ -139,26 +180,9 @@ void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Targe
 			}
 		}
 	}
-
-	OwnerActor->Destroy();
 }
 
-void UMSProjectileBehavior_Explosive::OnEnd_Implementation()
-{
-	HitActors.Reset();
-}
-
-void UMSProjectileBehavior_Explosive::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
-{
-	if (!InOwner)
-	{
-		return;
-	}
-
-	InOwner->SetCollisionRadius(50.f);
-}
-
-void UMSProjectileBehavior_Explosive::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_Fireball::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)
 	{
@@ -224,6 +248,19 @@ void UMSProjectileBehavior_Explosive::ApplyDamageToTarget(AActor* Target, float 
 	}
 }
 
+void UMSPB_Fireball::HandleSecondExplosion()
+{
+	if (!IsAuthority())
+	{
+		return;
+	}
 
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
 
-
+	ExplodeAt(SecondExplosionOrigin);
+	OwnerActor->Destroy();
+}

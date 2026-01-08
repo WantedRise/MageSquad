@@ -6,6 +6,7 @@
 #include "AbilitySystemGlobals.h"
 #include "GameplayEffect.h"
 #include "MSGameplayTags.h"
+#include "MSFunctionLibrary.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -41,6 +42,7 @@ void UMSProjectileBehavior_ChainBolt::OnBegin_Implementation()
 
 	ChainSourceActor = SourceActor;
 	HitActors.Reset();
+	HitTransforms.Reset();
 	LastHitActor = nullptr;
 	RemainingChains = MaxChains;
 	OwnerActor->SetActorLocation(SourceActor->GetActorLocation());
@@ -60,8 +62,10 @@ void UMSProjectileBehavior_ChainBolt::OnEnd_Implementation()
 	{
 		World->GetTimerManager().ClearTimer(ChainTimerHandle);
 		World->GetTimerManager().ClearTimer(TravelTimerHandle);
+		World->GetTimerManager().ClearTimer(OptionalProjectileDelayHandle);
 	}
 	HitActors.Reset();
+	HitTransforms.Reset();
 }
 
 void UMSProjectileBehavior_ChainBolt::ApplyCollisionRadius(
@@ -230,6 +234,7 @@ void UMSProjectileBehavior_ChainBolt::HandleArrival()
 	PendingTarget = nullptr;
 
 	ApplyDamageToTarget(Target, RuntimeData.Damage);
+	HitTransforms.Add(Target->GetActorTransform());
 
 	if (RuntimeData.OnHitVFX)
 	{
@@ -257,6 +262,72 @@ void UMSProjectileBehavior_ChainBolt::HandleArrival()
 	else
 	{
 		EndChain();
+	}
+}
+
+void UMSProjectileBehavior_ChainBolt::SpawnOptionalProjectilesAt(const FTransform& SpawnTransform)
+{
+	if (!IsAuthority())
+	{
+		return;
+	}
+
+	if (RuntimeData.OptionalProjectileDataClasses.Num() <= 0)
+	{
+		return;
+	}
+
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	for (const TSubclassOf<UProjectileStaticData>& DataClass : RuntimeData.OptionalProjectileDataClasses)
+	{
+		if (!DataClass)
+		{
+			continue;
+		}
+
+		FProjectileRuntimeData OptionalData = UMSFunctionLibrary::MakeProjectileRuntimeData(DataClass);
+		OptionalData.Damage = RuntimeData.Damage;
+		OptionalData.DamageEffect = RuntimeData.DamageEffect;
+		OptionalData.Effects = RuntimeData.Effects;
+		OptionalData.CriticalChance = RuntimeData.CriticalChance;
+		OptionalData.CriticalDamage = RuntimeData.CriticalDamage;
+
+		UMSFunctionLibrary::LaunchProjectile(
+			this,
+			DataClass,
+			OptionalData,
+			SpawnTransform,
+			OwnerActor->GetOwner(),
+			OwnerActor->GetInstigator()
+		);
+	}
+}
+
+void UMSProjectileBehavior_ChainBolt::SpawnOptionalProjectilesAtStoredHits()
+{
+	if (HitTransforms.Num() <= 0)
+	{
+		return;
+	}
+
+	for (const FTransform& SpawnTransform : HitTransforms)
+	{
+		SpawnOptionalProjectilesAt(SpawnTransform);
+	}
+}
+
+void UMSProjectileBehavior_ChainBolt::HandleDelayedOptionalProjectiles()
+{
+	SpawnOptionalProjectilesAtStoredHits();
+
+	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
+	{
+		OwnerActor->Destroy();
 	}
 }
 
@@ -322,6 +393,20 @@ void UMSProjectileBehavior_ChainBolt::ApplyDamageToTarget(AActor* Target, float 
 
 void UMSProjectileBehavior_ChainBolt::EndChain()
 {
+	if (UWorld* World = GetWorldSafe())
+	{
+		World->GetTimerManager().SetTimer(
+			OptionalProjectileDelayHandle,
+			FTimerDelegate::CreateUObject(
+				this,
+				&UMSProjectileBehavior_ChainBolt::HandleDelayedOptionalProjectiles
+			),
+			0.3f,
+			false
+		);
+		return;
+	}
+
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
 		OwnerActor->Destroy();

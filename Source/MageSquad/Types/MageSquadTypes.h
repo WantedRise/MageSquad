@@ -229,6 +229,7 @@ public:
 	// Behavior 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
+
 };
 
 
@@ -337,6 +338,10 @@ public:
 	// Behavior 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TSubclassOf<UMSProjectileBehaviorBase> BehaviorClass;
+
+	// Optional projectile data (skill-specific)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TArray<TSubclassOf<UProjectileStaticData>> OptionalProjectileDataClasses;
 };
 
 

@@ -45,6 +45,9 @@ public:
 
 	// Collision on/off
 	void EnableCollision(bool bEnable);
+	// Ignore hit for specific actor
+	void AddIgnoredActor(AActor* Actor);
+	bool IsIgnoredActor(const AActor* Actor) const;
 
 	// ?´ë™ ?•ì? (?¥íŒ??
 	void StopMovement();
@@ -128,6 +131,9 @@ protected:
 
 	// Attach VFX ì¤‘ë³µ ?ì„± ë°©ì? (ë¡œì»¬)
 	bool bAttachVfxSpawned = false;
+
+	// Overlap ignore list
+	TSet<TWeakObjectPtr<AActor>> IgnoredActors;
 
 public:
 	// ?ë³¸ StaticData ?´ë˜??

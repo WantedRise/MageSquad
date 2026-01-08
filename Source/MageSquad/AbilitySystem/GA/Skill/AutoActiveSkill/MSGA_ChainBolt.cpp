@@ -55,6 +55,11 @@ void UMSGA_ChainBolt::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.Radius = Range;
 	RuntimeData.ProjectileSpeed = 2000.f;
 	RuntimeData.LifeTime = 3.f;
+	RuntimeData.OptionalProjectileDataClasses.Reset();
+	if (bIsEnhanced && LightningProjectileDataClass)
+	{
+		RuntimeData.OptionalProjectileDataClasses.Add(LightningProjectileDataClass);
+	}
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_ChainBolt::StaticClass();
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 

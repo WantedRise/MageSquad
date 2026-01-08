@@ -136,6 +136,26 @@ void AMSBaseProjectile::EnableCollision(bool bEnable)
 	}
 }
 
+void AMSBaseProjectile::AddIgnoredActor(AActor* Actor)
+{
+	if (!Actor)
+	{
+		return;
+	}
+
+	IgnoredActors.Add(Actor);
+}
+
+bool AMSBaseProjectile::IsIgnoredActor(const AActor* Actor) const
+{
+	if (!Actor)
+	{
+		return false;
+	}
+
+	return IgnoredActors.Contains(Actor);
+}
+
 void AMSBaseProjectile::StopMovement()
 {
 	if (ProjectileMovementComponent)
@@ -284,6 +304,11 @@ void AMSBaseProjectile::OnHitOverlap(
 	}
 
 	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+
+	if (IsIgnoredActor(OtherActor))
 	{
 		return;
 	}

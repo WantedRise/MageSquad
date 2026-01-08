@@ -6,6 +6,8 @@
 #include "AbilitySystem/GA/Skill/MSGA_SkillBase.h"
 #include "MSGA_ChainBolt.generated.h"
 
+class UProjectileStaticData;
+
 UCLASS()
 class MAGESQUAD_API UMSGA_ChainBolt : public UMSGA_SkillBase
 {
@@ -26,4 +28,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Range = 800.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ChainBolt")
+	TSubclassOf<UProjectileStaticData> LightningProjectileDataClass;
 };
