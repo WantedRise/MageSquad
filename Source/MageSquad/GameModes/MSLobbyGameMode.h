@@ -29,6 +29,7 @@ public:
 	virtual void PostSeamlessTravel() override;
 	//로비에서 각 플레이어의 시작 위치를 결정
 	AActor* ChoosePlayerStart_Implementation(class AController* Player) override;
+	
 	void SetHiddenPlayerSlots();
 	void SetShowPlayerSlots();
 	void SetShowTargetPlayerSlot(AController* Target) const;
@@ -37,7 +38,9 @@ public:
 	void HandleReadyCountdownFinished();
 	//플레이어 준비 상태 변경 시 호출되어 전체 준비 상태를 재계산
 	void HandlePlayerReadyStateChanged();
+protected:
+	void CachePlayerSlotsIfNeeded();
 private:
 	UPROPERTY()
-	TArray<class AMSLobbyPlayerSlot*> PlayerSlots;
+	TArray<TWeakObjectPtr<class AMSLobbyPlayerSlot>> PlayerSlots;
 };

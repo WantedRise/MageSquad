@@ -25,6 +25,14 @@ void UMSCharacterDataSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
+const FName* UMSCharacterDataSubsystem::FindCharacterID(const FUniqueNetIdRepl& NetId) const
+{
+    if (!NetId.IsValid())
+        return nullptr;
+
+    return SelectedCharacterIDByNetId.Find(NetId);
+}
+
  FName UMSCharacterDataSubsystem::GetDefaultCharacterID() const
  {
      for (const auto& CharacterClassData : PlayerCharacterClasses)
@@ -72,4 +80,55 @@ void UMSCharacterDataSubsystem::Deinitialize()
          }
      }
      return nullptr;
+ }
+
+ const int32* UMSCharacterDataSubsystem::FindSlotIndex(const FUniqueNetIdRepl& NetId) const
+ {
+     if (!NetId.IsValid())
+         return nullptr;
+
+     return NetIdToSlotIndex.Find(NetId);
+ }
+
+ bool UMSCharacterDataSubsystem::IsSlotOccupied(int32 SlotIndex) const
+ {
+     return NetIdToSlotIndex.FindKey(SlotIndex) != nullptr;
+ }
+
+ bool UMSCharacterDataSubsystem::Assign(const FUniqueNetIdRepl& NetId, int32 SlotIndex)
+ {
+     if (!NetId.IsValid())
+         return false;
+
+     // 이미 이 NetId가 슬롯을 가지고 있으면 실패
+     if (NetIdToSlotIndex.Contains(NetId))
+         return false;
+
+     // 이미 다른 플레이어가 쓰는 슬롯이면 실패
+     if (IsSlotOccupied(SlotIndex))
+         return false;
+
+     NetIdToSlotIndex.Add(NetId, SlotIndex);
+     return true;
+ }
+
+ void UMSCharacterDataSubsystem::ReleaseByNetId(const FUniqueNetIdRepl& NetId)
+ {
+     if (!NetId.IsValid())
+         return;
+
+     NetIdToSlotIndex.Remove(NetId);
+ }
+
+ void UMSCharacterDataSubsystem::ReleaseBySlotIndex(int32 SlotIndex)
+ {
+     if (const FUniqueNetIdRepl* FoundKey = NetIdToSlotIndex.FindKey(SlotIndex))
+     {
+         NetIdToSlotIndex.Remove(*FoundKey);
+     }
+ }
+
+ void UMSCharacterDataSubsystem::ClearAll()
+ {
+     NetIdToSlotIndex.Empty();
  }

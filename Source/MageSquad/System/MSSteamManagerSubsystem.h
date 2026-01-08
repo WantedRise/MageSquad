@@ -63,7 +63,7 @@ protected:
 protected:
 	IOnlineSessionPtr SessionInterface;
 	FOnlineSessionSearchResult AcceptedInviteResult;
-	
+
 
 	/*
 	FOnSessionUserInviteAcceptedDelegate OnSessionUserInviteAcceptedDelegate;

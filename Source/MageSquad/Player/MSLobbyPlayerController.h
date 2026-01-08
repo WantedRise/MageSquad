@@ -32,6 +32,10 @@ public:
 	void ServerRequestSetReady(bool bNewReady);
 	UFUNCTION(Server, Reliable)
 	void Server_SelectCharacter(FName InCharacterId);
+	UFUNCTION(Server, Reliable)
+	void Server_RequestCharacterID(const FUniqueNetIdRepl& NetID);
+	UFUNCTION(Client, Reliable)
+	void Client_OnCharacterSelected(const FName& InCharacterId);
 
 	void SwitchToCharacterCamera();
 	void SwitchToLobbyCamera();
@@ -46,7 +50,7 @@ protected:
 	void CreateLobbyUI();
 	UFUNCTION(Server, Reliable)
 	void Server_RequestExitLobby();
-	
+	void UpdateCharacterSelectWidget();
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
