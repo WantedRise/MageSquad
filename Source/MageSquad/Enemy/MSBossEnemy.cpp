@@ -187,15 +187,22 @@ void AMSBossEnemy::TrySetMesh(USkeletalMesh* NewSkeletalMesh)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[CLIENT] TrySetMesh: %s"), *Phase2SkeletalMesh.GetName());
 
-	Phase2SkeletalMesh = NewSkeletalMesh;
-	if (Phase2SkeletalMesh == nullptr)
+	if (NewSkeletalMesh == nullptr)
 	{
-		// 아직 GameState가 NULL이면 다음 프레임에 다시 시도 (성공할 때까지)
-		GetWorld()->GetTimerManager().SetTimerForNextTick(
-			FTimerDelegate::CreateWeakLambda(this, [this, NewSkeletalMesh]()
-			{
-				TrySetMesh(NewSkeletalMesh);
-			})
-		);
+		if (Phase2SkeletalMesh == nullptr)
+		{
+			// 아직 GameState가 NULL이면 다음 프레임에 다시 시도 (성공할 때까지)
+			GetWorld()->GetTimerManager().SetTimerForNextTick(
+				FTimerDelegate::CreateWeakLambda(this, [this, NewSkeletalMesh]()
+				{
+					TrySetMesh(NewSkeletalMesh);
+				})
+			);
+		}
+	}
+	
+	else
+	{
+		Phase2SkeletalMesh = NewSkeletalMesh;
 	}
 }

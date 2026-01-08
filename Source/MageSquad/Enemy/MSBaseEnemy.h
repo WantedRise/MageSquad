@@ -81,6 +81,9 @@ protected:
 	UFUNCTION()
 	void OnRep_MonsterID();
 	
+	UFUNCTION()
+	void OnRep_IsInPool();
+	
 public:
 	// 시그니컨스 매니저가 호출할 계산 함수
 	static float CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint);
@@ -111,6 +114,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Cooldown")
 	TSubclassOf<class UGameplayEffect> CooldownEffectClass;
 	
+	UPROPERTY(ReplicatedUsing = OnRep_IsInPool)
 	bool bIsInPool = false;
 	
 	UPROPERTY()
