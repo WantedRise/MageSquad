@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GameStates/MSGameState.h"
@@ -10,6 +10,7 @@
 #include "Components/MSMissionComponent.h"
 
 #include "GameFramework/PlayerState.h"
+#include "TimerManager.h"
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
@@ -229,6 +230,13 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 			}
 		}
 	}
+
+	if (PendingSkillLevelUpSessions.Num() > 0)
+	{
+		const int32 NextSessionId = PendingSkillLevelUpSessions[0];
+		PendingSkillLevelUpSessions.RemoveAt(0);
+		ScheduleSkillLevelUpStart(NextSessionId);
+	}
 }
 
 bool AMSGameState::AreAllPlayersCompleted() const
@@ -290,42 +298,37 @@ void AMSGameState::StartSkillLevelUpPhase()
 	static int32 LevelUpSessionId = 0;
 	LevelUpSessionId++;
 
-	// 세션 상태 시작
-	bSkillLevelUpPhaseActive = true;
-	CurrentSkillLevelUpSessionId = LevelUpSessionId;
-	CompletedPlayers.Reset();
-
-	// 30초 리얼타임 마감
-	SkillLevelUpExpireAtRealTime = FPlatformTime::Seconds() + 30.0;
-
 	UE_LOG(LogTemp, Log,
 		TEXT("[GameState] Start Skill LevelUp Phase. SessionId=%d"),
 		LevelUpSessionId
 	);
 
-	// 모든 PlayerState에 레벨업 시작 알림
-	for (APlayerState* PS : PlayerArray)
+	if (bSkillLevelUpPhaseActive || bSkillLevelUpStartPending)
 	{
-		AMSPlayerState* MSPS = Cast<AMSPlayerState>(PS);
-		if (!MSPS)
-		{
-			continue;
-		}
-
-		MSPS->BeginSkillLevelUp(LevelUpSessionId);
+		PendingSkillLevelUpSessions.Add(LevelUpSessionId);
+		return;
 	}
 
-	// Ticker 시작 (Pause 영향 없음)
-	if (SkillLevelUpTickerHandle.IsValid())
-	{
-		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpTickerHandle);
-		SkillLevelUpTickerHandle.Reset();
-	}
+	ScheduleSkillLevelUpStart(LevelUpSessionId);
+}
 
-	SkillLevelUpTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
-		FTickerDelegate::CreateUObject(this, &AMSGameState::TickSkillLevelUpPhase),
-		0.1f
-	);
+void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId)
+{
+	if (UWorld* World = GetWorld())
+	{
+		bSkillLevelUpStartPending = true;
+		World->GetTimerManager().ClearTimer(SkillLevelUpStartDelayHandle);
+		World->GetTimerManager().SetTimer(
+			SkillLevelUpStartDelayHandle,
+			FTimerDelegate::CreateUObject(
+				this,
+				&AMSGameState::BeginSkillLevelUpPhaseForPlayers,
+				SessionId
+			),
+			2.0f,
+			false
+		);
+	}
 }
 
 void AMSGameState::NotifySkillLevelUpCompleted(class AMSPlayerState* PS)
@@ -590,3 +593,43 @@ void AMSGameState::OnRep_SharedLives()
 	// 공유 목숨 변경 이벤트 브로드캐스트
 	OnSharedLivesChanged.Broadcast(SharedLives);
 }
+void AMSGameState::BeginSkillLevelUpPhaseForPlayers(int32 SessionId)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	bSkillLevelUpStartPending = false;
+	bSkillLevelUpPhaseActive = true;
+	CurrentSkillLevelUpSessionId = SessionId;
+	CompletedPlayers.Reset();
+
+	// 30초 카운트다운 시작 시점을 지연 이후로 맞춤
+	SkillLevelUpExpireAtRealTime = FPlatformTime::Seconds() + 30.0;
+
+	// 모든 PlayerState에게 레벨업 시작 알림
+	for (APlayerState* PS : PlayerArray)
+	{
+		AMSPlayerState* MSPS = Cast<AMSPlayerState>(PS);
+		if (!MSPS)
+		{
+			continue;
+		}
+
+		MSPS->BeginSkillLevelUp(SessionId);
+	}
+
+	// Ticker 시작 (Pause 영향 없음)
+	if (SkillLevelUpTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpTickerHandle);
+		SkillLevelUpTickerHandle.Reset();
+	}
+
+	SkillLevelUpTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateUObject(this, &AMSGameState::TickSkillLevelUpPhase),
+		0.1f
+	);
+}
+
