@@ -1392,6 +1392,9 @@ void AMSPlayerCharacter::OnDeathEnter_Server()
 		AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Player_State_Dead);
 	}
 
+	// 물리 시뮬레이션 문제 방지용 강제 위치 갱신
+	SetActorLocation(GetActorLocation() + FVector(0.f, 0.f, 3.f));
+
 	// 리슨 서버(호스트) 같은 경우 서버에서 바로 로컬 입력도 차단
 	ApplyLocalDeathState(true);
 

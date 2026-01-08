@@ -39,20 +39,23 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 
 	MarkerComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Marker"));
 	MarkerComp->SetupAttachment(Root);
-	MarkerComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MarkerComp->SetCollisionProfileName(TEXT("NoCollision"));
 	MarkerComp->SetGenerateOverlapEvents(false);
+	MarkerComp->bReceivesDecals = false;
 	MarkerComp->SetIsReplicated(false);
 
 	RingComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingAnimation"));
 	RingComp->SetupAttachment(Root);
-	RingComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RingComp->SetCollisionProfileName(TEXT("NoCollision"));
 	RingComp->SetGenerateOverlapEvents(false);
+	RingComp->bReceivesDecals = false;
 	RingComp->SetIsReplicated(false);
 
 	RingOriginComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RingOrigin"));
 	RingOriginComp->SetupAttachment(Root);
-	RingOriginComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RingOriginComp->SetCollisionProfileName(TEXT("NoCollision"));
 	RingOriginComp->SetGenerateOverlapEvents(false);
+	RingOriginComp->bReceivesDecals = false;
 	RingOriginComp->SetIsReplicated(false);
 
 	// 초기값
@@ -147,7 +150,6 @@ void AMSTeamReviveActor::OnAreaBeginOverlap(UPrimitiveComponent* OverlappedCompo
 
 	// 부활 진행자 초기화
 	CurrentReviver = Pawn;
-	ForceNetUpdate();
 }
 
 void AMSTeamReviveActor::OnAreaEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -162,7 +164,6 @@ void AMSTeamReviveActor::OnAreaEndOverlap(UPrimitiveComponent* OverlappedCompone
 	if (Pawn == CurrentReviver)
 	{
 		CurrentReviver = nullptr;
-		ForceNetUpdate();
 	}
 }
 
