@@ -66,8 +66,12 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		UAbilitySystemComponent* TargetASC = &Data.Target;
 		if (!TargetASC) return;
 
-		// 초기화중이면 체력 변경에 따른 이벤트 로직 스킵
-		if (TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_Init))
+		// 시작 초기화, 무적, 사망, 컷씬 상태면 체력 변경에 따른 이벤트 로직 스킵
+		if (TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_Init) &&
+			TargetASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Invincible) &&
+			TargetASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead) &&
+			TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_CutScene)
+			)
 		{
 			return;
 		}
