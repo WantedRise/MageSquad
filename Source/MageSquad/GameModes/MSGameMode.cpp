@@ -86,7 +86,7 @@ void AMSGameMode::ExecuteTravelToLobby()
 	bTravelScheduled = true;
 
 	// 승/패 판단은 질문에 적힌 주석 그대로 따릅니다.
-	const bool bIsVictory = (bAllPlayersDead == true);
+	const bool bIsVictory = (bAllPlayersDead == false);
 
 	// 모든 플레이어에게 승리/패배 위젯 표시
 	ShowEndGameWidgetToAllPlayers(bIsVictory);
