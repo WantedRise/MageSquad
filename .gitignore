@@ -76,3 +76,4 @@ DerivedDataCache/*
 
 # IntelliJ IDE Option
 *.idea
+*AGENTS.md
