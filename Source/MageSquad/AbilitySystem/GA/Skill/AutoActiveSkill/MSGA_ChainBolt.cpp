@@ -56,6 +56,7 @@ void UMSGA_ChainBolt::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.ProjectileSpeed = 2000.f;
 	RuntimeData.LifeTime = 3.f;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_ChainBolt::StaticClass();
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FTransform SpawnTransform(FRotator::ZeroRotator, Avatar->GetActorLocation());
 

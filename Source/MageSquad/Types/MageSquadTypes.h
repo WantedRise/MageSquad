@@ -163,19 +163,22 @@ class MAGESQUAD_API UProjectileStaticData : public UObject
 	GENERATED_BODY()
 
 public:
-	// 발사체 대미지
+	// 발사체 데미지
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Damage = 0;
 
-	// 치명타 확률
+	// 크리티컬 확률/피해
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
-	// 다단히트 데미지 시퀀스: [a, b, c, d] 처럼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float CriticalDamage = 2.0f;
+
+	// 틱 단위 데미지 시퀀스 [a, b, c, d] 형태
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TArray<float> DamageSequence;
 
-	// 다단히트 주기(초): 0.2
+	// 틱 간격(초) 예: 0.2
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float DamageInterval = 0.2f;
 
@@ -250,6 +253,7 @@ public:
 
 		Damage = StaticData->Damage;
 		CriticalChance = StaticData->CriticalChance;
+		CriticalDamage = StaticData->CriticalDamage;
 		DamageSequence = StaticData->DamageSequence;
 		DamageInterval = StaticData->DamageInterval;
 		DamageEffect = StaticData->DamageEffect;
@@ -267,19 +271,22 @@ public:
 	}
 
 public:
-	// 발사체 대미지
+	// 발사체 데미지
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float Damage = 0;
 
-	// 치명타 확률
+	// 크리티컬 확률/피해
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float CriticalChance = 0.5f;
 
-	// 다단히트 데미지 시퀀스: [a, b, c, d] 처럼
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	float CriticalDamage = 2.0f;
+
+	// 틱 단위 데미지 시퀀스 [a, b, c, d] 형태
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TArray<float> DamageSequence;
 
-	// 다단히트 주기(초): 0.2
+	// 틱 간격(초) 예: 0.2
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	float DamageInterval = 0.2f;
 
@@ -443,6 +450,7 @@ public:
 		{
 			// 0x01: CueColor 포함
 			Flags |= 0x01;
+
 			// 0x02: Blink 세그먼트 포함
 			if (bHasBlinkSegment)
 			{
@@ -483,7 +491,7 @@ public:
 			BlinkEnd = FVector::ZeroVector;
 			bHasBlinkSegment = false;
 		}
-		
+
 		// Indicator
 		if (Flags & 0x04)
 		{
@@ -541,6 +549,7 @@ struct TStructOpsTypeTraits<FMSGameplayEffectContext> : public TStructOpsTypeTra
 {
 	enum { WithNetSerializer = true, WithCopy = true };
 };
+
 
 /**
  * 작성자: 박세찬

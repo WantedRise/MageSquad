@@ -50,6 +50,7 @@ void UMSGA_Tornado::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	RuntimeData.Radius = SkillRadius;
 	RuntimeData.DamageInterval = 0.5f;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Tornado::StaticClass();
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 	
 	// 2) 무작위 방향 생성 (XY 평면)
 	const float AngleRad = FMath::FRandRange(0.f, 2.f * PI);

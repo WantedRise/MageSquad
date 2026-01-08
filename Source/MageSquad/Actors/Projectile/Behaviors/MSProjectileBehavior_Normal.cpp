@@ -75,7 +75,7 @@ void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
 	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
 	if (bIsCritical)
 	{
-		FinalDamage *= 2.f;
+		FinalDamage *= RuntimeData.CriticalDamage;
 	}
 	
 	// Target ASC

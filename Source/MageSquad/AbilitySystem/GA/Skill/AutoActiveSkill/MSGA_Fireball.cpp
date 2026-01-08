@@ -47,6 +47,7 @@ void UMSGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.LifeTime = 5.f;
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_Explosive::StaticClass();
 	RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FVector SpawnLocation = Avatar->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 	const FTransform SpawnTransform(RuntimeData.Direction.Rotation(), SpawnLocation);

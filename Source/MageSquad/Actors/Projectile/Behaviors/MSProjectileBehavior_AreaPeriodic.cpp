@@ -170,7 +170,18 @@ void UMSProjectileBehavior_AreaPeriodic::ApplyDamageToTarget(AActor* Target, flo
 
 	// SetByCaller를 쓰는 GE
 	// 프로젝트 태그명에 맞게 바꿔줘 (예: Data_Damage)
-	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (DamageAmount * -1.f));
+	float FinalDamage = DamageAmount;
+	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
+	if (bIsCritical)
+	{
+		FinalDamage *= RuntimeData.CriticalDamage;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (FinalDamage * -1.f));
+	if (bIsCritical)
+	{
+		SpecHandle.Data->AddDynamicAssetTag(MSGameplayTags::Hit_Critical);
+	}
 
 	// 타겟에게 적용
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());

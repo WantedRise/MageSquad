@@ -84,15 +84,16 @@ void UMSGA_SharkFin::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
-	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
+FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(ProjectileDataClass);
 	RuntimeData.Damage = SkillListRow.SkillDamage;
 	RuntimeData.DamageInterval = 0.5f;
 	RuntimeData.DamageEffect = DamageEffect;
 	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.Radius = Range;
-	RuntimeData.LifeTime = 4.f;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_TrailDoT::StaticClass();
-	RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
+RuntimeData.LifeTime = 4.f;
+RuntimeData.BehaviorClass = UMSProjectileBehavior_TrailDoT::StaticClass();
+RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
+ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FVector SpawnLocation = Avatar->GetActorLocation();
 	const FTransform SpawnTransform(RuntimeData.Direction.Rotation(), SpawnLocation);

@@ -153,7 +153,18 @@ void UMSProjectileBehavior_AreaInstant::ApplyDamageToTarget(AActor* Target, floa
 		return;
 	}
 
-	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (DamageAmount * -1.f));
+	float FinalDamage = DamageAmount;
+	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
+	if (bIsCritical)
+	{
+		FinalDamage *= RuntimeData.CriticalDamage;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (FinalDamage * -1.f));
+	if (bIsCritical)
+	{
+		SpecHandle.Data->AddDynamicAssetTag(MSGameplayTags::Hit_Critical);
+	}
 
 	// 타겟에게 적용
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());

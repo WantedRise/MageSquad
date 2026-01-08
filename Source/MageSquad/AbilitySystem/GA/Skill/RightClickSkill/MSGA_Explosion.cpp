@@ -109,6 +109,7 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaPeriodic::StaticClass();
 	RuntimeData.DamageSequence = FinalDamageSequence;
 	RuntimeData.DamageInterval = DamageInterval;
+	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	// 공격 스폰
 	UMSFunctionLibrary::LaunchProjectile(

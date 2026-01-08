@@ -72,6 +72,17 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			return;
 		}
 
+		const float NewHealth = GetHealth();
+
+		// 현재 체력 변경량
+		const float DeltaHealth = NewHealth - CachedOldHealth;
+
+		// 현재 체력이 오른 경우 스킵
+		if (DeltaHealth > 0.f)
+		{
+			return;
+		}
+
 		/*
 		* 받은 피해량 출력 이벤트 전달 로직 (DamageFloater)
 		*/
@@ -119,7 +130,6 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		* 부활/관전 로직
 		*/
 		{
-			const float NewHealth = GetHealth();
 			if (NewHealth <= 0.f)
 			{
 				// 서버에서만 사망 처리

@@ -216,7 +216,18 @@ void UMSProjectileBehavior_Tornado::ApplyDamageToTarget(AActor* Target, float Da
 	}
 
 	// SetByCaller (프로젝트 태그 그대로 사용)
-	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (DamageAmount * -1.f));
+	float FinalDamage = DamageAmount;
+	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
+	if (bIsCritical)
+	{
+		FinalDamage *= RuntimeData.CriticalDamage;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(MSGameplayTags::Data_Damage, (FinalDamage * -1.f));
+	if (bIsCritical)
+	{
+		SpecHandle.Data->AddDynamicAssetTag(MSGameplayTags::Hit_Critical);
+	}
 
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 

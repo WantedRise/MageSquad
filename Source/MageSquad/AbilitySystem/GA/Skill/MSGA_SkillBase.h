@@ -9,6 +9,7 @@
 
 class UGameplayEffect;
 class UProjectileStaticData;
+struct FProjectileRuntimeData;
 
 /**
  * 작성자: 박세찬
@@ -48,5 +49,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
 	TArray<TSubclassOf<UGameplayEffect>> AdditionalEffects;
+
+	void ApplyPlayerCritToRuntimeData(
+		const FGameplayAbilityActorInfo* ActorInfo,
+		FProjectileRuntimeData& RuntimeData) const;
 	
 };
