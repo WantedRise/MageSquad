@@ -41,6 +41,10 @@ void UMSMissionTrackerWidget::StartMissionTimer(AMSGameState* InGameState, float
 
 void UMSMissionTrackerWidget::UpdateRemainingTime()
 {
+    if (!GameState)
+    {
+        return;
+    }
     const float ServerTime = GameState->GetServerTime();
     const float RemainingSeconds = FMath::Max(0.f, MissionEndTime - ServerTime);
 
