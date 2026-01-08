@@ -47,6 +47,9 @@ void UMSPlayerAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	if (Attribute == GetHealthAttribute())
 	{
 		CachedOldHealth = GetHealth();
+
+		// 변경되는 현재 체력을 최대 체력으로 Clamp
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	}
 
 	// 최대 체력 변경 시, 캐시 저장
@@ -81,8 +84,8 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		// 현재 체력 변경량
 		const float DeltaHealth = NewHealth - CachedOldHealth;
 
-		// 현재 체력이 회복된 경우, 체력 감소에 따른 로직 스킵
-		if (!(DeltaHealth > 0.f))
+		// 현재 체력이 감소일 때만 데미지 로직 실행
+		if (DeltaHealth < 0.f)
 		{
 			/*
 			* 받은 피해량 출력 이벤트 전달 로직 (DamageFloater)
