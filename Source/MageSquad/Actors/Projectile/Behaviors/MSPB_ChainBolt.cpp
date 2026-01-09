@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_ChainBolt.h"
+#include "Actors/Projectile/Behaviors/MSPB_ChainBolt.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
@@ -14,7 +14,7 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
-void UMSProjectileBehavior_ChainBolt::OnBegin_Implementation()
+void UMSPB_ChainBolt::OnBegin_Implementation()
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor)
@@ -50,13 +50,13 @@ void UMSProjectileBehavior_ChainBolt::OnBegin_Implementation()
 	PerformChainStep();
 }
 
-void UMSProjectileBehavior_ChainBolt::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+void UMSPB_ChainBolt::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
 	(void)Target;
 	(void)HitResult;
 }
 
-void UMSProjectileBehavior_ChainBolt::OnEnd_Implementation()
+void UMSPB_ChainBolt::OnEnd_Implementation()
 {
 	if (UWorld* World = GetWorldSafe())
 	{
@@ -68,7 +68,7 @@ void UMSProjectileBehavior_ChainBolt::OnEnd_Implementation()
 	HitTransforms.Reset();
 }
 
-void UMSProjectileBehavior_ChainBolt::ApplyCollisionRadius(
+void UMSPB_ChainBolt::ApplyCollisionRadius(
 	AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
 {
 	if (InOwner)
@@ -77,7 +77,7 @@ void UMSProjectileBehavior_ChainBolt::ApplyCollisionRadius(
 	}
 }
 
-void UMSProjectileBehavior_ChainBolt::PerformChainStep()
+void UMSPB_ChainBolt::PerformChainStep()
 {
 	if (!IsAuthority())
 	{
@@ -140,14 +140,14 @@ void UMSProjectileBehavior_ChainBolt::PerformChainStep()
 		World->GetTimerManager().SetTimer(
 			TravelTimerHandle,
 			this,
-			&UMSProjectileBehavior_ChainBolt::HandleArrival,
+			&UMSPB_ChainBolt::HandleArrival,
 			TravelTime,
 			false
 		);
 	}
 }
 
-AActor* UMSProjectileBehavior_ChainBolt::FindClosestTarget(
+AActor* UMSPB_ChainBolt::FindClosestTarget(
 	const FVector& Origin,
 	float SearchRadius) const
 {
@@ -203,7 +203,7 @@ AActor* UMSProjectileBehavior_ChainBolt::FindClosestTarget(
 	return BestTarget;
 }
 
-void UMSProjectileBehavior_ChainBolt::HandleArrival()
+void UMSPB_ChainBolt::HandleArrival()
 {
 	if (!IsAuthority())
 	{
@@ -253,7 +253,7 @@ void UMSProjectileBehavior_ChainBolt::HandleArrival()
 			World->GetTimerManager().SetTimer(
 				ChainTimerHandle,
 				this,
-				&UMSProjectileBehavior_ChainBolt::PerformChainStep,
+				&UMSPB_ChainBolt::PerformChainStep,
 				ChainInterval,
 				false
 			);
@@ -265,7 +265,7 @@ void UMSProjectileBehavior_ChainBolt::HandleArrival()
 	}
 }
 
-void UMSProjectileBehavior_ChainBolt::SpawnOptionalProjectilesAt(const FTransform& SpawnTransform)
+void UMSPB_ChainBolt::SpawnOptionalProjectilesAt(const FTransform& SpawnTransform)
 {
 	if (!IsAuthority())
 	{
@@ -308,7 +308,7 @@ void UMSProjectileBehavior_ChainBolt::SpawnOptionalProjectilesAt(const FTransfor
 	}
 }
 
-void UMSProjectileBehavior_ChainBolt::SpawnOptionalProjectilesAtStoredHits()
+void UMSPB_ChainBolt::SpawnOptionalProjectilesAtStoredHits()
 {
 	if (HitTransforms.Num() <= 0)
 	{
@@ -321,7 +321,7 @@ void UMSProjectileBehavior_ChainBolt::SpawnOptionalProjectilesAtStoredHits()
 	}
 }
 
-void UMSProjectileBehavior_ChainBolt::HandleDelayedOptionalProjectiles()
+void UMSPB_ChainBolt::HandleDelayedOptionalProjectiles()
 {
 	SpawnOptionalProjectilesAtStoredHits();
 
@@ -331,7 +331,7 @@ void UMSProjectileBehavior_ChainBolt::HandleDelayedOptionalProjectiles()
 	}
 }
 
-void UMSProjectileBehavior_ChainBolt::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_ChainBolt::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)
 	{
@@ -391,7 +391,7 @@ void UMSProjectileBehavior_ChainBolt::ApplyDamageToTarget(AActor* Target, float 
 	}
 }
 
-void UMSProjectileBehavior_ChainBolt::EndChain()
+void UMSPB_ChainBolt::EndChain()
 {
 	if (UWorld* World = GetWorldSafe())
 	{
@@ -399,7 +399,7 @@ void UMSProjectileBehavior_ChainBolt::EndChain()
 			OptionalProjectileDelayHandle,
 			FTimerDelegate::CreateUObject(
 				this,
-				&UMSProjectileBehavior_ChainBolt::HandleDelayedOptionalProjectiles
+				&UMSPB_ChainBolt::HandleDelayedOptionalProjectiles
 			),
 			0.3f,
 			false

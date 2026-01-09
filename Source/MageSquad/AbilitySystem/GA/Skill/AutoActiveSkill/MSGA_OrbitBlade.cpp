@@ -4,7 +4,7 @@
 
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_OrbitBlade.h"
+#include "Actors/Projectile/Behaviors/MSPB_OrbitBlade.h"
 #include "Player/MSPlayerController.h"
 #include "Types/MageSquadTypes.h"
 
@@ -46,28 +46,69 @@ void UMSGA_OrbitBlade::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.LifeTime = Duration;
 	RuntimeData.Radius = Range;
 	RuntimeData.ProjectileSpeed = OrbitSpeedDeg;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_OrbitBlade::StaticClass();
+	RuntimeData.BehaviorClass = UMSPB_OrbitBlade::StaticClass();
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
+	RuntimeData.OptionalParameters.Reset();
 
 	const FVector Forward = Avatar->GetActorForwardVector();
 	const float StepAngle = 360.f / FMath::Max(1, ProjectileNum);
 
-	for (int32 i = 0; i < ProjectileNum; ++i)
+	if (bIsEnhanced)
 	{
-		const float Angle = StepAngle * i;
-		const FVector Dir = FRotator(0.f, Angle, 0.f).RotateVector(Forward);
-		RuntimeData.Direction = Dir;
+		const float OuterRadius = 700.f;
+		const float InnerRadius = 700.f * 0.7f;
+		RuntimeData.Radius *= 0.8f;
 
-		const FTransform SpawnTM(Dir.Rotation(), Avatar->GetActorLocation());
+		for (int32 i = 0; i < ProjectileNum; ++i)
+		{
+			const float Angle = StepAngle * i;
+			const FVector Dir = FRotator(0.f, Angle, 0.f).RotateVector(Forward);
+			RuntimeData.Direction = Dir;
 
-		UMSFunctionLibrary::LaunchProjectile(
-			this,
-			ProjectileDataClass,
-			RuntimeData,
-			SpawnTM,
-			Avatar,
-			Cast<APawn>(Avatar)
-		);
+			const FTransform SpawnTM(Dir.Rotation(), Avatar->GetActorLocation());
+
+			RuntimeData.OptionalParameters.Reset();
+			RuntimeData.OptionalParameters.Add(OuterRadius);
+			UMSFunctionLibrary::LaunchProjectile(
+				this,
+				ProjectileDataClass,
+				RuntimeData,
+				SpawnTM,
+				Avatar,
+				Cast<APawn>(Avatar)
+			);
+
+			RuntimeData.OptionalParameters.Reset();
+			RuntimeData.OptionalParameters.Add(-InnerRadius);
+			UMSFunctionLibrary::LaunchProjectile(
+				this,
+				ProjectileDataClass,
+				RuntimeData,
+				SpawnTM,
+				Avatar,
+				Cast<APawn>(Avatar)
+			);
+		}
+	}
+	else
+	{
+		for (int32 i = 0; i < ProjectileNum; ++i)
+		{
+			const float Angle = StepAngle * i;
+			const FVector Dir = FRotator(0.f, Angle, 0.f).RotateVector(Forward);
+			RuntimeData.Direction = Dir;
+
+			const FTransform SpawnTM(Dir.Rotation(), Avatar->GetActorLocation());
+
+			UMSFunctionLibrary::LaunchProjectile(
+				this,
+				ProjectileDataClass,
+				RuntimeData,
+				SpawnTM,
+				Avatar,
+				Cast<APawn>(Avatar)
+			);
+		}
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

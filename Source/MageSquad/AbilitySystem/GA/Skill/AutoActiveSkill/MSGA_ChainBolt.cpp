@@ -4,7 +4,7 @@
 
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_ChainBolt.h"
+#include "Actors/Projectile/Behaviors/MSPB_ChainBolt.h"
 #include "Types/MageSquadTypes.h"
 
 UMSGA_ChainBolt::UMSGA_ChainBolt()
@@ -60,7 +60,7 @@ void UMSGA_ChainBolt::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		RuntimeData.OptionalProjectileDataClasses.Add(LightningProjectileDataClass);
 	}
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_ChainBolt::StaticClass();
+	RuntimeData.BehaviorClass = UMSPB_ChainBolt::StaticClass();
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FTransform SpawnTransform(FRotator::ZeroRotator, Avatar->GetActorLocation());

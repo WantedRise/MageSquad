@@ -5,7 +5,8 @@
 
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Tornado.h"
+#include "Actors/Projectile/Behaviors/MSPB_Tornado.h"
+#include "Actors/Projectile/Behaviors/MSPB_TornadoEnhanced.h"
 #include "Types/MageSquadTypes.h"
 
 UMSGA_Tornado::UMSGA_Tornado()
@@ -49,7 +50,7 @@ void UMSGA_Tornado::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	RuntimeData.LifeTime = SkillDuration;
 	RuntimeData.Radius = SkillRadius;
 	RuntimeData.DamageInterval = 0.5f;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_Tornado::StaticClass();
+	RuntimeData.BehaviorClass = bIsEnhanced ? UMSPB_TornadoEnhanced::StaticClass() : UMSPB_Tornado::StaticClass();
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 	
 	// 2) 무작위 방향 생성 (XY 평면)

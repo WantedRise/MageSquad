@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_ChainBolt.generated.h"
+#include "MSPB_ChainBolt.generated.h"
 
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_ChainBolt : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_ChainBolt : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 

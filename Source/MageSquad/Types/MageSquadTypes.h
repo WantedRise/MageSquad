@@ -342,6 +342,10 @@ public:
 	// Optional projectile data (skill-specific)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	TArray<TSubclassOf<UProjectileStaticData>> OptionalProjectileDataClasses;
+
+	// Optional parameters (skill-specific)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
+	TArray<float> OptionalParameters;
 };
 
 

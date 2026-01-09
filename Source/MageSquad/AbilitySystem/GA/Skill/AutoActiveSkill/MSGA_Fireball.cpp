@@ -4,7 +4,7 @@
 #include "AbilitySystem/GA/Skill/AutoActiveSkill/MSGA_Fireball.h"
 
 #include "Actors/Projectile/Behaviors/MSPB_Fireball.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Explosive.h"
+#include "Actors/Projectile/Behaviors/MSPB_Explosive.h"
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
 #include "Player/MSPlayerController.h"
@@ -48,7 +48,7 @@ void UMSGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.LifeTime = 5.f;
 	RuntimeData.BehaviorClass = bIsEnhanced
 		? UMSPB_Fireball::StaticClass()
-		: UMSProjectileBehavior_Explosive::StaticClass();
+		: UMSPB_Explosive::StaticClass();
 	RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 

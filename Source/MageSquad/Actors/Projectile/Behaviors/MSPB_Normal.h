@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_Normal.generated.h"
+#include "MSPB_Normal.generated.h"
 
 /**
  * 정석적인 단일 투사체 행동
@@ -14,7 +14,7 @@
  * - 기본: 관통 횟수 소진 시 파괴
  */
 UCLASS(BlueprintType, Blueprintable)
-class MAGESQUAD_API UMSProjectileBehavior_Normal : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_Normal : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 

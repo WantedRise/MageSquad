@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaPeriodic.h"
+#include "Actors/Projectile/Behaviors/MSPB_AreaPeriodic.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
@@ -9,7 +9,7 @@
 #include "GameFramework/Actor.h"
 #include "MSGameplayTags.h"
 
-void UMSProjectileBehavior_AreaPeriodic::OnBegin_Implementation()
+void UMSPB_AreaPeriodic::OnBegin_Implementation()
 {
 	// 서버에서만
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
@@ -21,12 +21,12 @@ void UMSProjectileBehavior_AreaPeriodic::OnBegin_Implementation()
 	StartPeriodicDamage();
 }
 
-void UMSProjectileBehavior_AreaPeriodic::OnEnd_Implementation()
+void UMSPB_AreaPeriodic::OnEnd_Implementation()
 {
 	StopPeriodicDamage();
 }
 
-void UMSProjectileBehavior_AreaPeriodic::StartPeriodicDamage()
+void UMSPB_AreaPeriodic::StartPeriodicDamage()
 {
 	if (bRunning)
 	{
@@ -61,14 +61,14 @@ void UMSProjectileBehavior_AreaPeriodic::StartPeriodicDamage()
 		World->GetTimerManager().SetTimer(
 			PeriodicTimerHandle,
 			this,
-			&UMSProjectileBehavior_AreaPeriodic::TickPeriodicDamage,
+			&UMSPB_AreaPeriodic::TickPeriodicDamage,
 			RuntimeData.DamageInterval,
 			true
 		);
 	}
 }
 
-void UMSProjectileBehavior_AreaPeriodic::StopPeriodicDamage()
+void UMSPB_AreaPeriodic::StopPeriodicDamage()
 {
 	if (!bRunning)
 	{
@@ -86,7 +86,7 @@ void UMSProjectileBehavior_AreaPeriodic::StopPeriodicDamage()
 	}
 }
 
-void UMSProjectileBehavior_AreaPeriodic::TickPeriodicDamage()
+void UMSPB_AreaPeriodic::TickPeriodicDamage()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !OwnerProj->HasAuthority())
@@ -134,7 +134,7 @@ void UMSProjectileBehavior_AreaPeriodic::TickPeriodicDamage()
 	}
 }
 
-void UMSProjectileBehavior_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	// 발사체 가져오기
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();

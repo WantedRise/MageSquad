@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaInstant.h"
+#include "Actors/Projectile/Behaviors/MSPB_AreaInstant.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
@@ -11,7 +11,7 @@
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "Engine/OverlapResult.h"
 
-void UMSProjectileBehavior_AreaInstant::OnBegin_Implementation()
+void UMSPB_AreaInstant::OnBegin_Implementation()
 {
 	if (!IsAuthority() || bDamageApplied)
 	{
@@ -106,18 +106,18 @@ void UMSProjectileBehavior_AreaInstant::OnBegin_Implementation()
 	OwnerActor->EnableCollision(false);
 }
 
-void UMSProjectileBehavior_AreaInstant::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+void UMSPB_AreaInstant::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
 	// 즉발형: 이후 진입 데미지 없음
 	(void)Target; (void)HitResult;
 }
 
-void UMSProjectileBehavior_AreaInstant::OnEnd_Implementation()
+void UMSPB_AreaInstant::OnEnd_Implementation()
 {
 	HitActors.Reset();
 }
 
-void UMSProjectileBehavior_AreaInstant::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_AreaInstant::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)
 	{

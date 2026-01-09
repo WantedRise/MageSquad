@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_OrbitBlade.h"
+#include "Actors/Projectile/Behaviors/MSPB_OrbitBlade.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
@@ -12,7 +12,7 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
-void UMSProjectileBehavior_OrbitBlade::OnBegin_Implementation()
+void UMSPB_OrbitBlade::OnBegin_Implementation()
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor)
@@ -41,6 +41,16 @@ void UMSProjectileBehavior_OrbitBlade::OnBegin_Implementation()
 	CurrentAngleRad = FMath::Atan2(Dir.Y, Dir.X);
 	AngularSpeedRad = FMath::DegreesToRadians(RuntimeData.ProjectileSpeed > 0.f ? RuntimeData.ProjectileSpeed : 180.f);
 	OrbitRadius = 700.f;
+	if (RuntimeData.OptionalParameters.Num() > 0)
+	{
+		const float SignedRadius = RuntimeData.OptionalParameters[0];
+		if (!FMath::IsNearlyZero(SignedRadius))
+		{
+			const float SpeedSign = (SignedRadius < 0.f) ? -1.f : 1.f;
+			AngularSpeedRad *= SpeedSign;
+			OrbitRadius = FMath::Abs(SignedRadius);
+		}
+	}
 
 	OwnerActor->EnableCollision(true);
 
@@ -56,7 +66,7 @@ void UMSProjectileBehavior_OrbitBlade::OnBegin_Implementation()
 		World->GetTimerManager().SetTimer(
 			OrbitTimerHandle,
 			this,
-			&UMSProjectileBehavior_OrbitBlade::TickOrbit,
+			&UMSPB_OrbitBlade::TickOrbit,
 			0.016f,
 			true
 		);
@@ -65,14 +75,14 @@ void UMSProjectileBehavior_OrbitBlade::OnBegin_Implementation()
 		World->GetTimerManager().SetTimer(
 			OrbitEndTimerHandle,
 			this,
-			&UMSProjectileBehavior_OrbitBlade::EndOrbit,
+			&UMSPB_OrbitBlade::EndOrbit,
 			LifeTime,
 			false
 		);
 	}
 }
 
-void UMSProjectileBehavior_OrbitBlade::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+void UMSPB_OrbitBlade::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
 	if (!IsAuthority())
 	{
@@ -88,7 +98,7 @@ void UMSProjectileBehavior_OrbitBlade::OnTargetEnter_Implementation(AActor* Targ
 	(void)HitResult;
 }
 
-void UMSProjectileBehavior_OrbitBlade::OnEnd_Implementation()
+void UMSPB_OrbitBlade::OnEnd_Implementation()
 {
 	if (UWorld* World = GetWorldSafe())
 	{
@@ -98,7 +108,7 @@ void UMSProjectileBehavior_OrbitBlade::OnEnd_Implementation()
 
 }
 
-void UMSProjectileBehavior_OrbitBlade::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+void UMSPB_OrbitBlade::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
 {
 	if (!InOwner)
 	{
@@ -109,7 +119,7 @@ void UMSProjectileBehavior_OrbitBlade::ApplyCollisionRadius(AMSBaseProjectile* I
 	InOwner->SetCollisionRadius(Base);
 }
 
-void UMSProjectileBehavior_OrbitBlade::TickOrbit()
+void UMSPB_OrbitBlade::TickOrbit()
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	AActor* CenterActor = OrbitCenter.Get();
@@ -127,7 +137,7 @@ void UMSProjectileBehavior_OrbitBlade::TickOrbit()
 	OwnerActor->SetActorLocation(NewLoc, true);
 }
 
-void UMSProjectileBehavior_OrbitBlade::EndOrbit()
+void UMSPB_OrbitBlade::EndOrbit()
 {
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
@@ -135,7 +145,7 @@ void UMSProjectileBehavior_OrbitBlade::EndOrbit()
 	}
 }
 
-void UMSProjectileBehavior_OrbitBlade::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_OrbitBlade::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)
 	{
@@ -195,7 +205,7 @@ void UMSProjectileBehavior_OrbitBlade::ApplyDamageToTarget(AActor* Target, float
 	}
 }
 
-void UMSProjectileBehavior_OrbitBlade::ApplyVfxScale(float Scale)
+void UMSPB_OrbitBlade::ApplyVfxScale(float Scale)
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor || Scale <= 0.f)

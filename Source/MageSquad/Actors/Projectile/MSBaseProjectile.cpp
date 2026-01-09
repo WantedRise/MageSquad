@@ -17,7 +17,7 @@
 
 // Behavior
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+#include "Actors/Projectile/Behaviors/MSPB_Normal.h"
 
 AMSBaseProjectile::AMSBaseProjectile()
 {
@@ -276,7 +276,7 @@ void AMSBaseProjectile::EnsureBehavior()
 
 	if (!ClassToUse)
 	{
-		ClassToUse = UMSProjectileBehavior_Normal::StaticClass(); // fallback
+		ClassToUse = UMSPB_Normal::StaticClass(); // fallback
 	}
 
 	Behavior = NewObject<UMSProjectileBehaviorBase>(this, ClassToUse);

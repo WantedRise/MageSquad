@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_OrbitBlade.generated.h"
+#include "MSPB_OrbitBlade.generated.h"
 
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_OrbitBlade : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_OrbitBlade : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 
