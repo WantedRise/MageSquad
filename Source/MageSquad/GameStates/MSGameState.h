@@ -195,7 +195,7 @@ private:
 	FTSTicker::FDelegateHandle SkillLevelUpTickerHandle;
 	bool TickSkillLevelUpPhase(float DeltaTime);
 
-	FTimerHandle SkillLevelUpStartDelayHandle;
+	FTSTicker::FDelegateHandle SkillLevelUpStartTickerHandle;
 	struct FPendingSkillLevelUpSession
 	{
 		int32 SessionId = 0;
