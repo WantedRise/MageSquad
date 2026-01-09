@@ -269,7 +269,7 @@ void UMSGameFlowPvE::StartSkillLevelUpPhaseDelayed()
 
 
 
-	GameState->StartSkillLevelUpPhase();
+	GameState->StartSkillLevelUpPhase(true);
 }
 
 
