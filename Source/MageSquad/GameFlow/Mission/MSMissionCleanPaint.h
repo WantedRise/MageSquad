@@ -50,11 +50,6 @@ private:
     FVector CalculateAreaScaleFromSize(float SizeCM);
     TArray<int32> GetRandomIndicesLarge(int32 MaxIndex, int32 Count);
 private:
-    UPROPERTY()
-    TSubclassOf<class AMSInkAreaActor> MissionActorClass;
-
-    
-
     UPROPERTY(EditDefaultsOnly, Category = "Mission|CleanPaint")
     float TargetPercent = 0.94f;
 
