@@ -99,7 +99,7 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
     const float ServerTime = OwnerGameState->GetServerTime();
     OwnerGameState->SetMissionEndTime(ServerTime + MissionRow.TimeLimit);
 
-    GetWorld()->GetTimerManager().SetTimer(
+    OwnerGameState->GetWorld()->GetTimerManager().SetTimer(
         MissionTimerHandle,
         this,
         &UMSMissionComponent::OnMissionTimeExpired,

@@ -58,7 +58,7 @@ void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable
 	FActorSpawnParameters Params;
 	Params.Owner = nullptr;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	WaveManager = InOwnerGameState->GetWorld()->SpawnActor<AMSWaveManager>(
+	WaveManager = GameState->GetWorld()->SpawnActor<AMSWaveManager>(
 		WaveManagerClass,
 		FVector::ZeroVector,
 		FRotator::ZeroRotator,
@@ -153,7 +153,7 @@ void UMSGameFlowPvE::SetWave(float FirstWaveTime,float DelayWaveTime, float EndT
 		EndTime
 	);
 
-	GetWorld()->GetTimerManager().SetTimer(
+	GameState->GetWorld()->GetTimerManager().SetTimer(
 		WaveStartDelayTimer,
 		StartWaveDelegate,
 		FirstWaveTime,
@@ -249,7 +249,7 @@ void UMSGameFlowPvE::GiveMissionReward(int32 MissionId)
 	// GiveGold(MissionData->RewardGold);
 	// GiveItem(MissionData->RewardItemId);
 
-		// 중복 예약 방지
+	// 중복 예약 방지
 	if (GameState->GetWorld()->GetTimerManager().IsTimerActive(SkillLevelUpDelayTimerHandle))
 		return;
 
