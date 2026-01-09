@@ -19,6 +19,10 @@
  		return false;
  	}
  	
+ 	// UE_LOG(LogTemp, Error, TEXT("[AMSGC_Indicator %s] - HasAuthority: %s"),
+	 //   *GetName(),
+	 //   Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+ 	
  	if (!GetOwner()->HasAuthority())
  	{
  		// 클라이언트: Replicated Actor를 사용하므로 직접 스폰하지 않음

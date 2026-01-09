@@ -171,7 +171,7 @@ void AMSGameMode::TryStartGame()
 
 				// 설정
 				SpawnSystem->SetSpawnInterval(5.0f);
-				SpawnSystem->SetMaxActiveMonsters(10);
+				SpawnSystem->SetMaxActiveMonsters(25);
 				SpawnSystem->SetSpawnCountPerTick(10);
 
 				// 5초 뒤 스폰 시작
