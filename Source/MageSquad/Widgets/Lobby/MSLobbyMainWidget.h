@@ -45,6 +45,7 @@ protected:
 	void OnUnHoveredLobbyButton();
 	UFUNCTION()
 	void OnExitClicked();
+	void StartBackgroundMusic();
 	void SetScaleButton(class UButton* InButton, float SetSize);
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -59,4 +60,13 @@ public:
 	class UButton* Button_Exit;
 	
 	EButtonState ButtonState = EButtonState::Lobby;
+
+	// 에디터에서 배경음 에셋을 선택합니다 (Looping 설정된 사운드 권장)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundBase* BGMAsset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundWave* ClickButtonSound;
+	// 재생 중인 사운드를 제어하기 위한 포인터
+	UPROPERTY()
+	class UAudioComponent* BGMComponent;
 };

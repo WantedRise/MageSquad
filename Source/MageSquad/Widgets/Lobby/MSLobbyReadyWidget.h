@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -38,7 +38,7 @@ protected:
 	void OnReadyButtonClicked();
 
 public:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite,meta = (BindWidget))
 	class UButton* Button_Ready;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_Ready_Default;
@@ -46,6 +46,10 @@ public:
 	class UTextBlock* Text_Ready_Selected;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_Ready_Second;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundWave* ReadyButtonSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundWave* CancelButtonSound;
 private:
 	//로컬 플레이어의 준비 상태 (UI 토글용, 서버 상태와 별도)
 	bool  bReady;

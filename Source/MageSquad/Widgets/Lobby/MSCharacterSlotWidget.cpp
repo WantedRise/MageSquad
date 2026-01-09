@@ -9,6 +9,7 @@
 #include "DataAssets/Player/DA_CharacterData.h"
 #include <Player/MSPlayerCharacter.h>
 #include "Components/Border.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMSCharacterSlotWidget::InitSlot(FName InCharacterID)
 {
@@ -55,6 +56,10 @@ FReply UMSCharacterSlotWidget::NativeOnMouseButtonDown(
 {
     if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
     {
+        if (ClickButtonSound)
+        {
+            UGameplayStatics::PlaySound2D(this, ClickButtonSound);
+        }
         OnClicked.Broadcast(CharacterID);
         return FReply::Handled();
     }

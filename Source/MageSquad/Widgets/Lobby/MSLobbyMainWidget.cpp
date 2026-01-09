@@ -6,6 +6,8 @@
 #include "Components/Button.h"
 #include "MSCharacterSelectWidget.h"
 #include "MSLobbyReadyWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
 
 UMSLobbyMainWidget::UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -48,6 +50,8 @@ void UMSLobbyMainWidget::NativeConstruct()
     }
     ButtonState = EButtonState::Lobby;
     SetScaleButton(Button_Lobby, 1.2f);
+
+    StartBackgroundMusic();
 }
 
 //Outline 검은색으로, 크기 1.2f
@@ -57,6 +61,11 @@ void UMSLobbyMainWidget::OnClickedSelectCharacterButton()
     {
         return;
     }
+    if (ClickButtonSound)
+    {
+        UGameplayStatics::PlaySound2D(this, ClickButtonSound);
+    }
+
     ButtonState = EButtonState::SelectCharacter;
     //세팅 : 보일것 감출것
     check(MSCharacterSelect);
@@ -109,6 +118,11 @@ void UMSLobbyMainWidget::OnClickedLobbyButton()
     {
         return;
     }
+    if (ClickButtonSound)
+    {
+        UGameplayStatics::PlaySound2D(this, ClickButtonSound);
+    }
+
     ButtonState = EButtonState::Lobby;
 
     check(MSCharacterSelect);
@@ -174,6 +188,11 @@ void UMSLobbyMainWidget::SetScaleButton(UButton* InButton,float SetSize)
 
 void UMSLobbyMainWidget::OnExitClicked()
 {
+    if (ClickButtonSound)
+    {
+        UGameplayStatics::PlaySound2D(this, ClickButtonSound);
+    }
+
     APlayerController* PC = GetOwningPlayer();
     if (!PC) return;
 
@@ -181,4 +200,19 @@ void UMSLobbyMainWidget::OnExitClicked()
     if (!LobbyPC) return;
 
     LobbyPC->RequestExitLobby();
+}
+
+// 배경음 시작
+void UMSLobbyMainWidget::StartBackgroundMusic()
+{
+    if (BGMAsset && !BGMComponent)
+    {
+        // 사운드를 재생하고 그 참조를 BGMComponent에 저장합니다.
+        // 마지막 인자 true는 자동 소멸 방지 등을 위해 설정할 수 있습니다.
+        BGMComponent = UGameplayStatics::SpawnSound2D(this, BGMAsset);
+        if (BGMComponent)
+        {
+            BGMComponent->FadeIn(1.5f, 1.0f); // 1.5초 동안 볼륨 1.0까지 상승
+        }
+    }
 }

@@ -31,7 +31,8 @@ protected:
     class UImage* Image_Portrait;
     UPROPERTY(meta = (BindWidget))
     class UBorder* Border_Select;
-
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+    class USoundWave* ClickButtonSound;
 private:
     FName CharacterID;
 };

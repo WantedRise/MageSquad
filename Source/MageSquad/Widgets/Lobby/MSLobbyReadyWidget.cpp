@@ -7,6 +7,8 @@
 #include "Player/MSLobbyPlayerController.h"
 #include "MageSquad.h"
 #include "GameStates/MSLobbyGameState.h"
+#include "Sound/SoundWave.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMSLobbyReadyWidget::NativeConstruct()
 {
@@ -52,6 +54,12 @@ void UMSLobbyReadyWidget::ApplyReadyStateUI(ELobbyReadyPhase NewLobbyReadyPhase)
             Text_Ready_Selected->SetVisibility(ESlateVisibility::Visible);
             Text_Ready_Second->SetVisibility(ESlateVisibility::Visible);
         }
+
+        if (ReadyButtonSound)
+        {
+            UGameplayStatics::PlaySound2D(this, ReadyButtonSound);
+        }
+        
     }
     else
     {
@@ -66,6 +74,11 @@ void UMSLobbyReadyWidget::ApplyReadyStateUI(ELobbyReadyPhase NewLobbyReadyPhase)
         if (Text_Ready_Default)
         {
             Text_Ready_Default->SetVisibility(ESlateVisibility::Visible);
+        }
+
+        if (CancelButtonSound)
+        {
+            UGameplayStatics::PlaySound2D(this, CancelButtonSound);
         }
     }
 }
