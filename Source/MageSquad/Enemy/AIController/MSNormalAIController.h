@@ -19,7 +19,7 @@ class MAGESQUAD_API AMSNormalAIController : public AMSBaseAIController
 public:
 	AMSNormalAIController();
 	
-public:
+protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void RunAI() override;

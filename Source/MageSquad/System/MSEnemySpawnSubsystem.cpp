@@ -225,7 +225,7 @@ void UMSEnemySpawnSubsystem::PrewarmPools()
 
 	// 각 풀 사전 생성
 	PrewarmPool(NormalEnemyPool);
-	//PrewarmPool(EliteEnemyPool);
+	PrewarmPool(EliteEnemyPool);
 	PrewarmPool(BossEnemyPool);
 }
 
@@ -296,6 +296,14 @@ void UMSEnemySpawnSubsystem::StartSpawning()
 		true // Loop
 	);
 
+	GetWorld()->GetTimerManager().SetTimer(
+		EliteSpawnTimerHandle,
+		this,
+		&UMSEnemySpawnSubsystem::SpawnEliteMonsterTick,
+		EliteSpawnInterval, // 엘리트 몬스터는 1분마다 스폰
+		true // Loop
+	);
+
 	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawning started - Interval: %.2fs, Max: %d"),
 	       SpawnInterval, MaxActiveMonsters);
 }
@@ -313,6 +321,12 @@ void UMSEnemySpawnSubsystem::StopSpawning()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(SpawnTimerHandle);
 		SpawnTimerHandle.Invalidate();
+	}
+	
+	if (EliteSpawnTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(EliteSpawnTimerHandle);
+		EliteSpawnTimerHandle.Invalidate();
 	}
 	
 	// 큐 타이머 정리
@@ -433,6 +447,58 @@ void UMSEnemySpawnSubsystem::SpawnMonsterTick()
 				const FName MonsterID = CachedNormalMonsterKeys[FMath::RandRange(0, CachedNormalMonsterKeys.Num() - 1)];
 				QueueSpawnRequest(MonsterID, SpawnLocation);
 			}
+		}
+	}
+}
+
+void UMSEnemySpawnSubsystem::SpawnEliteMonsterTick()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	TArray<APlayerController*> AllPlayers = GetAllPlayerControllers();
+	if (AllPlayers.Num() == 0)
+	{
+		return;
+	}
+	
+	if (CachedNormalMonsterKeys.Num() == 0)
+	{
+		return;
+	}
+	
+	// 타일 검색을 한 번만 수행
+	AMSSpawnTileMap* TileMap = GetSpawnTileMap();
+	if (!TileMap)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[SpawnTick] No TileMap"));
+		return;
+	}
+	
+	TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
+	UE_LOG(LogTemp, Log, TEXT("[SpawnTick] InvisibleTiles: %d"), InvisibleTiles.Num());
+	
+	if (InvisibleTiles.Num() == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[SpawnTick] No invisible tiles"));
+		return;
+	}
+	
+	if (const APlayerController* PC = AllPlayers[FMath::RandRange(0, AllPlayers.Num() - 1)])
+	{
+		const FVector PlayerLocation = PC->GetPawn()->GetActorLocation();
+		
+		FVector SpawnLocation;
+		
+		if (GetRandomSpawnLocationFromTiles(InvisibleTiles, PlayerLocation, SpawnLocation))
+		{
+			const FName MonsterID = CachedNormalMonsterKeys[FMath::RandRange(0, CachedNormalMonsterKeys.Num() - 1)];
+			const FName EliteMonsterID = FName(*MonsterID.ToString().Replace(TEXT("Normal"), TEXT("Elite")));
+			
+			//SpawnMonsterInternal(EliteMonsterID, SpawnLocation); // EliteMonster는 한 마리니까 바로 스폰
+			QueueSpawnRequest(EliteMonsterID, SpawnLocation);
 		}
 	}
 }
@@ -823,7 +889,7 @@ void UMSEnemySpawnSubsystem::QueueSpawnRequest(const FName& MonsterID, const FVe
 			SpawnQueueTimerHandle,
 			this,
 			&UMSEnemySpawnSubsystem::ProcessSpawnQueue,
-			0.2f,  // 매 프레임
+			0.2f, // 스폰을 나눠서 할 Interval
 			true   // 반복
 		);
 	}
@@ -891,6 +957,26 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 		for (int32 i = 0; i < MeshMaterials.Num(); ++i)
 		{
 			Enemy->GetMesh()->SetMaterial(i, MeshMaterials[i].MaterialInterface);
+		}
+		
+		if (Enemy->GetClass() == AMSEliteEnemy::StaticClass())
+		{
+			TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> WeakDynamicMaterials;
+			for (int32 i = 0; i < Enemy->GetMesh()->GetNumMaterials(); ++i)
+			{
+				UMaterialInstanceDynamic* DMI = Cast<UMaterialInstanceDynamic>(Enemy->GetMesh()->GetMaterial(i));
+				if (!DMI)
+				{
+					DMI = Enemy->GetMesh()->CreateDynamicMaterialInstance(i);
+				}
+
+				if (DMI)
+				{
+					WeakDynamicMaterials.Add(DMI);
+					FName MaterialParameterName = TEXT("PrenelValue");
+					DMI->SetScalarParameterValue(MaterialParameterName, 1.0f);
+				}
+			}
 		}
 	}
 
@@ -1217,6 +1303,11 @@ void UMSEnemySpawnSubsystem::SetSpawnInterval(float NewInterval)
 		StopSpawning();
 		StartSpawning();
 	}
+}
+
+void UMSEnemySpawnSubsystem::SetEliteSpawnInterval(float NewInterval)
+{
+	EliteSpawnInterval = FMath::Max(0.1f, NewInterval);
 }
 
 void UMSEnemySpawnSubsystem::SetMaxActiveMonsters(int32 NewMax)
