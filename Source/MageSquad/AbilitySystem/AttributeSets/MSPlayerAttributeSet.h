@@ -81,6 +81,7 @@ public:
 	/*
 	* 피해량 보정
 	* 스킬이나 기본 공격의 피해에 대한 추가/감소 비율
+	* Ex) 10 -> 데미지 * 1.1
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_DamageMod)
 	FGameplayAttributeData DamageMod;
@@ -97,6 +98,7 @@ public:
 	/*
 	* 쿨다운 감소
 	* 스킬 쿨다운 시간을 감소시키는 비율
+	* Ex) 0.15 -> 쿨타임 15퍼센트 감소
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CooldownReduction)
 	FGameplayAttributeData CooldownReduction;

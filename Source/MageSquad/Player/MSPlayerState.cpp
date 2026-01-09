@@ -188,7 +188,7 @@ void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplay
 	if (TagStr.Contains(TEXT("Upgrade.CoolTime")))
 	{
 		const float BaseCoolTime = (Skill.BaseCoolTime > 0.f) ? Skill.BaseCoolTime : Skill.CoolTime;
-		const float NewCoolTime = BaseCoolTime * (1.f - 0.1f * UpgradeInfoPtr->Current);
+		const float NewCoolTime = BaseCoolTime * (1.f - 0.15f * UpgradeInfoPtr->Current);
 		Skill.CoolTime = FMath::Max(0.05f, NewCoolTime);
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Damage")))
@@ -203,12 +203,12 @@ void AMSPlayerState::ApplyUpgradeTagToSkill(FMSSkillList& Skill, const FGameplay
 	else if (TagStr.Contains(TEXT("Upgrade.Range")))
 	{
 		const float BaseRange = (Skill.BaseRange > 0.f) ? Skill.BaseRange : Skill.Range;
-		Skill.Range = BaseRange * (1.f + 0.2f * UpgradeInfoPtr->Current);
+		Skill.Range = BaseRange * (1.f + 0.25f * UpgradeInfoPtr->Current);
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Duration")))
 	{
 		const float BaseDuration = (Skill.BaseDuration > 0.f) ? Skill.BaseDuration : Skill.Duration;
-		Skill.Duration = BaseDuration * (1.f + 0.2f * UpgradeInfoPtr->Current);
+		Skill.Duration = BaseDuration * (1.f + 0.25f * UpgradeInfoPtr->Current);
 	}
 	else if (TagStr.Contains(TEXT("Upgrade.Penetration")))
 	{
@@ -419,6 +419,35 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId, bool bIsSpellEnhancement
 		return;
 	}
 
+	if (bIsSpellEnhancement)
+	{
+		TArray<TSubclassOf<UGameplayEffect>> EffectPool = StatUpgradeEffects;
+		if (EffectPool.Num() > 0)
+		{
+			for (int32 i = EffectPool.Num() - 1; i > 0; --i)
+			{
+				const int32 Index = RandStream.RandRange(0, i);
+				EffectPool.Swap(i, Index);
+			}
+		}
+
+		int32 EffectIndex = 0;
+		for (FMSLevelUpChoicePair& Choice : CurrentSkillChoices)
+		{
+			if (EffectIndex < EffectPool.Num())
+			{
+				Choice.StatUpgradeEffect = EffectPool[EffectIndex++];
+				continue;
+			}
+
+			if (StatUpgradeEffects.Num() > 0)
+			{
+				const int32 RandIndex = RandStream.RandRange(0, StatUpgradeEffects.Num() - 1);
+				Choice.StatUpgradeEffect = StatUpgradeEffects[RandIndex];
+			}
+		}
+	}
+
 	AMSPlayerController* PC = Cast<AMSPlayerController>(GetOwner());
 	if (!PC)
 	{
@@ -467,6 +496,7 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 
 	const FGameplayTag SkillTag = Picked.SkillTag;
 	const FGameplayTag UpgradeTag = Picked.UpgradeTag;
+	const TSubclassOf<UGameplayEffect> StatUpgradeEffect = Picked.StatUpgradeEffect;
 
 	if (!SkillTag.IsValid())
 		return;
@@ -484,6 +514,19 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 			if (Skill.SkillLevel < MaxSkillLevel)
 			{
 				Skill.SkillLevel += 1;
+			}
+			if (StatUpgradeEffect)
+			{
+				if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+				{
+					FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+					Context.AddSourceObject(this);
+					FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(StatUpgradeEffect, 1.f, Context);
+					if (SpecHandle.IsValid())
+					{
+						ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+					}
+				}
 			}
 			bSkillLevelUpCompleted = true;
 			return;
@@ -523,6 +566,19 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 		}
 
 		bSkillLevelUpCompleted = true;
+		if (StatUpgradeEffect)
+		{
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+				Context.AddSourceObject(this);
+				FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(StatUpgradeEffect, 1.f, Context);
+				if (SpecHandle.IsValid())
+				{
+					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				}
+			}
+		}
 
 		UE_LOG(LogTemp, Log, TEXT("[LevelUp][Acquire] Skill=%s Level=1"), *SkillTag.ToString());
 		return;
@@ -552,6 +608,19 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 
 	// 완료 처리
 	bSkillLevelUpCompleted = true;
+	if (StatUpgradeEffect)
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+			Context.AddSourceObject(this);
+			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(StatUpgradeEffect, 1.f, Context);
+			if (SpecHandle.IsValid())
+			{
+				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			}
+		}
+	}
 
 	UE_LOG(LogTemp, Log,
 		TEXT("[LevelUp] Choice applied. PS=%s Session=%d"),

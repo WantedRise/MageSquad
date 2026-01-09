@@ -139,6 +139,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetSpawnInterval(float NewInterval);
+	
+	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
+	void SetEliteSpawnInterval(float NewInterval);
 
 	UFUNCTION(BlueprintCallable, Category = "Monster Spawn|Config")
 	void SetMaxActiveMonsters(int32 NewMax);
@@ -184,8 +187,11 @@ private:
 	/** 특정 풀 사전 생성 */
 	void PrewarmPool(FMSEnemyPool& Pool);
 	
-	/** 타이머 콜백: 주기적으로 랜덤 몬스터 스폰 */
+	/** 주기적으로 랜덤 몬스터 스폰 */
 	void SpawnMonsterTick();
+	
+	/** 주기적으로 랜덤 몬스터 스폰 */
+	void SpawnEliteMonsterTick();
 	
 	/** 내부 스폰 로직 (풀에서 가져오거나 새로 생성) */
 	AMSBaseEnemy* SpawnMonsterInternal(const FName& MonsterID, const FVector& Location);
@@ -268,8 +274,6 @@ private:
 	// 헤더에 캐시 변수 추가
 	TArray<FName> CachedNormalMonsterKeys;
 	
-	bool bNormalMonsterKeysCached = false;
-	
 	/** 대기 중인 스폰 요청 */
 	TArray<FMSPendingSpawnRequest> PendingSpawnQueue;
     
@@ -306,6 +310,9 @@ private:
 	/** 스폰 간격 (초) */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
 	float SpawnInterval = 3.0f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
+	float EliteSpawnInterval = 60.0f;
 
 	/** 최대 동시 활성 몬스터 수 */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Config")
@@ -325,6 +332,7 @@ private:
 	
 	/** 스폰 타이머 핸들 */
 	FTimerHandle SpawnTimerHandle;
+	FTimerHandle EliteSpawnTimerHandle;
 
 	/** 스폰 중 여부 */
 	bool bIsSpawning = false;
