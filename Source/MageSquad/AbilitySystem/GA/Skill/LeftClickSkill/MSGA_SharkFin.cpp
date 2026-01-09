@@ -7,7 +7,7 @@
 #include "MSGameplayTags.h"
 #include "MSFunctionLibrary.h"
 #include "Player/MSPlayerController.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_TrailDoT.h"
+#include "Actors/Projectile/Behaviors/MSPB_TrailDoT.h"
 
 UMSGA_SharkFin::UMSGA_SharkFin()
 {
@@ -91,7 +91,7 @@ FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeDa
 	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.Radius = Range;
 RuntimeData.LifeTime = 4.f;
-RuntimeData.BehaviorClass = UMSProjectileBehavior_TrailDoT::StaticClass();
+RuntimeData.BehaviorClass = UMSPB_TrailDoT::StaticClass();
 RuntimeData.Direction = PC->GetServerCursorDir(Avatar->GetActorForwardVector());
 ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 

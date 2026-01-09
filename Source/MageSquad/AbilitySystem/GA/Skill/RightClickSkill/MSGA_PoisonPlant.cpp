@@ -5,7 +5,7 @@
 #include "GameplayEffectTypes.h"
 #include "MSGameplayTags.h"
 #include "Player/MSPlayerController.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaPeriodic.h"
+#include "Actors/Projectile/Behaviors/MSPB_AreaPeriodic.h"
 #include "MSFunctionLibrary.h"
 
 UMSGA_PoisonPlant::UMSGA_PoisonPlant()
@@ -97,7 +97,7 @@ void UMSGA_PoisonPlant::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	RuntimeData.LifeTime = 0.f;
 	RuntimeData.DamageEffect = DamageEffect;
 	RuntimeData.Effects = AdditionalEffects;
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaPeriodic::StaticClass();
+	RuntimeData.BehaviorClass = UMSPB_AreaPeriodic::StaticClass();
 	RuntimeData.DamageSequence = FinalDamageSequence;
 	RuntimeData.DamageInterval = DamageInterval;
 	ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);

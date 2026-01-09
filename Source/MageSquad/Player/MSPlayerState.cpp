@@ -557,6 +557,22 @@ void AMSPlayerState::ApplySkillLevelUpChoice_Server(int32 SessionId, const FMSLe
 		TEXT("[LevelUp] Choice applied. PS=%s Session=%d"),
 		*GetName(), SessionId
 	);
+	
+	if (APawn* Pawn = GetPawn())
+	{
+		if (AMSPlayerCharacter* PC = Cast<AMSPlayerCharacter>(Pawn))
+		{
+			PC->AcquireSkill(Skill.SkillID);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] Pawn is not AMSPlayerCharacter. Pawn=%s"), *GetNameSafe(Pawn));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[LevelUp][Acquire] GetPawn() is null (not possessed yet)."));
+	}
 }
 
 void AMSPlayerState::ApplyRandomSkillLevelUpChoice_Server()

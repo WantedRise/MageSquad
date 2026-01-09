@@ -8,7 +8,7 @@
 #include "MSFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Actors/Projectile/Behaviors/MSPB_IceSpear.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+#include "Actors/Projectile/Behaviors/MSPB_Normal.h"
 
 UMSGA_IceSpear::UMSGA_IceSpear()
 {
@@ -77,7 +77,7 @@ void UMSGA_IceSpear::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	CachedRuntimeData.PenetrationCount = Penetration;
 	CachedRuntimeData.BehaviorClass = bIsEnhanced
 		? UMSPB_IceSpear::StaticClass()
-		: UMSProjectileBehavior_Normal::StaticClass();
+		: UMSPB_Normal::StaticClass();
 	CachedRuntimeData.DamageEffect = DamageEffect;
 	CachedRuntimeData.Effects = AdditionalEffects;
 	ApplyPlayerCritToRuntimeData(ActorInfo, CachedRuntimeData);

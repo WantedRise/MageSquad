@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_TrailDoT.h"
+#include "Actors/Projectile/Behaviors/MSPB_TrailDoT.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
@@ -13,7 +13,7 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
-void UMSProjectileBehavior_TrailDoT::OnBegin_Implementation()
+void UMSPB_TrailDoT::OnBegin_Implementation()
 {
 	DirectHitActors.Reset();
 	TrailPoints.Reset();
@@ -51,7 +51,7 @@ void UMSProjectileBehavior_TrailDoT::OnBegin_Implementation()
 		World->GetTimerManager().SetTimer(
 			TrailSampleTimerHandle,
 			this,
-			&UMSProjectileBehavior_TrailDoT::SampleTrailPoint,
+			&UMSPB_TrailDoT::SampleTrailPoint,
 			TrailSampleInterval,
 			true
 		);
@@ -60,7 +60,7 @@ void UMSProjectileBehavior_TrailDoT::OnBegin_Implementation()
 		World->GetTimerManager().SetTimer(
 			TrailDamageTimerHandle,
 			this,
-			&UMSProjectileBehavior_TrailDoT::TickTrailDamage,
+			&UMSPB_TrailDoT::TickTrailDamage,
 			DamageInterval,
 			true
 		);
@@ -69,14 +69,14 @@ void UMSProjectileBehavior_TrailDoT::OnBegin_Implementation()
 		World->GetTimerManager().SetTimer(
 			TrailEndTimerHandle,
 			this,
-			&UMSProjectileBehavior_TrailDoT::EndTrail,
+			&UMSPB_TrailDoT::EndTrail,
 			TrailLifetime,
 			false
 		);
 	}
 }
 
-void UMSProjectileBehavior_TrailDoT::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+void UMSPB_TrailDoT::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
 	if (!IsAuthority())
 	{
@@ -93,7 +93,7 @@ void UMSProjectileBehavior_TrailDoT::OnTargetEnter_Implementation(AActor* Target
 	(void)HitResult;
 }
 
-void UMSProjectileBehavior_TrailDoT::OnEnd_Implementation()
+void UMSPB_TrailDoT::OnEnd_Implementation()
 {
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
@@ -109,7 +109,7 @@ void UMSProjectileBehavior_TrailDoT::OnEnd_Implementation()
 	DirectHitActors.Reset();
 }
 
-void UMSProjectileBehavior_TrailDoT::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+void UMSPB_TrailDoT::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
 {
 	if (!InOwner)
 	{
@@ -120,7 +120,7 @@ void UMSProjectileBehavior_TrailDoT::ApplyCollisionRadius(AMSBaseProjectile* InO
 	InOwner->SetCollisionRadius(Base * 0.15f);
 }
 
-void UMSProjectileBehavior_TrailDoT::SampleTrailPoint()
+void UMSPB_TrailDoT::SampleTrailPoint()
 {
 	if (!IsAuthority())
 	{
@@ -158,7 +158,7 @@ void UMSProjectileBehavior_TrailDoT::SampleTrailPoint()
 	}
 }
 
-void UMSProjectileBehavior_TrailDoT::TickTrailDamage()
+void UMSPB_TrailDoT::TickTrailDamage()
 {
 	if (!IsAuthority())
 	{
@@ -224,7 +224,7 @@ void UMSProjectileBehavior_TrailDoT::TickTrailDamage()
 	}
 }
 
-void UMSProjectileBehavior_TrailDoT::EndTrail()
+void UMSPB_TrailDoT::EndTrail()
 {
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
@@ -232,7 +232,7 @@ void UMSProjectileBehavior_TrailDoT::EndTrail()
 	}
 }
 
-void UMSProjectileBehavior_TrailDoT::HandleDirectHitAtPoint(const FVector& Point)
+void UMSPB_TrailDoT::HandleDirectHitAtPoint(const FVector& Point)
 {
 	if (!IsAuthority() || RuntimeData.DamageEffect == nullptr)
 	{
@@ -296,7 +296,7 @@ void UMSProjectileBehavior_TrailDoT::HandleDirectHitAtPoint(const FVector& Point
 	}
 }
 
-bool UMSProjectileBehavior_TrailDoT::CanHitDirectTarget(AActor* Target) const
+bool UMSPB_TrailDoT::CanHitDirectTarget(AActor* Target) const
 {
 	if (!IsValid(Target))
 	{
@@ -330,7 +330,7 @@ bool UMSProjectileBehavior_TrailDoT::CanHitDirectTarget(AActor* Target) const
 	return true;
 }
 
-void UMSProjectileBehavior_TrailDoT::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_TrailDoT::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)
 	{

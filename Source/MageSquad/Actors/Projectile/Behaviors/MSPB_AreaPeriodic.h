@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_AreaPeriodic.generated.h"
+#include "MSPB_AreaPeriodic.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_AreaPeriodic : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_AreaPeriodic : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 	

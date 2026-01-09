@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_Tornado.generated.h"
+#include "MSPB_TornadoEnhanced.generated.h"
 
 /**
- * 
+ * Enhanced Tornado: splits into two every interval, shrinking radius/scale each time.
  */
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_Tornado : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_TornadoEnhanced : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 	
@@ -19,34 +19,38 @@ public:
 	virtual void OnEnd_Implementation() override;
 
 private:
-	// 이동
 	void StartMove();
 	void StopMove();
 	void TickMove();
 
-	// 대미지
 	void StartPeriodicDamage();
 	void StopPeriodicDamage();
 	void TickPeriodicDamage();
 	void ApplyDamageToTarget(AActor* Target, float DamageAmount);
 
+	void StartSplit();
+	void StopSplit();
+	void TickSplit();
+	void SpawnSplitProjectile(const FVector& Direction, float RemainingLife, float NextRadiusScale);
+
 private:
-	// 타이머
 	FTimerHandle MoveTimerHandle;
 	FTimerHandle DamageTimerHandle;
+	FTimerHandle SplitTimerHandle;
 
-	// 이동 베이스
 	FVector StartLocation = FVector::ZeroVector;
 	FVector ForwardDir = FVector::ForwardVector;
 	float StartTime = 0.f;
 
-	// 이동 파라미터
-	float MoveSpeed = 500.f;     // 전진 속도
-	float SwirlAmp = 120.f;      // 흔들림 크기(좌우)
-	float SwirlFreq = 7.f;       // 흔들림 속도
-	float NoiseAmp = 60.f;       // 불규칙성 크기
-	float NoiseFreq = 1.3f;      // 불규칙성 변화 속도
+	float MoveSpeed = 500.f;
+	float SwirlAmp = 120.f;
+	float SwirlFreq = 7.f;
+	float NoiseAmp = 60.f;
+	float NoiseFreq = 1.3f;
 
-	// 종료 중복 방지
+	float SplitInterval = 2.f;
+	float SplitRadiusScale = 0.9f;
+	float SplitYawOffset = 30.f;
+
 	bool bEnded = false;
 };

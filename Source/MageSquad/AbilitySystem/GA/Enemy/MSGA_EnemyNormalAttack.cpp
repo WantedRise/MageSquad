@@ -10,7 +10,7 @@
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "AbilitySystem/Tasks/MSAT_PlayMontageAndWaitForEvent.h"
 #include "Actors/Projectile/MSEnemyProjectile.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+#include "Actors/Projectile/Behaviors/MSPB_Normal.h"
 #include "Enemy/MSBaseEnemy.h"
 
 
@@ -115,7 +115,7 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	
 	// 이벤트 처리 - 발사체 발사
 	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(Owner->GetProjectileDataClass());
-	RuntimeData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	RuntimeData.BehaviorClass = UMSPB_Normal::StaticClass();
 	const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
 	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
 	RuntimeData.DamageEffect = Owner->GetDamageEffectClass();

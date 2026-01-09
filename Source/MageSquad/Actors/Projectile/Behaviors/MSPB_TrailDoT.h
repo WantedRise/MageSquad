@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_TrailDoT.generated.h"
+#include "MSPB_TrailDoT.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_TrailDoT : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_TrailDoT : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 

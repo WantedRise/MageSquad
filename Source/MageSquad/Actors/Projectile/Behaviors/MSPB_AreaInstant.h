@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_AreaInstant.generated.h"
+#include "MSPB_AreaInstant.generated.h"
 
 /**
  * 작성자: 박세찬
@@ -13,7 +13,7 @@
  * 일정 범위에 있는 몬스터에게 데미지를 1번 줌
  */
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_AreaInstant : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_AreaInstant : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 public:

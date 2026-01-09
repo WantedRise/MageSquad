@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Explosive.h"
+#include "Actors/Projectile/Behaviors/MSPB_Explosive.h"
 #include "Components/PrimitiveComponent.h"
 
 #include "AbilitySystemComponent.h"
@@ -14,7 +14,7 @@
 #include "Engine/OverlapResult.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
-void UMSProjectileBehavior_Explosive::OnBegin_Implementation()
+void UMSPB_Explosive::OnBegin_Implementation()
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor)
@@ -50,7 +50,7 @@ void UMSProjectileBehavior_Explosive::OnBegin_Implementation()
 	MoveComp->Velocity = RuntimeData.ProjectileSpeed * Dir;
 }
 
-void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
+void UMSPB_Explosive::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
 	if (bExploded)
 	{
@@ -143,12 +143,12 @@ void UMSProjectileBehavior_Explosive::OnTargetEnter_Implementation(AActor* Targe
 	OwnerActor->Destroy();
 }
 
-void UMSProjectileBehavior_Explosive::OnEnd_Implementation()
+void UMSPB_Explosive::OnEnd_Implementation()
 {
 	HitActors.Reset();
 }
 
-void UMSProjectileBehavior_Explosive::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
+void UMSPB_Explosive::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
 {
 	if (!InOwner)
 	{
@@ -158,7 +158,7 @@ void UMSProjectileBehavior_Explosive::ApplyCollisionRadius(AMSBaseProjectile* In
 	InOwner->SetCollisionRadius(50.f);
 }
 
-void UMSProjectileBehavior_Explosive::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_Explosive::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	if (!Target || !RuntimeData.DamageEffect)
 	{

@@ -6,7 +6,7 @@
 #include "GameplayEffectTypes.h"
 #include "MSGameplayTags.h"
 #include "MSFunctionLibrary.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_AreaInstant.h"
+#include "Actors/Projectile/Behaviors/MSPB_AreaInstant.h"
 
 UMSGA_IceNova::UMSGA_IceNova()
 {
@@ -88,7 +88,7 @@ RuntimeData.DamageEffect = DamageEffect;
 RuntimeData.Effects = AdditionalEffects;
 RuntimeData.LifeTime = 1.5f;
 RuntimeData.Radius = Range;
-RuntimeData.BehaviorClass = UMSProjectileBehavior_AreaInstant::StaticClass();
+	RuntimeData.BehaviorClass = UMSPB_AreaInstant::StaticClass();
 ApplyPlayerCritToRuntimeData(ActorInfo, RuntimeData);
 
 	const FTransform SpawnTransform(FRotator::ZeroRotator, Avatar->GetActorLocation());

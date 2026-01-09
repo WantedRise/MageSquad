@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
-#include "MSProjectileBehavior_Explosive.generated.h"
+#include "MSPB_Explosive.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MAGESQUAD_API UMSProjectileBehavior_Explosive : public UMSProjectileBehaviorBase
+class MAGESQUAD_API UMSPB_Explosive : public UMSProjectileBehaviorBase
 {
 	GENERATED_BODY()
 

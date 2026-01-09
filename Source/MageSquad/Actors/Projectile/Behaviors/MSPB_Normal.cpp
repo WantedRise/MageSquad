@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+#include "Actors/Projectile/Behaviors/MSPB_Normal.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitysystemGlobals.h"
@@ -10,7 +10,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
-void UMSProjectileBehavior_Normal::OnBegin_Implementation()
+void UMSPB_Normal::OnBegin_Implementation()
 {
 	HitActors.Reset();
 
@@ -47,7 +47,7 @@ void UMSProjectileBehavior_Normal::OnBegin_Implementation()
 
 }
 
-void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
+void UMSPB_Normal::OnTargetEnter_Implementation(
 	AActor* Target,
 	const FHitResult& HitResult
 )
@@ -155,12 +155,12 @@ void UMSProjectileBehavior_Normal::OnTargetEnter_Implementation(
 	RemainingPenetration--;
 }
 
-void UMSProjectileBehavior_Normal::OnEnd_Implementation()
+void UMSPB_Normal::OnEnd_Implementation()
 {
 	HitActors.Reset();
 }
 
-bool UMSProjectileBehavior_Normal::CanHitTarget(AActor* Target) const
+bool UMSPB_Normal::CanHitTarget(AActor* Target) const
 {
 	if (!IsValid(Target))
 	{
@@ -202,7 +202,7 @@ bool UMSProjectileBehavior_Normal::CanHitTarget(AActor* Target) const
 	return true;
 }
 
-void UMSProjectileBehavior_Normal::HandleHitTarget(
+void UMSPB_Normal::HandleHitTarget(
 	AActor* Target,
 	const FHitResult& HitResult
 )

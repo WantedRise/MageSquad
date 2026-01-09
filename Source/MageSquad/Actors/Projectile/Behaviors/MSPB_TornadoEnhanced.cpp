@@ -1,17 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Tornado.h"
+#include "Actors/Projectile/Behaviors/MSPB_TornadoEnhanced.h"
 
 #include "AbilitySystemComponent.h"
-#include "GameplayEffect.h"
-#include "MSGameplayTags.h"
 #include "AbilitySystem/Globals/MSAbilitySystemGlobals.h"
+#include "GameplayEffect.h"
+#include "MSFunctionLibrary.h"
+#include "MSGameplayTags.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
+#include "Kismet/KismetMathLibrary.h"
 
-void UMSProjectileBehavior_Tornado::OnBegin_Implementation()
+void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 {
-	// 서버에서만
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !OwnerProj->HasAuthority())
 	{
@@ -30,9 +31,10 @@ void UMSProjectileBehavior_Tornado::OnBegin_Implementation()
 
 	StartMove();
 	StartPeriodicDamage();
+	StartSplit();
 }
 
-void UMSProjectileBehavior_Tornado::OnEnd_Implementation()
+void UMSPB_TornadoEnhanced::OnEnd_Implementation()
 {
 	if (bEnded)
 	{
@@ -42,9 +44,10 @@ void UMSProjectileBehavior_Tornado::OnEnd_Implementation()
 
 	StopMove();
 	StopPeriodicDamage();
+	StopSplit();
 }
 
-void UMSProjectileBehavior_Tornado::StartMove()
+void UMSPB_TornadoEnhanced::StartMove()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj)
@@ -58,14 +61,14 @@ void UMSProjectileBehavior_Tornado::StartMove()
 		World->GetTimerManager().SetTimer(
 			MoveTimerHandle,
 			this,
-			&UMSProjectileBehavior_Tornado::TickMove,
+			&UMSPB_TornadoEnhanced::TickMove,
 			0.016f,
 			true
 		);
 	}
 }
 
-void UMSProjectileBehavior_Tornado::StopMove()
+void UMSPB_TornadoEnhanced::StopMove()
 {
 	if (UWorld* World = GetWorldSafe())
 	{
@@ -73,7 +76,7 @@ void UMSProjectileBehavior_Tornado::StopMove()
 	}
 }
 
-void UMSProjectileBehavior_Tornado::TickMove()
+void UMSPB_TornadoEnhanced::TickMove()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	UWorld* World = GetWorldSafe();
@@ -85,14 +88,11 @@ void UMSProjectileBehavior_Tornado::TickMove()
 	const float Now = World->GetTimeSeconds();
 	const float T = Now - StartTime;
 
-	// 기본 전진
 	const FVector Base = StartLocation + ForwardDir * (MoveSpeed * T);
 
-	// 흔들림 축
 	const FVector Right = OwnerProj->GetActorRightVector();
 	const FVector Up = OwnerProj->GetActorUpVector();
 
-	// 규칙적 소용돌이 + 불규칙 노이즈
 	const float S1 = FMath::Sin(T * SwirlFreq);
 	const float S2 = FMath::Cos(T * SwirlFreq * 0.9f);
 	const float N  = FMath::PerlinNoise1D(T * NoiseFreq);
@@ -106,7 +106,7 @@ void UMSProjectileBehavior_Tornado::TickMove()
 	OwnerProj->SetActorLocation(NewLoc, true);
 }
 
-void UMSProjectileBehavior_Tornado::StartPeriodicDamage()
+void UMSPB_TornadoEnhanced::StartPeriodicDamage()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj)
@@ -114,17 +114,15 @@ void UMSProjectileBehavior_Tornado::StartPeriodicDamage()
 		return;
 	}
 
-	// 방어 코드
 	if (RuntimeData.DamageInterval <= 0.f)
 	{
-		return; // 0이면 무한 호출 위험
+		return;
 	}
 	if (!RuntimeData.DamageEffect)
 	{
 		return;
 	}
 
-	// 첫 틱 즉시
 	TickPeriodicDamage();
 
 	if (UWorld* World = OwnerProj->GetWorld())
@@ -133,14 +131,14 @@ void UMSProjectileBehavior_Tornado::StartPeriodicDamage()
 		World->GetTimerManager().SetTimer(
 			DamageTimerHandle,
 			this,
-			&UMSProjectileBehavior_Tornado::TickPeriodicDamage,
-			RuntimeData.DamageInterval, // 예: 0.25
+			&UMSPB_TornadoEnhanced::TickPeriodicDamage,
+			RuntimeData.DamageInterval,
 			true
 		);
 	}
 }
 
-void UMSProjectileBehavior_Tornado::StopPeriodicDamage()
+void UMSPB_TornadoEnhanced::StopPeriodicDamage()
 {
 	if (UWorld* World = GetWorldSafe())
 	{
@@ -148,7 +146,7 @@ void UMSProjectileBehavior_Tornado::StopPeriodicDamage()
 	}
 }
 
-void UMSProjectileBehavior_Tornado::TickPeriodicDamage()
+void UMSPB_TornadoEnhanced::TickPeriodicDamage()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !OwnerProj->HasAuthority())
@@ -157,10 +155,8 @@ void UMSProjectileBehavior_Tornado::TickPeriodicDamage()
 		return;
 	}
 
-	// 이번 틱 데미지(항상 동일)
 	const float DamageAmount = RuntimeData.Damage;
 
-	// 현재 범위 내 타겟 스캔 (Exit 필요 없음)
 	UPrimitiveComponent* RootPrim = Cast<UPrimitiveComponent>(OwnerProj->GetRootComponent());
 	if (!RootPrim)
 	{
@@ -170,7 +166,6 @@ void UMSProjectileBehavior_Tornado::TickPeriodicDamage()
 	TArray<AActor*> OverlappingActors;
 	RootPrim->GetOverlappingActors(OverlappingActors);
 
-	// 중복 제거
 	TSet<AActor*> UniqueTargets;
 	for (AActor* A : OverlappingActors)
 	{
@@ -187,7 +182,7 @@ void UMSProjectileBehavior_Tornado::TickPeriodicDamage()
 	}
 }
 
-void UMSProjectileBehavior_Tornado::ApplyDamageToTarget(AActor* Target, float DamageAmount)
+void UMSPB_TornadoEnhanced::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !Target)
@@ -195,7 +190,6 @@ void UMSProjectileBehavior_Tornado::ApplyDamageToTarget(AActor* Target, float Da
 		return;
 	}
 
-	// 타겟 ASC
 	UAbilitySystemComponent* TargetASC =
 		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
 
@@ -215,7 +209,6 @@ void UMSProjectileBehavior_Tornado::ApplyDamageToTarget(AActor* Target, float Da
 		return;
 	}
 
-	// SetByCaller (프로젝트 태그 그대로 사용)
 	float FinalDamage = DamageAmount;
 	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
 	if (bIsCritical)
@@ -247,4 +240,112 @@ void UMSProjectileBehavior_Tornado::ApplyDamageToTarget(AActor* Target, float Da
 
 		TargetASC->ApplyGameplayEffectSpecToSelf(*ExtraSpec.Data.Get());
 	}
+}
+
+void UMSPB_TornadoEnhanced::StartSplit()
+{
+	AMSBaseProjectile* OwnerProj = GetOwnerActor();
+	if (!OwnerProj)
+	{
+		return;
+	}
+
+	if (SplitInterval <= 0.f)
+	{
+		return;
+	}
+
+	if (UWorld* World = OwnerProj->GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(SplitTimerHandle);
+		World->GetTimerManager().SetTimer(
+			SplitTimerHandle,
+			this,
+			&UMSPB_TornadoEnhanced::TickSplit,
+			SplitInterval,
+			true
+		);
+	}
+}
+
+void UMSPB_TornadoEnhanced::StopSplit()
+{
+	if (UWorld* World = GetWorldSafe())
+	{
+		World->GetTimerManager().ClearTimer(SplitTimerHandle);
+	}
+}
+
+void UMSPB_TornadoEnhanced::TickSplit()
+{
+	AMSBaseProjectile* OwnerProj = GetOwnerActor();
+	UWorld* World = GetWorldSafe();
+	if (!OwnerProj || !World || !OwnerProj->HasAuthority())
+	{
+		return;
+	}
+
+	const float Now = World->GetTimeSeconds();
+	float RemainingLife = RuntimeData.LifeTime;
+	if (RemainingLife > 0.f)
+	{
+		const float Elapsed = Now - StartTime;
+		RemainingLife = FMath::Max(0.f, RemainingLife - Elapsed);
+		if (RemainingLife <= 0.f)
+		{
+			return;
+		}
+	}
+
+	const FVector BaseDir = OwnerProj->GetActorForwardVector().GetSafeNormal();
+	if (BaseDir.IsNearlyZero())
+	{
+		return;
+	}
+
+	const FVector DirA = BaseDir.RotateAngleAxis(SplitYawOffset, FVector::UpVector);
+	const FVector DirB = BaseDir.RotateAngleAxis(-SplitYawOffset, FVector::UpVector);
+
+	SpawnSplitProjectile(DirA, RemainingLife, SplitRadiusScale);
+	SpawnSplitProjectile(DirB, RemainingLife, SplitRadiusScale);
+
+	OnEnd_Implementation();
+	OwnerProj->Destroy();
+}
+
+void UMSPB_TornadoEnhanced::SpawnSplitProjectile(
+	const FVector& Direction,
+	float RemainingLife,
+	float NextRadiusScale)
+{
+	AMSBaseProjectile* OwnerProj = GetOwnerActor();
+	if (!OwnerProj)
+	{
+		return;
+	}
+
+	if (!OwnerProj->ProjectileDataClass)
+	{
+		return;
+	}
+
+	FProjectileRuntimeData NewRuntime = RuntimeData;
+	NewRuntime.Direction = Direction;
+	NewRuntime.Radius = RuntimeData.Radius * NextRadiusScale;
+	if (RemainingLife > 0.f)
+	{
+		NewRuntime.LifeTime = RemainingLife;
+	}
+
+	const FVector SpawnLoc = OwnerProj->GetActorLocation();
+	const FTransform SpawnTM(Direction.Rotation(), SpawnLoc);
+
+	UMSFunctionLibrary::LaunchProjectile(
+		OwnerProj,
+		OwnerProj->ProjectileDataClass,
+		NewRuntime,
+		SpawnTM,
+		OwnerProj->GetOwner(),
+		OwnerProj->GetInstigator()
+	);
 }

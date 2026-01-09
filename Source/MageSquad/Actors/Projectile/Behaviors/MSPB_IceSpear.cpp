@@ -9,7 +9,7 @@
 #include "GameplayEffect.h"
 #include "MSGameplayTags.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
-#include "Actors/Projectile/Behaviors/MSProjectileBehavior_Normal.h"
+#include "Actors/Projectile/Behaviors/MSPB_Normal.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -381,7 +381,7 @@ bool UMSPB_IceSpear::SpawnSplitProjectileDir(
 	FProjectileRuntimeData SplitData = RuntimeData;
 	SplitData.Direction = LaunchDir;
 	SplitData.PenetrationCount = NextPenetration;
-	SplitData.BehaviorClass = UMSProjectileBehavior_Normal::StaticClass();
+	SplitData.BehaviorClass = UMSPB_Normal::StaticClass();
 
 	const float SpawnOffset = 50.f;
 	const FVector SpawnLocation = Origin + (LaunchDir * SpawnOffset);
