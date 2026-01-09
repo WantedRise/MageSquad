@@ -22,7 +22,8 @@ public:
 
     UFUNCTION()
     void CreateSessionAndTravalToLobby();
-public:
+
+protected:
     UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
     class UButton* Button_Play;
 };
