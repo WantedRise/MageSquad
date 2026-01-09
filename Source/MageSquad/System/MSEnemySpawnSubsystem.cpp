@@ -288,13 +288,13 @@ void UMSEnemySpawnSubsystem::StartSpawning()
 
 	bIsSpawning = true;
 
-	// GetWorld()->GetTimerManager().SetTimer(
-	// 	SpawnTimerHandle,
-	// 	this,
-	// 	&UMSEnemySpawnSubsystem::SpawnMonsterTick,
-	// 	SpawnInterval,
-	// 	true // Loop
-	// );
+	GetWorld()->GetTimerManager().SetTimer(
+		SpawnTimerHandle,
+		this,
+		&UMSEnemySpawnSubsystem::SpawnMonsterTick,
+		SpawnInterval,
+		true // Loop
+	);
 
 	GetWorld()->GetTimerManager().SetTimer(
 		EliteSpawnTimerHandle,
