@@ -7,7 +7,7 @@
 
  AMSGC_Indicator::AMSGC_Indicator()
  {
- 	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.Indicator"));
+ 	//GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.Indicator"));
  }
 
  bool AMSGC_Indicator::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
@@ -19,10 +19,14 @@
  		return false;
  	}
  	
+ 	UE_LOG(LogTemp, Error, TEXT("[AMSGC_Indicator %s] - HasAuthority: %s"),
+	   *GetName(),
+	   Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+ 	
  	if (!GetOwner()->HasAuthority())
  	{
  		// 클라이언트: Replicated Actor를 사용하므로 직접 스폰하지 않음
- 		return false;
+ 		return true;
  	}
  	
  	// EffectContext에서 파라미터 추출

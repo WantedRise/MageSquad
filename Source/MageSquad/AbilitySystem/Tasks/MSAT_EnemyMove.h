@@ -37,7 +37,9 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	void UpdateMoveTarget();
+	// void UpdateMoveTarget();
+	FVector GetNextPathDirection(const APawn* OwnerPawn, const AActor* TargetActor);
+	void UpdateCachedPath(const APawn* OwnerPawn, const AActor* TargetActor);
 	
 private:
 	UPROPERTY()
@@ -53,4 +55,13 @@ private:
 	// 최적화: 이전 타겟 위치 캐싱 (불필요한 MoveToActor 호출 방지)
 	FVector LastTargetLocation;
 	float TargetLocationThresholdSq;
+    
+	FVector CurrentMoveDirection;
+	float TurnSpeed = 2.f;
+    
+	// 경로 캐싱
+	TArray<FVector> CachedPathPoints;
+	int32 CurrentPathIndex = 0;
+	float PathUpdateTimer = 0.f;
+	float PathUpdateInterval = 0.5f;  // 0.5초마다 경로 재계산
 };

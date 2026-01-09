@@ -106,11 +106,9 @@ float AMSWaveBlock::CalculateSignificance(USignificanceManager::FManagedObjectIn
 		return 0.0f;
 	}
 
-	// 플레이어와 적 사이의 거리 계산
 	float DistanceSq = FVector::DistSquared(Owner->GetActorLocation(), Viewpoint.GetLocation());
-
-	// 뱀서류 예시 기준 (10미터 이내: 1.0, 30미터 이내: 0.5, 그 외: 0.1)
-	if (DistanceSq < FMath::Square(3500.0f))
+	
+	if (DistanceSq < FMath::Square(3000.0f))
 	{
 		return 1.0f;
 	}
@@ -125,7 +123,7 @@ float AMSWaveBlock::CalculateSignificance(USignificanceManager::FManagedObjectIn
 void AMSWaveBlock::OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig,
                                          float NewSig, bool bInView)
 {
-	bool IsCulling = NewSig <= 0.5f;
+	bool IsCulling = NewSig <= 0.1f;
 
 	// Mesh들을 배열에 담아 처리
 	UMeshComponent* Meshes[] = { Mesh1, Mesh2, Mesh3, Mesh4, Mesh5, Mesh6, Mesh7, Mesh8 };
