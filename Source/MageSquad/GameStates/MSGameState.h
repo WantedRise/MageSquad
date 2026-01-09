@@ -186,7 +186,7 @@ private:
 	TSet<TObjectPtr<class AMSPlayerState>> CompletedPlayers;
 
 	void BeginSkillLevelUpPhaseForPlayers(int32 SessionId, bool bIsSpellEnhancement);
-	void ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement);
+	void ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement, float DelaySeconds);
 
 	void EndSkillLevelUpPhase(bool bByTimeout);
 	bool AreAllPlayersCompleted() const;

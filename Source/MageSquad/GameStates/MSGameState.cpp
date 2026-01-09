@@ -226,7 +226,8 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 		{
 			if (AMSPlayerController* PC = Cast<AMSPlayerController>(C))
 			{
-				PC->Client_CloseSkillLevelUpChoices(SessionId);
+				const bool bKeepPaused = PendingSkillLevelUpSessions.Num() > 0;
+				PC->Client_CloseSkillLevelUpChoices(SessionId, bKeepPaused);
 			}
 		}
 	}
@@ -235,7 +236,7 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 	{
 		const FPendingSkillLevelUpSession NextSession = PendingSkillLevelUpSessions[0];
 		PendingSkillLevelUpSessions.RemoveAt(0);
-		ScheduleSkillLevelUpStart(NextSession.SessionId, NextSession.bIsSpellEnhancement);
+		ScheduleSkillLevelUpStart(NextSession.SessionId, NextSession.bIsSpellEnhancement, 0.0f);
 	}
 }
 
@@ -312,10 +313,10 @@ void AMSGameState::StartSkillLevelUpPhase(bool bIsSpellEnhancement)
 		return;
 	}
 
-	ScheduleSkillLevelUpStart(LevelUpSessionId, bIsSpellEnhancement);
+	ScheduleSkillLevelUpStart(LevelUpSessionId, bIsSpellEnhancement, 2.0f);
 }
 
-void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement)
+void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement, float DelaySeconds)
 {
 	if (UWorld* World = GetWorld())
 	{
@@ -329,7 +330,7 @@ void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhan
 				SessionId,
 				bIsSpellEnhancement
 			),
-			2.0f,
+			DelaySeconds,
 			false
 		);
 	}

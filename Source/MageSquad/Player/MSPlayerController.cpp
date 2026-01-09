@@ -584,7 +584,7 @@ void AMSPlayerController::OnSpectateNextAction(const FInputActionValue& Value)
 	RequestChangeSpectate(+1);
 }
 
-void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId)
+void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 SessionId, bool bKeepPaused)
 {
 	if (!IsLocalController()) return;
 
@@ -594,10 +594,16 @@ void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 S
 		LevelUpPanelInstance = nullptr;
 	}
 
-	SetPause(false);
+	if (!bKeepPaused)
+	{
+		SetPause(false);
+	}
 
-	FInputModeGameAndUI InputMode;
-	SetInputMode(InputMode);
+	if (!bKeepPaused)
+	{
+		FInputModeGameAndUI InputMode;
+		SetInputMode(InputMode);
+	}
 }
 
 void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 SessionId,

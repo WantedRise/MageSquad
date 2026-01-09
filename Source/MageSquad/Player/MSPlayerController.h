@@ -229,7 +229,7 @@ public:
 	void Client_ShowSkillLevelUpChoices(int32 SessionId, const TArray<FMSLevelUpChoicePair>& Choices, float RemainingSeconds);
 
 	UFUNCTION(Client, Reliable)
-	void Client_CloseSkillLevelUpChoices(int32 SessionId);
+	void Client_CloseSkillLevelUpChoices(int32 SessionId, bool bKeepPaused);
 
 	/** 클라 -> 서버: 선택 결과 전달 (Panel에서 호출) */
 	UFUNCTION(Server, Reliable)
