@@ -325,22 +325,39 @@ void AMSGameState::StartSkillLevelUpPhase(bool bIsSpellEnhancement)
 
 void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhancement, float DelaySeconds)
 {
-	if (UWorld* World = GetWorld())
+	bSkillLevelUpStartPending = true;
+
+	if (SkillLevelUpStartTickerHandle.IsValid())
 	{
-		bSkillLevelUpStartPending = true;
-		World->GetTimerManager().ClearTimer(SkillLevelUpStartDelayHandle);
-		World->GetTimerManager().SetTimer(
-			SkillLevelUpStartDelayHandle,
-			FTimerDelegate::CreateUObject(
-				this,
-				&AMSGameState::BeginSkillLevelUpPhaseForPlayers,
-				SessionId,
-				bIsSpellEnhancement
-			),
-			DelaySeconds,
-			false
-		);
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpStartTickerHandle);
+		SkillLevelUpStartTickerHandle.Reset();
 	}
+
+	if (DelaySeconds <= 0.f)
+	{
+		BeginSkillLevelUpPhaseForPlayers(SessionId, bIsSpellEnhancement);
+		return;
+	}
+
+	const double FireAt = FPlatformTime::Seconds() + DelaySeconds;
+	SkillLevelUpStartTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateLambda([this, SessionId, bIsSpellEnhancement, FireAt](float DeltaTime)
+		{
+			if (!HasAuthority())
+			{
+				return false;
+			}
+
+			if (FPlatformTime::Seconds() < FireAt)
+			{
+				return true;
+			}
+
+			BeginSkillLevelUpPhaseForPlayers(SessionId, bIsSpellEnhancement);
+			return false;
+		}),
+		0.05f
+	);
 }
 
 void AMSGameState::NotifySkillLevelUpCompleted(class AMSPlayerState* PS)
@@ -613,6 +630,11 @@ void AMSGameState::BeginSkillLevelUpPhaseForPlayers(int32 SessionId, bool bIsSpe
 	}
 
 	bSkillLevelUpStartPending = false;
+	if (SkillLevelUpStartTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpStartTickerHandle);
+		SkillLevelUpStartTickerHandle.Reset();
+	}
 	bSkillLevelUpPhaseActive = true;
 	CurrentSkillLevelUpSessionId = SessionId;
 	CompletedPlayers.Reset();
