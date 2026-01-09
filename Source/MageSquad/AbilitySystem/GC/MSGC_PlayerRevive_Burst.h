@@ -27,4 +27,8 @@ protected:
 	// 시작 지점에 스폰할 나이아가라
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	TObjectPtr<class UNiagaraSystem> StartNiagara;
+
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX")
+	TObjectPtr<class USoundBase> StartSound;
 };

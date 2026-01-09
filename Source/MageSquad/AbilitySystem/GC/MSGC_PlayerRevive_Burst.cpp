@@ -8,6 +8,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
+#include "Kismet/GameplayStatics.h"
+
 UMSGC_PlayerRevive_Burst::UMSGC_PlayerRevive_Burst()
 {
 }
@@ -54,6 +56,12 @@ bool UMSGC_PlayerRevive_Burst::OnExecute_Implementation(AActor* Target, const FG
 			EAttachLocation::KeepWorldPosition,
 			true
 		);
+
+		// 서운드 재생
+		if (StartSound)
+		{
+			UGameplayStatics::SpawnSoundAttached(StartSound, SkelMeshComp);
+		}
 
 		// 나이아가라의 회전 절댓값 설정
 		if (Niagara)
