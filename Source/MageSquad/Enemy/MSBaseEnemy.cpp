@@ -60,19 +60,23 @@ AMSBaseEnemy::AMSBaseEnemy()
 	MoveComp->SetAvoidanceGroup(1);
 	MoveComp->SetGroupsToAvoidMask(1); // 그룹 1의 다른 Enemy들을 회피
 	MoveComp->SetAvoidanceEnabled(true); // 명시적 활성화
-
-	// 기본 회전 설정
-	MoveComp->bOrientRotationToMovement = true;
-	MoveComp->bUseControllerDesiredRotation = false;
-	MoveComp->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // 중간 속도
-
-	// 가속/감속으로 자연스러운 움직임
-	MoveComp->MaxAcceleration = 800.0f;
-	MoveComp->BrakingDecelerationWalking = 800.0f;
-	MoveComp->MaxWalkSpeed = 400.0f;
-
-	// 곡선 이동을 위한 설정
+	
+	// // 곡선 이동을 위한 설정
 	MoveComp->bRequestedMoveUseAcceleration = true;
+	MoveComp->bUseControllerDesiredRotation = false;
+	
+	// 이동 방향으로 자동 회전
+	MoveComp->bOrientRotationToMovement = true;
+    
+	// 회전 속도 제한 (낮을수록 큰 호를 그림)
+	MoveComp->RotationRate = FRotator(0.f, 360.f, 0.f);  // 초당 180도
+    
+	// 컨트롤러 회전 무시
+	bUseControllerRotationYaw = false;
+    
+	// 가속/감속 설정 (자연스러운 곡선에 기여)
+	MoveComp->MaxAcceleration = 1500.f;
+	MoveComp->BrakingDecelerationWalking = 1000.f;
 	
 	// 바닥의 높이가 변하지 않으므로 성능상 끔
 	MoveComp->bAlwaysCheckFloor = false;  
