@@ -10,6 +10,7 @@
 
 struct FMSMissionRow;
 struct FMSMissionProgressUIData;
+struct FMSMissionCleanData;
 
 /*
 * 작성자: 이상준

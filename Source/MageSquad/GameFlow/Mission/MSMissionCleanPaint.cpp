@@ -7,6 +7,10 @@
 #include "NavigationSystem.h"
 #include "Components/MSMissionComponent.h"
 #include "DataStructs/MSMissionProgressUIData.h"
+#include "DataStructs/MSMissionCleanData.h"
+#include "System/MSEnemySpawnSubsystem.h" 
+#include "Actors/TileMap/MSSpawnTileMap.h"
+#include "GameStates/MSGameState.h"
 
 UMSMissionCleanPaint::UMSMissionCleanPaint()
 {
@@ -15,6 +19,13 @@ UMSMissionCleanPaint::UMSMissionCleanPaint()
     if (BP_Class.Succeeded())
     {
         MissionActorClass = BP_Class.Class;
+    }
+
+    //정화미션 데이터 가져오기
+    static ConstructorHelpers::FObjectFinder<UDataTable> DataTableAsset(TEXT("/Game/Data/Mission/DT/DT_MissionCleanData.DT_MissionCleanData"));
+    if (DataTableAsset.Succeeded())
+    {
+        CleanMissionDataTable = DataTableAsset.Object;
     }
 }
 
@@ -27,56 +38,101 @@ void UMSMissionCleanPaint::Initialize(UWorld* World)
     // 서버에서만 판정
     if (!World->GetAuthGameMode())
         return;
-
-
-
-    UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-    if (!NavSystem)
+    
+    //플레이인원수에 해당하는 정화미션 데이터를 가져오기
+    if (AMSGameState* GS = World->GetGameState<AMSGameState>())
     {
+        if (CleanMissionDataTable)
+        {
+            FName RowName = FName(*FString::FromInt(GS->GetActivePlayerCount()));
+            const FString Context(TEXT("CleanMissionData"));
+            CleanData = CleanMissionDataTable->FindRow<FMSMissionCleanData>(
+                RowName,
+                TEXT("CleanMission")
+            );
+        }
+    }
+    
+    if (!CleanData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CleanMissionData not found"));
         return;
     }
-    FNavLocation NavLoc;
-    FVector OutLocation;
-    if (NavSystem->ProjectPointToNavigation(FVector(0,0,0), NavLoc, FVector(2000.0f, 2000.0f, 2000.0f)))
-    {
-        OutLocation = NavLoc.Location;
-        OutLocation.Z = 10.f;
-    }
 
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SetTargetInfo(OwnerMissionComponent->GetCurrentMissionData().FindTargetActorClass);
+    SpawnTargets(World);
 
-    AMSInkAreaActor* SpawnedActor = World->SpawnActor<AMSInkAreaActor>(
-        MissionActorClass,
-        OutLocation,
-        FRotator::ZeroRotator,
-        SpawnParams
-    );
-
-    SpawnedActor->OnProgressChanged.AddUObject(
-        this,
-        &UMSMissionCleanPaint::OnAreaProgressChanged
-    );
-
-    AMSInkAreaActor* SpawnedActor2 = World->SpawnActor<AMSInkAreaActor>(
-        MissionActorClass,
-        OutLocation+FVector(0,1000.0f,0),
-        FRotator::ZeroRotator,
-        SpawnParams
-    );
-
-    SpawnedActor2->OnProgressChanged.AddUObject(
-        this,
-        &UMSMissionCleanPaint::OnAreaProgressChanged
-    );
-
-    InkAreas.Add(SpawnedActor);
-    InkAreas.Add(SpawnedActor2);
-    //BindInkAreas(World);
     // 초기 상태 1회 계산
     OnAreaProgressChanged(0.0f);
 }
 
+void UMSMissionCleanPaint::SetTargetInfo(TSubclassOf<AActor> InTargetClass)
+{
+    TargetActorClass = InTargetClass;
+}
+
+FVector UMSMissionCleanPaint::CalculateAreaScaleFromSize(float SizeCM)
+{
+    constexpr float BasePlaneSizeCM = 100.f; // Plane 실제 크기
+    const float ScaleXY = SizeCM / BasePlaneSizeCM;
+
+    return FVector(ScaleXY, ScaleXY, 1.f);
+}
+
+void UMSMissionCleanPaint::SpawnTargets(UWorld* World)
+{
+    if (!World || !TargetActorClass || !CleanData)
+        return;
+    UE_LOG(LogTemp, Log, TEXT("UMSMissionCleanPaint %d,%f"), CleanData->AreaCount, CleanData->AreaSize);
+    UMSEnemySpawnSubsystem* SpawnSubsystem = World->GetSubsystem<UMSEnemySpawnSubsystem>();
+    if (SpawnSubsystem)
+    {
+
+        if (AMSSpawnTileMap* TileMap = SpawnSubsystem->GetSpawnTileMap())
+        {
+            // 모든 타일들 가져오기
+            TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetAllSpawnableTiles();
+            TArray<int32> UniqueIndices = GetRandomIndicesLarge(InvisibleTiles.Num() - 1, CleanData->AreaCount);
+
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+            for (int32 SpawnTileIndex : UniqueIndices)
+            {
+                FVector SpawnLocation = InvisibleTiles[SpawnTileIndex].Location;
+                SpawnLocation.Z += 10.0f;
+                AMSInkAreaActor* Target = World->SpawnActor<AMSInkAreaActor>(
+                    TargetActorClass,
+                    FTransform(FRotator::ZeroRotator, SpawnLocation, CalculateAreaScaleFromSize(CleanData->AreaSize)),
+                    SpawnParams
+                );
+
+                if (Target)
+                {
+                    Target->OnProgressChanged.AddUObject(
+                        this,
+                        &UMSMissionCleanPaint::OnAreaProgressChanged
+                    );
+
+                    InkAreas.Add(TWeakObjectPtr<AMSInkAreaActor>(Target));
+                }
+            }
+        }
+    }
+}
+
+TArray<int32> UMSMissionCleanPaint::GetRandomIndicesLarge(int32 MaxIndex, int32 Count)
+{
+    TSet<int32> UniqueIndices;
+
+    while (UniqueIndices.Num() < Count)
+    {
+        int32 RandomIdx = FMath::RandRange(0, MaxIndex - 1);
+        UniqueIndices.Add(RandomIdx); // TSet은 중복을 자동으로 무시함
+    }
+
+    return UniqueIndices.Array();
+}
 void UMSMissionCleanPaint::Deinitialize()
 {
     for (TWeakObjectPtr<class AMSInkAreaActor> Area : InkAreas)
