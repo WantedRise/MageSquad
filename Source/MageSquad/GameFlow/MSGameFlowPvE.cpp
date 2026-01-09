@@ -24,6 +24,7 @@ UMSGameFlowPvE::UMSGameFlowPvE()
 
 void UMSGameFlowPvE::BeginDestroy()
 {
+	Super::BeginDestroy();
 	if (!GameState) return;
 	if (UWorld* World = GameState->GetWorld())
 	{
@@ -34,7 +35,6 @@ void UMSGameFlowPvE::BeginDestroy()
 		}
 		World->GetTimerManager().ClearTimer(SkillLevelUpDelayTimerHandle);
 	}
-	Super::BeginDestroy();
 }
 
 void UMSGameFlowPvE::Initialize(class AMSGameState* InOwnerGameState, UDataTable* InTimelineTable)
