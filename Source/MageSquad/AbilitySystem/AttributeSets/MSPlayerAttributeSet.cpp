@@ -69,20 +69,30 @@ void UMSPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		UAbilitySystemComponent* TargetASC = &Data.Target;
 		if (!TargetASC) return;
 
-		// 시작 초기화, 무적, 사망, 컷씬 상태면 체력 변경에 따른 이벤트 로직 스킵
-		if (TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_Init) &&
-			TargetASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Invincible) &&
-			TargetASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead) &&
-			TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_CutScene)
-			)
-		{
-			return;
-		}
+		// 시작 초기화, 무적, 사망, 컷씬 상태를 저장
+		const bool bIsInitState = TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_Init);
+		const bool bIsInvincible = TargetASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Invincible);
+		const bool bIsDead = TargetASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead);
+		const bool bIsCutScene = TargetASC->HasMatchingGameplayTag(MSGameplayTags::Shared_State_CutScene);
 
 		const float NewHealth = GetHealth();
 
 		// 현재 체력 변경량
 		const float DeltaHealth = NewHealth - CachedOldHealth;
+
+		// 무적 상태면 받는 피해를 먼저 무시
+		if (bIsInvincible && DeltaHealth < 0.f)
+		{
+			SetHealth(CachedOldHealth);
+			return;
+		}
+
+		// 상태 태그는 OR로 판정해서 피해 이벤트를 스킵
+		const bool bShouldSkipDamageEvents = bIsInitState || bIsInvincible || bIsDead || bIsCutScene;
+		if (bShouldSkipDamageEvents && DeltaHealth < 0.f)
+		{
+			return;
+		}
 
 		// 현재 체력이 감소일 때만 데미지 로직 실행
 		if (DeltaHealth < 0.f)

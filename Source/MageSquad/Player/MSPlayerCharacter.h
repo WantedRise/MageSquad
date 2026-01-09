@@ -476,6 +476,9 @@ protected:
 	// 서버: 부활 완료 시, 사망 진입에서 끈 요소들을 복구하는 함수
 	void OnRespawnExit_Server();
 
+	// 서버: 부활 직후 무적 태그 해제 함수
+	void ClearRespawnInvincible_Server();
+
 	// 사망 상태가 변경되었을 때 로컬 클라이언트에서 입력/카메라/UI 등을 처리하는 함수
 	void ApplyLocalDeathState(bool bNowDead);
 
@@ -497,6 +500,9 @@ protected:
 	// 팀 부활용 액터. 서버만 소유
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Respawn")
 	TSubclassOf<class AMSTeamReviveActor> PendingReviveActorClass;
+
+	// 부활 무적 타이머 핸들
+	FTimerHandle RespawnInvincibleTimerHandle;
 
 private:
 	UPROPERTY(Transient)

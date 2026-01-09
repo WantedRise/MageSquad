@@ -178,7 +178,7 @@ void AMSTeamReviveActor::Tick_Server(float DeltaSeconds)
 		return;
 	}
 
-	// 이미 부활했거나 사망 상태가 아니라면 진행 중인 부활을 정리한다.
+	// 이미 부활했거나 사망 상태가 아니라면 진행 중인 부활을 정리
 	if (!DownedCharacter->GetIsDead())
 	{
 		Destroy();

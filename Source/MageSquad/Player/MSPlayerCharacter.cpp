@@ -1060,7 +1060,8 @@ void AMSPlayerCharacter::HandleOverheadDisplayNameChanged(const FText& NewName)
 
 void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	if (!IsLocallyControlled()) return;
+	// 서버/로컬 모두에서 무적 태그 변경을 반영해 충돌 상태를 동기화
+	if (!HasAuthority() && !IsLocallyControlled()) return;
 
 	bool bIsInvincible = (NewCount > 0);
 
@@ -1072,7 +1073,8 @@ void AMSPlayerCharacter::OnInvincibilityChanged(const FGameplayTag CallbackTag, 
 
 void AMSPlayerCharacter::SetInvincibleCollision(bool bInvincible)
 {
-	if (!IsLocallyControlled()) return;
+	// 서버는 직접 적용, 로컬은 서버에 요청
+	if (!HasAuthority() && !IsLocallyControlled()) return;
 
 	if (HasAuthority())
 	{
@@ -1128,7 +1130,7 @@ void AMSPlayerCharacter::ClientRPCPlayHealthShake_Implementation(float Scale)
 void AMSPlayerCharacter::SetCharacterOnDead_Server()
 {
 	// 서버 전용 + 중복 방지
-	if (!HasAuthority() || bIsDead) return;
+	if (!HasAuthority() || GetIsDead()) return;
 
 	// 월드, GS, 사망 지점 가져오기
 	UWorld* World = GetWorld();
@@ -1261,7 +1263,7 @@ void AMSPlayerCharacter::SetCharacterOnDead_Server()
 
 void AMSPlayerCharacter::ResetCharacterOnRespawn()
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority() || !GetIsDead()) return;
 
 	// 사망한 캐릭터의 월드 및 GameState 가져오기
 	UWorld* World = GetWorld();
@@ -1286,6 +1288,7 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Player-Spectate] Non AMSPlayerController."));
 	}
+
 
 	// #4: 부활 VFX 재생 (Gameplay Cue)
 	// 부활 GameplayCue 태그 지정
@@ -1316,6 +1319,15 @@ void AMSPlayerCharacter::ResetCharacterOnRespawn()
 	{
 		AbilitySystemComponent->CancelAllAbilities(nullptr);
 	}
+}
+
+void AMSPlayerCharacter::ClearRespawnInvincible_Server()
+{
+	if (!HasAuthority()) return;
+	if (!AbilitySystemComponent) return;
+
+	// 부활 무적 태그 해제
+	AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Player_State_Invincible);
 }
 
 void AMSPlayerCharacter::BeginSpectate_Server()
@@ -1412,6 +1424,23 @@ void AMSPlayerCharacter::OnRespawnExit_Server()
 	PendingReviveActor = nullptr;
 
 	SetActorHiddenInGame(false);
+
+	// 부활 직후 짧은 무적 태그 부여
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Player_State_Invincible);
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(RespawnInvincibleTimerHandle);
+			World->GetTimerManager().SetTimer(
+				RespawnInvincibleTimerHandle,
+				this,
+				&AMSPlayerCharacter::ClearRespawnInvincible_Server,
+				1.f,
+				false
+			);
+		}
+	}
 
 	// 원본 복구
 	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
