@@ -171,7 +171,7 @@ void AMSGameMode::TryStartGame()
 
 				// 설정
 				SpawnSystem->SetSpawnInterval(5.0f);
-				SpawnSystem->SetEliteSpawnInterval(60.0f);
+				SpawnSystem->SetEliteSpawnInterval(3.0f);
 				SpawnSystem->SetMaxActiveMonsters(25);
 				SpawnSystem->SetSpawnCountPerTick(10);
 
