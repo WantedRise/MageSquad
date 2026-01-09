@@ -26,6 +26,7 @@ class MAGESQUAD_API AMSInkAreaActor : public AActor
 
 public:
     AMSInkAreaActor();
+    
     virtual void BeginPlay() override;
 
     /** 플레이어 위치를 “지나간 자리”로 기록 (RT + Grid) */

@@ -6,7 +6,7 @@
 #include "Actors/Mission/MSMissionFindTargetActor.h"
 #include "System/MSEnemySpawnSubsystem.h" 
 #include "Actors/TileMap/MSSpawnTileMap.h"
-#include <System/MSMissionDataSubsystem.h>
+//#include <System/MSMissionDataSubsystem.h>
 #include "DataStructs/MSMissionProgressUIData.h"
 
 void UMSMissionFindWithinTimeScript::Initialize(UWorld* World)
@@ -14,14 +14,14 @@ void UMSMissionFindWithinTimeScript::Initialize(UWorld* World)
 	if (!World)
 		return;
 
-	UMSMissionDataSubsystem* MissionDataSubsystem =
-		World->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
-	if (!MissionDataSubsystem)
-		return;
+	//UMSMissionDataSubsystem* MissionDataSubsystem =
+	//	World->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	//if (!MissionDataSubsystem)
+	//	return;
 
-	const FMSMissionRow* MissionData = MissionDataSubsystem->Find(3);
-	if (!MissionData)
-		return;
+	//const FMSMissionRow* MissionData = MissionDataSubsystem->Find(3);
+	//if (!MissionData)
+	//	return;
 
 	CurrentFindCount = 0;
 	

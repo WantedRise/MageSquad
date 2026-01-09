@@ -46,7 +46,12 @@ private:
 	void OnInterruptedCallback();
 
 private:
-	// 김준형 수정: 적 사망 시 드롭할 아이템 오브 클래스
+	/*
+	* 수정자: 김준형
+	* 수정일: 26/01/09
+	* 
+	* 적 사망 시 아이템 드롭 구현
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AMSExperienceOrb> ExpReward;
 
@@ -55,4 +60,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AMSPotionOrb> PotionReward;
+
+	// 아이템 중복 드롭 방지 플래그
+	bool bHasDroppedItem = false;
 };
