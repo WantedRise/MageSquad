@@ -58,8 +58,6 @@ void AMSInkAreaActor::InitGrid()
     if (!HasAuthority()) return;
 
     InkGrid.SetNum(GridSize * GridSize);
-    //for (uint8& C : InkGrid) C = 1;
-    //DirtyCount = InkGrid.Num();
     BakeBlockedCells();
 }
 

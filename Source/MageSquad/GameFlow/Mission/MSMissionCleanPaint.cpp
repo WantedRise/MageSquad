@@ -14,13 +14,6 @@
 
 UMSMissionCleanPaint::UMSMissionCleanPaint()
 {
-    static ConstructorHelpers::FClassFinder<AMSInkAreaActor> BP_Class(TEXT("/Game/Blueprints/Actors/Mission/BP_InkArea.BP_InkArea_C"));
-
-    if (BP_Class.Succeeded())
-    {
-        MissionActorClass = BP_Class.Class;
-    }
-
     //정화미션 데이터 가져오기
     static ConstructorHelpers::FObjectFinder<UDataTable> DataTableAsset(TEXT("/Game/Data/Mission/DT/DT_MissionCleanData.DT_MissionCleanData"));
     if (DataTableAsset.Succeeded())
