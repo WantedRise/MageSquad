@@ -79,7 +79,7 @@ public: /*Setter*/
 
 protected:
 	UFUNCTION()
-	void OnRep_MonsterID();
+	virtual void OnRep_MonsterID();
 	
 	UFUNCTION()
 	void OnRep_IsInPool();
