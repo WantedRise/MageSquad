@@ -11,7 +11,7 @@
 
 void UMSPB_AreaPeriodic::OnBegin_Implementation()
 {
-	// 서버에서만
+	// ?�버?�서�?
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !OwnerProj->HasAuthority())
 	{
@@ -40,11 +40,11 @@ void UMSPB_AreaPeriodic::StartPeriodicDamage()
 	}
 	if (RuntimeData.DamageInterval <= 0.f)
 	{
-		// 주기가 0이면 무한 호출 위험 -> 방지
+		// 주기가 0?�면 무한 ?�출 ?�험 -> 방�?
 		return;
 	}
 
-	// 시퀀스가 비어있으면 종료
+	// ?�퀀?��? 비어?�으�?종료
 	if (RuntimeData.DamageSequence.Num() <= 0)
 	{
 		return;
@@ -53,7 +53,7 @@ void UMSPB_AreaPeriodic::StartPeriodicDamage()
 	bRunning = true;
 	CurrentTickIndex = 0;
 
-	// 첫 틱 즉시 1회 적용 후, 이후 주기 반복
+	// �???즉시 1???�용 ?? ?�후 주기 반복
 	TickPeriodicDamage();
 
 	if (UWorld* World = OwnerProj->GetWorld())
@@ -97,17 +97,17 @@ void UMSPB_AreaPeriodic::TickPeriodicDamage()
 
 	if (CurrentTickIndex >= RuntimeData.DamageSequence.Num())
 	{
-		// 모든 틱 완료 -> 종료
+		// 모든 ???�료 -> 종료
 		StopPeriodicDamage();
-		OwnerProj->Destroy();
+
 		return;
 	}
 
-	// 이번 틱 데미지
+	// ?�번 ???��?지
 	const float DamageAmount = RuntimeData.DamageSequence[CurrentTickIndex];
 	++CurrentTickIndex;
 
-	// 장판 범위 안의 액터 수집 (루트=CollisionSphere라 가정)
+	// ?�판 범위 ?�의 ?�터 ?�집 (루트=CollisionSphere??가??
 	UPrimitiveComponent* RootPrim = Cast<UPrimitiveComponent>(OwnerProj->GetRootComponent());
 	if (!RootPrim)
 	{
@@ -117,7 +117,7 @@ void UMSPB_AreaPeriodic::TickPeriodicDamage()
 	TArray<AActor*> OverlappingActors;
 	RootPrim->GetOverlappingActors(OverlappingActors);
 
-	// 같은 액터 중복 방지
+	// 같�? ?�터 중복 방�?
 	TSet<AActor*> UniqueTargets;
 	for (AActor* A : OverlappingActors)
 	{
@@ -136,7 +136,7 @@ void UMSPB_AreaPeriodic::TickPeriodicDamage()
 
 void UMSPB_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 {
-	// 발사체 가져오기
+	// 발사�?가?�오�?
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !Target)
 	{
@@ -147,7 +147,7 @@ void UMSPB_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 		return;
 	}
 
-	// 타겟 ASC 가져오기
+	// ?��?ASC 가?�오�?
 	UAbilitySystemComponent* TargetASC =
 		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
 
@@ -156,9 +156,9 @@ void UMSPB_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 		return;
 	}
 
-	// 타겟 ASC로 Spec 생성
+	// ?��?ASC�?Spec ?�성
 	FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-	Context.AddSourceObject(OwnerProj); // “이 데미지의 출처 오브젝트” 정도만 남김(선택)
+	Context.AddSourceObject(OwnerProj); // ?�이 ?��?지??출처 ?�브?�트???�도�??��?(?�택)
 
 	FGameplayEffectSpecHandle SpecHandle =
 		TargetASC->MakeOutgoingSpec(RuntimeData.DamageEffect, 1.f, Context);
@@ -168,8 +168,8 @@ void UMSPB_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 		return;
 	}
 
-	// SetByCaller를 쓰는 GE
-	// 프로젝트 태그명에 맞게 바꿔줘 (예: Data_Damage)
+	// SetByCaller�??�는 GE
+	// ?�로?�트 ?�그명에 맞게 바꿔�?(?? Data_Damage)
 	float FinalDamage = DamageAmount;
 	const bool bIsCritical = FMath::FRand() < RuntimeData.CriticalChance;
 	if (bIsCritical)
@@ -183,7 +183,7 @@ void UMSPB_AreaPeriodic::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 		SpecHandle.Data->AddDynamicAssetTag(MSGameplayTags::Hit_Critical);
 	}
 
-	// 타겟에게 적용
+	// ?�겟에�??�용
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 
 	for (const TSubclassOf<UGameplayEffect>& ExtraEffect : RuntimeData.Effects)

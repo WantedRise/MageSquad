@@ -103,7 +103,7 @@ void UMSGA_Explosion::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	// RuntimeData 설정
 	const FTransform SpawnTM(FRotator::ZeroRotator, ExplosionLocation);
 	RuntimeData.Radius = Range;
-	RuntimeData.LifeTime = 0.f;
+	RuntimeData.LifeTime = 2.5f;
 	RuntimeData.DamageEffect = DamageEffect;
 	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.BehaviorClass = UMSPB_AreaPeriodic::StaticClass();

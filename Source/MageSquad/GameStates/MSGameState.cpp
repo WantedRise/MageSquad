@@ -25,6 +25,7 @@
 #include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
 #include "DataStructs/MSMissionProgressUIData.h"
+#include "Kismet/GameplayStatics.h"
 
 AMSGameState::AMSGameState()
 {
@@ -232,11 +233,17 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 		}
 	}
 
-	if (PendingSkillLevelUpSessions.Num() > 0)
+	const bool bWillStartNext = PendingSkillLevelUpSessions.Num() > 0;
+	if (bWillStartNext)
 	{
 		const FPendingSkillLevelUpSession NextSession = PendingSkillLevelUpSessions[0];
 		PendingSkillLevelUpSessions.RemoveAt(0);
 		ScheduleSkillLevelUpStart(NextSession.SessionId, NextSession.bIsSpellEnhancement, 0.0f);
+	}
+
+	if (!bWillStartNext && !bSkillLevelUpStartPending)
+	{
+		UGameplayStatics::SetGamePaused(GetWorld(), false);
 	}
 }
 
@@ -609,6 +616,8 @@ void AMSGameState::BeginSkillLevelUpPhaseForPlayers(int32 SessionId, bool bIsSpe
 	bSkillLevelUpPhaseActive = true;
 	CurrentSkillLevelUpSessionId = SessionId;
 	CompletedPlayers.Reset();
+
+	UGameplayStatics::SetGamePaused(GetWorld(), true);
 
 	// 30초 카운트다운 시작 시점을 지연 이후로 맞춤
 	SkillLevelUpExpireAtRealTime = FPlatformTime::Seconds() + 30.0;

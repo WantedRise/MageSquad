@@ -94,7 +94,7 @@ void UMSGA_PoisonPlant::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 	const FTransform SpawnTM(FRotator::ZeroRotator, PoisonPlantLocation);
 	RuntimeData.Radius = Range;
-	RuntimeData.LifeTime = 0.f;
+	RuntimeData.LifeTime = 5.5f;
 	RuntimeData.DamageEffect = DamageEffect;
 	RuntimeData.Effects = AdditionalEffects;
 	RuntimeData.BehaviorClass = UMSPB_AreaPeriodic::StaticClass();
