@@ -9,6 +9,8 @@
 #include "Types/MageSquadTypes.h"
 #include "MSPlayerState.generated.h"
 
+class UGameplayEffect;
+
 // 생존 상태 변경 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAliveStateChangedNative, bool /*bIsAlive*/);
 
@@ -120,6 +122,10 @@ protected:
 	// 스킬 최대 레벨
 	UPROPERTY(EditDefaultsOnly, Category = "Skill")
 	int32 MaxSkillLevel = 10;
+
+	// 주문 증강 시 함께 제공할 스탯 강화 GE 목록
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	TArray<TSubclassOf<UGameplayEffect>> StatUpgradeEffects;
 
 
 

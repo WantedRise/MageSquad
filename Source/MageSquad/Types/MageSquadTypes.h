@@ -585,4 +585,7 @@ struct FMSLevelUpChoicePair
 
 	UPROPERTY(BlueprintReadOnly)
 	FText SkillDescription;
+
+	UPROPERTY(BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> StatUpgradeEffect = nullptr;
 };
