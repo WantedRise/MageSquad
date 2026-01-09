@@ -9,6 +9,7 @@
 
 void UMSLevelUpPanel::InitPanel(int32 InSessionId, const TArray<FMSLevelUpChoicePair>& InChoices)
 {
+	bIsFocusable = true;
 	SessionId = InSessionId;
 	bHasPicked = false;
 
