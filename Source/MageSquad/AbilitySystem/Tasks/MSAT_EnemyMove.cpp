@@ -52,6 +52,12 @@ void UMSAT_EnemyMove::TickTask(float DeltaTime)
 {
 	Super::TickTask(DeltaTime);
 	
+	if (!Ability->GetActorInfo().IsNetAuthority())
+	{
+		EndTask();
+		return;
+	}
+	
 	// 서버에서만 실행됨 (Activate에서 클라이언트는 이미 종료)
 	if (!CachedAIC.IsValid())
 	{
