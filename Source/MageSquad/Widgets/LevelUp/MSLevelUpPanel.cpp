@@ -48,7 +48,7 @@ for (int32 Index = 0; Index < ChoiceCount; ++Index)
 	UPanelSlot* PanelSlot = ChoiceContainer->AddChild(ChoiceWidget);
 	if (UHorizontalBoxSlot* HSlot = Cast<UHorizontalBoxSlot>(PanelSlot))
 	{
-		const float RightPadding = (Index < ChoiceCount - 1) ? 75.f : 0.f;
+		const float RightPadding = (Index < ChoiceCount - 1) ? 15.f : 0.f;
 		HSlot->SetPadding(FMargin(0.f, 0.f, RightPadding, 0.f));
 	}
 }
