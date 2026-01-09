@@ -7,10 +7,10 @@
 #include "MSGC_PlayerBlinkStart.generated.h"
 
 /**
- * ÀÛ¼ºÀÚ: ±èÁØÇü
- * ÀÛ¼ºÀÏ: 25/12/15
+ * ì‘ì„±ì: ê¹€ì¤€í˜•
+ * ì‘ì„±ì¼: 25/12/15
  *
- * ÇÃ·¹ÀÌ¾î Á¡¸ê ½ÃÀÛ VFX/SFX Àç»ı °ÔÀÓÇÃ·¹ÀÌ Å¥
+ * í”Œë ˆì´ì–´ ì ë©¸ ì‹œì‘ VFX/SFX ì¬ìƒ ê²Œì„í”Œë ˆì´ í
  */
 UCLASS()
 class MAGESQUAD_API UMSGC_PlayerBlinkStart : public UGameplayCueNotify_Static
@@ -23,17 +23,21 @@ public:
 protected:
 	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
 
-	// ½ºÆù À§Ä¡ ±¸ÇÏ±â ÇÔ¼ö
+	// ìŠ¤í° ìœ„ì¹˜ êµ¬í•˜ê¸° í•¨ìˆ˜
 	FVector ResolveSpawnLocation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const;
 	
-	// ½ºÆù È¸Àü°ª ±¸ÇÏ±â ÇÔ¼ö
+	// ìŠ¤í° íšŒì „ê°’ êµ¬í•˜ê¸° í•¨ìˆ˜
 	FRotator ResolveSpawnRotation(AActor* MyTarget) const;
 
-	// »ö»ó ÆÄ¶ó¹ÌÅÍ ±¸ÇÏ±â ÇÔ¼ö
+	// ìƒ‰ìƒ íŒŒë¼ë¯¸í„° êµ¬í•˜ê¸° í•¨ìˆ˜
 	FLinearColor ResolveLinearColor(const FGameplayCueParameters& Parameters) const;
 
 protected:
-	// ½ÃÀÛ ÁöÁ¡¿¡ ½ºÆùÇÒ ³ªÀÌ¾Æ°¡¶ó
+	// ì‹œì‘ ì§€ì ì— ìŠ¤í°í•  ë‚˜ì´ì•„ê°€ë¼
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	TObjectPtr<class UNiagaraSystem> StartNiagara;
+
+	// ì‚¬ìš´ë“œ
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX")
+	TObjectPtr<class USoundBase> StartSound;
 };

@@ -36,6 +36,12 @@ bool UMSGC_PlayerBlinkStart::OnExecute_Implementation(AActor* MyTarget, const FG
 		SpawnRotation
 	);
 
+	// 서운드 재생
+	if (StartSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, StartSound, SpawnLocation);
+	}
+
 	if (Niagara)
 	{
 		Niagara->SetColorParameter(TEXT("User.Blink.Color"), Color);
