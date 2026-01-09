@@ -32,6 +32,9 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	// 드롭 가드 초기화
+	bHasDroppedItem = false;
+
 	// 1. ASC 가져오기
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
 	if (ASC)
@@ -80,24 +83,28 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 		return;
 	}
 
-	if (!ExpReward || !MagnetReward || !PotionReward)
-	{
-		return;
-	}
 
-	// 김준형 수정: 경험치 오브 드롭 -> 확률에 따라 아이템 오브(경험치, 자석, 포션) 랜덤 드롭
-	// 아이템 오브 드롭 확률 구하기
+	/*
+	* 김준형
+	* 경험치 오브 드롭 -> 확률에 따라 아이템 오브(경험치, 자석, 포션) 랜덤 드롭 로직 구현
+	*/
+	// 아이템 중복 드롭 방지
+	if (bHasDroppedItem) return;
+	bHasDroppedItem = true;
+
+	if (!ExpReward || !MagnetReward || !PotionReward) return;
+
 	const float Roll = FMath::FRand(); // (0.0, 1.0)
 
 	// 스폰할 클래스 선택
 	TSubclassOf<AActor> SpawnClass = nullptr;
 
-	// 90% 확률로 경험치 오브 드롭
-	if (Roll < 0.90f)
+	// 92% 확률로 경험치 오브 드롭
+	if (Roll < 0.92f)
 	{
 		SpawnClass = ExpReward;
 	}
-	// 8% 확률로 포션 오브 드롭
+	// 6% 확률로 포션 오브 드롭
 	else if (Roll < 0.98f)
 	{
 		SpawnClass = PotionReward;
