@@ -4,6 +4,8 @@
 #include "Widgets/Mission/MSMissionNotifyWidget.h"
 #include "Components/TextBlock.h"
 #include "Animation/WidgetAnimation.h"
+#include "Sound/SoundWave.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMSMissionNotifyWidget::SetMissionMessage(FText InMessage)
 {
@@ -23,6 +25,10 @@ void UMSMissionNotifyWidget::PlayNotify(FText InMessage)
         EUMGSequencePlayMode::Forward,
         1.f   
     );
+    if (MissionNotifySound)
+    {
+        UGameplayStatics::PlaySound2D(GetWorld(),MissionNotifySound);
+    }
 }
 
 void UMSMissionNotifyWidget::PlayMissionResult(bool bSuccess)
@@ -43,4 +49,19 @@ void UMSMissionNotifyWidget::PlayMissionResult(bool bSuccess)
         EUMGSequencePlayMode::Forward,
         1.f    
     );
+
+    if (bSuccess)
+    {
+        if (MissionSuccessSound)
+        {
+            UGameplayStatics::PlaySound2D(GetWorld(), MissionSuccessSound);
+        }
+    }
+    else
+    {
+        if (MissionFailSound)
+        {
+            UGameplayStatics::PlaySound2D(GetWorld(), MissionFailSound);
+        }
+    }
 }

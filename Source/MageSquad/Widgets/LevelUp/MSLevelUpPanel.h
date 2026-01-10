@@ -23,8 +23,6 @@ class MAGESQUAD_API UMSLevelUpPanel : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	UMSLevelUpPanel(const FObjectInitializer& ObjectInitializer);
-public:
 	UFUNCTION(BlueprintCallable)
 	void InitPanel(int32 InSessionId, const TArray<FMSLevelUpChoicePair>& InChoices);
 

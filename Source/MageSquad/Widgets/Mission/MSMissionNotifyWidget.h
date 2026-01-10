@@ -31,4 +31,11 @@ public:
 	
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	class UWidgetAnimation* Anim_MissionResult;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundWave* MissionSuccessSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundWave* MissionFailSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	class USoundWave* MissionNotifySound;
 };
