@@ -323,6 +323,14 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 		{
 			Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			Cap->SetGenerateOverlapEvents(false);
+			
+			if (UCharacterMovementComponent* CMC = GetCharacterMovement())
+			{
+				CMC->SetMovementMode(MOVE_Walking); 
+        
+				CMC->StopMovementImmediately();
+				CMC->Velocity = FVector::ZeroVector;
+			}
 		}
 		else
 		{
@@ -330,7 +338,7 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 			Cap->SetGenerateOverlapEvents(true);
 
 			// 캡슐 오브젝트 타입을 확실히 MSEnemy로 유지
-			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnem
+			Cap->SetCollisionObjectType(ECC_GameTraceChannel3); // MSEnemy
 		}
 	}
 }
