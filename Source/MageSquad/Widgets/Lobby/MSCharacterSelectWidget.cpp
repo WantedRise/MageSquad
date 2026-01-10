@@ -220,4 +220,3 @@ void UMSCharacterSelectWidget::OnCharacterSlotClicked(FName InCharacterId)
     if (!PC) return;
     PC->Server_SelectCharacter(InCharacterId);
 }
-

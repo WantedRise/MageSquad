@@ -8,6 +8,8 @@
 #include "MSLobbyReadyWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
+#include "Components/Overlay.h"
+#include "Components/CanvasPanel.h"
 
 UMSLobbyMainWidget::UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -17,10 +19,12 @@ UMSLobbyMainWidget::UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializ
 
 void UMSLobbyMainWidget::NativeConstruct()
 {
-    check(MSCharacterSelect);
-    MSCharacterSelect->SetVisibility(ESlateVisibility::Collapsed);
     Super::NativeConstruct();
-
+    if(MSCharacterSelect)
+    {
+        MSCharacterSelect->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    
     if (Button_Select)
     {
         // ⭐ 버튼 클릭 바인드
@@ -61,18 +65,17 @@ void UMSLobbyMainWidget::OnClickedSelectCharacterButton()
     {
         return;
     }
-    if (ClickButtonSound)
-    {
-        UGameplayStatics::PlaySound2D(this, ClickButtonSound);
-    }
 
     ButtonState = EButtonState::SelectCharacter;
     //세팅 : 보일것 감출것
     check(MSCharacterSelect);
     MSCharacterSelect->SetVisibility(ESlateVisibility::Visible);
-
     check(WBP_MSLobbyReady);
     WBP_MSLobbyReady->SetVisibility(ESlateVisibility::Collapsed);
+    check(Button_Exit);
+    Button_Exit->SetVisibility(ESlateVisibility::Collapsed);
+    check(CanvasPanel_OutClick);
+    CanvasPanel_OutClick->SetVisibility(ESlateVisibility::Visible);
 
     if (Button_Lobby)
     {
@@ -92,10 +95,10 @@ void UMSLobbyMainWidget::OnHoveredSelectCharacterButton()
     {
         return;
     }
-
+    
     if (Button_Select)
     {
-        SetScaleButton(Button_Select, 1.2f);
+        SetScaleButton(Button_Select, 1.2f); 
     }
 }
 
@@ -114,13 +117,17 @@ void UMSLobbyMainWidget::OnUnHoveredSelectCharacterButton()
 
 void UMSLobbyMainWidget::OnClickedLobbyButton()
 {
+    UE_LOG(LogTemp, Error, TEXT("OnClickedLobbyButton"));
+    AMSLobbyPlayerController* PC = GetOwningPlayer<AMSLobbyPlayerController>();
+    if (!PC)
+    {
+        UE_LOG(LogTemp, Error, TEXT("AMSLobbyPlayerController is nullptr"));
+        return;
+    }
+    
     if (ButtonState == EButtonState::Lobby)
     {
         return;
-    }
-    if (ClickButtonSound)
-    {
-        UGameplayStatics::PlaySound2D(this, ClickButtonSound);
     }
 
     ButtonState = EButtonState::Lobby;
@@ -129,16 +136,17 @@ void UMSLobbyMainWidget::OnClickedLobbyButton()
     MSCharacterSelect->SetVisibility(ESlateVisibility::Collapsed);
     check(WBP_MSLobbyReady);
     WBP_MSLobbyReady->SetVisibility(ESlateVisibility::Visible);
+    check(Button_Exit);
+    Button_Exit->SetVisibility(ESlateVisibility::Visible);
+    check(CanvasPanel_OutClick);
+    CanvasPanel_OutClick->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
     if (Button_Select)
     {
         SetScaleButton(Button_Select, 1.0f);
     }
-
-    if (AMSLobbyPlayerController* PC = GetOwningPlayer<AMSLobbyPlayerController>())
-    {
-        PC->SwitchToLobbyCamera();
-    }
+    UE_LOG(LogTemp, Error, TEXT("SwitchToLobbyCamera"));
+    PC->SwitchToLobbyCamera();
 }
 
 void UMSLobbyMainWidget::OnHoveredLobbyButton()
@@ -188,11 +196,6 @@ void UMSLobbyMainWidget::SetScaleButton(UButton* InButton,float SetSize)
 
 void UMSLobbyMainWidget::OnExitClicked()
 {
-    if (ClickButtonSound)
-    {
-        UGameplayStatics::PlaySound2D(this, ClickButtonSound);
-    }
-
     APlayerController* PC = GetOwningPlayer();
     if (!PC) return;
 
@@ -215,4 +218,29 @@ void UMSLobbyMainWidget::StartBackgroundMusic()
             BGMComponent->FadeIn(1.5f, 1.0f); // 1.5초 동안 볼륨 1.0까지 상승
         }
     }
+}
+
+FReply UMSLobbyMainWidget::NativeOnMouseButtonDown(
+    const FGeometry& InGeometry,
+    const FPointerEvent& InMouseEvent)
+{
+    // 마우스 위치
+    const FVector2D ScreenPos = InMouseEvent.GetScreenSpacePosition();
+    if (Overlay_CharacterSelect && ButtonState == EButtonState::SelectCharacter)
+    {
+        // Border의 스크린 영역 계산
+        const FGeometry& BorderGeometry = Overlay_CharacterSelect->GetCachedGeometry();
+        const FSlateRect BorderRect = BorderGeometry.GetLayoutBoundingRect();
+
+        // Border 밖을 눌렀다면 → 닫기
+        if (!BorderRect.ContainsPoint(ScreenPos))
+        {
+            OnHoveredLobbyButton();
+            OnClickedLobbyButton();
+            return FReply::Handled();
+        }
+    }
+
+    // Border 안 클릭 → 그냥 소비해서 아래로 전달 안 함
+    return FReply::Handled();
 }

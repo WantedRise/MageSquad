@@ -28,6 +28,7 @@ class MAGESQUAD_API UMSLobbyMainWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	UMSLobbyMainWidget(const FObjectInitializer& ObjectInitializer);
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	UMSCharacterSelectWidget* GetCharacterSelectWidget() { return MSCharacterSelect; }
 	virtual void NativeConstruct() override;
 protected:
@@ -58,7 +59,12 @@ public:
 	class UButton* Button_Lobby;
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Button_Exit;
+	UPROPERTY(meta = (BindWidget))
+	class UOverlay* Overlay_CharacterSelect;
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* CanvasPanel_OutClick;
 	
+
 	EButtonState ButtonState = EButtonState::Lobby;
 
 	// 에디터에서 배경음 에셋을 선택합니다 (Looping 설정된 사운드 권장)
