@@ -63,4 +63,6 @@ private:
 
 	// 아이템 중복 드롭 방지 플래그
 	bool bHasDroppedItem = false;
+	
+	bool bEndAbilityCalled = false;
 };

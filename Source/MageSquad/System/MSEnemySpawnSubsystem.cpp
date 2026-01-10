@@ -1045,9 +1045,12 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	{
 		return;
 	}
-
+	
+	
 	// 풀링 모드 해제
 	Enemy->SetPoolingMode(false);
+	
+	Enemy->GetMesh()->SetVisibility(true);
 
 	//  가시성/충돌 활성화
 	Enemy->SetActorHiddenInGame(false);
@@ -1062,7 +1065,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 		}
 	}
 
-	
 	// 리플리케이션 활성화
 	//Enemy->SetReplicates(true);
 	Enemy->SetReplicateMovement(true);
@@ -1096,13 +1098,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	}
 
 	Enemy->SetMonsterID(NAME_None);
-	
 	Enemy->SetPoolingMode(true);
-	
-	// // Hidden 처리
-	// Enemy->SetActorHiddenInGame(true);
-	// // 콜리전은 Dead Ability에서 몽타주 시작과 동시에 처리
-	// Enemy->SetActorTickEnabled(false);
 
 	// Movement 정리
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
@@ -1121,7 +1117,6 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		}
 	}
 
-
 	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
 	if (!ASC)
 	{
@@ -1135,11 +1130,10 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	//  모든 Ability 취소
 	ASC->CancelAllAbilities();
 	
-	//  GAS 초기화
-	//ResetEnemyGASState(Enemy);
+	// Enemy->SetActorHiddenInGame(true);
+	Enemy->GetMesh()->SetVisibility(false);
 	
 	// 리플리케이션 완전히 끄기
-	//Enemy->SetReplicates(false);
 	Enemy->SetReplicateMovement(false);
 }
 
@@ -1208,14 +1202,15 @@ void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
-	if (NewCount >= 0) // 태그가 없음 == 몽타주 끝남
+	if (NewCount > 0)
 	{
-		HandleEnemyDeath(Enemy);
+		// HandleEnemyDeath(Enemy);
 	}
-	
-	else // 태그가 제거됨 = 몽타주 끝남 = 사망처리
+
+	else
 	{
-		//HandleEnemyDeath(Enemy);
+		UE_LOG(LogTemp, Log, TEXT("Enemy Tag Erase : %s"), *Enemy->GetName());
+		HandleEnemyDeath(Enemy);
 	}
 }
 
@@ -1242,15 +1237,9 @@ void UMSEnemySpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
 	UnbindEnemyDeathEvent(Enemy);
 
 	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Enemy died (Active: %d)"), CurrentActiveCount);
-
-	// 사망 애니메이션 후 풀로 반환
-	FTimerHandle ReturnTimer;
-	GetWorld()->GetTimerManager().SetTimer(
-		ReturnTimer,
-		FTimerDelegate::CreateUObject(this, &UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal, Enemy, OwningPool),
-		DeathAnimationDuration,
-		false
-	);
+	
+	// 풀로 반환
+	ReturnEnemyToPoolInternal(Enemy, OwningPool);
 }
 
 void UMSEnemySpawnSubsystem::ReturnEnemyToPool(AMSBaseEnemy* Enemy)

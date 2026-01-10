@@ -11,6 +11,7 @@
 #include "Enemy/MSBossEnemy.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
 #include "Enemy/AIController/MSBossAIController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 UMSGA_EnemyGroggy::UMSGA_EnemyGroggy()
@@ -32,6 +33,16 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                         const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
+	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
+		{
+			CMC->StopMovementImmediately();
+			CMC->Velocity = FVector::ZeroVector;
+			CMC->DisableMovement();
+		}
+	}
 
 	GroggyCountAcc = 0;
 
@@ -69,6 +80,17 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
+	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
+		{
+			CMC->SetMovementMode(MOVE_Walking); 
+        
+			CMC->StopMovementImmediately();
+			CMC->Velocity = FVector::ZeroVector;
+		}
+	}
 
 	if (AMSBossAIController* EnemyAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
