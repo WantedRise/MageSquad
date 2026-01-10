@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "Components/MSDirectionIndicatorComponent.h"
+#include <Kismet/GameplayStatics.h>
 
 AMSMissionFindTargetActor::AMSMissionFindTargetActor()
 {
@@ -66,6 +67,11 @@ void AMSMissionFindTargetActor::OnOverlapBegin(
 
 	if (OtherActor && OtherActor->IsA<ACharacter>())
 	{
+		// 서운드 재생
+		if (StartSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
+		}
 		// 수집 이벤트 브로드캐스트
 		OnTargetCollected.Broadcast();
 		Destroy();

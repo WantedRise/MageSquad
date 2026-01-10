@@ -29,6 +29,11 @@ public:
 	// 매개변수: 정보객체, 이전 중요도, 새로운 중요도, 화면에 보이는지 여부
 	void OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView);
 
+	// 달리기 사운드 켜기
+	void StartRunSound();
+	// 달리기 사운드 끄기
+	void StopRunSound();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -52,4 +57,9 @@ private:
 	TObjectPtr<class USkeletalMeshComponent> Mesh7;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USkeletalMeshComponent> Mesh8;
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class USoundBase> RunSound;
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> RunAudioComponent;
 };

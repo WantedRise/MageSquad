@@ -50,4 +50,8 @@ protected:
 
 	FVector BaseLocation;
 	float RunningTime = 0.f;
+
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX")
+	TObjectPtr<class USoundBase> StartSound;
 };
