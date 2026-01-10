@@ -14,6 +14,7 @@
 #include "Actors/Items/MSExperienceOrb.h"
 #include "Actors/Items/MSMagnetOrb.h"
 #include "Actors/Items/MSPotionOrb.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UMSGA_EnemyDead::UMSGA_EnemyDead()
 {
@@ -31,20 +32,26 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
+	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
+		{
+			CMC->StopMovementImmediately();
+			CMC->Velocity = FVector::ZeroVector;
+			CMC->DisableMovement();
+		}
+	}
+	
 	// 드롭 가드 초기화
 	bHasDroppedItem = false;
-
-	// 1. ASC 가져오기
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (ASC)
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
-		// 2. 파라미터 설정
 		FGameplayCueParameters CueParams;
 		CueParams.Instigator = GetAvatarActorFromActorInfo();
 		CueParams.TargetAttachComponent = Owner->GetMesh();
-
-		// 3. ASC를 통해 GameplayCue 실행
+		
 		FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
 		ASC->ExecuteGameplayCue(CueTag, CueParams);
 	}
