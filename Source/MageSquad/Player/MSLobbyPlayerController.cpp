@@ -21,6 +21,7 @@
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
 #include "GameModes/MSLobbyGameMode.h"
+#include "Camera/PlayerCameraManager.h"
 
 AMSLobbyPlayerController::AMSLobbyPlayerController()
 {
