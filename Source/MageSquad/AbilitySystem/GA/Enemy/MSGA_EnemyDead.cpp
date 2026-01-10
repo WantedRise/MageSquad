@@ -99,17 +99,17 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	// 스폰할 클래스 선택
 	TSubclassOf<AActor> SpawnClass = nullptr;
 
-	// 92% 확률로 경험치 오브 드롭
-	if (Roll < 0.92f)
+	// 95% 확률로 경험치 오브 드롭
+	if (Roll < 0.95f)
 	{
 		SpawnClass = ExpReward;
 	}
-	// 6% 확률로 포션 오브 드롭
-	else if (Roll < 0.98f)
+	// 4% 확률로 포션 오브 드롭
+	else if (Roll < 0.99f)
 	{
 		SpawnClass = PotionReward;
 	}
-	// 2% 확률로 자석 오브 드롭
+	// 1% 확률로 자석 오브 드롭
 	else
 	{
 		SpawnClass = MagnetReward;
