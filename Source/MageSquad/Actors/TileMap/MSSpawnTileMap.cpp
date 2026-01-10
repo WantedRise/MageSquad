@@ -400,24 +400,94 @@ bool AMSSpawnTileMap::IsLocationVisibleToPlayer(APlayerController* PC, const FVe
 		return false;
 	}
 
-	// 스크린 좌표로 변환
-	FVector2D ScreenPosition;
-	if (PC->ProjectWorldLocationToScreen(Location, ScreenPosition, false))
+	// 로컬 플레이어: 정확한 뷰포트 기반 체크
+	if (PC->IsLocalController())
 	{
-		int32 ViewportSizeX, ViewportSizeY;
-		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-
-		// 화면 내부에 있는지 체크 (약간의 마진 포함)
-		constexpr float Margin = 150.0f;
-
-		if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
-			ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
+		FVector2D ScreenPosition;
+		if (PC->ProjectWorldLocationToScreen(Location, ScreenPosition, false))
 		{
-			return true;
+			int32 ViewportSizeX, ViewportSizeY;
+			PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+
+			constexpr float Margin = 150.0f;
+
+			if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
+				ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
+			{
+				return true;
+			}
 		}
+		return false;
+	}
+    
+	// 원격 플레이어: Frustum 기반 체크
+	return IsLocationInPlayerFrustum(PC, Location);
+}
+
+bool AMSSpawnTileMap::IsLocationInPlayerFrustum(APlayerController* PC, const FVector& Location) const
+{
+	if (!PC)
+	{
+		return false;
 	}
 
-	return false;
+	APlayerCameraManager* CameraManager = PC->PlayerCameraManager;
+	// 디버그: CameraManager 상태 확인
+	// UE_LOG(LogTemp, Log, TEXT("[Frustum] PC: %s, CameraManager: %s"), 
+	// 	*PC->GetName(),
+	// 	CameraManager ? TEXT("Valid") : TEXT("NULL"));
+ //    
+	// if (CameraManager)
+	// {
+	// 	UE_LOG(LogTemp, Log, TEXT("[Frustum] CameraLocation: %s, CameraRotation: %s"),
+	// 		*CameraManager->GetCameraLocation().ToString(),
+	// 		*CameraManager->GetCameraRotation().ToString());
+	// }
+	
+	if (!CameraManager)
+	{
+		// CameraManager가 없으면 Pawn 위치 기반 거리 체크로 폴백
+		if (APawn* Pawn = PC->GetPawn())
+		{
+			const float DistanceSq = FVector::DistSquared2D(Pawn->GetActorLocation(), Location);
+			constexpr float SafeDistance = 2500.f;
+			return DistanceSq < (SafeDistance * SafeDistance);
+		}
+		return false;
+	}
+
+	const FVector CameraLocation = CameraManager->GetCameraLocation();
+	const FRotator CameraRotation = CameraManager->GetCameraRotation();
+	const FVector CameraForward = CameraRotation.Vector();
+    
+	// 카메라에서 타일까지의 방향
+	const FVector ToLocation = Location - CameraLocation;
+	const float Distance = ToLocation.Size();
+    
+	// 너무 멀면 안 보이는 것으로 처리
+	constexpr float MaxVisibleDistance = 4000.f;
+	if (Distance > MaxVisibleDistance)
+	{
+		return false;
+	}
+    
+	// 너무 가까우면 보이는 것으로 처리 (안전 마진)
+	constexpr float MinSafeDistance = 500.f;
+	if (Distance < MinSafeDistance)
+	{
+		return true;
+	}
+    
+	const FVector ToLocationNormalized = ToLocation / Distance;
+    
+	// 내적으로 각도 계산
+	const float DotProduct = FVector::DotProduct(CameraForward, ToLocationNormalized);
+    
+	// FOV 90도 + 마진 20도 = 110도, 절반은 55도
+	// cos(55도) ≈ 0.574
+	constexpr float CosHalfFOV = 0.5f; // 약간 보수적으로 (60도)
+    
+	return DotProduct >= CosHalfFOV;
 }
 
 TArray<FMSSpawnTile> AMSSpawnTileMap::GetSpawnableTilesNotVisibleToPlayers(

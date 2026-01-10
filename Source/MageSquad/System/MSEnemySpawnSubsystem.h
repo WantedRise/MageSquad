@@ -197,21 +197,21 @@ private:
 	AMSBaseEnemy* SpawnMonsterInternal(const FName& MonsterID, const FVector& Location);
 
 	/** TileMap 기반 랜덤 스폰 위치 검색 */
-	bool GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation);
+	// bool GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation);
 	
 	/** 캐싱된 타일 목록에서 랜덤 위치 선택 */
 	bool GetRandomSpawnLocationFromTiles(
 		const TArray<struct FMSSpawnTile>& InvisibleTiles,
 		const FVector& PlayerLocation,
 		FVector& OutLocation);
-	/** 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
-	bool IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location);
-	
-	/** 멀티 고려 - 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
-	bool IsLocationVisibleToAnyPlayer(const FVector& Location);
+	// /** 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
+	// bool IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location);
+	//
+	// /** 멀티 고려 - 해당 위치가 플레이어 뷰포트에 보이는지 체크 */
+	// bool IsLocationVisibleToAnyPlayer(const FVector& Location);
 	
 	/** 화면 가장자리의 랜덤한 지점 반환 (화면 밖)*/
-	FVector2D GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY, float Margin);
+	// FVector2D GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY, float Margin);
 	
 	/** 스폰 요청을 큐에 추가 */
 	void QueueSpawnRequest(const FName& MonsterID, const FVector& Location);
