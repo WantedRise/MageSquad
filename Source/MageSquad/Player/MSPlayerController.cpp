@@ -604,6 +604,11 @@ void AMSPlayerController::Client_CloseSkillLevelUpChoices_Implementation(int32 S
 		FInputModeGameAndUI InputMode;
 		SetInputMode(InputMode);
 	}
+
+	if (PlayerInput)
+	{
+		PlayerInput->FlushPressedKeys();
+	}
 }
 
 void AMSPlayerController::Client_ShowSkillLevelUpChoices_Implementation(int32 SessionId,
@@ -782,7 +787,7 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID, bool bSuccess)
 		UE_LOG(LogTemp, Error, TEXT("MissionData can't find MissionID %d"), MissionID);
 		return;
 	}
-	
+
 	Notify->PlayMissionResult(bSuccess);
 
 	// 성공 시 타이머 중단

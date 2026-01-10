@@ -340,7 +340,8 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// 이동 입력 맵핑
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::Move_Triggered);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AMSPlayerCharacter::Move_Completed);
 
 		// 카메라 줌 인/아웃 입력 맵핑
 		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &AMSPlayerCharacter::CameraZoom);
@@ -363,16 +364,13 @@ void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
-void AMSPlayerCharacter::Move(const FInputActionValue& Value)
+void AMSPlayerCharacter::Move_Triggered(const FInputActionValue& Value)
 {
 	// 2D 축 입력을 FVector2D로 변환
 	const FVector2D MoveValue = Value.Get<FVector2D>();
 
-	// 입력/컨트롤러가 유효하지 않거나, 입력 값이 거의 0이면 무시
-	if (!Controller || MoveValue.IsNearlyZero())
-	{
-		return;
-	}
+	// 입력/컨트롤러가 유효하지 않으면 무시
+	if (!Controller) return;
 
 	// 컨트롤러의 회전값에서 Yaw(좌우)만 사용해서 월드 방향 벡터 생성
 	const FRotator ControlRotation = Controller->GetControlRotation();
@@ -393,6 +391,12 @@ void AMSPlayerCharacter::Move(const FInputActionValue& Value)
 	{
 		AddMovementInput(RightDirection, MoveValue.X);
 	}
+}
+
+void AMSPlayerCharacter::Move_Completed(const FInputActionValue& Value)
+{
+	// 입력이 끝나면 이동을 멈춤
+	AddMovementInput(FVector::ZeroVector, 0.f);
 }
 
 void AMSPlayerCharacter::CameraZoom(const FInputActionValue& Value)

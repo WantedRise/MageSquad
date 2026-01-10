@@ -124,7 +124,8 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// 이동, 카메라 줌 인/아웃 함수
-	void Move(const FInputActionValue& Value);
+	void Move_Triggered(const FInputActionValue& Value);
+	void Move_Completed(const FInputActionValue& Value);
 	void CameraZoom(const FInputActionValue& Value);
 
 	// 이동 스킬 함수
