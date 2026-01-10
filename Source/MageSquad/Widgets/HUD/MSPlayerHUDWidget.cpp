@@ -15,6 +15,8 @@
 
 #include "Kismet/GameplayStatics.h"
 
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerInput.h"
 #include "Player/MSPlayerCharacter.h"
 #include "Player/MSPlayerController.h"
 #include "Player/MSPlayerState.h"
@@ -693,7 +695,14 @@ void UMSPlayerHUDWidget::SetHudVisibility(bool Result)
 		AbilitySystemComponent->RemoveLooseGameplayTag(MSGameplayTags::Shared_State_CutScene);
 
 		// 입력 모드 변경
-		GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
+		APlayerController* OwningPlayer = GetOwningPlayer();
+		OwningPlayer->SetInputMode(FInputModeGameAndUI());
+
+		// 컷씬이 끝날 때, 남아있는 입력 키를 초기화
+		if (OwningPlayer && OwningPlayer->PlayerInput)
+		{
+			OwningPlayer->PlayerInput->FlushPressedKeys();
+		}
 
 		NewVisibility = ESlateVisibility::SelfHitTestInvisible;
 	}
