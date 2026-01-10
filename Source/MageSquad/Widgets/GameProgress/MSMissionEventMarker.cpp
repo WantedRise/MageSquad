@@ -34,7 +34,6 @@ float UMSMissionEventMarker::GetImageSizeX()
 
 void UMSMissionEventMarker::LoadMissionIcon()
 {
-    UE_LOG(LogTemp, Error, TEXT("LoadMissionIcon"));
     if (!Image_Marker || MissionID == INDEX_NONE)
         return;
 
@@ -45,11 +44,11 @@ void UMSMissionEventMarker::LoadMissionIcon()
     UMSMissionDataSubsystem* MissionData = GI->GetSubsystem<UMSMissionDataSubsystem>();
     if (!MissionData)
         return;
-    UE_LOG(LogTemp, Error, TEXT("MissionData"));
+
     const FMSMissionRow* Row = MissionData->Find(MissionID);
     if (!Row)
         return;
-    UE_LOG(LogTemp, Error, TEXT("MissionData Find"));
+
     const TSoftObjectPtr<UTexture2D>& IconPtr = Row->MissionIcon;
 
     if (IconPtr.IsNull())
@@ -61,8 +60,6 @@ void UMSMissionEventMarker::LoadMissionIcon()
     if (IconPtr.IsValid())
     {
         Image_Marker->SetBrushFromTexture(IconPtr.Get());
-        //SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-        UE_LOG(LogTemp, Error, TEXT("IconPtr.IsValid()"));
         return;
     }
 
@@ -79,7 +76,6 @@ void UMSMissionEventMarker::LoadMissionIcon()
                 {
                     Image_Marker->SetBrushFromTexture(IconPtr.Get());
                     SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-                    UE_LOG(LogTemp, Error, TEXT("Image_Marker success"));
                 }
             }
         )

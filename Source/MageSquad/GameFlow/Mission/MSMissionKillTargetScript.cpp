@@ -53,8 +53,7 @@ void UMSMissionKillTargetScript::SpawnElite(UWorld* World)
 	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(World))
 	{
 		EliteMonster = SpawnSystem->SpawnMonsterByID(MSUtils::ENEMY_BOSS_SEVAROG, FVector(0, 0, 0));
-		UE_LOG(LogTemp, Error, TEXT("%s"),
-			EliteMonster != nullptr ? TEXT("EliteMonster Spawn") : TEXT("EliteMonster Not Spawn"));
+		UE_LOG(LogTemp, Error, TEXT("%s"), EliteMonster != nullptr ? TEXT("EliteMonster Spawn") : TEXT("EliteMonster Not Spawn"));
 	}
 }
 

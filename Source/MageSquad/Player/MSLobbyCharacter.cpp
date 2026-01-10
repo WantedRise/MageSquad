@@ -162,8 +162,7 @@ void AMSLobbyCharacter::UpdateUserNickNameUI(const FString& InUserNickName)
 
 void AMSLobbyCharacter::UpdateHostUI(bool bReady)
 {
-	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("AMSLobbyCharacter UpdateHostUI"));
-	UE_LOG(LogMSNetwork, Log, TEXT("%s"), bReady ? TEXT("true"): TEXT("false"));
+	UE_LOG(LogMSNetwork, Log, TEXT("bReady : %s"), bReady ? TEXT("true"): TEXT("false"));
 	if (LobbyPlayerEntryWidget && bReady)
 	{
 		LobbyPlayerEntryWidget->ShowHostIcon();

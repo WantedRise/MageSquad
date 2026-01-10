@@ -28,7 +28,6 @@ void UMSGameProgressWidget::AddProgressEventMarker(int32 MissionID, float Percen
     {
         return;
     }
-    UE_LOG(LogTemp, Error, TEXT("AddProgressEventMarker success"));
     Percent = FMath::Clamp(Percent, 0.f, 1.f);
 
     // 이벤트 마커 생성
@@ -97,8 +96,6 @@ void UMSGameProgressWidget::OnProgressUpdated(float Normalized)
 
 void UMSGameProgressWidget::HandleMissionChanged(int32 MissionID)
 {
-    UE_LOG(LogTemp, Error, TEXT("HandleMissionChanged"));
-
     AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>();
     if (GS)
     {

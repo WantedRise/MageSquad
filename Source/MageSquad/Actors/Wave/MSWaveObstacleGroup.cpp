@@ -30,7 +30,6 @@ void AMSWaveObstacleGroup::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UE_LOG(LogTemp, Error, TEXT("WaveManager->AMSWaveObstacleGroup"));
 	if (!HasAuthority())
 	{
 		return;
@@ -102,7 +101,7 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 	}
 	SetActorLocation(InStartLocation);
 	ServerLocation = GetActorLocation();
-	UE_LOG(LogTemp, Error, TEXT("WaveManager->ActivateWave"));
+
 	// Block 활성화
 	for (AMSWaveBlock* Block : SpawnedBlocks)
 	{

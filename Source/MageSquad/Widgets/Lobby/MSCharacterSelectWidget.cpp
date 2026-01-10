@@ -180,7 +180,6 @@ void UMSCharacterSelectWidget::UpdateUI(const FUniqueNetIdRepl NetID)
     const FMSCharacterSelection* CharacterSelection = CharacterData->FindSelectionByNetId(NetID);
     if (CharacterSelection)
     {
-        UE_LOG(LogTemp, Error, TEXT("FMSCharacterSelection %s"), *CharacterSelection->CharacterID.ToString());
         UpdateCharacterInfoByCharacterId(CharacterSelection->CharacterID);
     }
     else
@@ -188,7 +187,6 @@ void UMSCharacterSelectWidget::UpdateUI(const FUniqueNetIdRepl NetID)
         const FName DefualtCharacterID = CharacterData->GetDefaultCharacterID();
         if (DefualtCharacterID != NAME_None)
         {
-            UE_LOG(LogTemp, Error, TEXT("FMSCharacterSelection %s"), *DefualtCharacterID.ToString());
             UpdateCharacterInfoByCharacterId(DefualtCharacterID);
         }
         else
@@ -196,7 +194,6 @@ void UMSCharacterSelectWidget::UpdateUI(const FUniqueNetIdRepl NetID)
             UE_LOG(LogTemp, Error, TEXT("[UMSCharacterSelectWidget] No CharacterData"));
         }
     }
-    UE_LOG(LogTemp, Error, TEXT("[FMSCharacterSelection] ENd"));
 }
 
 void UMSCharacterSelectWidget::SetVisibleCharacterSlotBorder(FName InCharacterId)

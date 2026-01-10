@@ -98,18 +98,15 @@ void UMSLevelManagerSubsystem::OnSessionCreatedDelayTravel(bool bWasSuccessful)
 
 void UMSLevelManagerSubsystem::ShowLoadingWidget()
 {
-	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::Begin()"));
+	UE_LOG(LogTemp, Log, TEXT("UMSLevelManagerSubsystem::Begin()"));
 	if (CurrentLoadingWidget || !LoadingWidgetClass) return;
-	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::if (CurrentLoadingWidget || !LoadingWidgetClass)()"));
 	UGameInstance* GI = GetGameInstance();
 	if (!GI) return;
-	UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::GetGameInstance()"));
 	// 위젯 생성
 	CurrentLoadingWidget = CreateWidget<UUserWidget>(GI, LoadingWidgetClass);
 
 	if (CurrentLoadingWidget)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UMSLevelManagerSubsystem::CreateWidget<UUserWidget>(GI, LoadingWidgetClass);()"));
 		// Z-Order를 높게 설정하여 렌더링 최상단에 배치
 		CurrentLoadingWidget->AddToViewport(9999);
 	}

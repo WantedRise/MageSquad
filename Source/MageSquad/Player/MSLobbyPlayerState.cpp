@@ -95,8 +95,6 @@ void AMSLobbyPlayerState::OnRep_IsHost()
 
 void AMSLobbyPlayerState::OnRep_IsReady()
 {
-	MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("IsBound "));
-
 	if (OnLobbyReadyStateChanged.IsBound())
 	{
 		MS_LOG(LogMSNetwork, Log, TEXT("%s"), TEXT("OnLobbyReadyStateChanged "));

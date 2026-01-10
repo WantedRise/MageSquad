@@ -118,8 +118,6 @@ void AMSWaveManager::SpawnPivotIfNeeded()
 		FVector::ZeroVector,
 		FRotator::ZeroRotator
 	);
-
-	UE_LOG(LogTemp, Error, TEXT("WaveManager->MapPivot"));
 }
 
 void AMSWaveManager::SetWavePaused(bool bIsStartCutscene)
