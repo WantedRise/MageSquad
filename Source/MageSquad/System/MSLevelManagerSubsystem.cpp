@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MSSteamManagerSubsystem.h"
 #include <GameModes/MSGameMode.h>
+#include <NiagaraComponent.h>
 
 UMSLevelManagerSubsystem::UMSLevelManagerSubsystem()
 {
@@ -71,6 +72,25 @@ void UMSLevelManagerSubsystem::OnSessionCreatedDelayTravel(bool bWasSuccessful)
 	if (SteamManager)
 	{
 		SteamManager->MSOnCreateSessionCompleteDelegate.RemoveDynamic(this, &UMSLevelManagerSubsystem::OnSessionCreatedDelayTravel);
+	}
+
+	for (TObjectIterator<UNiagaraComponent> It; It; ++It)
+	{
+		UNiagaraComponent* NiagaraComp = *It;
+
+		if (!IsValid(NiagaraComp))
+			continue;
+
+		// 다른 월드 (에디터 프리뷰 등) 제외
+		if (NiagaraComp->GetWorld() != GetWorld())
+			continue;
+
+		// 이미 파괴 중인 경우 스킵
+		if (NiagaraComp->IsBeingDestroyed())
+			continue;
+
+		NiagaraComp->DeactivateImmediate();
+		NiagaraComp->SetAutoDestroy(true);
 	}
 
 	GetWorld()->ServerTravel(LobbyLevelURL);

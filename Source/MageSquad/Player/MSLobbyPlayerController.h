@@ -45,6 +45,8 @@ protected:
 	void BeginPlay() override;
 	virtual void OnRep_PlayerState() override;
 	virtual void BeginPlayingState() override;
+	virtual void OnRep_Pawn() override;
+	void SettingCharacterCamera();
 protected:
 	//로비 메인 UI 위젯을 생성하고 화면에 표시
 	void CreateLobbyUI();

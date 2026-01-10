@@ -752,7 +752,14 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 
 	if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 	{
-		Tracker->StartMissionTimer(GS, GS->GetMissionEndTime());
+		if (MissionData.MissionType != EMissionType::Boss)
+		{
+			Tracker->StartMissionTimer(GS, GS->GetMissionEndTime());
+		}
+		else
+		{
+			Tracker->StopMissionTimer();
+		}
 		Tracker->SetVisibility(ESlateVisibility::Visible);
 	}
 }
@@ -767,7 +774,17 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID, bool bSuccess)
 	auto* Progress = HUDWidgetInstance->GetGameProgressWidget();
 	if (!Notify || !Progress) return;
 
+	// 미션 타입에 따른 위젯 표시 여부 결정
+	auto* Subsystem = GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
+	const FMSMissionRow* MissionData = Subsystem ? Subsystem->Find(MissionID) : nullptr;
+	if (!MissionData)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MissionData can't find MissionID %d"), MissionID);
+		return;
+	}
+	
 	Notify->PlayMissionResult(bSuccess);
+
 	// 성공 시 타이머 중단
 	if (bSuccess)
 	{
@@ -795,8 +812,6 @@ void AMSPlayerController::OnMissionFinished(int32 MissionID, bool bSuccess)
 					}
 				}
 			}
-
-
 		}), DelayTime, false
 	);
 }

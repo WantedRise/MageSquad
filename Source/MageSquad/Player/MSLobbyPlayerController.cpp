@@ -72,6 +72,7 @@ void AMSLobbyPlayerController::BeginPlay()
 		LobbyCameraActor = GetViewTarget();
 
 		UpdateCharacterSelectWidget();
+		SettingCharacterCamera();
 	}
 }
 
@@ -114,6 +115,22 @@ void AMSLobbyPlayerController::OnRep_PlayerState()
 void AMSLobbyPlayerController::BeginPlayingState()
 {
 	Super::BeginPlayingState();
+
+}
+
+void AMSLobbyPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+
+	SettingCharacterCamera();
+}
+
+void AMSLobbyPlayerController::SettingCharacterCamera()
+{
+	if (CharacterCameraActor)
+	{
+		return;
+	}
 	if (!IsLocalController()) return;
 	if (!GetPawn()) return;
 	AMSLobbyCharacter* LobbyCharacter = Cast<AMSLobbyCharacter>(GetPawn());

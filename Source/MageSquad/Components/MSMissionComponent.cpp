@@ -99,13 +99,17 @@ void UMSMissionComponent::StartMission(const FMSMissionRow& MissionRow)
     const float ServerTime = OwnerGameState->GetServerTime();
     OwnerGameState->SetMissionEndTime(ServerTime + MissionRow.TimeLimit);
 
-    OwnerGameState->GetWorld()->GetTimerManager().SetTimer(
-        MissionTimerHandle,
-        this,
-        &UMSMissionComponent::OnMissionTimeExpired,
-        MissionRow.TimeLimit,
-        false
-    );
+    //보스 아닐때만 미션 제한 시간 종료 알림 
+    if (MissionRow.MissionType != EMissionType::Boss)
+    {
+        OwnerGameState->GetWorld()->GetTimerManager().SetTimer(
+            MissionTimerHandle,
+            this,
+            &UMSMissionComponent::OnMissionTimeExpired,
+            MissionRow.TimeLimit,
+            false
+        );
+    }
 }
 
 void UMSMissionComponent::UpdateMission()

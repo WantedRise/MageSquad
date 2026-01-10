@@ -169,27 +169,11 @@ void UMSCharacterSelectWidget::BuildCharacterSlots()
         CharacterSlots.Add(CharacterSlot);
         Index++;
     }
-
-   /* for (; Index < TotalSlots; ++Index)
-    {
-        UMSCharacterSlotWidget* EmptySlot = CreateWidget<UMSCharacterSlotWidget>(this, SlotWidgetClass);
-
-        if (!EmptySlot) continue;
-        EmptySlot->HiddenPortrait();
-        CharacterGrid->AddChildToUniformGrid(EmptySlot,Index / Columns,Index % Columns);
-    }*/
 }
 
 
 void UMSCharacterSelectWidget::UpdateUI(const FUniqueNetIdRepl NetID)
 {
-    /*AMSLobbyPlayerController* PC = GetOwningPlayer<AMSLobbyPlayerController>();
-
-    if (!PC) return;
-
-    PC->Server_RequestCharacterID(NetID);
-    */
-
     UMSCharacterDataSubsystem* CharacterData = GetGameInstance()->GetSubsystem<UMSCharacterDataSubsystem>();
     check(CharacterData);
 

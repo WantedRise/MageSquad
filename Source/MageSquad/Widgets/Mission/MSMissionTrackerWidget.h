@@ -23,13 +23,14 @@ class MAGESQUAD_API UMSMissionTrackerWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
+	virtual void NativeDestruct() override;
+public:
 	void SetMissionTitle(FText InTitle);
 	void SetMissionMessage(FText Desc);
 	// 미션 제한 시간 타이머 시작
 	void StartMissionTimer(class AMSGameState* InGameState,float InEndTime);
 	// 서버 시간을 기준으로 남은 시간을 계산하여 UI 갱신
 	void UpdateRemainingTime();
-	// Todo : HP 분기에 따라 개선
 	// 진행도 갱신
 	void UpdateProgress(const FMSMissionProgressUIData& Data);
 	void SetBossHpProgress(float InNormalized);

@@ -200,8 +200,8 @@ void UMSAT_EnemyMove::OnDestroy(bool bInOwnerFinished)
 FVector UMSAT_EnemyMove::GetNextPathDirection(const APawn* OwnerPawn, const AActor* TargetActor)
 {
 	
-	UE_LOG(LogTemp, Warning, TEXT("[Path] PathPoints: %d, CurrentIndex: %d"), 
-		CachedPathPoints.Num(), CurrentPathIndex);
+	//UE_LOG(LogTemp, Warning, TEXT("[Path] PathPoints: %d, CurrentIndex: %d"), 
+	//	CachedPathPoints.Num(), CurrentPathIndex);
     
 	if (CachedPathPoints.Num() > 0 && CurrentPathIndex < CachedPathPoints.Num())
 	{
@@ -209,7 +209,7 @@ FVector UMSAT_EnemyMove::GetNextPathDirection(const APawn* OwnerPawn, const AAct
 			OwnerPawn->GetActorLocation(), 
 			CachedPathPoints[CurrentPathIndex]
 		);
-		UE_LOG(LogTemp, Warning, TEXT("[Path] DistToCurrentPoint: %f"), DistToPoint);
+		//UE_LOG(LogTemp, Warning, TEXT("[Path] DistToCurrentPoint: %f"), DistToPoint);
 	}
 	
 	if (CachedPathPoints.Num() <= 1)
@@ -277,10 +277,10 @@ void UMSAT_EnemyMove::UpdateCachedPath(const APawn* OwnerPawn, const AActor* Tar
 			// 디버그
 			// DrawDebugSphere(GetWorld(), Point, 30.f, 8, FColor::Yellow, false, PathUpdateInterval);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("[Path] Generated %d points"), CachedPathPoints.Num());
+		//UE_LOG(LogTemp, Warning, TEXT("[Path] Generated %d points"), CachedPathPoints.Num());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[Path] FindPathToLocation failed!"));
+		//UE_LOG(LogTemp, Error, TEXT("[Path] FindPathToLocation failed!"));
 	}
 }

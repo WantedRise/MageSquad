@@ -9,6 +9,16 @@
 #include "Components/SizeBox.h"
 #include "Types/GameMissionTypes.h"
 
+void UMSMissionTrackerWidget::NativeDestruct()
+{
+    Super::NativeDestruct();
+
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(UITimerHandle);
+    }
+}
+
 void UMSMissionTrackerWidget::SetMissionTitle(FText InTitle)
 {
     if (!Text_MissionTitle) return;
@@ -142,4 +152,5 @@ void UMSMissionTrackerWidget::UpdateFindCount(int32 Current, int32 Target)
 void UMSMissionTrackerWidget::StopMissionTimer()
 {
     GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);
+    Text_Timer->SetVisibility(ESlateVisibility::Collapsed);
 }
