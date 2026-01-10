@@ -343,6 +343,8 @@ private:
 	/** 총 스폰된 몬스터 수 (누적) */
 	int32 TotalSpawnedCount = 0;
 	
+	uint32 PlayerCount = 1;
+	
 	UPROPERTY()
 	TObjectPtr<UNavigationSystemV1> NavSystem;
 	

@@ -19,6 +19,7 @@
 #include "Components/MSDirectionIndicatorComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameStates/MSGameState.h"
 
 void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -288,6 +289,8 @@ void UMSEnemySpawnSubsystem::StartSpawning()
 
 	bIsSpawning = true;
 
+	PlayerCount = GetAllPlayerControllers().Num(); // 플레이어 수 캐싱
+	
 	GetWorld()->GetTimerManager().SetTimer(
 		SpawnTimerHandle,
 		this,
@@ -908,8 +911,7 @@ void UMSEnemySpawnSubsystem::ProcessSpawnQueue()
 		SpawnQueueTimerHandle.Invalidate();  // <-- 이 줄 추가
 		return;
 	}
-
-	const int32 PlayerCount = FMath::Max(1, GetAllPlayerControllers().Num());
+	
 	const int32 ScaledMaxMonsters = MaxActiveMonsters * PlayerCount;
 
 	const int32 SpawnCount = FMath::Min(MaxSpawnsPerFrame, PendingSpawnQueue.Num());
@@ -1006,8 +1008,22 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 			if (AttributeSet)
 			{
-				ASC->SetNumericAttributeBase(AttributeSet->GetMaxHealthAttribute(), Data->MaxHealth);
-				ASC->SetNumericAttributeBase(AttributeSet->GetCurrentHealthAttribute(), Data->MaxHealth);
+				float FinalHealth = Data->MaxHealth;
+				if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+				{
+					constexpr float LevelScalePercent = 0.02f; // 레벨당 2%
+					constexpr float PlayerScalePercent = 0.5f; // 추가 플레이어당 50%
+					
+					int32 SharedLevel = GS->GetSharedLevel();
+
+					float LevelMultiplier = 1.0f + (SharedLevel * LevelScalePercent);
+					float PlayerMultiplier = 1.0f + ((PlayerCount - 1) * PlayerScalePercent);
+
+					FinalHealth = Data->MaxHealth * LevelMultiplier * PlayerMultiplier;
+				}
+				
+				ASC->SetNumericAttributeBase(AttributeSet->GetMaxHealthAttribute(), FinalHealth);
+				ASC->SetNumericAttributeBase(AttributeSet->GetCurrentHealthAttribute(), FinalHealth);
 				ASC->SetNumericAttributeBase(AttributeSet->GetMoveSpeedAttribute(), Data->MoveSpeed);
 				Enemy->GetCharacterMovement()->MaxWalkSpeed = Data->MoveSpeed;
 				ASC->SetNumericAttributeBase(AttributeSet->GetAttackDamageAttribute(), Data->AttackDamage);
@@ -1175,7 +1191,6 @@ void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 		return;
 	}
 
-	// // "Enemy.State.Dead" 태그 변경 감지
 	FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
 
 	ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
@@ -1209,7 +1224,6 @@ void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int3
 
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Enemy Tag Erase : %s"), *Enemy->GetName());
 		HandleEnemyDeath(Enemy);
 	}
 }
