@@ -25,11 +25,40 @@
 AMSGameMode::AMSGameMode()
 {
 	bUseSeamlessTravel = true;
+
+	// 로비 이동 타이머가 게임 멈춤에 영향을 받지 않도록, Tick 활성화
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bTickEvenWhenPaused = true;
+
+	// Tick은 필요할 때만 활성화되도록 기본적으로 꺼둠
+	SetActorTickEnabled(false);
+}
+
+void AMSGameMode::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 로비 이동 카운트다운 처리
+	if (LobbyTravelCountdown > 0.f)
+	{
+		LobbyTravelCountdown -= DeltaTime;
+		if (LobbyTravelCountdown <= 0.f)
+		{
+			// 카운트다운이 끝나면 로비로 이동
+			TravelToLobby_Internal();
+
+			// Tick을 다시 비활성화
+			SetActorTickEnabled(false);
+		}
+	}
 }
 
 void AMSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Tick 비활성화
+	SetActorTickEnabled(false);
 
 	// 공유 목숨이 0 + 팀 전멸 이벤트에 로비 이동 함수 바인딩
 	GetGameState<AMSGameState>()->OnSharedLivesDepleted.AddLambda(
@@ -85,20 +114,17 @@ void AMSGameMode::ExecuteTravelToLobby()
 	if (bTravelScheduled) return;
 	bTravelScheduled = true;
 
-	// 승/패 판단은 질문에 적힌 주석 그대로 따릅니다.
+	// 승/패 판단
 	const bool bIsVictory = (bAllPlayersDead == false);
 
 	// 모든 플레이어에게 승리/패배 위젯 표시
 	ShowEndGameWidgetToAllPlayers(bIsVictory);
 
-	// 5초 뒤 트래블 예약
-	GetWorldTimerManager().SetTimer(
-		TravelToLobbyTimerHandle,
-		this,
-		&AMSGameMode::TravelToLobby_Internal,
-		TravelDelaySeconds,
-		false
-	);
+	// Tick에서 처리될 카운트다운 시작
+	LobbyTravelCountdown = TravelDelaySeconds;
+
+	// 카운트다운을 위해 Tick 활성화
+	SetActorTickEnabled(true);
 }
 
 void AMSGameMode::ShowEndGameWidgetToAllPlayers(bool bIsVictory)

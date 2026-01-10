@@ -29,6 +29,8 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void RestartPlayer(AController* NewPlayer) override;
 
+	virtual void Tick(float DeltaTime) override;
+
 public:
 	// GameState에서 GameFlow 생성 시 참조용
 	TSubclassOf<class UMSGameFlowBase> GetGameFlowClass() const;
@@ -77,7 +79,8 @@ protected:
 	float TravelDelaySeconds = 3.85f;
 
 private:
-	FTimerHandle TravelToLobbyTimerHandle;
+	// 로비 이동 카운트다운
+	float LobbyTravelCountdown = -1.f;
 
 	// 중복 호출 방지 플래그
 	bool bTravelScheduled = false;
