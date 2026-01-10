@@ -380,34 +380,19 @@ void AMSPlayerState::BeginSkillLevelUp(int32 SessionId, bool bIsSpellEnhancement
 	Shuffle(AcquireCandidates);
 	Shuffle(UpgradeCandidates);
 
-	// 최종 3개 구성 규칙
-	// - 슬롯 여유 있으면 Acquire 1개 우선(가능할 때)
-	// - 나머지는 Upgrade로 채우되 부족하면 Acquire로 채움
-	auto PickOne = [&](TArray<FMSLevelUpChoicePair>& Pool)
-		{
-			if (Pool.Num() <= 0) return false;
-			CurrentSkillChoices.Add(Pool.Pop(EAllowShrinking::No)); // 뒤에서 하나
-			return true;
-		};
+	// Select 3 choices uniformly from all candidates
+	TArray<FMSLevelUpChoicePair> AllCandidates;
+	AllCandidates.Reserve(AcquireCandidates.Num() + UpgradeCandidates.Num());
+	AllCandidates.Append(AcquireCandidates);
+	AllCandidates.Append(UpgradeCandidates);
 
-	// 1) Acquire 1개(가능하면)
-	if (bHasFreeSlot && AcquireCandidates.Num() > 0 && CurrentSkillChoices.Num() < 3)
+	Shuffle(AllCandidates);
+
+	const int32 ChoiceCount = FMath::Min(3, AllCandidates.Num());
+	for (int32 i = 0; i < ChoiceCount; ++i)
 	{
-		PickOne(AcquireCandidates);
+		CurrentSkillChoices.Add(AllCandidates[i]);
 	}
-
-	// 2) Upgrade로 채우기
-	while (CurrentSkillChoices.Num() < 3 && UpgradeCandidates.Num() > 0)
-	{
-		PickOne(UpgradeCandidates);
-	}
-
-	// 3) 남으면 Acquire로 채우기
-	while (CurrentSkillChoices.Num() < 3 && AcquireCandidates.Num() > 0)
-	{
-		PickOne(AcquireCandidates);
-	}
-
 	if (CurrentSkillChoices.Num() == 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[BeginSkillLevelUp] No choices; auto-complete"));
