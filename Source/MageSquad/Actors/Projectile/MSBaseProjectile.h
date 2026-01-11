@@ -39,8 +39,8 @@ public:
 	bool IsIgnoredActor(const AActor* Actor) const;
 
 	// RuntimeData.SFX 배열 인덱스로 SFX 재생.
-	void PlaySFXAtLocation(int32 Index) const;
-	void PlaySFXAttached(int32 Index, USceneComponent* AttachTo) const;
+	void PlaySFXAtLocation(int32 Index);
+	void PlaySFXAttached(int32 Index, USceneComponent* AttachTo);
 
 	// 이동 관련.
 	void StopMovement();
@@ -55,6 +55,13 @@ public:
 	// 폭발 연출: 정지 및 숨김 (멀티캐스트).
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopAndHide(const FVector& InLocation);
+
+	// SFX 재생 멀티캐스트.
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlaySFXAtLocation(int32 Index, const FVector& Location);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlaySFXAttached(int32 Index);
 
 
 protected:
