@@ -57,6 +57,7 @@ public:
 public:
 	void SetMonsterID(const FName& NewMonsterID);
 	void SetAnimData(UDA_EnemyAnimationSet* NewAnimData);
+	void SetSoundData(class UDA_EnemyStaticSoundData* NewSoundData);
 	virtual void SetPhase2SkeletalMesh(USkeletalMesh* NewSkeletalMesh) {};
 
 	// 풀링 모드 제어
@@ -70,6 +71,7 @@ public: /*Getter*/
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetDamageEffectClass() const { return DamageEffectClass; }
 	FORCEINLINE TSubclassOf<class UGameplayEffect> GetCooldownEffectClass() const { return CooldownEffectClass; }
 	FORCEINLINE TSubclassOf<class UProjectileStaticData> GetProjectileDataClass() const { return ProjectileDataClass; }
+	FORCEINLINE TObjectPtr<class UDA_EnemyStaticSoundData> GetEnemySoundData() const { return SoundData; }
 
 public: /*Setter*/
 	FORCEINLINE void SetProjectileData(TSubclassOf<class UProjectileStaticData> InProjectileDataClass)
@@ -107,6 +109,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAnimationSet> AnimData;
+	
+	UPROPERTY()
+	TObjectPtr<class UDA_EnemyStaticSoundData> SoundData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Attack")
 	TSubclassOf<class UGameplayEffect> DamageEffectClass;

@@ -14,7 +14,9 @@
 #include "Actors/Items/MSExperienceOrb.h"
 #include "Actors/Items/MSMagnetOrb.h"
 #include "Actors/Items/MSPotionOrb.h"
+#include "DataAssets/Enemy/DA_EnemyStaticSoundData.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 UMSGA_EnemyDead::UMSGA_EnemyDead()
 {

@@ -3,7 +3,10 @@
 
 #include "AbilitySystem/GC/MSGC_Dissolve.h"
 
+#include "DataAssets/Enemy/DA_EnemyStaticSoundData.h"
+#include "Enemy/MSBaseEnemy.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 
 UMSGC_Dissolve::UMSGC_Dissolve()
 {
@@ -20,6 +23,13 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
     if (!Character)
     {
         return false;
+    }
+    
+    if (AMSBaseEnemy* Avatar = Cast<AMSBaseEnemy>(Character))
+    {
+        USoundBase* DeadSound = Avatar->GetEnemySoundData()->DeathSound;
+	
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), DeadSound, Avatar->GetActorLocation());
     }
     
     USkeletalMeshComponent* Mesh = Character->GetMesh();
