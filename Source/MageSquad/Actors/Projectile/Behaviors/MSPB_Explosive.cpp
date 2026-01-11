@@ -22,6 +22,8 @@ void UMSPB_Explosive::OnBegin_Implementation()
 		return;
 	}
 
+	OwnerActor->PlaySFXAttached(0, OwnerActor->GetRootComponent());
+
 	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
 	if (!MoveComp)
 	{
@@ -62,6 +64,8 @@ void UMSPB_Explosive::OnTargetEnter_Implementation(AActor* Target, const FHitRes
 	{
 		return;
 	}
+
+	OwnerActor->PlaySFXAtLocation(1);
 
 	bExploded = true;
 

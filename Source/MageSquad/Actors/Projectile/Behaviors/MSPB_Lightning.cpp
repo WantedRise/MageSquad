@@ -26,6 +26,7 @@ void UMSPB_Lightning::OnBegin_Implementation()
 	}
 
 	ImpactOrigin = OwnerActor->GetActorLocation();
+	OwnerActor->PlaySFXAtLocation(0);
 	ApplyDamageInRadius(RuntimeData.Radius, RuntimeData.Damage, 0.0f);
 
 	bDamageApplied = true;
@@ -177,6 +178,11 @@ void UMSPB_Lightning::HandleDelayedStrike()
 	if (!IsAuthority())
 	{
 		return;
+	}
+
+	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
+	{
+		OwnerActor->PlaySFXAtLocation(0);
 	}
 
 	const float ScaledRadius = RuntimeData.Radius * 1.5f;

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actors/Projectile/Behaviors/MSPB_TornadoEnhanced.h"
@@ -9,6 +9,8 @@
 #include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void UMSPB_TornadoEnhanced::OnBegin_Implementation()
@@ -28,6 +30,10 @@ void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 	{
 		StartTime = World->GetTimeSeconds();
 	}
+	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
+	{
+		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
+	}
 
 	StartMove();
 	StartPeriodicDamage();
@@ -45,6 +51,11 @@ void UMSPB_TornadoEnhanced::OnEnd_Implementation()
 	StopMove();
 	StopPeriodicDamage();
 	StopSplit();
+	if (LoopingSFX.IsValid())
+	{
+		LoopingSFX->Stop();
+		LoopingSFX = nullptr;
+	}
 }
 
 void UMSPB_TornadoEnhanced::StartMove()
@@ -349,3 +360,5 @@ void UMSPB_TornadoEnhanced::SpawnSplitProjectile(
 		OwnerProj->GetInstigator()
 	);
 }
+
+

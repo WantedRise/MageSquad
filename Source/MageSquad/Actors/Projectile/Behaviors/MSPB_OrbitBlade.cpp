@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Actors/Projectile/Behaviors/MSPB_OrbitBlade.h"
 
@@ -8,8 +8,10 @@
 #include "MSGameplayTags.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "GameFramework/Actor.h"
+#include "Components/AudioComponent.h"
 #include "NiagaraComponent.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
 void UMSPB_OrbitBlade::OnBegin_Implementation()
@@ -61,6 +63,14 @@ void UMSPB_OrbitBlade::OnBegin_Implementation()
 	const float VfxScale = (RuntimeData.Radius > 0.f) ? (RuntimeData.Radius / 70.f) : 1.f;
 	ApplyVfxScale(VfxScale);
 
+	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
+	{
+		LoopingSFX = UGameplayStatics::SpawnSoundAttached(
+			RuntimeData.SFX[0],
+			OwnerActor->GetRootComponent()
+		);
+	}
+
 	if (UWorld* World = OwnerActor->GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
@@ -106,6 +116,11 @@ void UMSPB_OrbitBlade::OnEnd_Implementation()
 		World->GetTimerManager().ClearTimer(OrbitEndTimerHandle);
 	}
 
+	if (LoopingSFX.IsValid())
+	{
+		LoopingSFX->Stop();
+		LoopingSFX = nullptr;
+	}
 }
 
 void UMSPB_OrbitBlade::ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData)
@@ -141,6 +156,11 @@ void UMSPB_OrbitBlade::EndOrbit()
 {
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
+		if (LoopingSFX.IsValid())
+		{
+			LoopingSFX->Stop();
+			LoopingSFX = nullptr;
+		}
 		OwnerActor->Destroy();
 	}
 }

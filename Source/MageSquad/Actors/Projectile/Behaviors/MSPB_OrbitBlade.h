@@ -1,10 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
 #include "MSPB_OrbitBlade.generated.h"
+
+class UAudioComponent;
 
 UCLASS()
 class MAGESQUAD_API UMSPB_OrbitBlade : public UMSProjectileBehaviorBase
@@ -25,6 +27,9 @@ private:
 
 private:
 	UPROPERTY(Transient)
+	TWeakObjectPtr<UAudioComponent> LoopingSFX;
+
+	UPROPERTY(Transient)
 	TWeakObjectPtr<AActor> OrbitCenter;
 
 	UPROPERTY(Transient)
@@ -42,3 +47,4 @@ private:
 	UPROPERTY(Transient)
 	FTimerHandle OrbitEndTimerHandle;
 };
+

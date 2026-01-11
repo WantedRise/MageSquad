@@ -1,6 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "Actors/Projectile/Behaviors/MSPB_AreaInstant.h"
 
 #include "AbilitySystemComponent.h"
@@ -25,7 +23,10 @@ void UMSPB_AreaInstant::OnBegin_Implementation()
 		return;
 	}
 
-	// 스폰 순간 범위
+	// 발생 위치에서 즉시 사운드 재생
+	OwnerActor->PlaySFXAtLocation(0);
+
+	// 폭발 순간 범위
 	const float Radius = RuntimeData.Radius;
 	const FVector Origin = OwnerActor->GetActorLocation();
 
@@ -99,16 +100,16 @@ void UMSPB_AreaInstant::OnBegin_Implementation()
 		}
 	}
 
-	// 데미지는 끝
+	// 데미지 완료
 	bDamageApplied = true;
 
-	// 추가 판정 차단
+	// 추가 히트 차단
 	OwnerActor->EnableCollision(false);
 }
 
 void UMSPB_AreaInstant::OnTargetEnter_Implementation(AActor* Target, const FHitResult& HitResult)
 {
-	// 즉발형: 이후 진입 데미지 없음
+	// 즉발형 이후 진입 데미지 없음
 	(void)Target; (void)HitResult;
 }
 
@@ -166,6 +167,6 @@ void UMSPB_AreaInstant::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 		SpecHandle.Data->AddDynamicAssetTag(MSGameplayTags::Hit_Critical);
 	}
 
-	// 타겟에게 적용
+	// 대상에 적용
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 }

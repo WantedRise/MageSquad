@@ -1,10 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
 #include "MSPB_TornadoEnhanced.generated.h"
+
+class UAudioComponent;
 
 /**
  * Enhanced Tornado: splits into two every interval, shrinking radius/scale each time.
@@ -38,6 +40,8 @@ private:
 	FTimerHandle DamageTimerHandle;
 	FTimerHandle SplitTimerHandle;
 
+	TWeakObjectPtr<UAudioComponent> LoopingSFX;
+
 	FVector StartLocation = FVector::ZeroVector;
 	FVector ForwardDir = FVector::ForwardVector;
 	float StartTime = 0.f;
@@ -54,3 +58,6 @@ private:
 
 	bool bEnded = false;
 };
+
+
+

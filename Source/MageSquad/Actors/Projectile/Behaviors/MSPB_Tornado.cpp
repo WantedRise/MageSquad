@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actors/Projectile/Behaviors/MSPB_Tornado.h"
@@ -8,6 +8,8 @@
 #include "MSGameplayTags.h"
 #include "AbilitySystem/Globals/MSAbilitySystemGlobals.h"
 #include "Actors/Projectile/MSBaseProjectile.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMSPB_Tornado::OnBegin_Implementation()
 {
@@ -27,6 +29,10 @@ void UMSPB_Tornado::OnBegin_Implementation()
 	{
 		StartTime = World->GetTimeSeconds();
 	}
+	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
+	{
+		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
+	}
 
 	StartMove();
 	StartPeriodicDamage();
@@ -42,6 +48,11 @@ void UMSPB_Tornado::OnEnd_Implementation()
 
 	StopMove();
 	StopPeriodicDamage();
+	if (LoopingSFX.IsValid())
+	{
+		LoopingSFX->Stop();
+		LoopingSFX = nullptr;
+	}
 }
 
 void UMSPB_Tornado::StartMove()
@@ -248,3 +259,5 @@ void UMSPB_Tornado::ApplyDamageToTarget(AActor* Target, float DamageAmount)
 		TargetASC->ApplyGameplayEffectSpecToSelf(*ExtraSpec.Data.Get());
 	}
 }
+
+

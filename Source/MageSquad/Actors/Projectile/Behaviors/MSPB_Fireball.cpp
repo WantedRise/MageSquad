@@ -22,6 +22,8 @@ void UMSPB_Fireball::OnBegin_Implementation()
 		return;
 	}
 
+	OwnerActor->PlaySFXAttached(0, OwnerActor->GetRootComponent());
+
 	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
 	if (!MoveComp)
 	{
@@ -62,6 +64,8 @@ void UMSPB_Fireball::OnTargetEnter_Implementation(AActor* Target, const FHitResu
 	{
 		return;
 	}
+
+	OwnerActor->PlaySFXAtLocation(1);
 
 	bExploded = true;
 

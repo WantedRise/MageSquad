@@ -1,10 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
 #include "MSPB_Tornado.generated.h"
+
+class UAudioComponent;
 
 /**
  * 
@@ -31,7 +33,9 @@ private:
 	void ApplyDamageToTarget(AActor* Target, float DamageAmount);
 
 private:
-	// 타이머
+	// 루프 SFX 핸들
+	TWeakObjectPtr<UAudioComponent> LoopingSFX;
+
 	FTimerHandle MoveTimerHandle;
 	FTimerHandle DamageTimerHandle;
 
