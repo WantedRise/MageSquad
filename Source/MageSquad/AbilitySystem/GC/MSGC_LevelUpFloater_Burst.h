@@ -34,4 +34,8 @@ protected:
 	// 레벨업 나이아가라
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
 	TObjectPtr<class UNiagaraSystem> LevelUpNiagara;
+
+	// 레벨업 사운드
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | SFX")
+	TObjectPtr<class USoundBase> StartSound;
 };
