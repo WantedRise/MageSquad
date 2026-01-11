@@ -4,7 +4,8 @@
 #include "Actors/Wave/MSWaveBlock.h"
 
 #include "Components/BoxComponent.h"
-
+#include <Kismet/GameplayStatics.h>
+#include "Components/AudioComponent.h"
 // Sets default values
 AMSWaveBlock::AMSWaveBlock()
 {

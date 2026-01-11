@@ -19,6 +19,7 @@
 #include "Components/MSDirectionIndicatorComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameStates/MSGameState.h"
 
 void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -288,6 +289,8 @@ void UMSEnemySpawnSubsystem::StartSpawning()
 
 	bIsSpawning = true;
 
+	PlayerCount = GetAllPlayerControllers().Num(); // 플레이어 수 캐싱
+	
 	GetWorld()->GetTimerManager().SetTimer(
 		SpawnTimerHandle,
 		this,
@@ -582,154 +585,154 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	return Enemy;
 }
 
-bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation)
-{
-	if (!TargetPlayer)
-	{
-		return false;
-	}
-
-	APawn* PlayerPawn = TargetPlayer->GetPawn();
-	if (!PlayerPawn)
-	{
-		return false;
-	}
-
-	// 타일맵 시도
-	if (AMSSpawnTileMap* TileMap = GetSpawnTileMap())
-	{
-		// 모든 플레이어에게 안 보이는 타일들 가져오기
-		TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
-
-		if (InvisibleTiles.Num() == 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No invisible spawnable tiles"));
-			return false;
-		}
-
-		const FVector PlayerLocation = PlayerPawn->GetActorLocation();
-
-		// 사방에서 스폰되도록 4방향으로 분류
-		TArray<FMSSpawnTile> NorthTiles;  // +Y
-		TArray<FMSSpawnTile> SouthTiles;  // -Y
-		TArray<FMSSpawnTile> EastTiles;   // +X
-		TArray<FMSSpawnTile> WestTiles;   // -X
-		
-		for (const FMSSpawnTile& Tile : InvisibleTiles)
-		{
-			FVector ToTile = Tile.Location - PlayerLocation;
-			
-			// 주요 방향 판별
-			if (FMath::Abs(ToTile.X) > FMath::Abs(ToTile.Y))
-			{
-				// 동서 방향
-				if (ToTile.X > 0)
-				{
-					EastTiles.Add(Tile);
-				}
-				else
-				{
-					WestTiles.Add(Tile);
-				}
-			}
-			else
-			{
-				// 남북 방향
-				if (ToTile.Y > 0)
-				{
-					NorthTiles.Add(Tile);
-				}
-				else
-				{
-					SouthTiles.Add(Tile);
-				}
-			}
-		}
-		
-		// 비어있지 않은 방향들 수집
-		TArray<TArray<FMSSpawnTile>*> ValidDirections;
-		if (NorthTiles.Num() > 0)
-		{
-			ValidDirections.Add(&NorthTiles);
-		}
-		if (SouthTiles.Num() > 0)
-		{
-			ValidDirections.Add(&SouthTiles);
-		}
-		if (EastTiles.Num() > 0)
-		{
-			ValidDirections.Add(&EastTiles);
-		}
-		if (WestTiles.Num() > 0)
-		{
-			ValidDirections.Add(&WestTiles);
-		}
-
-		if (ValidDirections.Num() == 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No valid directions"));
-			return false;
-		}
-
-		// 랜덤 방향 선택
-		TArray<FMSSpawnTile>* SelectedDirection = ValidDirections[FMath::RandRange(0, ValidDirections.Num() - 1)];
-
-		// 선택된 방향에서 랜덤 타일 선택
-		int32 RandomIndex = FMath::RandRange(0, SelectedDirection->Num() - 1);
-		OutLocation = (*SelectedDirection)[RandomIndex].Location;
-		return true;
-	}
+// bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation)
+// {
+	// if (!TargetPlayer)
+	// {
+	// 	return false;
+	// }
+	//
+	// APawn* PlayerPawn = TargetPlayer->GetPawn();
+	// if (!PlayerPawn)
+	// {
+	// 	return false;
+	// }
+	//
+	// // 타일맵 시도
+	// if (AMSSpawnTileMap* TileMap = GetSpawnTileMap())
+	// {
+	// 	// 모든 플레이어에게 안 보이는 타일들 가져오기
+	// 	TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
+	//
+	// 	if (InvisibleTiles.Num() == 0)
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No invisible spawnable tiles"));
+	// 		return false;
+	// 	}
+	//
+	// 	const FVector PlayerLocation = PlayerPawn->GetActorLocation();
+	//
+	// 	// 사방에서 스폰되도록 4방향으로 분류
+	// 	TArray<FMSSpawnTile> NorthTiles;  // +Y
+	// 	TArray<FMSSpawnTile> SouthTiles;  // -Y
+	// 	TArray<FMSSpawnTile> EastTiles;   // +X
+	// 	TArray<FMSSpawnTile> WestTiles;   // -X
+	// 	
+	// 	for (const FMSSpawnTile& Tile : InvisibleTiles)
+	// 	{
+	// 		FVector ToTile = Tile.Location - PlayerLocation;
+	// 		
+	// 		// 주요 방향 판별
+	// 		if (FMath::Abs(ToTile.X) > FMath::Abs(ToTile.Y))
+	// 		{
+	// 			// 동서 방향
+	// 			if (ToTile.X > 0)
+	// 			{
+	// 				EastTiles.Add(Tile);
+	// 			}
+	// 			else
+	// 			{
+	// 				WestTiles.Add(Tile);
+	// 			}
+	// 		}
+	// 		else
+	// 		{
+	// 			// 남북 방향
+	// 			if (ToTile.Y > 0)
+	// 			{
+	// 				NorthTiles.Add(Tile);
+	// 			}
+	// 			else
+	// 			{
+	// 				SouthTiles.Add(Tile);
+	// 			}
+	// 		}
+	// 	}
+	// 	
+	// 	// 비어있지 않은 방향들 수집
+	// 	TArray<TArray<FMSSpawnTile>*> ValidDirections;
+	// 	if (NorthTiles.Num() > 0)
+	// 	{
+	// 		ValidDirections.Add(&NorthTiles);
+	// 	}
+	// 	if (SouthTiles.Num() > 0)
+	// 	{
+	// 		ValidDirections.Add(&SouthTiles);
+	// 	}
+	// 	if (EastTiles.Num() > 0)
+	// 	{
+	// 		ValidDirections.Add(&EastTiles);
+	// 	}
+	// 	if (WestTiles.Num() > 0)
+	// 	{
+	// 		ValidDirections.Add(&WestTiles);
+	// 	}
+	//
+	// 	if (ValidDirections.Num() == 0)
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No valid directions"));
+	// 		return false;
+	// 	}
+	//
+	// 	// 랜덤 방향 선택
+	// 	TArray<FMSSpawnTile>* SelectedDirection = ValidDirections[FMath::RandRange(0, ValidDirections.Num() - 1)];
+	//
+	// 	// 선택된 방향에서 랜덤 타일 선택
+	// 	int32 RandomIndex = FMath::RandRange(0, SelectedDirection->Num() - 1);
+	// 	OutLocation = (*SelectedDirection)[RandomIndex].Location;
+	// 	return true;
+	// }
 
 #pragma region Non Tilemap
 	// 타일맵이 없을때는 기존 NavMesh 방식 
 	// 나중에 껐을 때 스폰이 제대로 이루어지지 않는 현상 테스트용으로 남겨둠
 
-	if (!NavSystem)
-	{
-		NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-		if (!NavSystem)
-		{
-			return false;
-		}
-	}
-
-	int32 ViewportSizeX, ViewportSizeY;
-	TargetPlayer->GetViewportSize(ViewportSizeX, ViewportSizeY);
-
-	constexpr int32 MaxAttempts = 30;
-
-	for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
-	{
-		constexpr float OffScreenMargin = 1000.f;
-		FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
-
-		FVector WorldLocation, WorldDirection;
-		if (TargetPlayer->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
-		{
-			const float SpawnDistance = FMath::FRandRange(4000.0f, 5000.0f);
-			FVector CandidateLocation = WorldLocation + WorldDirection * SpawnDistance;
-			CandidateLocation.Z = PlayerPawn->GetActorLocation().Z;
-
-			// 다른 플레이어에게도 안 보이는지 체크
-			if (IsLocationVisibleToAnyPlayer(CandidateLocation))
-			{
-				continue;
-			}
-
-			FNavLocation NavLoc;
-			if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
-			{
-				OutLocation = NavLoc.Location;
-				OutLocation.Z = 92.f;
-				return true;
-			}
-		}
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
-	return false;
+	// if (!NavSystem)
+	// {
+	// 	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	// 	if (!NavSystem)
+	// 	{
+	// 		return false;
+	// 	}
+	// }
+	//
+	// int32 ViewportSizeX, ViewportSizeY;
+	// TargetPlayer->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	//
+	// constexpr int32 MaxAttempts = 30;
+	//
+	// for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
+	// {
+	// 	constexpr float OffScreenMargin = 1000.f;
+	// 	FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
+	//
+	// 	FVector WorldLocation, WorldDirection;
+	// 	if (TargetPlayer->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
+	// 	{
+	// 		const float SpawnDistance = FMath::FRandRange(4000.0f, 5000.0f);
+	// 		FVector CandidateLocation = WorldLocation + WorldDirection * SpawnDistance;
+	// 		CandidateLocation.Z = PlayerPawn->GetActorLocation().Z;
+	//
+	// 		// 다른 플레이어에게도 안 보이는지 체크
+	// 		if (IsLocationVisibleToAnyPlayer(CandidateLocation))
+	// 		{
+	// 			continue;
+	// 		}
+	//
+	// 		FNavLocation NavLoc;
+	// 		if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
+	// 		{
+	// 			OutLocation = NavLoc.Location;
+	// 			OutLocation.Z = 92.f;
+	// 			return true;
+	// 		}
+	// 	}
+	// }
+	//
+	// UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
+	// return false;
 #pragma endregion 
-}
+// }
 
 bool UMSEnemySpawnSubsystem::GetRandomSpawnLocationFromTiles(const TArray<FMSSpawnTile>& InvisibleTiles,
 	const FVector& PlayerLocation, FVector& OutLocation)
@@ -785,90 +788,90 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocationFromTiles(const TArray<FMSSpa
 	return true;
 }
 
-bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location)
-{
-	if (!PC)
-	{
-		return false;
-	}
+// bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location)
+// {
+// 	if (!PC)
+// 	{
+// 		return false;
+// 	}
+//
+// 	FVector CameraLocation;
+// 	FRotator CameraRotation;
+// 	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+//
+// 	// 스크린 좌표 변환
+// 	FVector2D ScreenPosition;
+// 	if (PC->ProjectWorldLocationToScreen(Location, ScreenPosition, false))
+// 	{
+// 		// 뷰포트 크기 획득
+// 		int32 ViewportSizeX, ViewportSizeY;
+// 		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+//
+// 		// 화면 경계에 마진 추가 (선택적 - 완전히 화면 밖을 원할 경우)
+// 		constexpr float Margin = 100.0f; // 픽셀 단위
+//
+// 		// 화면 내부에 있는지 체크
+// 		if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
+// 			ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
+// 		{
+// 			return true; // 화면에 보임
+// 		}
+// 	}
+//
+// 	return false; // 화면 밖
+// }
+//
+// bool UMSEnemySpawnSubsystem::IsLocationVisibleToAnyPlayer(const FVector& Location)
+// {
+// 	// 모든 플레이어 컨트롤러 체크
+// 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+// 	{
+// 		APlayerController* PC = It->Get();
+// 		if (PC && IsLocationVisibleToPlayer(PC, Location))
+// 		{
+// 			return true; // 한 명이라도 보고 있으면 true
+// 		}
+// 	}
+//
+// 	return false; // 모든 플레이어 시야 밖
+// }
 
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
-	// 스크린 좌표 변환
-	FVector2D ScreenPosition;
-	if (PC->ProjectWorldLocationToScreen(Location, ScreenPosition, false))
-	{
-		// 뷰포트 크기 획득
-		int32 ViewportSizeX, ViewportSizeY;
-		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-
-		// 화면 경계에 마진 추가 (선택적 - 완전히 화면 밖을 원할 경우)
-		constexpr float Margin = 100.0f; // 픽셀 단위
-
-		// 화면 내부에 있는지 체크
-		if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
-			ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
-		{
-			return true; // 화면에 보임
-		}
-	}
-
-	return false; // 화면 밖
-}
-
-bool UMSEnemySpawnSubsystem::IsLocationVisibleToAnyPlayer(const FVector& Location)
-{
-	// 모든 플레이어 컨트롤러 체크
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		APlayerController* PC = It->Get();
-		if (PC && IsLocationVisibleToPlayer(PC, Location))
-		{
-			return true; // 한 명이라도 보고 있으면 true
-		}
-	}
-
-	return false; // 모든 플레이어 시야 밖
-}
-
-FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY,
-                                                           float Margin)
-{
-	// 4개 가장자리 중 하나 선택: 0=상단, 1=하단, 2=좌측, 3=우측
-	int32 Edge = FMath::RandRange(0, 3);
-
-	FVector2D ScreenPoint;
-
-	switch (Edge)
-	{
-	case 0: // 상단
-		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
-		ScreenPoint.Y = -Margin;
-		break;
-
-	case 1: // 하단
-		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
-		ScreenPoint.Y = ViewportSizeY + Margin;
-		break;
-
-	case 2: // 좌측
-		ScreenPoint.X = -Margin;
-		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
-		break;
-
-	case 3: // 우측
-		ScreenPoint.X = ViewportSizeX + Margin;
-		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
-		break;
-		
-	default:
-		break;
-	}
-
-	return ScreenPoint;
-}
+// FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY,
+//                                                            float Margin)
+// {
+// 	// 4개 가장자리 중 하나 선택: 0=상단, 1=하단, 2=좌측, 3=우측
+// 	int32 Edge = FMath::RandRange(0, 3);
+//
+// 	FVector2D ScreenPoint;
+//
+// 	switch (Edge)
+// 	{
+// 	case 0: // 상단
+// 		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
+// 		ScreenPoint.Y = -Margin;
+// 		break;
+//
+// 	case 1: // 하단
+// 		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
+// 		ScreenPoint.Y = ViewportSizeY + Margin;
+// 		break;
+//
+// 	case 2: // 좌측
+// 		ScreenPoint.X = -Margin;
+// 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
+// 		break;
+//
+// 	case 3: // 우측
+// 		ScreenPoint.X = ViewportSizeX + Margin;
+// 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
+// 		break;
+// 		
+// 	default:
+// 		break;
+// 	}
+//
+// 	return ScreenPoint;
+// }
 
 void UMSEnemySpawnSubsystem::QueueSpawnRequest(const FName& MonsterID, const FVector& Location)
 {
@@ -908,8 +911,7 @@ void UMSEnemySpawnSubsystem::ProcessSpawnQueue()
 		SpawnQueueTimerHandle.Invalidate();  // <-- 이 줄 추가
 		return;
 	}
-
-	const int32 PlayerCount = FMath::Max(1, GetAllPlayerControllers().Num());
+	
 	const int32 ScaledMaxMonsters = MaxActiveMonsters * PlayerCount;
 
 	const int32 SpawnCount = FMath::Min(MaxSpawnsPerFrame, PendingSpawnQueue.Num());
@@ -1006,8 +1008,22 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 
 			if (AttributeSet)
 			{
-				ASC->SetNumericAttributeBase(AttributeSet->GetMaxHealthAttribute(), Data->MaxHealth);
-				ASC->SetNumericAttributeBase(AttributeSet->GetCurrentHealthAttribute(), Data->MaxHealth);
+				float FinalHealth = Data->MaxHealth;
+				if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
+				{
+					constexpr float LevelScalePercent = 0.02f; // 레벨당 2%
+					constexpr float PlayerScalePercent = 0.5f; // 추가 플레이어당 50%
+					
+					int32 SharedLevel = GS->GetSharedLevel();
+
+					float LevelMultiplier = 1.0f + (SharedLevel * LevelScalePercent);
+					float PlayerMultiplier = 1.0f + ((PlayerCount - 1) * PlayerScalePercent);
+
+					FinalHealth = Data->MaxHealth * LevelMultiplier * PlayerMultiplier;
+				}
+				
+				ASC->SetNumericAttributeBase(AttributeSet->GetMaxHealthAttribute(), FinalHealth);
+				ASC->SetNumericAttributeBase(AttributeSet->GetCurrentHealthAttribute(), FinalHealth);
 				ASC->SetNumericAttributeBase(AttributeSet->GetMoveSpeedAttribute(), Data->MoveSpeed);
 				Enemy->GetCharacterMovement()->MaxWalkSpeed = Data->MoveSpeed;
 				ASC->SetNumericAttributeBase(AttributeSet->GetAttackDamageAttribute(), Data->AttackDamage);
@@ -1175,7 +1191,6 @@ void UMSEnemySpawnSubsystem::BindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 		return;
 	}
 
-	// // "Enemy.State.Dead" 태그 변경 감지
 	FGameplayTag DeathTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Dead"));
 
 	ASC->RegisterGameplayTagEvent(DeathTag, EGameplayTagEventType::NewOrRemoved)
@@ -1209,7 +1224,6 @@ void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int3
 
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Enemy Tag Erase : %s"), *Enemy->GetName());
 		HandleEnemyDeath(Enemy);
 	}
 }

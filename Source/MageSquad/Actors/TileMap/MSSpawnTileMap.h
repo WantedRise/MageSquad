@@ -47,7 +47,34 @@ class MAGESQUAD_API AMSSpawnTileMap : public AActor
 public:
 	AMSSpawnTileMap();
 
-	// ========== 에디터 설정 ==========
+protected:
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+
+#if WITH_EDITORONLY_DATA
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
+private:
+	// 스폰 가능 타일 인덱스 캐시 빌드
+	void BuildSpawnableTileCache();
+
+	// 특정 위치가 플레이어 뷰포트에 보이는지 체크
+	bool IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location) const;
+	
+	// Frustum 기반 가시성 체크 (원격 플레이어용)
+	bool IsLocationInPlayerFrustum(APlayerController* PC, const FVector& Location) const;
+	
+	// 디버그 드로잉 (런타임)
+	void DrawDebugTilesRuntime();
+
+	// 캐시된 스폰 가능 타일 배열 (런타임용)
+	UPROPERTY(Transient)
+	TArray<FMSSpawnTile> CachedSpawnableTiles;
+
+	
+public:
+		// ========== 에디터 설정 ==========
 	// 타일 크기 (가로, 세로 동일)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TileMap|Settings", meta = (ClampMin = "50.0"))
 	float TileSize = 300.f;
@@ -79,8 +106,7 @@ public:
 	// NavMesh 투영 허용 범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TileMap|Settings", meta = (EditCondition = "bRequireNavMesh"))
 	FVector NavMeshQueryExtent = FVector(100.f, 100.f, 500.f);
-
-	// ========== 생성된 데이터 ==========
+	
 	// 모든 타일 데이터 (에디터에서 생성, 레벨에 저장됨)
 	// AdvancedDisplay: Details 패널에서 숨김 (대량 데이터로 인한 에디터 렉 방지)
 	UPROPERTY(BlueprintReadOnly, Category = "TileMap|Data", meta = (AdvancedDisplay))
@@ -166,28 +192,7 @@ public:
 	// 그리드 인덱스를 월드 좌표로 변환
 	UFUNCTION(BlueprintCallable, Category = "TileMap")
 	FVector GridIndexToWorld(const FIntPoint& GridIndex) const;
-
-protected:
-	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
-
-#if WITH_EDITORONLY_DATA
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
+	
 private:
-	// 스폰 가능 타일 인덱스 캐시 빌드
-	void BuildSpawnableTileCache();
-
-	// 특정 위치가 플레이어 뷰포트에 보이는지 체크
-	bool IsLocationVisibleToPlayer(APlayerController* PC, const FVector& Location) const;
-
-	// 디버그 드로잉 (런타임)
-	void DrawDebugTilesRuntime();
-
-	// 캐시된 스폰 가능 타일 배열 (런타임용)
-	UPROPERTY(Transient)
-	TArray<FMSSpawnTile> CachedSpawnableTiles;
-
 	bool bCacheBuilt = false;
 };

@@ -241,7 +241,7 @@ void AMSGameState::EndSkillLevelUpPhase(bool bByTimeout)
 		ScheduleSkillLevelUpStart(NextSession.SessionId, NextSession.bIsSpellEnhancement, 0.0f);
 	}
 
-	if (!bWillStartNext && !bSkillLevelUpStartPending)
+	if (!bWillStartNext)
 	{
 		UGameplayStatics::SetGamePaused(GetWorld(), false);
 	}

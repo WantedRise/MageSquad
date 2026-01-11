@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -9,15 +9,11 @@
 #include "MSBaseProjectile.generated.h"
 
 /**
- * ?�성?? 김준??
- * ?�성?? 25/12/15
- *
- * ?�정: 박세�?
- * 발사�? 공격??몸체 ??��
+ * 발사체 베이스 액터. 런타임 데이터와 행동(Behavior)을 소유한다.
  */
-
 class UStaticMeshComponent;
 class UProjectileMovementComponent;
+class USceneComponent;
 class UMSProjectileBehaviorBase;
 
 UCLASS()
@@ -28,53 +24,46 @@ class MAGESQUAD_API AMSBaseProjectile : public AActor
 public:
 	AMSBaseProjectile();
 
-	// ?�본 StaticData로�???RuntimeData 초기??
+	// StaticData 클래스로부터 RuntimeData를 초기화.
 	void InitProjectileRuntimeDataFromClass(TSubclassOf<UProjectileStaticData> InProjectileDataClass);
 
-	// ?��????�이??Getter
+	// 런타임 데이터 접근자.
 	const FProjectileRuntimeData& GetProjectileRuntimeData() const { return ProjectileRuntimeData; }
-
-	// ?�효???��????�이??반환
 	FProjectileRuntimeData GetEffectiveRuntimeData() const;
-
-	// ?��????�이??Setter (GA가 만든 RuntimeData 주입)
 	void SetProjectileRuntimeData(const FProjectileRuntimeData& InRuntimeData);
 
-	// Collision 반경 ?�정 (?�판/?�사�?공용)
+	// 콜리전 관련.
 	void SetCollisionRadius(float Radius);
-
-	// Collision on/off
 	void EnableCollision(bool bEnable);
-	// Ignore hit for specific actor
 	void AddIgnoredActor(AActor* Actor);
 	bool IsIgnoredActor(const AActor* Actor) const;
 
-	// ?�동 ?��? (?�판??
-	void StopMovement();
+	// RuntimeData.SFX 배열 인덱스로 SFX 재생.
+	void PlaySFXAtLocation(int32 Index) const;
+	void PlaySFXAttached(int32 Index, USceneComponent* AttachTo) const;
 
-	// ProjectileMovement ?�근 (Behavior?�서 직접 ?�팅)
+	// 이동 관련.
+	void StopMovement();
 	UProjectileMovementComponent* GetMovementComponent() const
 	{
 		return ProjectileMovementComponent;
 	}
 
-	// Attach VFX (??번만)
+	// 부착 VFX 1회 재생.
 	void SpawnAttachVFXOnce();
 
-	// Explosive�� �ð� ���� ����ȭ
+	// 폭발 연출: 정지 및 숨김 (멀티캐스트).
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopAndHide(const FVector& InLocation);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// �?바닥 ??Block?�로 멈췄????
 	UFUNCTION()
 	void OnProjectileStop(const FHitResult& ImpactResult);
 
-	// ?�과 충돌 ??
 	UFUNCTION()
 	void OnHitOverlap(
 		UPrimitiveComponent* OverlappedComp,
@@ -85,60 +74,48 @@ protected:
 		const FHitResult& SweepResult
 	);
 
-	// ?��????�이??복제 ???�라) ?�용
 	UFUNCTION()
 	void OnRep_ProjectileRuntimeData();
 
-
-
 protected:
-	// ?�버/?�라 모두?�서 Behavior 보장
+	// Behavior 생성/초기화 및 RuntimeData 반영.
 	void EnsureBehavior();
-
-	// ?��????�이???�용(메시/?��???무브먼트/VFX/?�명 ?�?�머)
 	void ApplyProjectileRuntimeData(bool bSpawnAttachVFX);
-
-	// LifeTime ?�?�머 ?�팅 (?�버)
 	void ArmLifeTimerIfNeeded(const FProjectileRuntimeData& EffectiveData);
-	
+
 protected:
-	// 최종 RuntimeData
+	// 런타임 데이터 복제.
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileRuntimeData)
 	FProjectileRuntimeData ProjectileRuntimeData;
 
-	// RuntimeData가 ??번이?�도 초기?�되?�는지
 	UPROPERTY(Replicated)
 	bool bRuntimeDataInitialized = false;
 
-	// ?�트 ?�정??콜리????Overlap ?�용)
+	// 콜리전 및 비주얼.
 	UPROPERTY()
 	TObjectPtr<USphereComponent> CollisionSphere = nullptr;
 
-	// ?�각/블로?�용 메시
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> ProjectileMesh = nullptr;
 
-	// ?�동 처리
 	UPROPERTY()
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent = nullptr;
 
-	// ?�동(?�사�??�판/지?? 객체
+	// 현재 행동 인스턴스.
 	UPROPERTY(Transient)
 	TObjectPtr<UMSProjectileBehaviorBase> Behavior = nullptr;
 
-	// ?�명 ?�?�머(로컬 변?�로 ?�면 중복 버그 ?��?)
+	// 수명 타이머.
 	FTimerHandle LifeTimerHandle;
 
-	// Attach VFX 중복 ?�성 방�? (로컬)
+	// 부착 VFX 1회 재생용 플래그.
 	bool bAttachVfxSpawned = false;
 
-	// Overlap ignore list
+	// 중복 히트 방지용 ignore 목록.
 	TSet<TWeakObjectPtr<AActor>> IgnoredActors;
 
 public:
-	// ?�본 StaticData ?�래??
+	// 발사체 StaticData 클래스.
 	UPROPERTY(Replicated)
 	TSubclassOf<UProjectileStaticData> ProjectileDataClass;
 };
-
-

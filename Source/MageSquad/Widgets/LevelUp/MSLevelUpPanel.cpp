@@ -7,12 +7,6 @@
 #include "Components/HorizontalBoxSlot.h"
 #include "Player/MSPlayerController.h"
 
-UMSLevelUpPanel::UMSLevelUpPanel(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-	bIsFocusable = true;
-}
-
 void UMSLevelUpPanel::InitPanel(int32 InSessionId, const TArray<FMSLevelUpChoicePair>& InChoices)
 {
 	SessionId = InSessionId;

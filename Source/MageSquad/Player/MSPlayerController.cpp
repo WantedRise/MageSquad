@@ -77,6 +77,8 @@ void AMSPlayerController::BeginPlay()
 		// {
 		// 	PlayerViewModel->InitializeWithASC(ASC);
 		// }
+
+		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(),FVector(0,0,0));
 	}
 }
 
