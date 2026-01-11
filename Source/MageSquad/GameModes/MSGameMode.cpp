@@ -202,7 +202,7 @@ void AMSGameMode::TryStartGame()
 				SpawnSystem->SetSpawnCountPerTick(10);
 
 				// 5초 뒤 스폰 시작
-				// SpawnSystem->StartSpawning();
+				SpawnSystem->StartSpawning();
 			}
 		}
 		else
