@@ -67,13 +67,21 @@ void AMSMissionFindTargetActor::OnOverlapBegin(
 
 	if (OtherActor && OtherActor->IsA<ACharacter>())
 	{
-		// 서운드 재생
-		if (StartSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
-		}
+		MulticastPlaySound();
+
 		// 수집 이벤트 브로드캐스트
 		OnTargetCollected.Broadcast();
 		Destroy();
 	}
+}
+
+void AMSMissionFindTargetActor::MulticastPlaySound_Implementation()
+{
+	if (StartSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
+	}
+
+	// 추가로 파티클 효과가 있다면 여기서 함께 처리하면 좋습니다.
+	// UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), PickupEffect, GetActorLocation());
 }

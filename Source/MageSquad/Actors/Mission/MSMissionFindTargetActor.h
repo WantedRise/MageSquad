@@ -38,6 +38,10 @@ protected:
 	);
 
 protected:
+	// 서버가 호출하면 모든 클라이언트에서 실행되는 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlaySound();
+protected:
 	// 방향 표시 인디케이터 컴포넌트 (팀원에게 위치 및 초상화 제공)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Indicator")
 	TObjectPtr<class UMSDirectionIndicatorComponent> DirectionIndicatorComponent;
