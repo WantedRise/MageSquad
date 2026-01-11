@@ -31,7 +31,7 @@ public:
 
     /** 플레이어 위치를 “지나간 자리”로 기록 (RT + Grid) */
     UFUNCTION(BlueprintCallable, Category = "Ink")
-    void CleanAtWorldPos(const FVector& WorldPos, float RadiusCm);
+    bool CleanAtWorldPos(const FVector& WorldPos, float RadiusCm);
 
     /** 0~1 (1 = 완전 정화) */
     UFUNCTION(BlueprintCallable, Category = "Ink")
@@ -48,7 +48,7 @@ protected:
     void InitGrid();
     void BakeBlockedCells();
     FVector GetCellWorldCenter(int32 X, int32 Y) const;
-    void CleanGridAtUV(float U, float V, float RadiusUV);
+    bool CleanGridAtUV(float U, float V, float RadiusUV);
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ink")
