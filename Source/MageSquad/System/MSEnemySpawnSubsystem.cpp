@@ -161,6 +161,11 @@ void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 		{
 			CachedData.IndicatorImage = RowData->IndicatorImage.LoadSynchronous();
 		}
+		
+		if (!RowData->EnemySounds.IsNull())
+		{
+			CachedData.EnemySounds = RowData->EnemySounds.LoadSynchronous();
+		}
 
 		// 스탯 복사
 		CachedData.MaxHealth = RowData->MaxHealth;
@@ -986,6 +991,11 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 	if (Data->AnimationSet && Data->AnimationSet->AnimationClass)
 	{
 		Enemy->SetAnimData(Data->AnimationSet);
+	}
+	
+	if (Data->EnemySounds)
+	{
+		Enemy->SetSoundData(Data->EnemySounds);
 	}
 	
 	if (Data->IndicatorImage)

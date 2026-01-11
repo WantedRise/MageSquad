@@ -45,15 +45,21 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	// 드롭 가드 초기화
 	bHasDroppedItem = false;
+	bEndAbilityCalled = false;
 	
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	if (!bEndAbilityCalled)
 	{
-		FGameplayCueParameters CueParams;
-		CueParams.Instigator = GetAvatarActorFromActorInfo();
-		CueParams.TargetAttachComponent = Owner->GetMesh();
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			FGameplayCueParameters CueParams;
+			CueParams.Instigator = GetAvatarActorFromActorInfo();
+			CueParams.TargetAttachComponent = Owner->GetMesh();
 		
-		FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
-		ASC->ExecuteGameplayCue(CueTag, CueParams);
+			UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Dissolve Called"), *GetAvatarActorFromActorInfo()->GetName())
+			
+			FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
+			ASC->ExecuteGameplayCue(CueTag, CueParams);
+		}
 	}
 
 	if (UAnimMontage* DeadMontage = Owner->GetDeadMontage())
@@ -63,7 +69,7 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 이것도 추가
 		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		EnemyDeadTask->ReadyForActivation();
-		//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		
 		Owner->SetActorEnableCollision(false);
 	}
@@ -78,8 +84,6 @@ void UMSGA_EnemyDead::CancelAbility(const FGameplayAbilitySpecHandle Handle, con
 void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
 	if (bEndAbilityCalled)
 	{
 		return;
@@ -159,6 +163,8 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 			ExpObject->ExperienceValue = EnemyAS->GetDropExpValue();
 		}
 	}
+	
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 void UMSGA_EnemyDead::OnCompleteCallback()

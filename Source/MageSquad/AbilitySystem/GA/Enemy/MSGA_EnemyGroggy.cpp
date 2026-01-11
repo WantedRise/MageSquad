@@ -79,8 +79,6 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
                                    bool bWasCancelled)
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
 	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
 	{
 		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
@@ -149,6 +147,8 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 		       HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"),
 		       Owner->GetMesh() ? *Owner->GetMesh()->GetName() : TEXT("NULL"));
 	}
+	
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 void UMSGA_EnemyGroggy::OnCompleteCallback()

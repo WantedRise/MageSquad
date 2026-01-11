@@ -52,23 +52,23 @@ void UMSGA_EnemyMove::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 void UMSGA_EnemyMove::CancelAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateCancelAbility)
 {
-	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
-	
 	if (AMSBaseAIController* AIC = Cast<AMSBaseAIController>(ActorInfo->OwnerActor->GetInstigatorController()))
 	{
 		AIC->StopMovement();
 	}
+	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
 void UMSGA_EnemyMove::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
 	if (AMSBaseAIController* AIC = Cast<AMSBaseAIController>(ActorInfo->OwnerActor->GetInstigatorController()))
 	{
 		AIC->StopMovement();
 	}
+	
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
 }
 
 float UMSGA_EnemyMove::GetTargetUpdateInterval() const

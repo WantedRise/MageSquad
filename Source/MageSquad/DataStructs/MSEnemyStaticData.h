@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
 #include "DataAssets/Enemy/DA_EnemyAbilityData.h"
+#include "DataAssets/Enemy/DA_EnemyStaticSoundData.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
 #include "MSEnemyStaticData.generated.h"
 
@@ -54,4 +54,7 @@ struct FMSEnemyStaticData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> IndicatorImage;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UDA_EnemyStaticSoundData> EnemySounds;
 };
