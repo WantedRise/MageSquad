@@ -23,8 +23,8 @@ void AMSInkAreaActor::BeginPlay()
     InitGrid();
 
     // 2) RT 2장 생성 + 초기화(검정=더러움)
-    RT_A = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), RTSize, RTSize, RTF_RGBA8);
-    RT_B = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), RTSize, RTSize, RTF_RGBA8);
+    RT_A = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), RTSize, RTSize, RTF_R8);
+    RT_B = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), RTSize, RTSize, RTF_R8);
 
     UKismetRenderingLibrary::ClearRenderTarget2D(GetWorld(), RT_A, FLinearColor::Black);
     UKismetRenderingLibrary::ClearRenderTarget2D(GetWorld(), RT_B, FLinearColor::Black);
@@ -233,6 +233,12 @@ bool AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
     bool bAnyCellCleaned = false;
 
     if (GridSize <= 0 || !HasAuthority()) return bAnyCellCleaned;
+    // 1. 마지막 업데이트 위치와 비교 (Throttling)
+    static FVector2D LastUpdateUV;
+    float DistSq = FVector2D::DistSquared(FVector2D(U, V), LastUpdateUV);
+    if (DistSq < FMath::Square(0.005f)) return bAnyCellCleaned; // 아주 조금 움직였다면 스킵
+    LastUpdateUV = FVector2D(U, V);
+
 
     const int32 CX = FMath::RoundToInt(U * (GridSize - 1));
     const int32 CY = FMath::RoundToInt(V * (GridSize - 1));
@@ -246,22 +252,29 @@ bool AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
 
     for (int32 y = MinY; y <= MaxY; ++y)
     {
+        int32 RowOffset = y * GridSize;
         for (int32 x = MinX; x <= MaxX; ++x)
         {
-            const int32 dx = x - CX;
-            const int32 dy = y - CY;
-            if (dx * dx + dy * dy > R2) continue;
+            const int32 Idx = RowOffset + x;
 
-            const int32 Idx = y * GridSize + x;
-
+            // 상태를 먼저 확인하여 무거운 거리 계산 회피
             if (InkGrid[Idx] == EInkGridState::Dirty)
             {
-                InkGrid[Idx] = EInkGridState::Clean;
-                CurrentDirtyCount = FMath::Max(0, CurrentDirtyCount - 1); // 지워질 때만 카운트 감소
-                OnProgressChanged.Broadcast(GetCleanRatio());
-                bAnyCellCleaned = true;
+                const int32 dx = x - CX;
+                const int32 dy = y - CY;
+                if (dx * dx + dy * dy <= R2)
+                {
+                    InkGrid[Idx] = EInkGridState::Clean;
+                    CurrentDirtyCount--;
+                    bAnyCellCleaned = true;
+                }
             }
         }
+    }
+
+    if (bAnyCellCleaned)
+    {
+        OnProgressChanged.Broadcast(GetCleanRatio());
     }
 
     return bAnyCellCleaned;
