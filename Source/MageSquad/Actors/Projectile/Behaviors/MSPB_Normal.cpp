@@ -20,6 +20,8 @@ void UMSPB_Normal::OnBegin_Implementation()
 		return;
 	}
 
+	OwnerActor->PlaySFXAtLocation(0);
+
 	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
 	if (!MoveComp)
 	{
