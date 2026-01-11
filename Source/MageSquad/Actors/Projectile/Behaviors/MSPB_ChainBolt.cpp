@@ -24,6 +24,8 @@ void UMSPB_ChainBolt::OnBegin_Implementation()
 
 	OwnerActor->EnableCollision(false);
 
+	OwnerActor->PlaySFXAtLocation(0);
+
 	if (!IsAuthority())
 	{
 		return;
@@ -227,6 +229,8 @@ void UMSPB_ChainBolt::HandleArrival()
 
 	OwnerActor->StopMovement();
 	OwnerActor->SetActorLocation(Target->GetActorLocation());
+
+	OwnerActor->PlaySFXAtLocation(1);
 
 	HitActors.Add(Target);
 	LastHitActor = Target;
