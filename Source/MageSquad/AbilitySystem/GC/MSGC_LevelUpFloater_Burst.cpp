@@ -72,6 +72,12 @@ bool UMSGC_LevelUpFloater_Burst::OnExecute_Implementation(AActor* Target, const 
 				true
 			);
 
+			// 서운드 재생
+			if (StartSound)
+			{
+				UGameplayStatics::SpawnSoundAttached(StartSound, SkelMeshComp);
+			}
+
 			// 나이아가라의 회전 절댓값 설정
 			if (Niagara)
 			{

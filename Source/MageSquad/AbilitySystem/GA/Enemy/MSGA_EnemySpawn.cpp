@@ -63,8 +63,6 @@ void UMSGA_EnemySpawn::EndAbility(const FGameplayAbilitySpecHandle Handle, const
                                   const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
                                   bool bWasCancelled)
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-
 	if (AMSBossAIController* BossAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
 		BossAIController->GetBlackboardComponent()->SetValueAsBool(BossAIController->GetIsSpawndKey(), false);
@@ -72,6 +70,8 @@ void UMSGA_EnemySpawn::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 	}
 	
 	Owner->SetActorEnableCollision(true);
+	
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 void UMSGA_EnemySpawn::OnCompleteCallback()

@@ -102,4 +102,9 @@ protected:
 
 	// 타겟(획득자) 액터. (클라이언트에게만 보여줄 연출용 액터)
 	TWeakObjectPtr<AActor> AttractionActor;
+
+protected:
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | SFX")
+	TObjectPtr<class USoundBase> StartSound;
 };

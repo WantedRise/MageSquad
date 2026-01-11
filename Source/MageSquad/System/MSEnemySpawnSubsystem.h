@@ -89,6 +89,10 @@ struct FMSCachedEnemyData
 	UPROPERTY()
 	TObjectPtr<class UDA_EnemyAbilityData> EnemyAbilities;
 	
+	// Sound 관련
+	UPROPERTY()
+	TObjectPtr<class UDA_EnemyStaticSoundData> EnemySounds;
+	
 	UPROPERTY()
 	TObjectPtr<class UTexture2D> IndicatorImage;
 };
