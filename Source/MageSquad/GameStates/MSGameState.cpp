@@ -340,10 +340,17 @@ void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhan
 	}
 
 	const double FireAt = FPlatformTime::Seconds() + DelaySeconds;
+	TWeakObjectPtr<AMSGameState> WeakThis(this);
 	SkillLevelUpStartTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
-		FTickerDelegate::CreateLambda([this, SessionId, bIsSpellEnhancement, FireAt](float DeltaTime)
+		FTickerDelegate::CreateLambda([WeakThis, SessionId, bIsSpellEnhancement, FireAt](float DeltaTime)
 		{
-			if (!HasAuthority())
+			if (!WeakThis.IsValid())
+			{
+				return false;
+			}
+
+			AMSGameState* GS = WeakThis.Get();
+			if (!GS->HasAuthority())
 			{
 				return false;
 			}
@@ -353,7 +360,7 @@ void AMSGameState::ScheduleSkillLevelUpStart(int32 SessionId, bool bIsSpellEnhan
 				return true;
 			}
 
-			BeginSkillLevelUpPhaseForPlayers(SessionId, bIsSpellEnhancement);
+			GS->BeginSkillLevelUpPhaseForPlayers(SessionId, bIsSpellEnhancement);
 			return false;
 		}),
 		0.05f
@@ -570,6 +577,21 @@ void AMSGameState::OnRep_MissionFinished()
 
 void AMSGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (SkillLevelUpStartTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpStartTickerHandle);
+		SkillLevelUpStartTickerHandle.Reset();
+	}
+
+	if (SkillLevelUpTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(SkillLevelUpTickerHandle);
+		SkillLevelUpTickerHandle.Reset();
+	}
+
+	bSkillLevelUpStartPending = false;
+	bSkillLevelUpPhaseActive = false;
+
 	// 등록된 모든 함수 바인딩 해제
 	OnSharedExperienceChanged.Clear();
 	OnActivePlayerCountChanged.Clear();
