@@ -108,12 +108,15 @@ void UMSMissionTrackerWidget::SetBossHpProgress(float InNormalized)
 }
 void UMSMissionTrackerWidget::ShowDefaultProgress()
 {
+    Text_Timer->SetVisibility(ESlateVisibility::Visible);
     SizeBox_Boss->SetVisibility(ESlateVisibility::Collapsed);
     SizeBox_Other->SetVisibility(ESlateVisibility::Visible);
     Text_FindTarget->SetVisibility(ESlateVisibility::Collapsed);
 }
 void UMSMissionTrackerWidget::ShowBossProgress()
 {
+    StopMissionTimer();
+    Text_Timer->SetVisibility(ESlateVisibility::Collapsed);
     SizeBox_Boss->SetVisibility(ESlateVisibility::Visible);
     SizeBox_Other->SetVisibility(ESlateVisibility::Collapsed);
     Text_FindTarget->SetVisibility(ESlateVisibility::Collapsed);
@@ -152,5 +155,4 @@ void UMSMissionTrackerWidget::UpdateFindCount(int32 Current, int32 Target)
 void UMSMissionTrackerWidget::StopMissionTimer()
 {
     GetWorld()->GetTimerManager().ClearTimer(UITimerHandle);
-    Text_Timer->SetVisibility(ESlateVisibility::Collapsed);
 }

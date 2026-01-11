@@ -7,7 +7,7 @@
 #include "MSMissionFindWithinTimeScript.generated.h"
 
 struct FMSMissionProgressUIData;
-
+struct FMSMissionFindData;
 /**
  * 
  */
@@ -17,6 +17,7 @@ class MAGESQUAD_API UMSMissionFindWithinTimeScript : public UMSMissionScript
 	GENERATED_BODY()
 	//MSGameMissionData
 public:
+	UMSMissionFindWithinTimeScript();
 	/** UMSMissionScript 인터페이스 */
 	virtual void Initialize(UWorld* World) override;
 	virtual void Deinitialize() override;
@@ -41,4 +42,8 @@ protected:
 
 	UPROPERTY()
 	TArray<TWeakObjectPtr<class AMSMissionFindTargetActor>> SpawnedTargets;
+
+	UPROPERTY()
+	class UDataTable* FindMissionDataTable = nullptr;
+	const FMSMissionFindData* FindMissionData;
 };

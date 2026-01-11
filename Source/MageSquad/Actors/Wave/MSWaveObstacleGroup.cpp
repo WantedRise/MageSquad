@@ -102,11 +102,7 @@ void AMSWaveObstacleGroup::StartRunSound()
 	if (!RunSound)
 		return;
 	UE_LOG(LogTemp, Warning, TEXT("RunAudioComponent: RunSound"));
-	// 이미 재생 중이면 중복 재생 방지
-	if (RunAudioComponent && RunAudioComponent->IsPlaying())
-		return;
-	UE_LOG(LogTemp, Warning, TEXT("RunAudioComponent: %s"),
-		*GetNameSafe(RunAudioComponent));
+
 	if (!RunAudioComponent && AttenuationSettings)
 	{
 		RunAudioComponent = UGameplayStatics::SpawnSoundAttached(
