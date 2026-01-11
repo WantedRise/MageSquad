@@ -42,6 +42,8 @@ protected:
     );
 private:
     void ApplyClean();
+    void StartCleanSound();
+    void StopCleanSound();
 protected:
     UPROPERTY(EditAnywhere, Category = "Ink")
     float CleanRadiusCm = 60.f;
@@ -56,4 +58,12 @@ protected:
     TArray<TWeakObjectPtr<AMSInkAreaActor>> OverlappingAreas;
 private:
     FTimerHandle CleanTimer;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Sound")
+    USoundBase* CleanLoopSound;
+
+    UPROPERTY(Transient)
+    UAudioComponent* CleanLoopAudioComp = nullptr;
+
+    bool bIsCleaningSoundPlaying = false;
 };

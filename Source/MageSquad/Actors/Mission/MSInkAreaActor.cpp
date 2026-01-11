@@ -162,11 +162,11 @@ float AMSInkAreaActor::GetCleanRatio() const
     return FMath::Clamp(Ratio, 0.f, 1.f);
 }
 
-void AMSInkAreaActor::CleanAtWorldPos(const FVector& WorldPos, float RadiusCm)
+bool AMSInkAreaActor::CleanAtWorldPos(const FVector& WorldPos, float RadiusCm)
 {
     float U, V;
     if (!WorldPosToUV(WorldPos, U, V))
-        return;
+        return false;
     // 스케일 1.0 기준의 순수 로컬 크기를 가져옴
     const FBoxSphereBounds LocalBounds = AreaMesh->CalcBounds(FTransform::Identity);
     // 여기에 현재 액터의 X 스케일을 곱해 실제 월드 너비(cm)를 구함
@@ -179,7 +179,7 @@ void AMSInkAreaActor::CleanAtWorldPos(const FVector& WorldPos, float RadiusCm)
     PaintRT(U, V, RadiusUV);
 
     // Grid 판정 (지나간 영역 기록)
-    CleanGridAtUV(U, V, RadiusUV); 
+    return CleanGridAtUV(U, V, RadiusUV); 
 }
 
 bool AMSInkAreaActor::WorldPosToUV(const FVector& WorldPos, float& OutU, float& OutV) const
@@ -228,9 +228,11 @@ void AMSInkAreaActor::PaintRT(float U, float V, float RadiusUV)
     AreaMID->SetTextureParameterValue(RTParamName, CurrentRT);
 }
 
-void AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
+bool AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
 {
-    if (GridSize <= 0 || !HasAuthority()) return;
+    bool bAnyCellCleaned = false;
+
+    if (GridSize <= 0 || !HasAuthority()) return bAnyCellCleaned;
 
     const int32 CX = FMath::RoundToInt(U * (GridSize - 1));
     const int32 CY = FMath::RoundToInt(V * (GridSize - 1));
@@ -257,7 +259,10 @@ void AMSInkAreaActor::CleanGridAtUV(float U, float V, float RadiusUV)
                 InkGrid[Idx] = EInkGridState::Clean;
                 CurrentDirtyCount = FMath::Max(0, CurrentDirtyCount - 1); // 지워질 때만 카운트 감소
                 OnProgressChanged.Broadcast(GetCleanRatio());
+                bAnyCellCleaned = true;
             }
         }
     }
+
+    return bAnyCellCleaned;
 }

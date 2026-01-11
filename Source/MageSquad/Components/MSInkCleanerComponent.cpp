@@ -2,6 +2,8 @@
 #include "Actors/Mission/MSInkAreaActor.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/PrimitiveComponent.h"
+#include <Kismet/GameplayStatics.h>
+#include "Components/AudioComponent.h"
 
 UMSInkCleanerComponent::UMSInkCleanerComponent()
 {
@@ -37,6 +39,7 @@ void UMSInkCleanerComponent::OnEndOverlap(
 {
     if (AMSInkAreaActor* Area = Cast<AMSInkAreaActor>(OtherActor))
     {
+        StopCleanSound();
         OverlappingAreas.Remove(Area);
     }
 }
@@ -48,6 +51,7 @@ void UMSInkCleanerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
         GetWorld()->GetTimerManager().ClearTimer(CleanTimer);
     }
     OverlappingAreas.Empty();
+    StopCleanSound();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -115,6 +119,66 @@ void UMSInkCleanerComponent::ApplyClean()
         if (!Area) continue;
         // 플레이어 현재 위치
         const FVector CleanPos = Owner->GetActorLocation();
-        Area->CleanAtWorldPos(CleanPos, CleanRadiusCm);
+        //클린 처리
+        if (Area->CleanAtWorldPos(CleanPos, CleanRadiusCm))
+        {
+            //성공시 사운드
+            StartCleanSound();
+        }
+        else
+        {
+            StopCleanSound();
+        }
     }
+}
+
+void UMSInkCleanerComponent::StartCleanSound()
+{
+    if (bIsCleaningSoundPlaying)
+        return;
+
+    if (!CleanLoopSound)
+        return;
+
+    AActor* Owner = GetOwner();
+    if (!Owner)
+        return;
+
+    CleanLoopAudioComp =
+        UGameplayStatics::SpawnSoundAttached(
+            CleanLoopSound,
+            Owner->GetRootComponent(),
+            FName(TEXT("")),          // 소켓 이름 (특정 소켓에 첨부하려면 소켓 이름 지정, 없으면 빈 이름)
+            FVector(ForceInit),       // 상대 위치 오프셋 (FVector::ZeroVector 사용 가능)
+            FRotator(ForceInit),      // 상대 회전 오프셋 (FRotator::ZeroRotator 사용 가능)
+            EAttachLocation::SnapToTarget, // 첨부 방식 (타겟 위치/회전에 맞춤)
+            true,                     // 자동 활성화 여부
+            1.0f,                     // 볼륨 멀티플라이어
+            1.0f,                     // 피치 멀티플라이어
+            0.0f,                     // 시작 시간 (초)
+            nullptr,                  // 감쇠 설정 (USoundAttenuation* 타입, nullptr 시 애셋 기본값)
+            nullptr,                  // 동시성 설정 (USoundConcurrency* 타입, nullptr 시 애셋 기본값)
+            false                     // 레벨 전환 시 지속 여부
+        );
+
+    if (CleanLoopAudioComp)
+    {
+        CleanLoopAudioComp->bAutoDestroy = false;
+        CleanLoopAudioComp->Play();
+        bIsCleaningSoundPlaying = true;
+    }
+}
+
+void UMSInkCleanerComponent::StopCleanSound()
+{
+    if (!bIsCleaningSoundPlaying)
+        return;
+
+    if (CleanLoopAudioComp)
+    {
+        CleanLoopAudioComp->FadeOut(0.15f, 0.f);
+        CleanLoopAudioComp = nullptr;
+    }
+
+    bIsCleaningSoundPlaying = false;
 }
