@@ -79,7 +79,10 @@ public:
 	void ActivateWave(FVector InStartLocation);
 	void DeactivateWave();
 	void SetMoveDistance(float InDistance);
-
+	// 달리기 사운드 켜기
+	void StartRunSound();
+	// 달리기 사운드 끄기
+	void StopRunSound();
 protected:
 	/* ===== Internal ===== */
 
@@ -98,4 +101,12 @@ protected:
 
 	float ElapsedTime = 0.f;
 	FTimerHandle MoveTimerHandle;
+
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class USoundBase> RunSound;
+	UPROPERTY()
+	TObjectPtr<class UAudioComponent> RunAudioComponent;
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class USoundAttenuation> AttenuationSettings;
 };
