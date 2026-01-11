@@ -8,24 +8,47 @@
 #include "Actors/TileMap/MSSpawnTileMap.h"
 //#include <System/MSMissionDataSubsystem.h>
 #include "DataStructs/MSMissionProgressUIData.h"
+#include "DataStructs/MSMissionFindData.h"
+#include "GameStates/MSGameState.h"
+
+UMSMissionFindWithinTimeScript::UMSMissionFindWithinTimeScript()
+{
+	//정화미션 데이터 가져오기
+	static ConstructorHelpers::FObjectFinder<UDataTable> DataTableAsset(TEXT("/Game/Data/Mission/DT/DT_MissionFindData.DT_MissionFindData"));
+	if (DataTableAsset.Succeeded())
+	{
+		FindMissionDataTable = DataTableAsset.Object;
+	}
+}
 
 void UMSMissionFindWithinTimeScript::Initialize(UWorld* World)
 {
 	if (!World)
 		return;
 
-	//UMSMissionDataSubsystem* MissionDataSubsystem =
-	//	World->GetGameInstance()->GetSubsystem<UMSMissionDataSubsystem>();
-	//if (!MissionDataSubsystem)
-	//	return;
+	//플레이인원수에 해당하는 찾기미션 데이터를 가져오기
+	if (AMSGameState* GS = World->GetGameState<AMSGameState>())
+	{
+		if (FindMissionDataTable)
+		{
+			FName RowName = FName(*FString::FromInt(GS->GetActivePlayerCount()));
+			const FString Context(TEXT("FindMissionData"));
+			FindMissionData = FindMissionDataTable->FindRow<FMSMissionFindData>(
+				RowName,
+				TEXT("FindMissionData")
+			);
+		}
+	}
 
-	//const FMSMissionRow* MissionData = MissionDataSubsystem->Find(3);
-	//if (!MissionData)
-	//	return;
+	if (!FindMissionData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FindMissionData not found"));
+		return;
+	}
 
 	CurrentFindCount = 0;
 	
-	SetTargetInfo(OwnerMissionComponent->GetCurrentMissionData().FindTargetActorClass, OwnerMissionComponent->GetCurrentMissionData().FindTargetCount);
+	SetTargetInfo(OwnerMissionComponent->GetCurrentMissionData().FindTargetActorClass, FindMissionData->Count);
 
 	SpawnTargets(World);
 

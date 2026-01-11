@@ -763,10 +763,6 @@ void AMSPlayerController::ShowMissionTracker(FMSMissionRow MissionData)
 		{
 			Tracker->StartMissionTimer(GS, GS->GetMissionEndTime());
 		}
-		else
-		{
-			Tracker->StopMissionTimer();
-		}
 		Tracker->SetVisibility(ESlateVisibility::Visible);
 	}
 }
