@@ -157,30 +157,49 @@ bool AMSBaseProjectile::IsIgnoredActor(const AActor* Actor) const
 	return IgnoredActors.Contains(Actor);
 }
 
-void AMSBaseProjectile::PlaySFXAtLocation(int32 Index) const
+void AMSBaseProjectile::PlaySFXAtLocation(int32 Index)
 {
-	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
-	if (!EffectiveData.SFX.IsValidIndex(Index))
+	if (GetNetMode() == NM_Standalone)
 	{
+		Multicast_PlaySFXAtLocation(Index, GetActorLocation());
 		return;
 	}
 
-	USoundBase* Sound = EffectiveData.SFX[Index];
-	if (!Sound)
+	if (HasAuthority())
 	{
-		return;
+		Multicast_PlaySFXAtLocation(Index, GetActorLocation());
 	}
-
-	UGameplayStatics::PlaySoundAtLocation(this, Sound, GetActorLocation(), 1.f);
 }
 
-void AMSBaseProjectile::PlaySFXAttached(int32 Index, USceneComponent* AttachTo) const
+void AMSBaseProjectile::PlaySFXAttached(int32 Index, USceneComponent* AttachTo)
 {
 	if (!AttachTo)
 	{
 		return;
 	}
 
+	if (GetNetMode() == NM_Standalone)
+	{
+		Multicast_PlaySFXAttached(Index);
+		return;
+	}
+
+	if (HasAuthority())
+	{
+		Multicast_PlaySFXAttached(Index);
+	}
+}
+
+void AMSBaseProjectile::Multicast_PlaySFXAtLocation_Implementation(
+	int32 Index,
+	const FVector& Location
+)
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+
 	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
 	if (!EffectiveData.SFX.IsValidIndex(Index))
 	{
@@ -189,6 +208,34 @@ void AMSBaseProjectile::PlaySFXAttached(int32 Index, USceneComponent* AttachTo) 
 
 	USoundBase* Sound = EffectiveData.SFX[Index];
 	if (!Sound)
+	{
+		return;
+	}
+
+	UGameplayStatics::PlaySoundAtLocation(this, Sound, Location, 1.f);
+}
+
+void AMSBaseProjectile::Multicast_PlaySFXAttached_Implementation(int32 Index)
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
+	if (!EffectiveData.SFX.IsValidIndex(Index))
+	{
+		return;
+	}
+
+	USoundBase* Sound = EffectiveData.SFX[Index];
+	if (!Sound)
+	{
+		return;
+	}
+
+	USceneComponent* AttachTo = GetRootComponent();
+	if (!AttachTo)
 	{
 		return;
 	}

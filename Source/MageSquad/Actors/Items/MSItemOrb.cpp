@@ -4,6 +4,7 @@
 
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -147,6 +148,12 @@ void AMSItemOrb::DeferredDestroy_Server()
 		TmpHandle,
 		[this]()
 		{
+			// 서운드 재생
+			if (StartSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
+			}
+
 			Destroy();
 		},
 		DestroyDelay,

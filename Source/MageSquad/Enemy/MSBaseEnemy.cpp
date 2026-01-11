@@ -233,6 +233,11 @@ void AMSBaseEnemy::SetAnimData(UDA_EnemyAnimationSet* NewAnimData)
 	GetMesh()->SetAnimInstanceClass(AnimData->AnimationClass);
 }
 
+void AMSBaseEnemy::SetSoundData(class UDA_EnemyStaticSoundData* NewSoundData)
+{
+	SoundData = NewSoundData;
+}
+
 void AMSBaseEnemy::OnRep_MonsterID()
 {
 	// 클라이언트에서 MonsterID 변경 시 자동 호출됨

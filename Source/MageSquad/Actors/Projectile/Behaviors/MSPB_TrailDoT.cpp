@@ -24,6 +24,8 @@ void UMSPB_TrailDoT::OnBegin_Implementation()
 		return;
 	}
 
+	OwnerActor->PlaySFXAtLocation(0);
+
 	StartLocation = OwnerActor->GetActorLocation();
 	VirtualLocation = StartLocation;
 	TrailPoints.Add(StartLocation);
