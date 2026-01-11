@@ -278,15 +278,6 @@ void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		}
 	}
 
-	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
-	if (EffectiveData.OnHitSFX)
-	{
-		// 히트 사운드 재생
-		UGameplayStatics::PlaySoundAtLocation(
-			this, EffectiveData.OnHitSFX, GetActorLocation(), 1.f
-		);
-	}
-
 	Super::EndPlay(EndPlayReason);
 }
 
