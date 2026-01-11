@@ -22,7 +22,7 @@ UMSMissionCleanPaint::UMSMissionCleanPaint()
     }
 }
 
-//Todo : 랜덤 위치에 N개의 영역을 만들어야함
+
 void UMSMissionCleanPaint::Initialize(UWorld* World)
 {
     if (!World)
