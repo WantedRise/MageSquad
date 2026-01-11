@@ -4,6 +4,7 @@
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
@@ -156,6 +157,44 @@ bool AMSBaseProjectile::IsIgnoredActor(const AActor* Actor) const
 	return IgnoredActors.Contains(Actor);
 }
 
+void AMSBaseProjectile::PlaySFXAtLocation(int32 Index) const
+{
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
+	if (!EffectiveData.SFX.IsValidIndex(Index))
+	{
+		return;
+	}
+
+	USoundBase* Sound = EffectiveData.SFX[Index];
+	if (!Sound)
+	{
+		return;
+	}
+
+	UGameplayStatics::PlaySoundAtLocation(this, Sound, GetActorLocation(), 1.f);
+}
+
+void AMSBaseProjectile::PlaySFXAttached(int32 Index, USceneComponent* AttachTo) const
+{
+	if (!AttachTo)
+	{
+		return;
+	}
+
+	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
+	if (!EffectiveData.SFX.IsValidIndex(Index))
+	{
+		return;
+	}
+
+	USoundBase* Sound = EffectiveData.SFX[Index];
+	if (!Sound)
+	{
+		return;
+	}
+
+	UGameplayStatics::SpawnSoundAttached(Sound, AttachTo);
+}
 void AMSBaseProjectile::StopMovement()
 {
 	if (ProjectileMovementComponent)
@@ -403,3 +442,5 @@ void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
 	ApplyProjectileRuntimeData(true);
 	EnsureBehavior();
 }
+
+

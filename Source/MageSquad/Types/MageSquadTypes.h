@@ -222,9 +222,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	class UNiagaraSystem* OnHitVFX = nullptr;
 
-	// 피격 SFX
+	// SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	USoundBase* OnHitSFX = nullptr;
+	TArray<USoundBase*> SFX;
 
 	// Behavior 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
@@ -267,7 +267,7 @@ public:
 		Effects = StaticData->Effects;
 		OnAttachVFX = StaticData->OnAttachVFX;
 		OnHitVFX = StaticData->OnHitVFX;
-		OnHitSFX = StaticData->OnHitSFX;
+		SFX = StaticData->SFX;
 		BehaviorClass = StaticData->BehaviorClass;
 	}
 
@@ -331,9 +331,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
 	class UNiagaraSystem* OnHitVFX = nullptr;
 
-	// 피격 SFX
+	// SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
-	USoundBase* OnHitSFX = nullptr;
+	TArray<USoundBase*> SFX;
 
 	// Behavior 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Projectile")
