@@ -90,6 +90,18 @@ void AMSWaveObstacleGroup::Tick(float DeltaTime)
 	}
 }
 
+void AMSWaveObstacleGroup::OnRep_Moving()
+{
+	if (bMoving)
+	{
+		StartRunSound();
+	}
+	else
+	{
+		StopRunSound();
+	}
+}
+
 void AMSWaveObstacleGroup::SetMoveDistance(float InDistance)
 {
 	MaxMoveDistance = InDistance;
@@ -159,7 +171,7 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 			Block->ActivateBlock();
 		}
 	}
-	StartRunSound();
+	MulticastPlaySound();
 	SetActorHiddenInGame(false);
 
 	StartMove();
@@ -180,7 +192,7 @@ void AMSWaveObstacleGroup::DeactivateWave()
 			Block->DeactivateBlock();
 		}
 	}
-	StopRunSound();
+	MulticastStopSound();
 	SetActorHiddenInGame(true);
 
 	bMoving = false;
@@ -267,4 +279,14 @@ void AMSWaveObstacleGroup::MulticastSetWaveRotation_Implementation(float Yaw)
 {
 	const FRotator NewRot(0.f, Yaw, 0.f);
 	SetActorRotation(NewRot);
+}
+
+void AMSWaveObstacleGroup::MulticastPlaySound_Implementation()
+{
+	StartRunSound();
+}
+
+void AMSWaveObstacleGroup::MulticastStopSound_Implementation()
+{
+	StopRunSound();
 }

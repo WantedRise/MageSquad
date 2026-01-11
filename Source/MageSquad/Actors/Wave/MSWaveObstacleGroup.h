@@ -26,6 +26,12 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastSetWaveRotation(float Yaw);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlaySound();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastStopSound();
+	UFUNCTION()
+	void OnRep_Moving();
 public:
 	/* ===== Settings ===== */
 	FOnWaveFinished OnWaveFinished;
@@ -55,7 +61,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Wave")
 	float MoveSpeed = 600.0f;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_Moving)
 	uint8 bMoving : 1;
 	
 	// Block 클래스
