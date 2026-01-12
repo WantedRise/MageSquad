@@ -143,22 +143,22 @@ void AMSItemOrb::DeferredDestroy_Server()
 	if (!HasAuthority()) return;
 
 	// 연출이 끝날 시간만큼 딜레이 후 Destroy
-	FTimerHandle TmpHandle;
-	GetWorldTimerManager().SetTimer(
-		TmpHandle,
-		[this]()
-		{
-			// 서운드 재생
-			if (StartSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
-			}
+	FTimerDelegate Delegate;
+	Delegate.BindUObject(this, &AMSItemOrb::OnDestroyTimerFinished);
 
-			Destroy();
-		},
-		DestroyDelay,
-		false
-	);
+	FTimerHandle TmpHandle;
+	GetWorldTimerManager().SetTimer(TmpHandle, Delegate, DestroyDelay, false);
+}
+
+void AMSItemOrb::OnDestroyTimerFinished()
+{
+	// 사운드 재생
+	if (StartSound && this)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
+	}
+
+	Destroy();
 }
 
 void AMSItemOrb::OnRep_Collected()

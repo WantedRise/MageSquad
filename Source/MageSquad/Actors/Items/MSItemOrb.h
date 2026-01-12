@@ -49,6 +49,9 @@ protected:
 	UFUNCTION()
 	void OnRep_Collected();
 
+	// 지연 Destroy 타이머 완료 시 호출될 함수
+	void OnDestroyTimerFinished();
+
 protected:
 	// 루트 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom | Components")
