@@ -68,7 +68,7 @@ public:
 	void Multicast_PlaySFXAttached(int32 Index);
 
 	// VFX 재생 멀티캐스트.
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SpawnVFXAtLocation(UNiagaraSystem* Vfx, const FVector& Location, float Scale);
 
 
