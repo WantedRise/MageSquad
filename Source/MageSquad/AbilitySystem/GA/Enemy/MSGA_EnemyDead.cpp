@@ -25,6 +25,9 @@ UMSGA_EnemyDead::UMSGA_EnemyDead()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Dead);
+	
+	// 이미 Dead 상태면 활성화 차단
+	ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
 
 void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -67,7 +70,7 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback);
 			EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback);
 			EnemyDeadTask->ReadyForActivation();
-			//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
+			// UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		
 			Owner->SetActorEnableCollision(false);
 		}
@@ -85,7 +88,7 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 {
 	if (bEndAbilityCalled)
 	{
-		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		UE_LOG(LogTemp, Warning, TEXT("[%s] bEndAbilityCalled is already true"), *GetAvatarActorFromActorInfo()->GetName());
 		return;
 	}
 	
@@ -100,6 +103,7 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
 	{
 		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Dead Is Client called"), *GetAvatarActorFromActorInfo()->GetName());
 		return;
 	}
 	

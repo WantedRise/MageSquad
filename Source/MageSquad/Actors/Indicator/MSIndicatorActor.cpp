@@ -127,7 +127,6 @@ void AMSIndicatorActor::UpdateFillPercent() const
 
 void AMSIndicatorActor::OnFillComplete()
 {
-	// 서버에서만 충돌 검사 및 데미지 처리
 	if (!HasAuthority())
 	{
 		return;

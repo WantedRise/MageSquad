@@ -269,7 +269,7 @@ void AMSBaseEnemy::OnRep_MonsterID()
 
 void AMSBaseEnemy::OnRep_IsInPool()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[%s] OnRep_IsInPool %s"), HasAuthority() ? TEXT("Server") : TEXT("Client"), *CurrentMonsterID.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("[%s] OnRep_IsInPool %s"), HasAuthority() ? TEXT("Server") : TEXT("Client"), *CurrentMonsterID.ToString());
 	
 	SetNetDormancy(bIsInPool ? DORM_DormantAll : DORM_Awake);
 	SetActorTickEnabled(!bIsInPool);

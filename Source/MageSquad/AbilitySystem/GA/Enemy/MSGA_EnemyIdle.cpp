@@ -28,11 +28,10 @@ void UMSGA_EnemyIdle::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	if (UAnimMontage* IdleMontage = Owner->GetIdleMontage())
 	{
-		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Idle"), IdleMontage);
-		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyIdle::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyIdle::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
-		EnemyDeadTask->ReadyForActivation();
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
+		UAbilityTask_PlayMontageAndWait* EnemyIdleTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Idle"), IdleMontage);
+		EnemyIdleTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyIdle::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
+		EnemyIdleTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyIdle::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
+		EnemyIdleTask->ReadyForActivation();
 	}
 }
 
