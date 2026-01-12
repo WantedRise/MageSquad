@@ -1103,6 +1103,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
 	{
 		MovementComp->SetComponentTickEnabled(true);
+		MovementComp->bUseRVOAvoidance = true;
 	}
 
 	// AI 컨트롤러 시작
@@ -1135,6 +1136,7 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 		MovementComp->StopMovementImmediately();
 		MovementComp->Velocity = FVector::ZeroVector;
 		MovementComp->SetComponentTickEnabled(false);
+		MovementComp->bUseRVOAvoidance = false;
 	}
 
 	// AI 정지

@@ -114,6 +114,21 @@ void UMSAT_EnemyMove::TickTask(float DeltaTime)
 	// 경로 방향 가져와서 관성 적용
 	FVector DesiredDirection = GetNextPathDirection(OwnerPawn, TargetActor);
 	
+	// 디버깅: Zero Vector 체크
+	if (DesiredDirection.IsNearlyZero())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Move] DesiredDirection is Zero! Owner: %s, Target: %s, Dist: %f"), 
+			*OwnerPawn->GetActorLocation().ToString(),
+			*TargetActor->GetActorLocation().ToString(),
+			FVector::Dist(OwnerPawn->GetActorLocation(), TargetActor->GetActorLocation()));
+	}
+	
+	// 디버깅: 현재 방향 체크
+	if (CurrentMoveDirection.IsNearlyZero())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Move] CurrentMoveDirection became Zero!"));
+	}
+	
 	// UE_LOG(LogTemp, Warning, TEXT("[Move] Before - CurrentDir: %s, DesiredDir: %s"), 
 	// *CurrentMoveDirection.ToString(), 
 	// *DesiredDirection.ToString());
@@ -245,6 +260,15 @@ FVector UMSAT_EnemyMove::GetNextPathDirection(const APawn* OwnerPawn, const AAct
 	if (CurrentPathIndex < CachedPathPoints.Num())
 	{
 		return (CachedPathPoints[CurrentPathIndex] - OwnerPawn->GetActorLocation()).GetSafeNormal2D();
+	}
+	
+	// 최종 반환 전 Zero Vector 방지
+	FVector Direction = (TargetActor->GetActorLocation() - OwnerPawn->GetActorLocation()).GetSafeNormal2D();
+    
+	if (Direction.IsNearlyZero())
+	{
+		// 타겟과 거의 같은 위치면 현재 방향 유지
+		return CurrentMoveDirection.IsNearlyZero() ? OwnerPawn->GetActorForwardVector() : CurrentMoveDirection;
 	}
     
 	return (TargetActor->GetActorLocation() - OwnerPawn->GetActorLocation()).GetSafeNormal2D();
