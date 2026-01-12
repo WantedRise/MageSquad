@@ -1,0 +1,1 @@
+"C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\Win64\UnrealEditor.exe" "C:\Workspace\Potenup_3rd\Project\MageSquad\MageSquad.uproject" "MainmenuLevel" -game -ResX=1280 -ResY=720 -log -windowed

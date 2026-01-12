@@ -1,0 +1,43 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayCueNotify_Static.h"
+#include "MSGC_PlayerBlinkStart.generated.h"
+
+/**
+ * 작성자: 김준형
+ * 작성일: 25/12/15
+ *
+ * 플레이어 점멸 시작 VFX/SFX 재생 게임플레이 큐
+ */
+UCLASS()
+class MAGESQUAD_API UMSGC_PlayerBlinkStart : public UGameplayCueNotify_Static
+{
+	GENERATED_BODY()
+	
+public:
+	UMSGC_PlayerBlinkStart();
+
+protected:
+	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
+
+	// 스폰 위치 구하기 함수
+	FVector ResolveSpawnLocation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const;
+	
+	// 스폰 회전값 구하기 함수
+	FRotator ResolveSpawnRotation(AActor* MyTarget) const;
+
+	// 색상 파라미터 구하기 함수
+	FLinearColor ResolveLinearColor(const FGameplayCueParameters& Parameters) const;
+
+protected:
+	// 시작 지점에 스폰할 나이아가라
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | VFX")
+	TObjectPtr<class UNiagaraSystem> StartNiagara;
+
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Custom | SFX")
+	TObjectPtr<class USoundBase> StartSound;
+};

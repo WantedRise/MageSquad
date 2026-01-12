@@ -1,4 +1,5 @@
 [*.{cpp,h}]
+charset = utf-8               # 한글 깨짐 처리
 
 # Naming convention rules (note: currently need to be ordered from more to less specific)
 

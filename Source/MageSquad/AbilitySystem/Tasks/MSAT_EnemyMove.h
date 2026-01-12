@@ -1,0 +1,67 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Abilities/Tasks/AbilityTask.h"
+#include "MSAT_EnemyMove.generated.h"
+
+/**
+ * 작성자 : 임희섭
+ * 작성일 : 2026/01/06
+ * Enemy가 움직일 때 Target Actor를 계속 탐지하고 변경하기 위한 Ability Task
+ */
+UCLASS()
+class MAGESQUAD_API UMSAT_EnemyMove : public UAbilityTask
+{
+	GENERATED_BODY()
+	
+public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveTaskDelegate);
+    
+	UPROPERTY(BlueprintAssignable)
+	FOnMoveTaskDelegate OnTargetReached;
+    
+	UPROPERTY(BlueprintAssignable)
+	FOnMoveTaskDelegate OnTargetLost;
+
+	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", 
+		meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility"))
+	static UMSAT_EnemyMove* CreateTask(
+		UGameplayAbility* OwningAbility,
+		float AcceptanceRadius = 5.f,
+		float TargetUpdateInterval = 0.25f);
+
+	virtual void Activate() override;
+	virtual void TickTask(float DeltaTime) override;
+	virtual void OnDestroy(bool bInOwnerFinished) override;
+
+private:
+	// void UpdateMoveTarget();
+	FVector GetNextPathDirection(const APawn* OwnerPawn, const AActor* TargetActor);
+	void UpdateCachedPath(const APawn* OwnerPawn, const AActor* TargetActor);
+	
+private:
+	UPROPERTY()
+	TWeakObjectPtr<class AMSBaseAIController> CachedAIC;
+    
+	UPROPERTY()
+	TWeakObjectPtr<AActor> CachedTargetActor;
+
+	float AcceptanceRadius;
+	float UpdateInterval;
+	float TimeSinceLastUpdate;
+    
+	// 최적화: 이전 타겟 위치 캐싱 (불필요한 MoveToActor 호출 방지)
+	FVector LastTargetLocation;
+	float TargetLocationThresholdSq;
+    
+	FVector CurrentMoveDirection;
+	float TurnSpeed = 2.f;
+    
+	// 경로 캐싱
+	TArray<FVector> CachedPathPoints;
+	int32 CurrentPathIndex = 0;
+	float PathUpdateTimer = 0.f;
+	float PathUpdateInterval = 0.5f;  // 0.5초마다 경로 재계산
+};

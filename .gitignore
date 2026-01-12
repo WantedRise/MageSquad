@@ -73,3 +73,8 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# CLI
+*.idea
+*AGENTS.md
+*GEMINI.md

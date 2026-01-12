@@ -1,0 +1,14 @@
+﻿,1.00 
+Player.Stats.MaxHealth,200.00 
+Player.Stats.HealthRegen,0.00 
+Player.Stats.Defense,0.00 
+Player.Stats.DodgeRate,0.00 
+Player.Stats.MoveSpeedMod,0.00 
+Player.Stats.DamageMod,0.00 
+Player.Stats.SpellSizeMod,0.00 
+Player.Stats.CooldownReduction,0.00 
+Player.Stats.CritChance,0.10 
+Player.Stats.CritDamage,1.50 
+Player.Stats.PickupRangeMod,0.00 
+Player.Stats.ExperienceGainMod,0.00 
+Player.Stats.Luck,0.00 
