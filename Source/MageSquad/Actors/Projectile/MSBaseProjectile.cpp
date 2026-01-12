@@ -242,6 +242,32 @@ void AMSBaseProjectile::Multicast_PlaySFXAttached_Implementation(int32 Index)
 
 	UGameplayStatics::SpawnSoundAttached(Sound, AttachTo);
 }
+
+void AMSBaseProjectile::Multicast_SpawnVFXAtLocation_Implementation(
+	UNiagaraSystem* Vfx,
+	const FVector& Location,
+	float Scale
+)
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+
+	if (!Vfx)
+	{
+		return;
+	}
+
+	const float SafeScale = FMath::Max(0.01f, Scale);
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		this,
+		Vfx,
+		Location,
+		FRotator::ZeroRotator,
+		FVector(SafeScale)
+	);
+}
 void AMSBaseProjectile::StopMovement()
 {
 	if (ProjectileMovementComponent)

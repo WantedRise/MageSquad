@@ -15,6 +15,7 @@ class UStaticMeshComponent;
 class UProjectileMovementComponent;
 class USceneComponent;
 class UMSProjectileBehaviorBase;
+class UNiagaraSystem;
 
 UCLASS()
 class MAGESQUAD_API AMSBaseProjectile : public AActor
@@ -65,6 +66,10 @@ public:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlaySFXAttached(int32 Index);
+
+	// VFX 재생 멀티캐스트.
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SpawnVFXAtLocation(UNiagaraSystem* Vfx, const FVector& Location, float Scale);
 
 
 protected:
