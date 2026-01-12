@@ -149,7 +149,7 @@ void AMSItemOrb::DeferredDestroy_Server()
 		[this]()
 		{
 			// 서운드 재생
-			if (StartSound)
+			if (StartSound && this)
 			{
 				UGameplayStatics::PlaySoundAtLocation(this, StartSound, GetActorLocation());
 			}
