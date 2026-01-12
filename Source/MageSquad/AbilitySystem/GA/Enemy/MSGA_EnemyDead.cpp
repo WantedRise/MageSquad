@@ -63,6 +63,7 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		if (UAnimMontage* DeadMontage = Owner->GetDeadMontage())
 		{
 			UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Dead"), DeadMontage);
+			EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback);
 			EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback);
 			EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback);
 			EnemyDeadTask->ReadyForActivation();
