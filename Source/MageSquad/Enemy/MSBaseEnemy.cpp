@@ -152,6 +152,17 @@ void AMSBaseEnemy::PostInitializeComponents()
 	Super::PostInitializeComponents();
 }
 
+void AMSBaseEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 컴포넌트 해제 전에 모든 어빌리티 강제 종료
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		ASC->CancelAllAbilities();
+	}
+	
+	Super::EndPlay(EndPlayReason);
+}
+
 void AMSBaseEnemy::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
