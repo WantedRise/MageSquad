@@ -33,6 +33,9 @@ struct FMSSpawnTile
 	// 그리드 인덱스 (빠른 조회용)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FIntPoint GridIndex = FIntPoint::ZeroValue;
+	
+	// 지면 보정된 스폰 높이 (캡슐 반높이 포함)
+	float SafeSpawnZ = 0.f;
 
 	FMSSpawnTile() {}
 	FMSSpawnTile(const FVector& InLocation, float InHeight, bool bSpawnable, FIntPoint InIndex)
@@ -72,7 +75,6 @@ private:
 	UPROPERTY(Transient)
 	TArray<FMSSpawnTile> CachedSpawnableTiles;
 
-	
 public:
 		// ========== 에디터 설정 ==========
 	// 타일 크기 (가로, 세로 동일)

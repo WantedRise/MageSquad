@@ -27,9 +27,10 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
     
     if (AMSBaseEnemy* Avatar = Cast<AMSBaseEnemy>(Character))
     {
-        USoundBase* DeadSound = Avatar->GetEnemySoundData()->DeathSound;
-	
-        UGameplayStatics::PlaySoundAtLocation(GetWorld(), DeadSound, Avatar->GetActorLocation());
+        if (UDA_EnemyStaticSoundData* EnemySoundData = Avatar->GetEnemySoundData())
+        {
+            UGameplayStatics::PlaySoundAtLocation(GetWorld(), EnemySoundData->DeathSound, Avatar->GetActorLocation());
+        }
     }
     
     USkeletalMeshComponent* Mesh = Character->GetMesh();
