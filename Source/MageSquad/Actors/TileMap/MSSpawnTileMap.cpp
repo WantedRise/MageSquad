@@ -175,7 +175,16 @@ void AMSSpawnTileMap::GenerateTileMap()
 				bool bSpawnable = (GroundHeight <= MaxSpawnableHeight);
 				FIntPoint GridIndex(X, Y);
 
-				AllTiles.Add(FMSSpawnTile(FinalLocation, GroundHeight, bSpawnable, GridIndex));
+				//AllTiles.Add(FMSSpawnTile(FinalLocation, GroundHeight, bSpawnable, GridIndex));
+				
+				FMSSpawnTile NewTile(FinalLocation, GroundHeight, bSpawnable, GridIndex);
+
+				// 안전 스폰 높이 계산 (캡슐 반높이 + 여유분)
+				constexpr float CapsuleHalfHeight = 88.f;
+				constexpr float SafetyMargin = 12.f;
+				NewTile.SafeSpawnZ = GroundHeight + CapsuleHalfHeight + SafetyMargin;
+
+				AllTiles.Add(NewTile);
 				
 				TotalTiles++;
 				if (bSpawnable)

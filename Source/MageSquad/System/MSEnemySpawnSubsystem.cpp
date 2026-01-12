@@ -251,7 +251,7 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 
 		AMSBaseEnemy* Enemy = World->SpawnActor<AMSBaseEnemy>(
 			Pool.EnemyClass,
-			FVector(0, 0, 100.0f),
+			FVector(0, 0, 200.0f),
 			FRotator::ZeroRotator,
 			Params
 		);
@@ -788,7 +788,10 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocationFromTiles(const TArray<FMSSpa
     
 	// 해당 방향에서 랜덤 타일 선택
 	const int32 TileIdx = SelectedIndices[FMath::RandRange(0, SelectedIndices.Num() - 1)];
-	OutLocation = InvisibleTiles[TileIdx].Location;
+	//OutLocation = InvisibleTiles[TileIdx].Location;
+	
+	const FMSSpawnTile& SelectedTile = InvisibleTiles[TileIdx];
+	OutLocation = FVector(SelectedTile.Location.X, SelectedTile.Location.Y, SelectedTile.SafeSpawnZ);
     
 	return true;
 }

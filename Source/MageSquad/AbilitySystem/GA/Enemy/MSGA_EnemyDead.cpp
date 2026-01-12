@@ -171,12 +171,13 @@ void UMSGA_EnemyDead::OnCompleteCallback()
 {
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 	
 	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
 	{
 		Owner->GetMesh()->SetVisibility(false);
 	}
+	
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
 
 void UMSGA_EnemyDead::OnInterruptedCallback()

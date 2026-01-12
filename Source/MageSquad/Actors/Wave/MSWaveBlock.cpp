@@ -60,12 +60,7 @@ void AMSWaveBlock::BeginPlay()
 	{
 		if (MeshComp)
 		{
-			// 틱 시스템 자체는 허용 (애니메이션 업데이트를 위해)
-			// MeshComp->PrimaryComponentTick.bCanEverTick = true;
-			// MeshComp->PrimaryComponentTick.bStartWithTickEnabled = true;
-
-			// 이 설정이 되어 있으면 화면 밖에서는 틱이 돌아도 무거운 애니메이션 계산을 생략합니다.
-			MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+			// MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		}
 	}
 
