@@ -65,10 +65,10 @@ bool UMSGC_LevelUpFloater_Burst::OnExecute_Implementation(AActor* Target, const 
 			UNiagaraComponent* Niagara = UNiagaraFunctionLibrary::SpawnSystemAttached(
 				LevelUpNiagara,
 				SkelMeshComp,
-				NAME_None,
-				Parameters.Location + FVector(0.f, 0.f, -100.f),
+				TEXT("sLevelUp"),
+				FVector::ZeroVector,
 				FRotator::ZeroRotator,
-				EAttachLocation::KeepWorldPosition,
+				EAttachLocation::SnapToTarget,
 				true
 			);
 

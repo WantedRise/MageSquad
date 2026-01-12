@@ -12,7 +12,7 @@
 AMSWaveObstacleGroup::AMSWaveObstacleGroup()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickGroup = TG_PostPhysics;
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
 
 	bReplicates = true;
 	SetReplicateMovement(false);
@@ -85,7 +85,7 @@ void AMSWaveObstacleGroup::Tick(float DeltaTime)
 	else if (bMoving)
 	{
 		// ⭐ 클라 보간
-		const FVector Smoothed = FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 20.f);
+		const FVector Smoothed = FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 15.f);
 		SetActorLocation(Smoothed);
 	}
 }
@@ -161,7 +161,9 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 		return;
 	}
 	SetActorLocation(InStartLocation);
-	ServerLocation = GetActorLocation();
+	ServerLocation = InStartLocation;
+
+	ForceNetUpdate();
 
 	// Block 활성화
 	for (AMSWaveBlock* Block : SpawnedBlocks)
