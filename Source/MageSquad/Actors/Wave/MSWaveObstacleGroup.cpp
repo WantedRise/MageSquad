@@ -12,7 +12,7 @@
 AMSWaveObstacleGroup::AMSWaveObstacleGroup()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickGroup = TG_PostPhysics;
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
 
 	bReplicates = true;
 	SetReplicateMovement(false);
@@ -60,12 +60,6 @@ void AMSWaveObstacleGroup::BeginPlay()
 void AMSWaveObstacleGroup::OnRep_ServerLocation()
 {
 	TargetLocation = ServerLocation;
-
-	// 웨이브 시작 시에는 스냅
-	if (!bMoving)
-	{
-		SetActorLocation(ServerLocation);
-	}
 }
 
 void AMSWaveObstacleGroup::Tick(float DeltaTime)
@@ -91,7 +85,7 @@ void AMSWaveObstacleGroup::Tick(float DeltaTime)
 	else if (bMoving)
 	{
 		// ⭐ 클라 보간
-		const FVector Smoothed = FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 20.f);
+		const FVector Smoothed = FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 15.f);
 		SetActorLocation(Smoothed);
 	}
 }
@@ -167,7 +161,7 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 		return;
 	}
 	SetActorLocation(InStartLocation);
-	ServerLocation = GetActorLocation();
+	ServerLocation = InStartLocation;
 
 	ForceNetUpdate();
 
