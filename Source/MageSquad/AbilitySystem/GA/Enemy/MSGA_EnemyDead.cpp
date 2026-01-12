@@ -54,8 +54,7 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			FGameplayCueParameters CueParams;
 			CueParams.Instigator = GetAvatarActorFromActorInfo();
 			CueParams.TargetAttachComponent = Owner->GetMesh();
-		
-			UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Dissolve Called"), *GetAvatarActorFromActorInfo()->GetName())
+			//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Dissolve Called"), *GetAvatarActorFromActorInfo()->GetName())
 			
 			FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
 			ASC->ExecuteGameplayCue(CueTag, CueParams);
@@ -65,11 +64,10 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (UAnimMontage* DeadMontage = Owner->GetDeadMontage())
 	{
 		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Dead"), DeadMontage);
-		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
-		EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback); // 이것도 추가
-		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
+		EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyDead::OnCompleteCallback);
+		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyDead::OnInterruptedCallback);
 		EnemyDeadTask->ReadyForActivation();
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
+		//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		
 		Owner->SetActorEnableCollision(false);
 	}
@@ -86,6 +84,7 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 {
 	if (bEndAbilityCalled)
 	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 		return;
 	}
 	
@@ -99,6 +98,7 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 
 	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
 	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 		return;
 	}
 	
@@ -107,11 +107,20 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	* 경험치 오브 드롭 -> 확률에 따라 아이템 오브(경험치, 자석, 포션) 랜덤 드롭 로직 구현
 	*/
 	// 아이템 중복 드롭 방지
-	if (bHasDroppedItem) return;
+	if (bHasDroppedItem)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
+	
 	bHasDroppedItem = true;
 
-	if (!ExpReward || !MagnetReward || !PotionReward) return;
-
+	if (!ExpReward || !MagnetReward || !PotionReward)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
+	
 	const float Roll = FMath::FRand(); // (0.0, 1.0)
 
 	// 스폰할 클래스 선택
@@ -133,8 +142,12 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 		SpawnClass = MagnetReward;
 	}
 
-	if (!SpawnClass) return;
-
+	if (!SpawnClass)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
+	
 	// 아이템 오브 스폰
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -146,12 +159,19 @@ void UMSGA_EnemyDead::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 		Params
 	);
 
-	if (!SpawnedActor) return;
-
+	if (!SpawnedActor)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
+	
 	// 경험치 오브가 드롭된 경우에만 경험치량 보정 로직 수행
 	AMSExperienceOrb* ExpObject = Cast<AMSExperienceOrb>(SpawnedActor);
-	if (!ExpObject) return;
-
+	if (!ExpObject)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
 	// ASC 확인
 	if (UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent())
 	{
