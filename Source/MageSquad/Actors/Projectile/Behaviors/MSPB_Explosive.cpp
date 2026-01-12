@@ -93,13 +93,7 @@ void UMSPB_Explosive::OnTargetEnter_Implementation(AActor* Target, const FHitRes
 	if (RuntimeData.OnHitVFX)
 	{
 		const float VfxScale = FMath::Max(0.01f, RuntimeData.Radius / 150.f);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			OwnerActor,
-			RuntimeData.OnHitVFX,
-			ExplosionOrigin,
-			FRotator::ZeroRotator,
-			FVector(VfxScale)
-		);
+		OwnerActor->Multicast_SpawnVFXAtLocation(RuntimeData.OnHitVFX, ExplosionOrigin, VfxScale);
 	}
 
 

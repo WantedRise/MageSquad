@@ -243,11 +243,7 @@ void UMSPB_ChainBolt::HandleArrival()
 	if (RuntimeData.OnHitVFX)
 	{
 		const FVector Location = Target->GetActorLocation();
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorldSafe(),
-			RuntimeData.OnHitVFX,
-			Location
-		);
+		OwnerActor->Multicast_SpawnVFXAtLocation(RuntimeData.OnHitVFX, Location, 1.f);
 	}
 
 	if (RemainingChains > 0)

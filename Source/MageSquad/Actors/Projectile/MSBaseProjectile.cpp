@@ -353,6 +353,12 @@ void AMSBaseProjectile::BeginPlay()
 
 void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// 클라이언트에서도 종료 처리를 통해 루프 SFX 등을 정리.
+	if (Behavior)
+	{
+		Behavior->OnEnd();
+	}
+
 	// 서버 타이머 정리
 	if (HasAuthority())
 	{
