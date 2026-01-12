@@ -133,7 +133,7 @@ void UMSPB_IceSpear::OnTargetEnter_Implementation(
 	{
 		if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 		{
-			OwnerActor->Destroy();
+			OwnerActor->RequestDestroy();
 		}
 		return;
 	}
@@ -146,7 +146,7 @@ void UMSPB_IceSpear::OnTargetEnter_Implementation(
 
 	if (RemainingPenetration <= 0)
 	{
-		OwnerActor->Destroy();
+		OwnerActor->RequestDestroy();
 		return;
 	}
 

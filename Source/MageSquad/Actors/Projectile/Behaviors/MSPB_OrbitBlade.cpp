@@ -161,7 +161,7 @@ void UMSPB_OrbitBlade::EndOrbit()
 			LoopingSFX->Stop();
 			LoopingSFX = nullptr;
 		}
-		OwnerActor->Destroy();
+		OwnerActor->RequestDestroy();
 	}
 }
 

@@ -42,6 +42,9 @@ public:
 	void PlaySFXAtLocation(int32 Index);
 	void PlaySFXAttached(int32 Index, USceneComponent* AttachTo);
 
+	// 파괴 요청 (중복 호출 방지).
+	void RequestDestroy();
+
 	// 이동 관련.
 	void StopMovement();
 	UProjectileMovementComponent* GetMovementComponent() const
@@ -115,6 +118,8 @@ protected:
 
 	// 수명 타이머.
 	FTimerHandle LifeTimerHandle;
+
+	bool bDestroyRequested = false;
 
 	// 부착 VFX 1회 재생용 플래그.
 	bool bAttachVfxSpawned = false;

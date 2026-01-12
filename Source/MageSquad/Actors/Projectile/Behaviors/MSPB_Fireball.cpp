@@ -266,5 +266,5 @@ void UMSPB_Fireball::HandleSecondExplosion()
 	}
 
 	ExplodeAt(SecondExplosionOrigin);
-	OwnerActor->Destroy();
+	OwnerActor->RequestDestroy();
 }

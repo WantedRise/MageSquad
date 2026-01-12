@@ -230,7 +230,7 @@ void UMSPB_TrailDoT::EndTrail()
 {
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
-		OwnerActor->Destroy();
+		OwnerActor->RequestDestroy();
 	}
 }
 

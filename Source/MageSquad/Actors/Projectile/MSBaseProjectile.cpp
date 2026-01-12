@@ -251,6 +251,17 @@ void AMSBaseProjectile::StopMovement()
 	}
 }
 
+void AMSBaseProjectile::RequestDestroy()
+{
+	if (bDestroyRequested)
+	{
+		return;
+	}
+	bDestroyRequested = true;
+
+	Destroy();
+}
+
 void AMSBaseProjectile::SpawnAttachVFXOnce()
 {
 	if (bAttachVfxSpawned)
@@ -408,7 +419,7 @@ void AMSBaseProjectile::OnProjectileStop(
 		Behavior->OnEnd();
 	}
 
-	Destroy();
+	RequestDestroy();
 }
 
 void AMSBaseProjectile::ApplyProjectileRuntimeData(bool bSpawnAttachVFX)
@@ -465,7 +476,7 @@ void AMSBaseProjectile::ArmLifeTimerIfNeeded(
 					{
 						WeakSelf->Behavior->OnEnd();
 					}
-					WeakSelf->Destroy();
+					WeakSelf->RequestDestroy();
 				}
 			}),
 			EffectiveData.LifeTime,

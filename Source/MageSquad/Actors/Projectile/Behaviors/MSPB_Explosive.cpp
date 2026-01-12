@@ -144,7 +144,7 @@ void UMSPB_Explosive::OnTargetEnter_Implementation(AActor* Target, const FHitRes
 		}
 	}
 
-	OwnerActor->Destroy();
+	OwnerActor->RequestDestroy();
 }
 
 void UMSPB_Explosive::OnEnd_Implementation()

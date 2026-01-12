@@ -321,7 +321,7 @@ void UMSPB_TornadoEnhanced::TickSplit()
 	SpawnSplitProjectile(DirB, RemainingLife, SplitRadiusScale);
 
 	OnEnd_Implementation();
-	OwnerProj->Destroy();
+	OwnerProj->RequestDestroy();
 }
 
 void UMSPB_TornadoEnhanced::SpawnSplitProjectile(

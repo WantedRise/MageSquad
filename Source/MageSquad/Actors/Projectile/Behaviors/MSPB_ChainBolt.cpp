@@ -331,7 +331,7 @@ void UMSPB_ChainBolt::HandleDelayedOptionalProjectiles()
 
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
-		OwnerActor->Destroy();
+		OwnerActor->RequestDestroy();
 	}
 }
 
@@ -413,6 +413,6 @@ void UMSPB_ChainBolt::EndChain()
 
 	if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 	{
-		OwnerActor->Destroy();
+		OwnerActor->RequestDestroy();
 	}
 }

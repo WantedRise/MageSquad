@@ -149,7 +149,7 @@ void UMSPB_Normal::OnTargetEnter_Implementation(
 	// 관통 횟수가 없으면 파괴
 	if (RemainingPenetration <= 0)
 	{
-		OwnerActor->Destroy();
+		OwnerActor->RequestDestroy();
 		return;
 	}
 
