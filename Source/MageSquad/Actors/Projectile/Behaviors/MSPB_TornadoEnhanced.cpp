@@ -16,7 +16,7 @@
 void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
-	if (!OwnerProj || !OwnerProj->HasAuthority())
+	if (!OwnerProj)
 	{
 		return;
 	}
@@ -33,6 +33,11 @@ void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
 	{
 		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
+	}
+
+	if (!OwnerProj->HasAuthority())
+	{
+		return;
 	}
 
 	StartMove();
