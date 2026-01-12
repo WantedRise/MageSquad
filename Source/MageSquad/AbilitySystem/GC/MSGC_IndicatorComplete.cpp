@@ -18,7 +18,7 @@ bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGa
 {
 	Super::OnExecute_Implementation(Target, Parameters);
 	
-	UE_LOG(LogMSNetwork, Log, TEXT("UMSGC_IndicatorComplete::OnExecute_Implementation"));
+	// UE_LOG(LogMSNetwork, Log, TEXT("UMSGC_IndicatorComplete::OnExecute_Implementation"));
 
 	const FMSGameplayEffectContext* Context = static_cast<const FMSGameplayEffectContext*>(Parameters.EffectContext.Get());
     

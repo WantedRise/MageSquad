@@ -155,7 +155,7 @@ void AMSBaseEnemy::PostInitializeComponents()
 void AMSBaseEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	// 컴포넌트 해제 전에 모든 어빌리티 강제 종료
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	if (ASC)
 	{
 		ASC->CancelAllAbilities();
 	}
@@ -260,7 +260,7 @@ void AMSBaseEnemy::OnRep_MonsterID()
 	// Subsystem에서 캐시된 데이터 가져오기
 	if (UMSEnemySpawnSubsystem* SpawnSystem = UMSEnemySpawnSubsystem::Get(this))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: for %s"), *CurrentMonsterID.ToString());
+		// UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnRep_MonsterID: for %s"), *CurrentMonsterID.ToString());
 		//  클라이언트에서도 InitializeEnemyFromData 호출
 		SpawnSystem->ActivateEnemy(this);
 		SpawnSystem->InitializeEnemyFromData(this, CurrentMonsterID);
