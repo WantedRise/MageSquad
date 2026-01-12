@@ -338,18 +338,31 @@ void AMSSpawnTileMap::BuildSpawnableTileCache()
 	SpawnableTileIndices.Empty();
 	CachedSpawnableTiles.Empty();
 
+	constexpr float CapsuleHalfHeight = 88.f;
+	constexpr float SafetyMargin = 12.f;
+
 	for (int32 i = 0; i < AllTiles.Num(); ++i)
 	{
 		if (AllTiles[i].bIsSpawnable)
 		{
 			SpawnableTileIndices.Add(i);
-			CachedSpawnableTiles.Add(AllTiles[i]);
+            
+			FMSSpawnTile TileCopy = AllTiles[i];
+            
+			// SafeSpawnZ가 계산되지 않은 경우 (기존 데이터 호환)
+			if (TileCopy.SafeSpawnZ == 0.f)
+			{
+				TileCopy.SafeSpawnZ = TileCopy.GroundHeight + CapsuleHalfHeight + SafetyMargin;
+			}
+            
+			CachedSpawnableTiles.Add(TileCopy);
 		}
 	}
 
 	bCacheBuilt = true;
 
-	UE_LOG(LogTemp, Log, TEXT("[SpawnTileMap] Cache built: %d spawnable tiles"), CachedSpawnableTiles.Num());
+	UE_LOG(LogTemp, Log, TEXT("[SpawnTileMap] Cache built: %d spawnable tiles (SafeSpawnZ calculated)"), 
+		CachedSpawnableTiles.Num());
 }
 
 const TArray<FMSSpawnTile>& AMSSpawnTileMap::GetAllSpawnableTiles() const
