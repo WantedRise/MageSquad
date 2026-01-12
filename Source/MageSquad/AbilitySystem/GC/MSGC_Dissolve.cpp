@@ -42,8 +42,7 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
     TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> WeakDynamicMaterials;
     for (int32 i = 0; i < Mesh->GetNumMaterials(); ++i)
     {
-        UMaterialInstanceDynamic* DMI = Mesh->CreateDynamicMaterialInstance(i);
-        if (DMI)
+        if (UMaterialInstanceDynamic* DMI = Mesh->CreateDynamicMaterialInstance(i))
         {
             WeakDynamicMaterials.Add(DMI);
             DMI->SetScalarParameterValue(DissolveParameterName, 1.0f);
@@ -86,7 +85,7 @@ bool UMSGC_Dissolve::OnExecute_Implementation(AActor* Target, const FGameplayCue
         }
     });
 
-    Target->GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.01f, true);
-
+    Target->GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.01f, true);    
+    
     return true;
 }
