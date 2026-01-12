@@ -60,6 +60,12 @@ void AMSWaveObstacleGroup::BeginPlay()
 void AMSWaveObstacleGroup::OnRep_ServerLocation()
 {
 	TargetLocation = ServerLocation;
+
+	// 웨이브 시작 시에는 스냅
+	if (!bMoving)
+	{
+		SetActorLocation(ServerLocation);
+	}
 }
 
 void AMSWaveObstacleGroup::Tick(float DeltaTime)
@@ -162,6 +168,8 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 	}
 	SetActorLocation(InStartLocation);
 	ServerLocation = GetActorLocation();
+
+	ForceNetUpdate();
 
 	// Block 활성화
 	for (AMSWaveBlock* Block : SpawnedBlocks)
