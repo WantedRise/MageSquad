@@ -69,13 +69,7 @@ void UMSPB_Lightning::ApplyDamageInRadius(float Radius, float Damage, float VfxS
 
 	if (RuntimeData.OnHitVFX && VfxScale > 0.f)
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			OwnerActor,
-			RuntimeData.OnHitVFX,
-			ImpactOrigin,
-			FRotator::ZeroRotator,
-			FVector(VfxScale)
-		);
+		OwnerActor->Multicast_SpawnVFXAtLocation(RuntimeData.OnHitVFX, ImpactOrigin, VfxScale);
 	}
 
 	FCollisionObjectQueryParams ObjParams;
