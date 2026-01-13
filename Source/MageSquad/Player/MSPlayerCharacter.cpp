@@ -304,8 +304,6 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
-
-	Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(this->GetRootComponent(), FVector(0, 0, 0));
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)
