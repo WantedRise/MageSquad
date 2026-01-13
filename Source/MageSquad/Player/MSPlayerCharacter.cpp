@@ -257,7 +257,7 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 		HUDDataComponent->RefreshSkillSlotsFromOwner();
 	}
 
-	Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(this->GetRootComponent(), FVector(0, 0, 0));
+	Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(GetMesh(), FVector(0, 0, 0));
 }
 
 void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
