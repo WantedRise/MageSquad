@@ -78,7 +78,7 @@ void AMSPlayerController::BeginPlay()
 		// 	PlayerViewModel->InitializeWithASC(ASC);
 		// }
 
-		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(),FVector(0,0,0));
+		//SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(),FVector(0,0,0));
 	}
 }
 
@@ -113,6 +113,7 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 		EnsureHUDCreated();
 		NotifyHUDReinitialize();
 		ServerRPCReportReady();
+		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(), FVector(0, 0, 0));
 	}
 }
 
@@ -127,6 +128,7 @@ void AMSPlayerController::OnRep_Pawn()
 		EnsureHUDCreated();
 		NotifyHUDReinitialize();
 		ServerRPCReportReady();
+		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(), FVector(0, 0, 0));
 	}
 }
 
