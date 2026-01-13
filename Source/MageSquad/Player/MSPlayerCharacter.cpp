@@ -256,6 +256,8 @@ void AMSPlayerCharacter::PossessedBy(AController* NewController)
 		// 스킬 슬롯 초기화 후 HUD 데이터 갱신
 		HUDDataComponent->RefreshSkillSlotsFromOwner();
 	}
+
+	Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(this->GetRootComponent(), FVector(0, 0, 0));
 }
 
 void AMSPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -302,6 +304,8 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	// 머리 위 이름 위젯을 초기화 + 바인딩 다시 한 번 보정
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
+
+	Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(this->GetRootComponent(), FVector(0, 0, 0));
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)

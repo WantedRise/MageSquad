@@ -237,12 +237,10 @@ void AMSPlayerController::NotifyHUDReinitialize()
 			{
 				//GS->OnBossSpawnCutsceneStateChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
 			}
-		}
-
-		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(), FVector(0, 0, 0));
+	
+	}
 	}
 }
-
 FVector AMSPlayerController::GetServerCursor() const
 {
 	return ServerCursor;
