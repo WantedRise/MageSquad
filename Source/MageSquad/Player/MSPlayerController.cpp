@@ -113,7 +113,6 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 		EnsureHUDCreated();
 		NotifyHUDReinitialize();
 		ServerRPCReportReady();
-		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(), FVector(0, 0, 0));
 	}
 }
 
@@ -128,7 +127,6 @@ void AMSPlayerController::OnRep_Pawn()
 		EnsureHUDCreated();
 		NotifyHUDReinitialize();
 		ServerRPCReportReady();
-		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(), FVector(0, 0, 0));
 	}
 }
 
@@ -225,6 +223,7 @@ void AMSPlayerController::NotifyHUDReinitialize()
 	{
 		// 위젯 내부에서 Pawn/ASC 준비 여부를 체크하고, 준비가 안 됐으면 타이머로 재시도
 		HUDWidgetInstance->RequestReinitialize();
+
 		// HUD 재초기화 시 미션 관련 이벤트 바인딩 처리
 		if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 		{
@@ -239,6 +238,8 @@ void AMSPlayerController::NotifyHUDReinitialize()
 				//GS->OnBossSpawnCutsceneStateChanged.AddUObject(this, &AMSPlayerController::OnMissionProgressChanged);
 			}
 		}
+
+		SetAudioListenerAttenuationOverride(GetPawn()->GetRootComponent(), FVector(0, 0, 0));
 	}
 }
 
