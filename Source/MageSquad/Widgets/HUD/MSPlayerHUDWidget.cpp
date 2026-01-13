@@ -684,7 +684,14 @@ void UMSPlayerHUDWidget::SetHudVisibility(bool Result)
 		AbilitySystemComponent->AddLooseGameplayTag(MSGameplayTags::Shared_State_CutScene);
 
 		// 입력 모드 변경
-		GetOwningPlayer()->SetInputMode(FInputModeUIOnly());
+		APlayerController* OwningPlayer = GetOwningPlayer();
+		OwningPlayer->SetInputMode(FInputModeUIOnly());
+
+		// 컷씬 시작할 때, 남아있는 입력 키를 초기화
+		if (OwningPlayer && OwningPlayer->PlayerInput)
+		{
+			OwningPlayer->PlayerInput->FlushPressedKeys();
+		}
 
 		NewVisibility = ESlateVisibility::Collapsed;
 	}
