@@ -68,7 +68,7 @@ void AMSWaveBlock::BeginPlay()
 	{
 		if (MeshComp)
 		{
-			// MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+			MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		}
 	}
 
@@ -135,15 +135,15 @@ void AMSWaveBlock::OnSignificanceChanged(USignificanceManager::FManagedObjectInf
 
 	for (UMeshComponent* Mesh : Meshes)
 	{
-		// if (IsValid(Mesh))
-		// {
-		// 	Mesh->SetComponentTickEnabled(!IsCulling);
-		// 	Mesh->SetVisibility(!IsCulling);
-  //           
-		// 	if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(Mesh))
-		// 	{
-		// 		SkelMesh->bPauseAnims = IsCulling;
-		// 	}
-		// }
+		if (IsValid(Mesh))
+		{
+			Mesh->SetComponentTickEnabled(!IsCulling);
+			Mesh->SetVisibility(!IsCulling);
+            
+			if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(Mesh))
+			{
+				SkelMesh->bPauseAnims = IsCulling;
+			}
+		}
 	}
 }
