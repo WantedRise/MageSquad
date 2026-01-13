@@ -21,11 +21,7 @@ public:
 	AMSWaveObstacleGroup();
 protected:
 	virtual void BeginPlay() override;
-	UFUNCTION()
-	void OnRep_ServerLocation();
 	virtual void Tick(float DeltaTime) override;
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSetWaveRotation(float Yaw);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastPlaySound();
 	UFUNCTION(NetMulticast, Reliable)
@@ -35,7 +31,7 @@ protected:
 public:
 	/* ===== Settings ===== */
 	FOnWaveFinished OnWaveFinished;
-	void ApplyWaveRotation(float Yaw);
+
 	// Block 길이 (Y 방향)
 	UPROPERTY(EditAnywhere, Category = "Wave")
 	float BlockLength = 930.f;
@@ -76,8 +72,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Wave")
 	FString Pattern;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ServerLocation)
-	FVector ServerLocation;
 	FVector TargetLocation;
 public:
 	/* ===== Control ===== */

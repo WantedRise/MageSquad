@@ -90,9 +90,8 @@ void AMSWaveManager::RequestSpawnWave()
 	{
 		// 랜덤 회전
 		const float RandomYaw = FMath::FRandRange(MinYaw, MaxYaw);
-		MapPivot->SetActorRotation(FRotator(0.f, RandomYaw, 0.f));
+		ActiveWave->SetActorRotation(FRotator(0.f, RandomYaw, 0.f));
 		// 클라 동기화
-		ActiveWave->ApplyWaveRotation(ActiveWave->GetActorRotation().Yaw);
 		ActiveWave->ActivateWave(StartLocation);
 		return;
 	}
@@ -151,7 +150,7 @@ void AMSWaveManager::SpawnWaveInternal()
 	ActiveWave = GetWorld()->SpawnActor<AMSWaveObstacleGroup>(
 		WaveClass,
 		StartLocation,
-		FRotator(0, 180.0f,0.f)
+		FRotator::ZeroRotator
 	);
 	
 	ActiveWave->OnWaveFinished.AddUObject(
@@ -164,18 +163,12 @@ void AMSWaveManager::SpawnWaveInternal()
 		return;
 	}
 
-	// Pivot에 부착 (회전 기준)
-	ActiveWave->AttachToActor(
-		MapPivot,
-		FAttachmentTransformRules::KeepRelativeTransform
-	);
-
 	StartLocation.Z += ActiveWave->DefaultHeight;
 	ActiveWave->SetActorLocation(StartLocation);
 
 	// 랜덤 회전
 	const float RandomYaw = FMath::FRandRange(MinYaw, MaxYaw);
-	MapPivot->SetActorRotation(FRotator(0.f, RandomYaw, 0.f));
+	ActiveWave->SetActorRotation(FRotator(0.f, RandomYaw, 0.f));
 
 	// 이동 거리 전달
 	ActiveWave->SetMoveDistance(WaveMoveDistance);

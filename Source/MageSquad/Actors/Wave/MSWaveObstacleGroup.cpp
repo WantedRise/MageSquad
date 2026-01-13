@@ -8,20 +8,19 @@
 #include "Net/UnrealNetwork.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/AudioComponent.h"
-#include "MageSquad.h"
+
 AMSWaveObstacleGroup::AMSWaveObstacleGroup()
 {
-	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
-
 	bReplicates = true;
-	// ⭐ 엔진의 기본 이동 복제 활성화
+	bAlwaysRelevant = true;
+	PrimaryActorTick.bCanEverTick = true;
 	SetReplicateMovement(true);
-
-	// NetUpdateFrequency를 높여주면 더 부드럽게 동기화됩니다.
+	SetNetCullDistanceSquared(0.0f);
 	SetNetUpdateFrequency(100.0f);
+	SetMinNetUpdateFrequency(60.f);
+	NetPriority = 3.f;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	RootComponent->SetIsReplicated(true);
 }
 
 void AMSWaveObstacleGroup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -60,31 +59,26 @@ void AMSWaveObstacleGroup::BeginPlay()
 	
 }
 
-void AMSWaveObstacleGroup::OnRep_ServerLocation()
-{
-	TargetLocation = ServerLocation;
-}
-
 void AMSWaveObstacleGroup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bMoving)
+	if (HasAuthority() && bMoving)
 	{
 		const FVector MoveDir = GetActorForwardVector();
 		const float DeltaDist = MoveSpeed * DeltaTime;
 
-		// 서버와 클라이언트 모두 똑같이 위치를 옮깁니다.
-		AddActorWorldOffset(MoveDir * DeltaDist, false);
+		//AddActorWorldOffset(MoveDir * DeltaDist, false);
 
-		if (HasAuthority())
+		const float FixedStep = GetWorld()->GetDeltaSeconds();
+		const FVector Velocity = GetActorForwardVector() * MoveSpeed;
+		AddActorWorldOffset(Velocity * FixedStep);
+
+		MovedDistance += DeltaDist;
+		if (MovedDistance >= MaxMoveDistance)
 		{
-			MovedDistance += DeltaDist;
-			if (MovedDistance >= MaxMoveDistance)
-			{
-				FinishWave();
-				MovedDistance = 0.0f;
-			}
+			FinishWave();
+			MovedDistance = 0.0f;
 		}
 	}
 }
@@ -159,9 +153,7 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 	{
 		return;
 	}
-	MS_LOG(LogTemp, Log, TEXT("AMSWaveBlock %s"), *GetActorRotation().ToString());
 	SetActorLocation(InStartLocation);
-	ForceNetUpdate();
 
 	// Block 활성화
 	for (AMSWaveBlock* Block : SpawnedBlocks)
@@ -201,15 +193,11 @@ void AMSWaveObstacleGroup::DeactivateWave()
 void AMSWaveObstacleGroup::SpawnBlocksByPattern()
 {
 	if (!BlockClass || Pattern.IsEmpty())
-	{
 		return;
-	}
 
 	float Cursor = 0.f;
 	int32 PatternIndex = 0;
 	const int32 PatternLen = Pattern.Len();
-
-	const FVector Right = GetActorRightVector();
 
 	while (Cursor < TargetWaveWidth)
 	{
@@ -220,23 +208,27 @@ void AMSWaveObstacleGroup::SpawnBlocksByPattern()
 
 		if (bIsBlock)
 		{
-			// ⭐ 중앙 기준 연속 배치
-			const float CenterOffset =-TargetWaveWidth + Cursor * 2;
+			// ⭐ WaveGroup 기준 로컬 X 위치
+			const float LocalX = -TargetWaveWidth + Cursor * 2.f;
 
-			const FVector SpawnLoc =
-				GetActorLocation()
-				+ Right * CenterOffset;
+			// Group 기준 오른쪽 벡터 방향 (Y축)
+			const FVector LocalOffset = FVector(0.f, LocalX, 0.f);
 
-			AMSWaveBlock* Block =
-				GetWorld()->SpawnActor<AMSWaveBlock>(
-					BlockClass,
-					SpawnLoc,
-					GetActorRotation()
-				);
+			AMSWaveBlock* Block = GetWorld()->SpawnActor<AMSWaveBlock>(
+				BlockClass,
+				FVector::ZeroVector,
+				FRotator::ZeroRotator
+			);
 
 			if (Block)
 			{
-				Block->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+				// ⭐ Group에 로컬 기준으로 Attach
+				Block->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+
+				// ⭐ 패턴 좌표를 RelativeLocation으로 설정
+				Block->SetActorRelativeLocation(LocalOffset);
+				Block->SetActorRelativeRotation(FRotator::ZeroRotator);
+
 				Block->DeactivateBlock();
 				SpawnedBlocks.Add(Block);
 			}
@@ -263,22 +255,6 @@ void AMSWaveObstacleGroup::FinishWave()
 	DeactivateWave();
 
 	OnWaveFinished.Broadcast();
-}
-
-void AMSWaveObstacleGroup::ApplyWaveRotation(float Yaw)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	MulticastSetWaveRotation(Yaw);
-}
-
-void AMSWaveObstacleGroup::MulticastSetWaveRotation_Implementation(float Yaw)
-{
-	//const FRotator NewRot(0.f, Yaw, 0.f);
-	//SetActorRotation(NewRot);
 }
 
 void AMSWaveObstacleGroup::MulticastPlaySound_Implementation()

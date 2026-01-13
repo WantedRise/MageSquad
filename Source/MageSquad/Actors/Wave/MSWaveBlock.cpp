@@ -6,8 +6,8 @@
 #include "Components/BoxComponent.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/AudioComponent.h"
-
 #include "MageSquad.h"
+
 // Sets default values
 AMSWaveBlock::AMSWaveBlock()
 {
@@ -15,13 +15,13 @@ AMSWaveBlock::AMSWaveBlock()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	bAlwaysRelevant = true;
-
-	SetReplicateMovement(true);
-	SetNetCullDistanceSquared(100000000.0f);
-	
+	SetReplicateMovement(false);
+	SetNetCullDistanceSquared(0.0f);
+	SetNetUpdateFrequency(100.0f);
+	SetMinNetUpdateFrequency(60.f);
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("Box");
 	RootComponent = BoxCollision;
-	RootComponent->SetIsReplicated(true);
+
 	Mesh1 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh1");
 	Mesh1->SetupAttachment(RootComponent);
 	Mesh2 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh2");
@@ -57,8 +57,7 @@ void AMSWaveBlock::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!HasAuthority())
-		SetActorRelativeRotation(FRotator::ZeroRotator); // 부모와 정렬
+	MS_LOG(LogTemp, Log, TEXT("%s"), *GetActorLocation().ToString());
 
 	// 이 액터에 붙은 모든 컴포넌트를 순회
 	TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
@@ -68,6 +67,11 @@ void AMSWaveBlock::BeginPlay()
 	{
 		if (MeshComp)
 		{
+			// 틱 시스템 자체는 허용 (애니메이션 업데이트를 위해)
+			// MeshComp->PrimaryComponentTick.bCanEverTick = true;
+			// MeshComp->PrimaryComponentTick.bStartWithTickEnabled = true;
+
+			// 이 설정이 되어 있으면 화면 밖에서는 틱이 돌아도 무거운 애니메이션 계산을 생략합니다.
 			MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		}
 	}

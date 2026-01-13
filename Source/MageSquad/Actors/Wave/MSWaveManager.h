@@ -64,10 +64,10 @@ protected:
 
 	// 회전 범위
 	UPROPERTY(EditAnywhere, Category = "Wave")
-	float MinYaw = -30.f;
+	float MinYaw = -30.f+180.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Wave")
-	float MaxYaw = 30.f;
+	float MaxYaw = 30.f + 180.0f;
 
 	float DelayAfterWave;
 protected:

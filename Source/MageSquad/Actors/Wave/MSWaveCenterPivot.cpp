@@ -9,9 +9,9 @@ AMSWaveCenterPivot::AMSWaveCenterPivot()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	bReplicates = false;
-	SetReplicateMovement(false);
-
+    bReplicates = true;
+    bAlwaysRelevant = true;          // 웨이브 기준 축이면 켜도 OK
+    SetReplicateMovement(true);      // 회전 동기화하려면 필요
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
