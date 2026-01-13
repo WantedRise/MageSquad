@@ -49,7 +49,7 @@ AMSBaseEnemy::AMSBaseEnemy()
 	bNetLoadOnClient = true;
 	bAlwaysRelevant = false;
 	SetNetCullDistanceSquared(0.f); // 리플레케이션 거리 무한 // 스폰할 때 무한으로
-	SetNetUpdateFrequency(100.f);
+	SetNetUpdateFrequency(15.f);
 	NetDormancy = DORM_Initial; 
 
 	// RVO 설정
