@@ -58,7 +58,7 @@ void AMSNormalAIController::HandleGlobalFreeze(bool bGlobalFreeze)
 		
 		if (AMSNormalEnemy* OwnerEnemy = Cast<AMSNormalEnemy>(GetPawn()))
 		{
-			OwnerEnemy->GetCharacterMovement()->MaxWalkSpeed = 0.f;
+			OwnerEnemy->GetCharacterMovement()->SetMovementMode(MOVE_None);
 		}
 		
 		StopAI();
@@ -74,8 +74,7 @@ void AMSNormalAIController::HandleGlobalFreeze(bool bGlobalFreeze)
 		
 		if (AMSNormalEnemy* OwnerEnemy = Cast<AMSNormalEnemy>(GetPawn()))
 		{
-			const UMSEnemyAttributeSet* AttributeSet = Cast<UMSEnemyAttributeSet>(OwnerEnemy->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
-			OwnerEnemy->GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMoveSpeed();
+			OwnerEnemy->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 		}	
 	}
 }

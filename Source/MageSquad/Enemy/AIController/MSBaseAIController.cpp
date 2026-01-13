@@ -18,6 +18,10 @@ AMSBaseAIController::AMSBaseAIController()
 	
 	// Tick은 Default로 끔
 	PrimaryActorTick.bCanEverTick = false;
+	
+	// 거리 기반 최적화 비활성화
+	bSkipExtraLOSChecks = true;
+	bStopAILogicOnUnposses = false;
 }
 
 void AMSBaseAIController::OnPossess(APawn* InPawn)

@@ -35,6 +35,14 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;	
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual float GetNetPriority(
+	const FVector& ViewPos,
+	const FVector& ViewDir,
+	AActor* Viewer,
+	AActor* ViewTarget,
+	UActorChannel* InChannel,
+	float Time,
+	bool bLowBandwidth) override;
 
 public:
 	// ~ Begin IAbilitySystemInterface Interface
@@ -94,6 +102,12 @@ public:
 	// 중요도가 변경되었을 때 호출될 커스텀 함수
 	// 매개변수: 정보객체, 이전 중요도, 새로운 중요도, 화면에 보이는지 여부
 	void OnSignificanceChanged(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSig, float NewSig, bool bInView);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SpawnProjectile();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDissolveEffect();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))

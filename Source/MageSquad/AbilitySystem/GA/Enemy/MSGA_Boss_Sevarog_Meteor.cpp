@@ -142,43 +142,38 @@ void UMSGA_Boss_Sevarog_Meteor::OnIndicatorSpawned(AMSIndicatorActor* Indicator,
 	{
 		return;
 	}
-
-	// Task에서 이미 데미지 정보를 설정하므로 여기서는 추가 이펙트만 처리
-	FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
-
-	if (CompleteParticle == nullptr)
-	{
-		UE_LOG(LogMSNetwork, Log, TEXT("Meteor Particle is null"));
-		return;
-	}
 	
-	Context->SetEffectAssets(CompleteParticle, CompleteSound);
+	if (!Owner->HasAuthority())
+    {
+       return;
+    }
+    
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	Indicator->Multicast_PlayIndicatorCompleteCue(ASC, CompleteParticle, CompleteSound);
 
-	FGameplayEffectContextHandle ContextHandle(Context);
-
-	FGameplayCueParameters Params;
-	Params.EffectContext = ContextHandle;
-	Params.Location = Indicator->GetActorLocation(); // 재생될 위치
-	Params.RawMagnitude = 1.0f; // 필요시 강도 전달
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
-	{
-		ASC->ExecuteGameplayCue(
-			FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"),
-			Params
-		);
-	}
-
-	// if (CompleteParticle)
+	// // Task에서 이미 데미지 정보를 설정하므로 여기서는 추가 이펙트만 처리
+	// FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
+	//
+	// if (CompleteParticle == nullptr)
 	// {
-	// 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, Indicator->GetActorLocation());
-	// 	// if (UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CompleteParticle, SpawnLocation))
-	// 	// {
-	// 	// 	PSC->CustomTimeDilation = 2.0f;
-	// 	// }
+	// 	UE_LOG(LogMSNetwork, Log, TEXT("Meteor Particle is null"));
+	// 	return;
 	// }
-	// if (CompleteSound)
+	//
+	// Context->SetEffectAssets(CompleteParticle, CompleteSound);
+	//
+	// FGameplayEffectContextHandle ContextHandle(Context);
+	//
+	// FGameplayCueParameters Params;
+	// Params.EffectContext = ContextHandle;
+	// Params.Location = Indicator->GetActorLocation(); // 재생될 위치
+	// Params.RawMagnitude = 1.0f; // 필요시 강도 전달
+	//
+	// if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	// {
-	// 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), CompleteSound, Indicator->GetActorLocation());
+	// 	ASC->ExecuteGameplayCue(
+	// 		FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"),
+	// 		Params
+	// 	);
 	// }
 }

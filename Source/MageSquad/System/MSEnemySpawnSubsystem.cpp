@@ -1078,7 +1078,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	
 	// 풀링 모드 해제
 	Enemy->SetPoolingMode(false);
-	
 	Enemy->GetMesh()->SetVisibility(true);
 
 	//  가시성/충돌 활성화
@@ -1098,6 +1097,7 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	//Enemy->SetReplicates(true);
 	Enemy->SetReplicateMovement(true);
 	Enemy->SetNetDormancy(DORM_Awake);
+	Enemy->FlushNetDormancy();
 	Enemy->ForceNetUpdate();
 	
 	if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())

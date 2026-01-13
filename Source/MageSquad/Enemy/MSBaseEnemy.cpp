@@ -3,9 +3,12 @@
 
 #include "Enemy/MSBaseEnemy.h"
 
+#include "MSFunctionLibrary.h"
 #include "MSGameplayTags.h"
 #include "AbilitySystem/ASC/MSEnemyAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/MSEnemyAttributeSet.h"
+#include "Actors/Projectile/MSEnemyProjectile.h"
+#include "Actors/Projectile/Behaviors/MSPB_Normal.h"
 #include "Animation/Enemy/MSEnemyAnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "DataAssets/Enemy/DA_MonsterAnimationSetData.h"
@@ -43,23 +46,32 @@ AMSBaseEnemy::AMSBaseEnemy()
 	AttributeSet = CreateDefaultSubobject<UMSEnemyAttributeSet>(TEXT("AttributeSet"));
 	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
-	// Character는 리플리케이트
 	bReplicates = true;
-	ACharacter::SetReplicateMovement(true); // Movement 리플리케이트 (기본값)
+	ACharacter::SetReplicateMovement(true);
 	bNetLoadOnClient = true;
-	bAlwaysRelevant = false;
+	bAlwaysRelevant = true;
 	SetNetCullDistanceSquared(0.f); // 리플레케이션 거리 무한 // 스폰할 때 무한으로
-	SetNetUpdateFrequency(15.f);
-	NetDormancy = DORM_Initial; 
+	SetNetUpdateFrequency(100.f);
+	NetDormancy = DORM_Never; 
+	NetPriority = 2.0f;
 
 	// RVO 설정
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	MoveComp->bUseRVOAvoidance = true;
-	MoveComp->AvoidanceConsiderationRadius = 300.0f;
-	MoveComp->AvoidanceWeight = 0.5f;
+	MoveComp->AvoidanceConsiderationRadius = 150.0f; 
+	MoveComp->AvoidanceWeight = 0.3f;                
 	MoveComp->SetAvoidanceGroup(1);
 	MoveComp->SetGroupsToAvoidMask(1); // 그룹 1의 다른 Enemy들을 회피
 	MoveComp->SetAvoidanceEnabled(true); // 명시적 활성화
+	
+	// 위치 보간 허용 오차 증가 (네트워크 트래픽 감소)
+	MoveComp->NetworkSimulatedSmoothLocationTime = 0.1f;  // 기본 0.05
+	MoveComp->NetworkSimulatedSmoothRotationTime = 0.05f;
+	MoveComp->ListenServerNetworkSimulatedSmoothLocationTime = 0.075f;
+
+	// 작은 이동은 복제 안 함
+	MoveComp->NetworkMinTimeBetweenClientAckGoodMoves = 0.1f;
+	MoveComp->NetworkMinTimeBetweenClientAdjustments = 0.1f;
 	
 	// // 곡선 이동을 위한 설정
 	MoveComp->bRequestedMoveUseAcceleration = true;
@@ -172,6 +184,16 @@ void AMSBaseEnemy::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	DOREPLIFETIME_CONDITION_NOTIFY(AMSBaseEnemy, bIsInPool, COND_None, REPNOTIFY_Always);
 }
 
+float AMSBaseEnemy::GetNetPriority(const FVector& ViewPos, const FVector& ViewDir, AActor* Viewer, AActor* ViewTarget,
+	UActorChannel* InChannel, float Time, bool bLowBandwidth)
+{
+	// 기본 우선순위 계산 (시간 기반 starvation 방지 포함)
+	float BasePriority = NetPriority * Time;
+    
+	// 거리 페널티 최소화 - 모든 몬스터를 비슷한 우선순위로
+	return FMath::Max(BasePriority, NetPriority * 0.5f);
+}
+
 bool AMSBaseEnemy::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget,
                                     const FVector& SrcLocation) const
 {
@@ -232,8 +254,12 @@ void AMSBaseEnemy::SetMonsterID(const FName& NewMonsterID)
 	
 	CurrentMonsterID = NewMonsterID;
 
+	FlushNetDormancy();
+	ForceNetUpdate();
+	
 	if (HasAuthority())
 	{
+		FlushNetDormancy();
 		ForceNetUpdate();
 	}
 }
@@ -276,6 +302,39 @@ void AMSBaseEnemy::OnRep_IsInPool()
 	SetActorHiddenInGame(bIsInPool);
 }
 
+void AMSBaseEnemy::Multicast_SpawnProjectile_Implementation()
+{
+	
+	// 이벤트 처리 - 발사체 발사
+	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(GetProjectileDataClass());
+	RuntimeData.BehaviorClass = UMSPB_Normal::StaticClass();
+	// const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(ASC->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
+	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
+	RuntimeData.DamageEffect = GetDamageEffectClass();
+	RuntimeData.Radius = 3.f;
+	RuntimeData.CriticalChance = 0.f; // 몬스터의 공격은 치명타가 뜨지 않도록 함
+	
+	UMSFunctionLibrary::LaunchProjectile(
+	this,
+	GetProjectileDataClass(),
+	RuntimeData,
+	GetActorTransform(),
+	this,
+	Cast<APawn>(this),
+	AMSEnemyProjectile::StaticClass());
+}
+
+void AMSBaseEnemy::Multicast_PlayDissolveEffect_Implementation()
+{
+	FGameplayCueParameters CueParams;
+	CueParams.Instigator = this;
+	CueParams.TargetAttachComponent = GetMesh();
+        
+	FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
+	//ASC->ExecuteGameplayCue(CueTag, CueParams);
+	ASC->InvokeGameplayCueEvent(CueTag, EGameplayCueEvent::Executed, CueParams);
+}
+
 float AMSBaseEnemy::CalculateSignificance(USignificanceManager::FManagedObjectInfo* ObjectInfo,
                                           const FTransform& Viewpoint)
 {
@@ -284,9 +343,9 @@ float AMSBaseEnemy::CalculateSignificance(USignificanceManager::FManagedObjectIn
 	{
 		return 0.0f;
 	}
-
+	
 	float DistanceSq = FVector::DistSquared(Owner->GetActorLocation(), Viewpoint.GetLocation());
-
+	
 	// 20미터 이내: 1.0, 40미터 이내: 0.5, 그 외: 0.1
 	if (DistanceSq < FMath::Square(2000.0f))
 	{
@@ -308,6 +367,15 @@ void AMSBaseEnemy::OnSignificanceChanged(USignificanceManager::FManagedObjectInf
 	{
 		bool bShouldTickMesh = (NewSig >= 0.1f) || bInView;
 		GetMesh()->SetComponentTickEnabled(bShouldTickMesh);
+		if (bShouldTickMesh)
+		{
+			GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
+		}
+
+		else
+		{
+			GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+		}
 	}
 	
 	if (HasAuthority())
@@ -342,7 +410,7 @@ void AMSBaseEnemy::SetPoolingMode(bool bInPooling)
 			
 			if (UCharacterMovementComponent* CMC = GetCharacterMovement())
 			{
-				CMC->SetMovementMode(MOVE_Walking); 
+				CMC->SetMovementMode(MOVE_Walking);
         
 				CMC->StopMovementImmediately();
 				CMC->Velocity = FVector::ZeroVector;

@@ -33,6 +33,10 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Start] %s , HasAuthority: %s"), 
+	*GetName(),
+	Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -108,28 +112,38 @@ void UMSGA_EnemyNormalAttack::OnInterruptedCallback()
 void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGameplayEventData EventData)
 {
 	// 서버가 아니면 리턴
-	if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
-	{
-		return;
-	}
-	
-	// 이벤트 처리 - 발사체 발사
-	FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(Owner->GetProjectileDataClass());
-	RuntimeData.BehaviorClass = UMSPB_Normal::StaticClass();
-	const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
-	RuntimeData.Damage =  AttributeSet->GetAttackDamage();
-	RuntimeData.DamageEffect = Owner->GetDamageEffectClass();
-	RuntimeData.Radius = 3.f;
-	RuntimeData.CriticalChance = 0.f; // 몬스터의 공격은 치명타가 뜨지 않도록 함
-	
-	AActor* CachedAvatar = GetAvatarActorFromActorInfo();
-	
-	UMSFunctionLibrary::LaunchProjectile(
-	this,
-	Owner->GetProjectileDataClass(),
-	RuntimeData,
-	GetAvatarActorFromActorInfo()->GetActorTransform(),
-	CachedAvatar,
-	Cast<APawn>(CachedAvatar),
-	AMSEnemyProjectile::StaticClass());
+	// if (GetCurrentActorInfo()->AvatarActor->GetLocalRole() != ROLE_Authority)
+	// {
+	// 	return;
+	// }
+	//
+	// // 이벤트 처리 - 발사체 발사
+	// FProjectileRuntimeData RuntimeData = UMSFunctionLibrary::MakeProjectileRuntimeData(Owner->GetProjectileDataClass());
+	// RuntimeData.BehaviorClass = UMSPB_Normal::StaticClass();
+	// const UMSEnemyAttributeSet* AttributeSet =  Cast<UMSEnemyAttributeSet>(Owner->GetAbilitySystemComponent()->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
+	// RuntimeData.Damage =  AttributeSet->GetAttackDamage();
+	// RuntimeData.DamageEffect = Owner->GetDamageEffectClass();
+	// RuntimeData.Radius = 3.f;
+	// RuntimeData.CriticalChance = 0.f; // 몬스터의 공격은 치명타가 뜨지 않도록 함
+	//
+	// AActor* CachedAvatar = GetAvatarActorFromActorInfo();
+	//
+	// UMSFunctionLibrary::LaunchProjectile(
+	// this,
+	// Owner->GetProjectileDataClass(),
+	// RuntimeData,
+	// GetAvatarActorFromActorInfo()->GetActorTransform(),
+	// CachedAvatar,
+	// Cast<APawn>(CachedAvatar),
+	// AMSEnemyProjectile::StaticClass());
+	// if (!Owner->HasAuthority())
+	//    {
+	//     	 return;
+	//    }
+	UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Projectile Shoot] %s , HasAuthority: %s"), 
+		*GetName(),
+		Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+
+	Owner->FlushNetDormancy();
+	Owner->Multicast_SpawnProjectile();
 }

@@ -36,8 +36,8 @@ void UMSGA_EnemyMove::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		AcceptanceRadius,
 		GetTargetUpdateInterval());
     
-	MoveTask->OnTargetReached.AddDynamic(this, &UMSGA_EnemyMove::OnCompleteCallback);
-	MoveTask->OnTargetLost.AddDynamic(this, &UMSGA_EnemyMove::OnInterruptedCallback);
+	// MoveTask->OnTargetReached.AddDynamic(this, &UMSGA_EnemyMove::OnCompleteCallback);
+	// MoveTask->OnTargetLost.AddDynamic(this, &UMSGA_EnemyMove::OnInterruptedCallback);
 	MoveTask->ReadyForActivation();
 	
 	if (UAnimMontage* MoveMontage = Owner->GetMoveMontage())
@@ -78,7 +78,7 @@ float UMSGA_EnemyMove::GetTargetUpdateInterval() const
 		return 0.25f;
 	}
 	
-	return 0.3f;    // 일반: 느린 반응 (대량 스폰 최적화)
+	return 0.2f;    // 일반: 느린 반응 (대량 스폰 최적화)
 	
 	// switch (Owner->GetEnemyTier())
 	// {
