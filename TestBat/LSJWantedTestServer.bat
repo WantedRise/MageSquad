@@ -1,0 +1,1 @@
+"" "C:\GithubWorkspace\MageSquad\MageSquad.uproject" "MainmenuLevel" -game -ResX=1280 -ResY=720 -log -windowed -NetTrace=1 -tracehost=127.0.0.1 -trace=net,Log,Frame,CPU,GPU,Slate -NoVerifyGC -noailogging

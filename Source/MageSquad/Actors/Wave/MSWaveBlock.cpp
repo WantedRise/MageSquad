@@ -6,6 +6,8 @@
 #include "Components/BoxComponent.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/AudioComponent.h"
+
+#include "MageSquad.h"
 // Sets default values
 AMSWaveBlock::AMSWaveBlock()
 {
@@ -13,10 +15,13 @@ AMSWaveBlock::AMSWaveBlock()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+
+	SetReplicateMovement(true);
+	SetNetCullDistanceSquared(100000000.0f);
 	
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("Box");
 	RootComponent = BoxCollision;
-
+	RootComponent->SetIsReplicated(true);
 	Mesh1 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh1");
 	Mesh1->SetupAttachment(RootComponent);
 	Mesh2 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh2");
@@ -51,6 +56,9 @@ void AMSWaveBlock::DeactivateBlock()
 void AMSWaveBlock::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!HasAuthority())
+		SetActorRelativeRotation(FRotator::ZeroRotator); // 부모와 정렬
 
 	// 이 액터에 붙은 모든 컴포넌트를 순회
 	TArray<USkeletalMeshComponent*> SkeletalMeshComponents;

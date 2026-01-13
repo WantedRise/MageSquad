@@ -8,23 +8,26 @@
 #include "Net/UnrealNetwork.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/AudioComponent.h"
-
+#include "MageSquad.h"
 AMSWaveObstacleGroup::AMSWaveObstacleGroup()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
 
 	bReplicates = true;
-	SetReplicateMovement(false);
+	// ⭐ 엔진의 기본 이동 복제 활성화
+	SetReplicateMovement(true);
 
+	// NetUpdateFrequency를 높여주면 더 부드럽게 동기화됩니다.
+	SetNetUpdateFrequency(100.0f);
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent->SetIsReplicated(true);
 }
 
 void AMSWaveObstacleGroup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AMSWaveObstacleGroup, ServerLocation);
 	DOREPLIFETIME(AMSWaveObstacleGroup, bMoving);
 }
 
@@ -66,27 +69,23 @@ void AMSWaveObstacleGroup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority() && bMoving)
+	if (bMoving)
 	{
 		const FVector MoveDir = GetActorForwardVector();
 		const float DeltaDist = MoveSpeed * DeltaTime;
 
+		// 서버와 클라이언트 모두 똑같이 위치를 옮깁니다.
 		AddActorWorldOffset(MoveDir * DeltaDist, false);
 
-		ServerLocation = GetActorLocation();
-
-		MovedDistance += DeltaDist;
-		if (MovedDistance >= MaxMoveDistance)
+		if (HasAuthority())
 		{
-			FinishWave();
-			MovedDistance = 0.0f;
+			MovedDistance += DeltaDist;
+			if (MovedDistance >= MaxMoveDistance)
+			{
+				FinishWave();
+				MovedDistance = 0.0f;
+			}
 		}
-	}
-	else if (bMoving)
-	{
-		// ⭐ 클라 보간
-		const FVector Smoothed = FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 15.f);
-		SetActorLocation(Smoothed);
 	}
 }
 
@@ -160,9 +159,8 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 	{
 		return;
 	}
+	MS_LOG(LogTemp, Log, TEXT("AMSWaveBlock %s"), *GetActorRotation().ToString());
 	SetActorLocation(InStartLocation);
-	ServerLocation = InStartLocation;
-
 	ForceNetUpdate();
 
 	// Block 활성화
@@ -279,8 +277,8 @@ void AMSWaveObstacleGroup::ApplyWaveRotation(float Yaw)
 
 void AMSWaveObstacleGroup::MulticastSetWaveRotation_Implementation(float Yaw)
 {
-	const FRotator NewRot(0.f, Yaw, 0.f);
-	SetActorRotation(NewRot);
+	//const FRotator NewRot(0.f, Yaw, 0.f);
+	//SetActorRotation(NewRot);
 }
 
 void AMSWaveObstacleGroup::MulticastPlaySound_Implementation()
