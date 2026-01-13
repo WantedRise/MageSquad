@@ -15,8 +15,8 @@ AMSWaveBlock::AMSWaveBlock()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	SetReplicateMovement(false);
-	SetNetCullDistanceSquared(0.0f);
+	SetReplicateMovement(true);
+	SetNetCullDistanceSquared(100000000.0f);
 	SetNetUpdateFrequency(100.0f);
 	SetMinNetUpdateFrequency(60.f);
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("Box");

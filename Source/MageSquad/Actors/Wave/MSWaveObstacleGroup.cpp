@@ -13,13 +13,11 @@ AMSWaveObstacleGroup::AMSWaveObstacleGroup()
 {
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
 	bReplicates = true;
-	bAlwaysRelevant = true;
+
 	PrimaryActorTick.bCanEverTick = true;
 	SetReplicateMovement(true);
-	SetNetCullDistanceSquared(0.0f);
 	SetNetUpdateFrequency(100.0f);
 	SetMinNetUpdateFrequency(60.f);
-	NetPriority = 3.f;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
@@ -62,25 +60,38 @@ void AMSWaveObstacleGroup::BeginPlay()
 void AMSWaveObstacleGroup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (!bMoving) return;
+	// 양쪽 모두 이동
+	AddActorWorldOffset(GetActorForwardVector() * MoveSpeed * DeltaTime);
 
-	if (HasAuthority() && bMoving)
+	// 종료 판정은 서버만
+	if (HasAuthority())
 	{
-		const FVector MoveDir = GetActorForwardVector();
-		const float DeltaDist = MoveSpeed * DeltaTime;
-
-		//AddActorWorldOffset(MoveDir * DeltaDist, false);
-
-		const float FixedStep = GetWorld()->GetDeltaSeconds();
-		const FVector Velocity = GetActorForwardVector() * MoveSpeed;
-		AddActorWorldOffset(Velocity * FixedStep);
-
-		MovedDistance += DeltaDist;
+		MovedDistance += MoveSpeed * DeltaTime;
 		if (MovedDistance >= MaxMoveDistance)
 		{
 			FinishWave();
 			MovedDistance = 0.0f;
 		}
 	}
+	//if (HasAuthority() && bMoving)
+	//{
+	//	const FVector MoveDir = GetActorForwardVector();
+	//	const float DeltaDist = MoveSpeed * DeltaTime;
+
+	//	AddActorWorldOffset(MoveDir * DeltaDist, false);
+
+	//	const float FixedStep = GetWorld()->GetDeltaSeconds();
+	//	const FVector Velocity = GetActorForwardVector() * MoveSpeed;
+	//	//AddActorWorldOffset(Velocity * FixedStep);
+
+	//	MovedDistance += DeltaDist;
+	//	if (MovedDistance >= MaxMoveDistance)
+	//	{
+	//		FinishWave();
+	//		MovedDistance = 0.0f;
+	//	}
+	//}
 }
 
 void AMSWaveObstacleGroup::OnRep_Moving()
@@ -154,7 +165,7 @@ void AMSWaveObstacleGroup::ActivateWave(FVector InStartLocation)
 		return;
 	}
 	SetActorLocation(InStartLocation);
-
+	ForceNetUpdate();
 	// Block 활성화
 	for (AMSWaveBlock* Block : SpawnedBlocks)
 	{
