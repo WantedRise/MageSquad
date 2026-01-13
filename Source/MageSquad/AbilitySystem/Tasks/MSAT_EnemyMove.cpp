@@ -30,7 +30,7 @@ void UMSAT_EnemyMove::Activate()
 	// 서버 전용 체크 - 클라이언트에서는 즉시 종료
 	if (!Ability->GetActorInfo().IsNetAuthority())
 	{
-		EndTask();
+		// EndTask();
 		return;
 	}
 
@@ -43,8 +43,9 @@ void UMSAT_EnemyMove::Activate()
 
 	if (!CachedAIC.IsValid())
 	{
-		OnTargetLost.Broadcast();
-		EndTask();
+		// OnTargetLost.Broadcast();
+		// EndTask();
+		return;
 	}
 }
 
@@ -54,15 +55,15 @@ void UMSAT_EnemyMove::TickTask(float DeltaTime)
 	
 	if (!Ability->GetActorInfo().IsNetAuthority())
 	{
-		EndTask();
+		// EndTask();
 		return;
 	}
 	
 	// 서버에서만 실행됨 (Activate에서 클라이언트는 이미 종료)
 	if (!CachedAIC.IsValid())
 	{
-		OnTargetLost.Broadcast();
-		EndTask();
+		//OnTargetLost.Broadcast();
+		// EndTask();
 		return;
 	}
 	
@@ -71,7 +72,7 @@ void UMSAT_EnemyMove::TickTask(float DeltaTime)
 	if (OwnerPawn)
 	{
 		const UCharacterMovementComponent* CMC = Cast<ACharacter>(OwnerPawn)->GetCharacterMovement();
-		if (CMC && CMC->MaxWalkSpeed <= 0.f)
+		if (CMC && CMC->GetGroundMovementMode() != MOVE_Walking)
 		{
 			// 진행 중인 이동도 중단
 			CachedAIC->StopMovement();
@@ -82,8 +83,8 @@ void UMSAT_EnemyMove::TickTask(float DeltaTime)
 	const UBlackboardComponent* BB = CachedAIC->GetBlackboardComponent();
 	if (!BB)
 	{
-		OnTargetLost.Broadcast();
-		EndTask();
+		//OnTargetLost.Broadcast();
+		// EndTask();
 		return;
 	}
 
@@ -91,15 +92,15 @@ void UMSAT_EnemyMove::TickTask(float DeltaTime)
     
 	if (!TargetActor)
 	{
-		OnTargetLost.Broadcast();
-		EndTask();
+		//OnTargetLost.Broadcast();
+		// EndTask();
 		return;
 	}
 
 	if (!OwnerPawn)
 	{
-		OnTargetLost.Broadcast();
-		EndTask();
+		//OnTargetLost.Broadcast();
+		// EndTask();
 		return;
 	}
 	
@@ -160,6 +161,7 @@ void UMSAT_EnemyMove::OnDestroy(bool bInOwnerFinished)
 	{
 		CachedAIC->StopMovement();
 	}
+	
 	Super::OnDestroy(bInOwnerFinished);
 }
 

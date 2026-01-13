@@ -52,16 +52,16 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	if (!bEndAbilityCalled)
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
-		{
-			FGameplayCueParameters CueParams;
-			CueParams.Instigator = GetAvatarActorFromActorInfo();
-			CueParams.TargetAttachComponent = Owner->GetMesh();
-			//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Dissolve Called"), *GetAvatarActorFromActorInfo()->GetName())
-			
-			FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
-			ASC->ExecuteGameplayCue(CueTag, CueParams);
-		}
+		// if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		// {
+		// 	FGameplayCueParameters CueParams;
+		// 	CueParams.Instigator = GetAvatarActorFromActorInfo();
+		// 	CueParams.TargetAttachComponent = Owner->GetMesh();
+		// 	//UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Dissolve Called"), *GetAvatarActorFromActorInfo()->GetName())
+		// 	
+		// 	FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Dissolve"));
+		// 	ASC->ExecuteGameplayCue(CueTag, CueParams);
+		// }
 		
 		if (UAnimMontage* DeadMontage = Owner->GetDeadMontage())
 		{
@@ -73,6 +73,11 @@ void UMSGA_EnemyDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			// UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy Dead Ability Being"), *GetAvatarActorFromActorInfo()->GetName())
 		
 			Owner->SetActorEnableCollision(false);
+			
+			if (Owner->HasAuthority())
+            {
+                Owner->Multicast_PlayDissolveEffect();
+            }
 		}
 	}
 }

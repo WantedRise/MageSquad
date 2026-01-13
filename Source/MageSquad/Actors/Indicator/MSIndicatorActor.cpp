@@ -1,9 +1,12 @@
 #include "Actors/Indicator/MSIndicatorActor.h"
 #include "AbilitySystemComponent.h"
+#include "MageSquad.h"
+#include "NiagaraSystem.h"
 #include "AbilitySystem/TargetActor/MSTargetActor_IndicatorBase.h"
 #include "Components/DecalComponent.h"
 #include "Interfaces/MSIndicatorDamageInterface.h"
 #include "Net/UnrealNetwork.h"
+#include "Types/MageSquadTypes.h"
 
 AMSIndicatorActor::AMSIndicatorActor()
 {
@@ -45,6 +48,40 @@ void AMSIndicatorActor::SetIndicatorOwner(AActor* InOwner)
 {
 	IndicatorOwner = InOwner;
 	UE_LOG(LogTemp, Warning, TEXT("SetIndicatorOwner: %s"), *IndicatorOwner->GetName());
+}
+
+void AMSIndicatorActor::Multicast_PlayIndicatorCompleteCue_Implementation(UAbilitySystemComponent* ASC, UParticleSystem* Particle,
+	USoundBase* Sound)
+{
+	if (ASC == nullptr)
+	{
+		return;
+	}
+	// Task에서 이미 데미지 정보를 설정하므로 여기서는 추가 이펙트만 처리
+	FMSGameplayEffectContext* Context = new FMSGameplayEffectContext();
+
+	if (Particle == nullptr)
+	{
+		UE_LOG(LogMSNetwork, Log, TEXT("Meteor Particle is null"));
+		return;
+	}
+	
+	Context->SetEffectAssets(Particle, Sound);
+
+	FGameplayEffectContextHandle ContextHandle(Context);
+
+	FGameplayCueParameters Params;
+	Params.EffectContext = ContextHandle;
+	Params.Location = GetActorLocation(); // 재생될 위치
+	Params.RawMagnitude = 1.0f; // 필요시 강도 전달
+
+
+	// ASC->ExecuteGameplayCue(
+	// 	FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"),
+	// 	Params
+	// );
+	
+	 ASC->InvokeGameplayCueEvent(FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), EGameplayCueEvent::Executed, Params);
 }
 
 void AMSIndicatorActor::Tick(float DeltaTime)

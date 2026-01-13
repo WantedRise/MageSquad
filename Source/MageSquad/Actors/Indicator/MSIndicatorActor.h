@@ -46,11 +46,27 @@ public:
 	FORCEINLINE const FAttackIndicatorParams& GetParams() const { return CachedParams; }
 
 	void SetIndicatorOwner(AActor* InOwner);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayIndicatorCompleteCue(UAbilitySystemComponent* ASC, UParticleSystem* Particle, USoundBase* Sound);
 
 protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+private:
+	UFUNCTION()
+	void OnRep_CachedParams();
+
+	void ApplyMaterialParams();
+	void UpdateFillPercent() const;
+
+	// Fill 완료 시 호출
+	void OnFillComplete();
+	
+	bool GetDamageInfo(UAbilitySystemComponent*& OutASC, TSubclassOf<UGameplayEffect>& OutDamageEffect) const;
+	
+protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UDecalComponent> DecalComponent;
 
@@ -81,18 +97,6 @@ protected:
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 	float ElapsedTime = 0.f;
-
-private:
-	UFUNCTION()
-	void OnRep_CachedParams();
-
-	void ApplyMaterialParams();
-	void UpdateFillPercent() const;
-
-	// Fill 완료 시 호출
-	void OnFillComplete();
-	
-	bool GetDamageInfo(UAbilitySystemComponent*& OutASC, TSubclassOf<UGameplayEffect>& OutDamageEffect) const;
 	
 private:
 	// Shape에 맞는 TargetActor 스폰 및 충돌 검사 수행
