@@ -305,7 +305,7 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	RefreshOverheadVisibility();
 	BindOverheadNameToHUDData();
 
-	//Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(this->GetRootComponent(), FVector(0, 0, 0));
+	Cast<APlayerController>(GetController())->SetAudioListenerAttenuationOverride(this->GetRootComponent(), FVector(0, 0, 0));
 }
 
 void AMSPlayerCharacter::UpdateCameraZoom(float DeltaTime)

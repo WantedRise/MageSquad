@@ -116,13 +116,6 @@ void AMSPlayerController::OnPossess(APawn* InPawn)
 	}
 }
 
-void AMSPlayerController::SetPawn(APawn* InPawn)
-{
-	Super::SetPawn(InPawn);
-
-	SetAudioListenerAttenuationOverride(InPawn->GetRootComponent(), FVector::ZeroVector);
-}
-
 void AMSPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
