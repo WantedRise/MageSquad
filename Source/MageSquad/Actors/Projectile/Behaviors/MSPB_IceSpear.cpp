@@ -133,7 +133,9 @@ void UMSPB_IceSpear::OnTargetEnter_Implementation(
 	{
 		if (AMSBaseProjectile* OwnerActor = GetOwnerActor())
 		{
-			OwnerActor->RequestDestroy();
+			OwnerActor->EnableCollision(false);
+			OwnerActor->SetActorHiddenInGame(true);
+			OwnerActor->SetLifeSpan(0.2f);
 		}
 		return;
 	}
@@ -320,8 +322,8 @@ bool UMSPB_IceSpear::TrySplitOnFirstHit(AActor* HitTarget, const FHitResult& Hit
 		DirB.Z = 0.f;
 		DirB = DirB.GetSafeNormal();
 
-		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget);
-		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget);
+		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, true);
+		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, true);
 	}
 	else if (BestTarget)
 	{
@@ -339,15 +341,15 @@ bool UMSPB_IceSpear::TrySplitOnFirstHit(AActor* HitTarget, const FHitResult& Hit
 			DirB = -DirA;
 		}
 
-		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget);
-		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget);
+		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, true);
+		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, true);
 	}
 	else
 	{
 		const FVector DirA = BaseDir.RotateAngleAxis(90.f, FVector::UpVector);
 		const FVector DirB = BaseDir.RotateAngleAxis(-90.f, FVector::UpVector);
-		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget);
-		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget);
+		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, true);
+		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, true);
 	}
 
 	return bSpawned;
@@ -357,7 +359,8 @@ bool UMSPB_IceSpear::SpawnSplitProjectileDir(
 	const FVector& Dir,
 	const FVector& Origin,
 	int32 NextPenetration,
-	AActor* IgnoreActor
+	AActor* IgnoreActor,
+	bool bReplicate
 )
 {
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
@@ -400,6 +403,12 @@ bool UMSPB_IceSpear::SpawnSplitProjectileDir(
 	if (!SplitProjectile)
 	{
 		return false;
+	}
+
+	if (!bReplicate)
+	{
+		SplitProjectile->SetReplicates(false);
+		SplitProjectile->SetReplicateMovement(false);
 	}
 
 	static const FName IceSpearSplitTag(TEXT("IceSpearSplit"));

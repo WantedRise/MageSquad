@@ -10,10 +10,27 @@
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Math/RandomStream.h"
+
+namespace
+{
+	float GetTornadoDeterministicNoise(float Time, float Frequency, int32 Seed)
+	{
+		const float NoiseTime = Time * Frequency;
+		const int32 Step = FMath::FloorToInt(NoiseTime);
+		const float Alpha = NoiseTime - Step;
+		const int32 SeedA = Seed + Step * 92821;
+		const int32 SeedB = Seed + (Step + 1) * 92821;
+		FRandomStream StreamA(SeedA);
+		FRandomStream StreamB(SeedB);
+		const float V1 = StreamA.FRandRange(-1.f, 1.f);
+		const float V2 = StreamB.FRandRange(-1.f, 1.f);
+		return FMath::Lerp(V1, V2, Alpha);
+	}
+}
 
 void UMSPB_Tornado::OnBegin_Implementation()
 {
-	// 서버에서만
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj)
 	{
@@ -22,25 +39,31 @@ void UMSPB_Tornado::OnBegin_Implementation()
 
 	bEnded = false;
 
-	StartLocation = OwnerProj->GetActorLocation();
-	ForwardDir = OwnerProj->GetActorForwardVector().GetSafeNormal();
-
-	if (UWorld* World = OwnerProj->GetWorld())
+	if (OwnerProj->IsClientSimEnabled())
 	{
-		StartTime = World->GetTimeSeconds();
+		StartLocation = OwnerProj->GetClientSimStartLocation();
+		ForwardDir = OwnerProj->GetClientSimDirection().GetSafeNormal();
+		StartTime = OwnerProj->GetClientSimStartTime();
+	}
+	else
+	{
+		StartLocation = OwnerProj->GetActorLocation();
+		ForwardDir = OwnerProj->GetActorForwardVector().GetSafeNormal();
+		if (UWorld* World = OwnerProj->GetWorld())
+		{
+			StartTime = World->GetTimeSeconds();
+		}
 	}
 	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
 	{
 		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
 	}
 
-	if (!OwnerProj->HasAuthority())
-	{
-		return;
-	}
-
 	StartMove();
-	StartPeriodicDamage();
+	if (OwnerProj->HasAuthority())
+	{
+		StartPeriodicDamage();
+	}
 }
 
 void UMSPB_Tornado::OnEnd_Implementation()
@@ -93,7 +116,7 @@ void UMSPB_Tornado::TickMove()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	UWorld* World = GetWorldSafe();
-	if (!OwnerProj || !World || !OwnerProj->HasAuthority())
+	if (!OwnerProj || !World)
 	{
 		return;
 	}
@@ -111,16 +134,17 @@ void UMSPB_Tornado::TickMove()
 	// 규칙적 소용돌이 + 불규칙 노이즈
 	const float S1 = FMath::Sin(T * SwirlFreq);
 	const float S2 = FMath::Cos(T * SwirlFreq * 0.9f);
-	const float N  = FMath::PerlinNoise1D(T * NoiseFreq);
+	const int32 NoiseSeed = OwnerProj->GetClientSimNoiseSeed();
+	const float N = GetTornadoDeterministicNoise(T, NoiseFreq, NoiseSeed);
 
 	const FVector Offset =
 		Right * (S1 * SwirlAmp + N * NoiseAmp) +
 		Up    * (S2 * (SwirlAmp * 0.25f));
 
 	const FVector NewLoc = Base + Offset;
+	const FVector Correction = OwnerProj->GetClientSimCorrectionOffset(0.016f, NewLoc);
 
-	OwnerProj->SetActorLocation(NewLoc, true);
-	OwnerProj->ForceNetUpdate();
+	OwnerProj->SetActorLocation(NewLoc + Correction, true);
 }
 
 void UMSPB_Tornado::StartPeriodicDamage()
@@ -170,7 +194,6 @@ void UMSPB_Tornado::TickPeriodicDamage()
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !OwnerProj->HasAuthority())
 	{
-		OnEnd_Implementation();
 		return;
 	}
 

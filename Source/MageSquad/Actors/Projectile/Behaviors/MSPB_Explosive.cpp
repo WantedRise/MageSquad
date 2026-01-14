@@ -32,7 +32,9 @@ void UMSPB_Explosive::OnBegin_Implementation()
 
 	if (UPrimitiveComponent* RootPrim = Cast<UPrimitiveComponent>(OwnerActor->GetRootComponent()))
 	{
-		RootPrim->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);
+		const ECollisionResponse Response =
+			OwnerActor->HasAuthority() ? ECR_Block : ECR_Ignore;
+		RootPrim->SetCollisionResponseToChannel(ECC_GameTraceChannel3, Response);
 	}
 
 	MoveComp->bInitialVelocityInLocalSpace = false;

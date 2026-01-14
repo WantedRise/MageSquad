@@ -29,7 +29,7 @@ protected:
 	void HandleHitTarget(AActor* Target, const FHitResult& HitResult);
 
 	bool TrySplitOnFirstHit(AActor* HitTarget, const FHitResult& HitResult);
-	bool SpawnSplitProjectileDir(const FVector& Dir, const FVector& Origin, int32 NextPenetration, AActor* IgnoreActor);
+	bool SpawnSplitProjectileDir(const FVector& Dir, const FVector& Origin, int32 NextPenetration, AActor* IgnoreActor, bool bReplicate);
 
 protected:
 	UPROPERTY(Transient)

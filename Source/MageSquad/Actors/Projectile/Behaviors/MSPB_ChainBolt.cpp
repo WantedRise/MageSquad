@@ -48,6 +48,7 @@ void UMSPB_ChainBolt::OnBegin_Implementation()
 	LastHitActor = nullptr;
 	RemainingChains = MaxChains;
 	OwnerActor->SetActorLocation(SourceActor->GetActorLocation());
+	ServerStepId = 0;
 
 	PerformChainStep();
 }
@@ -64,6 +65,7 @@ void UMSPB_ChainBolt::OnEnd_Implementation()
 	{
 		World->GetTimerManager().ClearTimer(ChainTimerHandle);
 		World->GetTimerManager().ClearTimer(TravelTimerHandle);
+		World->GetTimerManager().ClearTimer(ClientTravelTimerHandle);
 		World->GetTimerManager().ClearTimer(OptionalProjectileDelayHandle);
 	}
 	HitActors.Reset();
@@ -131,6 +133,8 @@ void UMSPB_ChainBolt::PerformChainStep()
 		MoveComp->Velocity = Direction * Speed;
 	}
 
+	OwnerActor->Multicast_ChainBoltStep(StartLocation, TargetLocation, Speed, ChainInterval, ++ServerStepId);
+
 	if (TravelTime <= KINDA_SMALL_NUMBER)
 	{
 		HandleArrival();
@@ -147,6 +151,64 @@ void UMSPB_ChainBolt::PerformChainStep()
 			false
 		);
 	}
+}
+
+void UMSPB_ChainBolt::ClientReceiveChainStep(
+	const FVector& Start,
+	const FVector& Target,
+	float Speed,
+	float Interval,
+	int32 StepId
+)
+{
+	(void)Interval;
+
+	if (StepId <= ClientLastStepId)
+	{
+		return;
+	}
+	ClientLastStepId = StepId;
+
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	OwnerActor->EnableCollision(false);
+	OwnerActor->SetActorLocation(Start);
+
+	const FVector Direction = (Target - Start).GetSafeNormal();
+	if (UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent())
+	{
+		MoveComp->Velocity = Direction * Speed;
+	}
+
+	const float Distance = FVector::Dist(Start, Target);
+	const float TravelTime = (Distance > 0.f && Speed > 0.f) ? (Distance / Speed) : 0.f;
+
+	if (UWorld* World = GetWorldSafe())
+	{
+		World->GetTimerManager().ClearTimer(ClientTravelTimerHandle);
+		World->GetTimerManager().SetTimer(
+			ClientTravelTimerHandle,
+			FTimerDelegate::CreateUObject(this, &UMSPB_ChainBolt::ClientFinishStep, Target),
+			TravelTime,
+			false
+		);
+	}
+}
+
+void UMSPB_ChainBolt::ClientFinishStep(FVector Target)
+{
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor)
+	{
+		return;
+	}
+
+	OwnerActor->StopMovement();
+	OwnerActor->SetActorLocation(Target);
 }
 
 AActor* UMSPB_ChainBolt::FindClosestTarget(

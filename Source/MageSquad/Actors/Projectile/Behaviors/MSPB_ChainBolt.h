@@ -17,6 +17,14 @@ public:
 	virtual void OnEnd_Implementation() override;
 	virtual void ApplyCollisionRadius(AMSBaseProjectile* InOwner, const FProjectileRuntimeData& InRuntimeData) override;
 
+	void ClientReceiveChainStep(
+		const FVector& Start,
+		const FVector& Target,
+		float Speed,
+		float Interval,
+		int32 StepId
+	);
+
 private:
 	void PerformChainStep();
 	void HandleArrival();
@@ -26,6 +34,8 @@ private:
 	void SpawnOptionalProjectilesAtStoredHits();
 	void HandleDelayedOptionalProjectiles();
 	void EndChain();
+
+	void ClientFinishStep(FVector Target);
 
 private:
 	UPROPERTY(Transient)
@@ -63,4 +73,13 @@ private:
 
 	UPROPERTY(Transient)
 	FTimerHandle TravelTimerHandle;
+
+	UPROPERTY(Transient)
+	FTimerHandle ClientTravelTimerHandle;
+
+	UPROPERTY(Transient)
+	int32 ServerStepId = 0;
+
+	UPROPERTY(Transient)
+	int32 ClientLastStepId = 0;
 };

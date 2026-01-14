@@ -15,10 +15,12 @@
 #include "Net/UnrealNetwork.h"
 
 #include "MSFunctionLibrary.h"
+#include "GameFramework/GameStateBase.h"
 
 // Behavior
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
 #include "Actors/Projectile/Behaviors/MSPB_Normal.h"
+#include "Actors/Projectile/Behaviors/MSPB_ChainBolt.h"
 
 AMSBaseProjectile::AMSBaseProjectile()
 {
@@ -268,6 +270,113 @@ void AMSBaseProjectile::Multicast_SpawnVFXAtLocation_Implementation(
 		FVector(SafeScale)
 	);
 }
+
+void AMSBaseProjectile::Multicast_SpawnClientProjectiles_Implementation(
+	TSubclassOf<UProjectileStaticData> DataClass,
+	const FProjectileRuntimeData& BaseData,
+	const FVector& Origin,
+	const TArray<FVector_NetQuantizeNormal>& Directions
+)
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+	if (!DataClass)
+	{
+		DataClass = ProjectileDataClass;
+	}
+	if (!DataClass)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const UProjectileStaticData* StaticData = UMSFunctionLibrary::GetProjectileStaticData(DataClass);
+
+	for (const FVector_NetQuantizeNormal& Dir : Directions)
+	{
+		FVector LaunchDir = FVector(Dir);
+		if (LaunchDir.IsNearlyZero())
+		{
+			continue;
+		}
+
+		FProjectileRuntimeData Data = BaseData;
+		if (!Data.StaticMesh && StaticData)
+		{
+			Data.StaticMesh = StaticData->StaticMesh;
+		}
+		if (!Data.OnAttachVFX && StaticData)
+		{
+			Data.OnAttachVFX = StaticData->OnAttachVFX;
+		}
+		Data.Direction = LaunchDir;
+
+		const float SpawnOffset = 50.f;
+		const FVector SpawnLocation = Origin + (LaunchDir * SpawnOffset);
+		const FTransform SpawnTransform(LaunchDir.Rotation(), SpawnLocation);
+
+		AMSBaseProjectile* SplitProjectile = World->SpawnActorDeferred<AMSBaseProjectile>(
+			AMSBaseProjectile::StaticClass(),
+			SpawnTransform,
+			GetOwner(),
+			GetInstigator(),
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
+		);
+
+		if (!SplitProjectile)
+		{
+			continue;
+		}
+
+		SplitProjectile->SetReplicates(false);
+		SplitProjectile->SetReplicateMovement(false);
+		SplitProjectile->ProjectileDataClass = DataClass;
+		SplitProjectile->SetProjectileRuntimeData(Data);
+		SplitProjectile->FinishSpawning(SpawnTransform);
+
+		const float LifeTime = (Data.LifeTime > 0.f) ? Data.LifeTime : 3.f;
+		SplitProjectile->SetLifeSpan(LifeTime);
+	}
+}
+
+void AMSBaseProjectile::Multicast_ChainBoltStep_Implementation(
+	const FVector& Start,
+	const FVector& Target,
+	float Speed,
+	float Interval,
+	int32 StepId
+)
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	if (UMSPB_ChainBolt* ChainBehavior = Cast<UMSPB_ChainBolt>(Behavior))
+	{
+		ChainBehavior->ClientReceiveChainStep(Start, Target, Speed, Interval, StepId);
+	}
+}
+
+void AMSBaseProjectile::Multicast_ServerStop_Implementation(const FVector& InLocation)
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	SetActorLocation(InLocation);
+	StopMovement();
+	EnableCollision(false);
+	SetActorHiddenInGame(true);
+}
 void AMSBaseProjectile::StopMovement()
 {
 	if (ProjectileMovementComponent)
@@ -277,6 +386,87 @@ void AMSBaseProjectile::StopMovement()
 	}
 }
 
+FVector AMSBaseProjectile::GetClientSimCorrectionOffset(float DeltaSeconds, const FVector& SimulatedLocation)
+{
+	if (!bHasSimCorrection || DeltaSeconds <= 0.f)
+	{
+		return FVector::ZeroVector;
+	}
+
+	SimCorrectionAlpha = FMath::Min(1.f, SimCorrectionAlpha + (DeltaSeconds / SimCorrectionDuration));
+	const FVector DesiredLocation = FMath::Lerp(SimCorrectionStart, SimCorrectionTarget, SimCorrectionAlpha);
+	const FVector Offset = DesiredLocation - SimulatedLocation;
+
+	if (SimCorrectionAlpha >= 1.f)
+	{
+		bHasSimCorrection = false;
+	}
+
+	return Offset;
+}
+
+void AMSBaseProjectile::TriggerSplitEvent(
+	const FVector& Origin,
+	const FVector& DirA,
+	const FVector& DirB,
+	int32 PenetrationCount
+)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	SplitEvent.bValid = true;
+	SplitEvent.Origin = Origin;
+	SplitEvent.DirA = DirA;
+	SplitEvent.DirB = DirB;
+	SplitEvent.NumDirs = DirB.IsNearlyZero() ? 1 : 2;
+	SplitEvent.PenetrationCount = PenetrationCount;
+	SplitEventId++;
+
+	ForceNetUpdate();
+}
+
+float AMSBaseProjectile::GetClientSimStartTime() const
+{
+	if (HasAuthority())
+	{
+		return SimStartServerTime;
+	}
+
+	if (!bClientSimEnabled || SimStartServerTime <= 0.f)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			return World->GetTimeSeconds();
+		}
+		return 0.f;
+	}
+
+	const UWorld* World = GetWorld();
+	const AGameStateBase* GS = World ? World->GetGameState() : nullptr;
+	if (!GS)
+	{
+		return World ? World->GetTimeSeconds() : 0.f;
+	}
+
+	const float ServerNow = GS->GetServerWorldTimeSeconds();
+	const float Elapsed = FMath::Max(0.f, ServerNow - SimStartServerTime);
+	return World->GetTimeSeconds() - Elapsed;
+}
+
+void AMSBaseProjectile::UpdateSimServerLocation()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	SimServerLocation = GetActorLocation();
+	ForceNetUpdate();
+}
+
 void AMSBaseProjectile::RequestDestroy()
 {
 	if (bDestroyRequested)
@@ -284,6 +474,22 @@ void AMSBaseProjectile::RequestDestroy()
 		return;
 	}
 	bDestroyRequested = true;
+
+	if (HasAuthority())
+	{
+		bServerStop = true;
+		SimServerLocation = GetActorLocation();
+		Multicast_ServerStop(SimServerLocation);
+		ForceNetUpdate();
+
+		// Replication for stop signal before destroy.
+		const float StopDelay = 0.2f;
+		if (GetLifeSpan() <= 0.f)
+		{
+			SetLifeSpan(StopDelay);
+			return;
+		}
+	}
 
 	Destroy();
 }
@@ -335,6 +541,33 @@ void AMSBaseProjectile::BeginPlay()
 	// 런타임 데이터 적용
 	ApplyProjectileRuntimeData(true);
 
+	if (HasAuthority())
+	{
+		const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
+		bClientSimEnabled = true;
+		SimStartServerTime = GetWorld()->GetTimeSeconds();
+		SimStartLocation = GetActorLocation();
+		SimDirection = EffectiveData.Direction.IsNearlyZero()
+			? GetActorForwardVector()
+			: EffectiveData.Direction.GetSafeNormal();
+		SimSpeed = EffectiveData.ProjectileSpeed;
+		SimNoiseSeed = FMath::Rand();
+
+		SetNetUpdateFrequency(3.33f);
+		SetMinNetUpdateFrequency(3.33f);
+
+		SimServerLocation = GetActorLocation();
+		GetWorldTimerManager().SetTimer(
+			SimCorrectionTimerHandle,
+			this,
+			&AMSBaseProjectile::UpdateSimServerLocation,
+			0.5f,
+			true
+		);
+
+		SetReplicateMovement(false);
+	}
+
 	// 서버/클라 모두 Behavior 보장
 	EnsureBehavior();
 
@@ -365,6 +598,7 @@ void AMSBaseProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		if (UWorld* World = GetWorld())
 		{
 			World->GetTimerManager().ClearTimer(LifeTimerHandle);
+			World->GetTimerManager().ClearTimer(SimCorrectionTimerHandle);
 		}
 	}
 
@@ -380,15 +614,20 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(
 	DOREPLIFETIME(AMSBaseProjectile, ProjectileDataClass);
 	DOREPLIFETIME(AMSBaseProjectile, bRuntimeDataInitialized);
 	DOREPLIFETIME(AMSBaseProjectile, ProjectileRuntimeData);
+	DOREPLIFETIME(AMSBaseProjectile, SplitEvent);
+	DOREPLIFETIME(AMSBaseProjectile, SplitEventId);
+	DOREPLIFETIME(AMSBaseProjectile, bServerStop);
+	DOREPLIFETIME(AMSBaseProjectile, bClientSimEnabled);
+	DOREPLIFETIME(AMSBaseProjectile, SimStartServerTime);
+	DOREPLIFETIME(AMSBaseProjectile, SimStartLocation);
+	DOREPLIFETIME(AMSBaseProjectile, SimDirection);
+	DOREPLIFETIME(AMSBaseProjectile, SimSpeed);
+	DOREPLIFETIME(AMSBaseProjectile, SimNoiseSeed);
+	DOREPLIFETIME(AMSBaseProjectile, SimServerLocation);
 }
 
 void AMSBaseProjectile::EnsureBehavior()
 {
-	if (Behavior)
-	{
-		return;
-	}
-
 	const FProjectileRuntimeData EffectiveData = GetEffectiveRuntimeData();
 
 	TSubclassOf<UMSProjectileBehaviorBase> ClassToUse =
@@ -397,6 +636,17 @@ void AMSBaseProjectile::EnsureBehavior()
 	if (!ClassToUse)
 	{
 		ClassToUse = UMSPB_Normal::StaticClass(); // fallback
+	}
+
+	if (Behavior)
+	{
+		if (Behavior->GetClass() == ClassToUse)
+		{
+			return;
+		}
+
+		Behavior->OnEnd();
+		Behavior = nullptr;
 	}
 
 	Behavior = NewObject<UMSProjectileBehaviorBase>(this, ClassToUse);
@@ -446,7 +696,12 @@ void AMSBaseProjectile::OnProjectileStop(
 	const FHitResult& ImpactResult
 )
 {
-	if (HasAuthority() && Behavior)
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (Behavior)
 	{
 		Behavior->OnEnd();
 	}
@@ -521,7 +776,139 @@ void AMSBaseProjectile::OnRep_ProjectileRuntimeData()
 {
 	// 런타임 데이터 리플리케이션 시 클라이언트 반영
 	ApplyProjectileRuntimeData(true);
+	if (Behavior)
+	{
+		Behavior->OnEnd();
+		Behavior = nullptr;
+	}
+	if (!HasAuthority() && bClientSimEnabled)
+	{
+		SetReplicateMovement(false);
+	}
 	EnsureBehavior();
+}
+
+void AMSBaseProjectile::OnRep_SplitEvent()
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	if (SplitEventId <= LastHandledSplitEventId)
+	{
+		return;
+	}
+	LastHandledSplitEventId = SplitEventId;
+
+	if (!SplitEvent.bValid)
+	{
+		return;
+	}
+
+	TSubclassOf<UProjectileStaticData> DataClass = ProjectileDataClass;
+	if (!DataClass)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	FProjectileRuntimeData SplitData = GetEffectiveRuntimeData();
+	SplitData.PenetrationCount = SplitEvent.PenetrationCount;
+	SplitData.BehaviorClass = UMSPB_Normal::StaticClass();
+
+	const int32 NumDirs = FMath::Clamp(static_cast<int32>(SplitEvent.NumDirs), 1, 2);
+	for (int32 Index = 0; Index < NumDirs; ++Index)
+	{
+		const FVector Dir = (Index == 0) ? FVector(SplitEvent.DirA) : FVector(SplitEvent.DirB);
+		if (Dir.IsNearlyZero())
+		{
+			continue;
+		}
+
+		FVector LaunchDir = Dir.GetSafeNormal();
+		SplitData.Direction = LaunchDir;
+
+		const float SpawnOffset = 50.f;
+		const FVector SpawnLocation = FVector(SplitEvent.Origin) + (LaunchDir * SpawnOffset);
+		const FTransform SpawnTransform(LaunchDir.Rotation(), SpawnLocation);
+
+		AMSBaseProjectile* SplitProjectile = World->SpawnActorDeferred<AMSBaseProjectile>(
+			AMSBaseProjectile::StaticClass(),
+			SpawnTransform,
+			GetOwner(),
+			GetInstigator(),
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
+		);
+
+		if (!SplitProjectile)
+		{
+			continue;
+		}
+
+		SplitProjectile->SetReplicates(false);
+		SplitProjectile->SetReplicateMovement(false);
+		SplitProjectile->ProjectileDataClass = DataClass;
+		SplitProjectile->SetProjectileRuntimeData(SplitData);
+		SplitProjectile->EnableCollision(false);
+		SplitProjectile->FinishSpawning(SpawnTransform);
+
+		const float LifeTime = (SplitData.LifeTime > 0.f) ? SplitData.LifeTime : 3.f;
+		SplitProjectile->SetLifeSpan(LifeTime);
+	}
+}
+
+void AMSBaseProjectile::OnRep_SimServerLocation()
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	SimCorrectionStart = GetActorLocation();
+	SimCorrectionTarget = SimServerLocation;
+	SimCorrectionAlpha = 0.f;
+	bHasSimCorrection = true;
+}
+
+void AMSBaseProjectile::OnRep_ClientSimEnabled()
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	if (!bClientSimEnabled)
+	{
+		return;
+	}
+
+	SetReplicateMovement(false);
+
+	if (Behavior)
+	{
+		Behavior->OnEnd();
+		Behavior = nullptr;
+	}
+
+	EnsureBehavior();
+}
+void AMSBaseProjectile::OnRep_ServerStop()
+{
+	if (!bServerStop)
+	{
+		return;
+	}
+
+	SetActorLocation(SimServerLocation);
+	StopMovement();
+	EnableCollision(false);
+	SetActorHiddenInGame(true);
 }
 
 
