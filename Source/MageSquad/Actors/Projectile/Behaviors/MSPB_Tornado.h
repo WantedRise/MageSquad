@@ -26,6 +26,7 @@ private:
 	void StopMove();
 	void TickMove();
 	FVector GenerateNextTarget(const FVector& From);
+	void ApplyVfxScale(float Scale);
 
 	// 대미지
 	void StartPeriodicDamage();

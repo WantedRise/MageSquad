@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/RandomStream.h"
+#include "NiagaraComponent.h"
 
 void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 {
@@ -46,6 +47,9 @@ void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 	{
 		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
 	}
+
+	const float VfxScale = (RuntimeData.Radius > 0.f) ? (RuntimeData.Radius / 300.f) : 1.f;
+	ApplyVfxScale(VfxScale);
 
 	if (OwnerProj->HasAuthority())
 	{
@@ -187,6 +191,26 @@ FVector UMSPB_TornadoEnhanced::GenerateNextTarget(const FVector& From)
 	const float Noise = PathStream.FRandRange(-NoiseAmp, NoiseAmp);
 
 	return From + (Forward * StepDistance) + (Right * (Lateral + Noise));
+}
+
+void UMSPB_TornadoEnhanced::ApplyVfxScale(float Scale)
+{
+	AMSBaseProjectile* OwnerActor = GetOwnerActor();
+	if (!OwnerActor || Scale <= 0.f)
+	{
+		return;
+	}
+
+	TArray<UNiagaraComponent*> NiagaraComps;
+	OwnerActor->GetComponents<UNiagaraComponent>(NiagaraComps);
+
+	for (UNiagaraComponent* Comp : NiagaraComps)
+	{
+		if (Comp)
+		{
+			Comp->SetWorldScale3D(FVector(Scale));
+		}
+	}
 }
 
 void UMSPB_TornadoEnhanced::StartPeriodicDamage()
