@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "MSGameplayTags.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "AbilitySystem/Tasks/MSAT_PlayMontageAndWaitForEvent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -34,6 +35,12 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                         const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 
 	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
 	{
@@ -52,13 +59,19 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		FGameplayTagContainer Tags;
 		Tags.AddTag(FGameplayTag::RequestGameplayTag("Enemy.Event.Groggy"));
 
-		UMSAT_PlayMontageAndWaitForEvent* AttackTask =
-			UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, GroggyMontage, Tags);
-
-		AttackTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
-		AttackTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyGroggy::OnInterruptedCallback);
-		AttackTask->OnEventReceived.AddDynamic(this, &UMSGA_EnemyGroggy::OnEventReceivedCallback);
-		AttackTask->ReadyForActivation();
+		// UMSAT_PlayMontageAndWaitForEvent* GroggyTask =
+		// 	UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, GroggyMontage, Tags);
+		//
+		// GroggyTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
+		// GroggyTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyGroggy::OnInterruptedCallback);
+		// GroggyTask->OnEventReceived.AddDynamic(this, &UMSGA_EnemyGroggy::OnEventReceivedCallback);
+		// GroggyTask->ReadyForActivation();
+		
+		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Groggy"), GroggyMontage);
+		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
+		EnemyDeadTask->OnBlendOut.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
+		EnemyDeadTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyGroggy::OnInterruptedCallback);
+		EnemyDeadTask->ReadyForActivation();
 	}
 
 	Owner->SetActorEnableCollision(false);
@@ -80,6 +93,16 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
                                    bool bWasCancelled)
 {
+	// UE_LOG(LogTemp, Warning, TEXT("[Groggy] Boss EndAbility Called - bWasCancelled: %s, IsActive: %s"),
+	// bWasCancelled ? TEXT("true") : TEXT("false"),
+	// IsActive() ? TEXT("true") : TEXT("false"));
+	//
+	// // 이미 종료된 상태면 early return
+	// if (!IsActive())
+	// {
+	// 	return;
+	// }
+	
 	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
 	{
 		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
@@ -177,7 +200,7 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 				ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
 				LambdaOwner->SetActorEnableCollision(true);
 			});
-		UE_LOG(LogTemp, Warning, TEXT("[%s] TargetMesh: %s"),
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Enemy TargetMesh: %s"),
 		       HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"),
 		       Owner->GetMesh() ? *Owner->GetMesh()->GetName() : TEXT("NULL"));
 	}
@@ -187,7 +210,20 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 		World->GetTimerManager().ClearTimer(GroggyTimerHandle);
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("[Groggy] Before Super::EndAbility"));
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	UE_LOG(LogTemp, Warning, TEXT("[Groggy] After Super::EndAbility"));
+
+	if (UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent())
+	{
+		while (ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Groggy))
+		{
+			ASC->RemoveLooseGameplayTag(MSGameplayTags::Enemy_State_Groggy);
+			UE_LOG(LogTemp, Warning, TEXT("[Groggy] Manually removed Groggy tag"));
+		}
+		
+		UE_LOG(LogTemp, Warning, TEXT("[Groggy] Manually removed Groggy tag Complete"));
+	}
 }
 
 void UMSGA_EnemyGroggy::OnCompleteCallback()

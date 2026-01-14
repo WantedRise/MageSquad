@@ -53,8 +53,11 @@ void UMSGA_EnemyHealthDepleted::ActivateAbility(const FGameplayAbilitySpecHandle
 	{
 	 	if (AMSBossAIController* AIController = Cast<AMSBossAIController>(Owner->GetController()))
 	 	{
-	 		AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsGroggyKey(), true);
-	 		UE_LOG(LogTemp, Error, TEXT("Boss Is Groggy"));
+		    if (!ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Groggy))
+		    {
+			    AIController->GetBlackboardComponent()->SetValueAsBool(AIController->GetIsGroggyKey(), true);
+			    UE_LOG(LogTemp, Error, TEXT("Boss Is Groggy"));
+		    }
 	 	}
 	}
 	
