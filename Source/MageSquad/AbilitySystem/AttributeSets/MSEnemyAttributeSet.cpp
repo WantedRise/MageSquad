@@ -11,6 +11,7 @@
 #include "Interfaces/MSHitReactableInterface.h"
 
 #include "MSGameplayTags.h"
+#include "Enemy/MSBossEnemy.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UMSEnemyAttributeSet::UMSEnemyAttributeSet()
@@ -112,6 +113,10 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
 
 			SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
+			if(Data.Target.GetAvatarActor()->IsA(AMSBossEnemy::StaticClass()))
+			{
+				UE_LOG(LogTemp, Error, TEXT("Boss Hp : %f"), GetCurrentHealth());
+			}
 
 			if (GetCurrentHealth() <= 0.f)
 			{
