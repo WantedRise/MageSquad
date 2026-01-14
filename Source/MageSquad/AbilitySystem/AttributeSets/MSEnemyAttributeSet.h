@@ -77,17 +77,32 @@ private:
 	FGameplayAttributeData DropExpValue;
 		
 
+
+	/*
+	* 김준형
+	* 받은 피해량 출력 이벤트 전달 로직 구현
+	*/
 private:
 	// 이전 현재 체력 캐시
 	float CachedOldCurrentHealth = 0.f;
 
 private:
+	// 받은 피해량 누적 함수
 	void QueueDamageFloater(float DeltaHealth, bool bIsCritical);
+
+	// 피해량 전송 함수
 	void FlushDamageFloater();
 
+private:
+	// 피해량 전송 주기
 	static constexpr float DamageFloaterBatchInterval = 0.1f;
 
+	// 누적된 받은 피해량
 	float PendingDamageFloater = 0.f;
+
+	// 피해량 전송 주기동안 치명타를 받았는지 여부
 	bool bPendingCritical = false;
+
+	// 피해량 전송 델리게이트
 	FTimerHandle DamageFloaterFlushHandle;
 };
