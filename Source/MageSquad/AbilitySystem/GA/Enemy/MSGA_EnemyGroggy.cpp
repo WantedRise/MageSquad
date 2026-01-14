@@ -23,7 +23,8 @@ UMSGA_EnemyGroggy::UMSGA_EnemyGroggy()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Groggy);
-
+	
+	ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
 	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
 
@@ -92,12 +93,8 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 
 	if (AMSBossAIController* EnemyAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
-		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetIsGroggyKey(), false);
-		Owner->GetAbilitySystemComponent()->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
-		Owner->SetActorEnableCollision(true);
-
 		// 람다를 사용해 다음 프레임에 실행되도록 예약
-		GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+		GetWorld()->GetTimerManager().SetTimerForNextTick([this, EnemyAIController]()
 		{
 			if (!IsValid(this) || !Owner || !Owner->GetMesh())
 			{
@@ -134,6 +131,10 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 					
 					UE_LOG(LogTemp, Warning, TEXT("[%s] ApplyGameplayEffectSpecToSelf"),
 						   HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"));
+					
+					EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetIsGroggyKey(), false);
+					Owner->GetAbilitySystemComponent()->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
+					Owner->SetActorEnableCollision(true);
 				}
 			}
 
