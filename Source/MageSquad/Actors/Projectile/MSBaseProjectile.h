@@ -78,6 +78,7 @@ public:
 	float GetClientSimSpeed() const { return SimSpeed; }
 	float GetClientSimStartTime() const;
 	FVector GetClientSimCorrectionOffset(float DeltaSeconds, const FVector& SimulatedLocation);
+	int32 GetClientSimNoiseSeed() const { return SimNoiseSeed; }
 
 	// 분열 연출 이벤트(클라이언트 전용 스폰).
 	void TriggerSplitEvent(const FVector& Origin, const FVector& DirA, const FVector& DirB, int32 PenetrationCount);
@@ -213,13 +214,16 @@ protected:
 	UPROPERTY(Replicated)
 	float SimSpeed = 0.f;
 
+	UPROPERTY(Replicated)
+	int32 SimNoiseSeed = 0;
+
 	UPROPERTY(ReplicatedUsing = OnRep_SimServerLocation)
 	FVector_NetQuantize SimServerLocation = FVector::ZeroVector;
 
 	FVector SimCorrectionStart = FVector::ZeroVector;
 	FVector SimCorrectionTarget = FVector::ZeroVector;
 	float SimCorrectionAlpha = 1.f;
-	float SimCorrectionDuration = 0.3f;
+	float SimCorrectionDuration = 0.5f;
 	bool bHasSimCorrection = false;
 
 	// 부착 VFX 1회 재생용 플래그.

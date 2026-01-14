@@ -522,6 +522,7 @@ void AMSBaseProjectile::BeginPlay()
 			? GetActorForwardVector()
 			: EffectiveData.Direction.GetSafeNormal();
 		SimSpeed = EffectiveData.ProjectileSpeed;
+		SimNoiseSeed = FMath::Rand();
 
 		SetNetUpdateFrequency(3.33f);
 		SetMinNetUpdateFrequency(3.33f);
@@ -591,6 +592,7 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(
 	DOREPLIFETIME(AMSBaseProjectile, SimStartLocation);
 	DOREPLIFETIME(AMSBaseProjectile, SimDirection);
 	DOREPLIFETIME(AMSBaseProjectile, SimSpeed);
+	DOREPLIFETIME(AMSBaseProjectile, SimNoiseSeed);
 	DOREPLIFETIME(AMSBaseProjectile, SimServerLocation);
 }
 

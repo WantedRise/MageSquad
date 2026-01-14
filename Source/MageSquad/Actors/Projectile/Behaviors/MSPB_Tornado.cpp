@@ -10,6 +10,24 @@
 #include "Actors/Projectile/MSBaseProjectile.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Math/RandomStream.h"
+
+namespace
+{
+	float GetDeterministicNoise(float Time, float Frequency, int32 Seed)
+	{
+		const float NoiseTime = Time * Frequency;
+		const int32 Step = FMath::FloorToInt(NoiseTime);
+		const float Alpha = NoiseTime - Step;
+		const int32 SeedA = Seed + Step * 92821;
+		const int32 SeedB = Seed + (Step + 1) * 92821;
+		FRandomStream StreamA(SeedA);
+		FRandomStream StreamB(SeedB);
+		const float V1 = StreamA.FRandRange(-1.f, 1.f);
+		const float V2 = StreamB.FRandRange(-1.f, 1.f);
+		return FMath::Lerp(V1, V2, Alpha);
+	}
+}
 
 void UMSPB_Tornado::OnBegin_Implementation()
 {
@@ -116,7 +134,8 @@ void UMSPB_Tornado::TickMove()
 	// 규칙적 소용돌이 + 불규칙 노이즈
 	const float S1 = FMath::Sin(T * SwirlFreq);
 	const float S2 = FMath::Cos(T * SwirlFreq * 0.9f);
-	const float N  = FMath::PerlinNoise1D(T * NoiseFreq);
+	const int32 NoiseSeed = OwnerProj->GetClientSimNoiseSeed();
+	const float N = GetDeterministicNoise(T, NoiseFreq, NoiseSeed);
 
 	const FVector Offset =
 		Right * (S1 * SwirlAmp + N * NoiseAmp) +
