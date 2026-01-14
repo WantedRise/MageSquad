@@ -16,6 +16,7 @@
 
 #include "MSFunctionLibrary.h"
 #include "GameFramework/GameStateBase.h"
+#include "TimerManager.h"
 
 // Behavior
 #include "Actors/Projectile/Behaviors/MSProjectileBehaviorBase.h"
@@ -179,6 +180,45 @@ void AMSBaseProjectile::ClearSimPathPoints()
 
 	SimPathPoints.Reset();
 	ForceNetUpdate();
+}
+
+void AMSBaseProjectile::RequestSpawnSFX()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	bSpawnSFX = true;
+	bSpawnSFXPlayed = false;
+	ForceNetUpdate();
+
+	if (GetNetMode() != NM_DedicatedServer)
+	{
+		Multicast_PlaySFXAtLocation_Implementation(0, GetActorLocation());
+		bSpawnSFXPlayed = true;
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		TWeakObjectPtr<AMSBaseProjectile> WeakSelf(this);
+		World->GetTimerManager().ClearTimer(SpawnSFXResetHandle);
+		World->GetTimerManager().SetTimer(
+			SpawnSFXResetHandle,
+			FTimerDelegate::CreateLambda([WeakSelf]()
+			{
+				if (!WeakSelf.IsValid() || !WeakSelf->HasAuthority())
+				{
+					return;
+				}
+
+				WeakSelf->bSpawnSFX = false;
+				WeakSelf->ForceNetUpdate();
+			}),
+			0.1f,
+			false
+		);
+	}
 }
 
 void AMSBaseProjectile::PlaySFXAtLocation(int32 Index)
@@ -630,6 +670,7 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(
 	DOREPLIFETIME(AMSBaseProjectile, SimNoiseSeed);
 	DOREPLIFETIME(AMSBaseProjectile, SimPathPoints);
 	DOREPLIFETIME(AMSBaseProjectile, SimServerLocation);
+	DOREPLIFETIME(AMSBaseProjectile, bSpawnSFX);
 }
 
 void AMSBaseProjectile::EnsureBehavior()
@@ -903,6 +944,17 @@ void AMSBaseProjectile::OnRep_ClientSimEnabled()
 	}
 
 	EnsureBehavior();
+}
+
+void AMSBaseProjectile::OnRep_SpawnSFX()
+{
+	if (!bSpawnSFX || bSpawnSFXPlayed)
+	{
+		return;
+	}
+
+	bSpawnSFXPlayed = true;
+	Multicast_PlaySFXAtLocation_Implementation(0, GetActorLocation());
 }
 void AMSBaseProjectile::OnRep_ServerStop()
 {

@@ -26,7 +26,7 @@ void UMSPB_IceSpear::OnBegin_Implementation()
 		return;
 	}
 
-	OwnerActor->PlaySFXAtLocation(0);
+	OwnerActor->RequestSpawnSFX();
 
 	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
 	if (!MoveComp)

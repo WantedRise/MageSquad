@@ -20,7 +20,11 @@ void UMSPB_Normal::OnBegin_Implementation()
 		return;
 	}
 
-	OwnerActor->PlaySFXAtLocation(0);
+	static const FName IceSpearSplitTag(TEXT("IceSpearSplit"));
+	if (!OwnerActor->Tags.Contains(IceSpearSplitTag))
+	{
+		OwnerActor->RequestSpawnSFX();
+	}
 
 	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
 	if (!MoveComp)

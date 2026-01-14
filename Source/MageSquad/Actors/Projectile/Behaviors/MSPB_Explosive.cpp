@@ -22,7 +22,7 @@ void UMSPB_Explosive::OnBegin_Implementation()
 		return;
 	}
 
-	OwnerActor->PlaySFXAttached(0, OwnerActor->GetRootComponent());
+	OwnerActor->RequestSpawnSFX();
 
 	UProjectileMovementComponent* MoveComp = OwnerActor->GetMovementComponent();
 	if (!MoveComp)

@@ -30,7 +30,7 @@ void UMSPB_AreaInstant::OnBegin_Implementation()
 	}
 
 	// 발생 위치에서 즉시 사운드 재생
-	OwnerActor->PlaySFXAtLocation(0);
+	OwnerActor->RequestSpawnSFX();
 
 	// 폭발 순간 범위
 	const float Radius = RuntimeData.Radius;

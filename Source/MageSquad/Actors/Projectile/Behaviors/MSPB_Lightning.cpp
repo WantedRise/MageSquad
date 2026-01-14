@@ -32,7 +32,7 @@ void UMSPB_Lightning::OnBegin_Implementation()
 	}
 
 	ImpactOrigin = OwnerActor->GetActorLocation();
-	OwnerActor->PlaySFXAtLocation(0);
+	OwnerActor->RequestSpawnSFX();
 	ApplyDamageInRadius(RuntimeData.Radius, RuntimeData.Damage, 0.0f);
 
 	bDamageApplied = true;

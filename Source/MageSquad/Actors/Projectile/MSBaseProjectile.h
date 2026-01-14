@@ -70,6 +70,7 @@ public:
 	// RuntimeData.SFX 배열 인덱스로 SFX 재생.
 	void PlaySFXAtLocation(int32 Index);
 	void PlaySFXAttached(int32 Index, USceneComponent* AttachTo);
+	void RequestSpawnSFX();
 
 	// 파괴 요청 (중복 호출 방지).
 	void RequestDestroy();
@@ -165,6 +166,9 @@ protected:
 	UFUNCTION()
 	void OnRep_ClientSimEnabled();
 
+	UFUNCTION()
+	void OnRep_SpawnSFX();
+
 protected:
 	// Behavior 생성/초기화 및 RuntimeData 반영.
 	void EnsureBehavior();
@@ -200,6 +204,8 @@ protected:
 
 	bool bDestroyRequested = false;
 
+	FTimerHandle SpawnSFXResetHandle;
+
 	UPROPERTY(ReplicatedUsing = OnRep_SplitEvent)
 	FSplitProjectileEvent SplitEvent;
 
@@ -217,6 +223,11 @@ protected:
 	// 클라 시뮬 파라미터 (서버가 설정, 클라가 재현).
 	UPROPERTY(ReplicatedUsing = OnRep_ClientSimEnabled)
 	bool bClientSimEnabled = false;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SpawnSFX)
+	bool bSpawnSFX = false;
+
+	bool bSpawnSFXPlayed = false;
 
 	UPROPERTY(Replicated)
 	float SimStartServerTime = 0.f;

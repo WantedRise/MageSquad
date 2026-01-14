@@ -24,7 +24,7 @@ void UMSPB_ChainBolt::OnBegin_Implementation()
 
 	OwnerActor->EnableCollision(false);
 
-	OwnerActor->PlaySFXAtLocation(0);
+	OwnerActor->RequestSpawnSFX();
 
 	if (!IsAuthority())
 	{

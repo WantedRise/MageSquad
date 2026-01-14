@@ -24,7 +24,7 @@ void UMSPB_TrailDoT::OnBegin_Implementation()
 		return;
 	}
 
-	OwnerActor->PlaySFXAtLocation(0);
+	OwnerActor->RequestSpawnSFX();
 
 	StartLocation = OwnerActor->GetActorLocation();
 	VirtualLocation = StartLocation;

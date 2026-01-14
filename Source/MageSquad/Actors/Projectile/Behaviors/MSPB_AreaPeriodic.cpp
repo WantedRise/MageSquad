@@ -24,7 +24,7 @@ void UMSPB_AreaPeriodic::OnBegin_Implementation()
 		return;
 	}
 
-	OwnerProj->PlaySFXAtLocation(0);
+	OwnerProj->RequestSpawnSFX();
 	StartPeriodicDamage();
 }
 
