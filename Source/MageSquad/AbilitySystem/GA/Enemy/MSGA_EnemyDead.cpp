@@ -27,7 +27,7 @@ UMSGA_EnemyDead::UMSGA_EnemyDead()
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Dead);
 	
 	// 이미 Dead 상태면 활성화 차단
-	ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
+	//ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
 	ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
 
