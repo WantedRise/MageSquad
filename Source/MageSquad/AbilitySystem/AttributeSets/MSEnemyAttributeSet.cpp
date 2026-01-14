@@ -74,21 +74,18 @@ void UMSEnemyAttributeSet::OnRep_DropExpValue(const FGameplayAttributeData& OldV
 void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-	
+
 	if (Data.Target.GetOwnerRole() != ROLE_Authority)
 	{
 		return;
 	}
-	
-#pragma region Health
-	// Clamp Health to [0, MaxHealth]
+
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
 		/*
 		* 김준형
 		* 받은 피해량 출력 이벤트 전달 로직 구현
 		*/
-		//if (GetCurrentHealth() > 0.f)
 		{
 			// 현재 체력 및 받은 피해량 계산
 			const float NewHealth = GetCurrentHealth();
@@ -98,17 +95,16 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			UAbilitySystemComponent* TargetASC = &Data.Target;
 			if (!FMath::IsNearlyZero(DeltaHealth))
 			{
+				// 치명타 여부 태그 저장
 				FGameplayTagContainer SpecAssetTags;
 				Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
 				const bool bIsCritical = SpecAssetTags.HasTag(MSGameplayTags::Hit_Critical);
+
+				// 받은 피해량 누적
 				QueueDamageFloater(DeltaHealth, bIsCritical);
 			}
 
 			SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
-			if(Data.Target.GetAvatarActor()->IsA(AMSBossEnemy::StaticClass()))
-			{
-				UE_LOG(LogTemp, Error, TEXT("Boss Hp : %f"), GetCurrentHealth());
-			}
 
 			if (GetCurrentHealth() <= 0.f)
 			{
@@ -122,24 +118,21 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			}
 		}
 	}
-#pragma endregion
 
-#pragma region MoveSpeed
 	if (Data.EvaluatedData.Attribute == GetMoveSpeedAttribute())
 	{
-		// 받은 피해량 출력 이벤트 전달
 		UAbilitySystemComponent* TargetASC = &Data.Target;
 		if (AMSBaseEnemy* Target = Cast<AMSBaseEnemy>(TargetASC->GetOwnerActor()))
 		{
 			Target->GetCharacterMovement()->MaxWalkSpeed = GetMoveSpeed();
 		}
 	}
-#pragma endregion
 }
 
 
 void UMSEnemyAttributeSet::QueueDamageFloater(float DeltaHealth, bool bIsCritical)
 {
+	// 받은 피해량 누적 + 치명타 여부 OR 계산
 	PendingDamageFloater += DeltaHealth;
 	bPendingCritical |= bIsCritical;
 
@@ -151,6 +144,7 @@ void UMSEnemyAttributeSet::QueueDamageFloater(float DeltaHealth, bool bIsCritica
 		return;
 	}
 
+	// 피해량 전송 주기마다 피해량 전송
 	FTimerManager& TimerManager = World->GetTimerManager();
 	if (!TimerManager.IsTimerActive(DamageFloaterFlushHandle))
 	{
@@ -170,15 +164,18 @@ void UMSEnemyAttributeSet::FlushDamageFloater()
 	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
 	if (TargetASC)
 	{
+		// 대미지 플로터 이벤트 파라미터 설정 (피해량, 태그)
 		FGameplayEventData Payload;
 		Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
 		Payload.EventMagnitude = PendingDamageFloater;
 
+		// 치명타 여부 적용
 		if (bPendingCritical)
 		{
 			Payload.InstigatorTags.AddTag(MSGameplayTags::Hit_Critical);
 		}
 
+		// 대미지 플로터 이벤트 호출
 		TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
 	}
 
