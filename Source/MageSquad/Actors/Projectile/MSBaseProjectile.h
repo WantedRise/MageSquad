@@ -16,6 +16,31 @@ class UProjectileMovementComponent;
 class USceneComponent;
 class UMSProjectileBehaviorBase;
 class UNiagaraSystem;
+class AGameStateBase;
+
+USTRUCT()
+struct FSplitProjectileEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bValid = false;
+
+	UPROPERTY()
+	FVector_NetQuantize Origin = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector_NetQuantizeNormal DirA = FVector::ForwardVector;
+
+	UPROPERTY()
+	FVector_NetQuantizeNormal DirB = FVector::ForwardVector;
+
+	UPROPERTY()
+	uint8 NumDirs = 0;
+
+	UPROPERTY()
+	int32 PenetrationCount = 0;
+};
 
 UCLASS()
 class MAGESQUAD_API AMSBaseProjectile : public AActor
@@ -46,6 +71,17 @@ public:
 	// 파괴 요청 (중복 호출 방지).
 	void RequestDestroy();
 
+	// 클라 시뮬 파라미터 접근자.
+	bool IsClientSimEnabled() const { return bClientSimEnabled; }
+	FVector GetClientSimStartLocation() const { return SimStartLocation; }
+	FVector GetClientSimDirection() const { return SimDirection; }
+	float GetClientSimSpeed() const { return SimSpeed; }
+	float GetClientSimStartTime() const;
+	FVector GetClientSimCorrectionOffset(float DeltaSeconds, const FVector& SimulatedLocation);
+
+	// 분열 연출 이벤트(클라이언트 전용 스폰).
+	void TriggerSplitEvent(const FVector& Origin, const FVector& DirA, const FVector& DirB, int32 PenetrationCount);
+
 	// 이동 관련.
 	void StopMovement();
 	UProjectileMovementComponent* GetMovementComponent() const
@@ -71,6 +107,25 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SpawnVFXAtLocation(UNiagaraSystem* Vfx, const FVector& Location, float Scale);
 
+	// 클라 전용 투사체 스폰(서버는 스킵).
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SpawnClientProjectiles(
+		TSubclassOf<UProjectileStaticData> DataClass,
+		const FProjectileRuntimeData& BaseData,
+		const FVector& Origin,
+		const TArray<FVector_NetQuantizeNormal>& Directions
+	);
+
+	// ChainBolt 클라 이동 단계 전달.
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_ChainBoltStep(
+		const FVector& Start,
+		const FVector& Target,
+		float Speed,
+		float Interval,
+		int32 StepId
+	);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -93,11 +148,18 @@ protected:
 	UFUNCTION()
 	void OnRep_ProjectileRuntimeData();
 
+	UFUNCTION()
+	void OnRep_SplitEvent();
+
+	UFUNCTION()
+	void OnRep_SimServerLocation();
+
 protected:
 	// Behavior 생성/초기화 및 RuntimeData 반영.
 	void EnsureBehavior();
 	void ApplyProjectileRuntimeData(bool bSpawnAttachVFX);
 	void ArmLifeTimerIfNeeded(const FProjectileRuntimeData& EffectiveData);
+	void UpdateSimServerLocation();
 
 protected:
 	// 런타임 데이터 복제.
@@ -123,8 +185,42 @@ protected:
 
 	// 수명 타이머.
 	FTimerHandle LifeTimerHandle;
+	FTimerHandle SimCorrectionTimerHandle;
 
 	bool bDestroyRequested = false;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SplitEvent)
+	FSplitProjectileEvent SplitEvent;
+
+	UPROPERTY(Replicated)
+	int32 SplitEventId = 0;
+
+	int32 LastHandledSplitEventId = 0;
+
+	// 클라 시뮬 파라미터 (서버가 설정, 클라가 재현).
+	UPROPERTY(Replicated)
+	bool bClientSimEnabled = false;
+
+	UPROPERTY(Replicated)
+	float SimStartServerTime = 0.f;
+
+	UPROPERTY(Replicated)
+	FVector_NetQuantize SimStartLocation = FVector::ZeroVector;
+
+	UPROPERTY(Replicated)
+	FVector_NetQuantizeNormal SimDirection = FVector::ForwardVector;
+
+	UPROPERTY(Replicated)
+	float SimSpeed = 0.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SimServerLocation)
+	FVector_NetQuantize SimServerLocation = FVector::ZeroVector;
+
+	FVector SimCorrectionStart = FVector::ZeroVector;
+	FVector SimCorrectionTarget = FVector::ZeroVector;
+	float SimCorrectionAlpha = 1.f;
+	float SimCorrectionDuration = 0.3f;
+	bool bHasSimCorrection = false;
 
 	// 부착 VFX 1회 재생용 플래그.
 	bool bAttachVfxSpawned = false;

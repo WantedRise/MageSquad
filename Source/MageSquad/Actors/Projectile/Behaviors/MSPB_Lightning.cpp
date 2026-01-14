@@ -14,7 +14,7 @@
 
 void UMSPB_Lightning::OnBegin_Implementation()
 {
-	if (!IsAuthority() || bDamageApplied)
+	if (bDamageApplied)
 	{
 		return;
 	}
@@ -22,6 +22,12 @@ void UMSPB_Lightning::OnBegin_Implementation()
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!OwnerActor)
 	{
+		return;
+	}
+
+	if (!IsAuthority())
+	{
+		OwnerActor->EnableCollision(false);
 		return;
 	}
 

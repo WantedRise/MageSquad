@@ -48,6 +48,11 @@ void UMSPB_TrailDoT::OnBegin_Implementation()
 
 	OwnerActor->EnableCollision(false);
 
+	if (!IsAuthority())
+	{
+		return;
+	}
+
 	if (UWorld* World = OwnerActor->GetWorld())
 	{
 		World->GetTimerManager().SetTimer(

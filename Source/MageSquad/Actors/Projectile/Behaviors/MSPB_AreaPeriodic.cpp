@@ -13,8 +13,14 @@ void UMSPB_AreaPeriodic::OnBegin_Implementation()
 {
 	// 서버에서만
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
-	if (!OwnerProj || !OwnerProj->HasAuthority())
+	if (!OwnerProj)
 	{
+		return;
+	}
+
+	if (!OwnerProj->HasAuthority())
+	{
+		OwnerProj->EnableCollision(false);
 		return;
 	}
 

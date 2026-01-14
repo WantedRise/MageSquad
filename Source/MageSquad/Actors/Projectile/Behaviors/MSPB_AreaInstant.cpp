@@ -11,7 +11,7 @@
 
 void UMSPB_AreaInstant::OnBegin_Implementation()
 {
-	if (!IsAuthority() || bDamageApplied)
+	if (bDamageApplied)
 	{
 		return;
 	}
@@ -20,6 +20,12 @@ void UMSPB_AreaInstant::OnBegin_Implementation()
 	AMSBaseProjectile* OwnerActor = GetOwnerActor();
 	if (!World || !OwnerActor)
 	{
+		return;
+	}
+
+	if (!IsAuthority())
+	{
+		OwnerActor->EnableCollision(false);
 		return;
 	}
 

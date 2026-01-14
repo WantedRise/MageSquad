@@ -13,7 +13,6 @@
 
 void UMSPB_Tornado::OnBegin_Implementation()
 {
-	// 서버에서만
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj)
 	{
@@ -22,25 +21,31 @@ void UMSPB_Tornado::OnBegin_Implementation()
 
 	bEnded = false;
 
-	StartLocation = OwnerProj->GetActorLocation();
-	ForwardDir = OwnerProj->GetActorForwardVector().GetSafeNormal();
-
-	if (UWorld* World = OwnerProj->GetWorld())
+	if (OwnerProj->IsClientSimEnabled())
 	{
-		StartTime = World->GetTimeSeconds();
+		StartLocation = OwnerProj->GetClientSimStartLocation();
+		ForwardDir = OwnerProj->GetClientSimDirection().GetSafeNormal();
+		StartTime = OwnerProj->GetClientSimStartTime();
+	}
+	else
+	{
+		StartLocation = OwnerProj->GetActorLocation();
+		ForwardDir = OwnerProj->GetActorForwardVector().GetSafeNormal();
+		if (UWorld* World = OwnerProj->GetWorld())
+		{
+			StartTime = World->GetTimeSeconds();
+		}
 	}
 	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
 	{
 		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
 	}
 
-	if (!OwnerProj->HasAuthority())
-	{
-		return;
-	}
-
 	StartMove();
-	StartPeriodicDamage();
+	if (OwnerProj->HasAuthority())
+	{
+		StartPeriodicDamage();
+	}
 }
 
 void UMSPB_Tornado::OnEnd_Implementation()
@@ -93,7 +98,7 @@ void UMSPB_Tornado::TickMove()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	UWorld* World = GetWorldSafe();
-	if (!OwnerProj || !World || !OwnerProj->HasAuthority())
+	if (!OwnerProj || !World)
 	{
 		return;
 	}
@@ -118,9 +123,9 @@ void UMSPB_Tornado::TickMove()
 		Up    * (S2 * (SwirlAmp * 0.25f));
 
 	const FVector NewLoc = Base + Offset;
+	const FVector Correction = OwnerProj->GetClientSimCorrectionOffset(0.016f, NewLoc);
 
-	OwnerProj->SetActorLocation(NewLoc, true);
-	OwnerProj->ForceNetUpdate();
+	OwnerProj->SetActorLocation(NewLoc + Correction, true);
 }
 
 void UMSPB_Tornado::StartPeriodicDamage()
@@ -170,7 +175,6 @@ void UMSPB_Tornado::TickPeriodicDamage()
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
 	if (!OwnerProj || !OwnerProj->HasAuthority())
 	{
-		OnEnd_Implementation();
 		return;
 	}
 
