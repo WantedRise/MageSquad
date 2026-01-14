@@ -532,7 +532,7 @@ void AMSBaseProjectile::BeginPlay()
 			SimCorrectionTimerHandle,
 			this,
 			&AMSBaseProjectile::UpdateSimServerLocation,
-			0.3f,
+			0.5f,
 			true
 		);
 

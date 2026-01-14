@@ -16,7 +16,7 @@
 
 namespace
 {
-	float GetDeterministicNoise(float Time, float Frequency, int32 Seed)
+	float GetTornadoEnhancedDeterministicNoise(float Time, float Frequency, int32 Seed)
 	{
 		const float NoiseTime = Time * Frequency;
 		const int32 Step = FMath::FloorToInt(NoiseTime);
@@ -136,7 +136,7 @@ void UMSPB_TornadoEnhanced::TickMove()
 	const float S1 = FMath::Sin(T * SwirlFreq);
 	const float S2 = FMath::Cos(T * SwirlFreq * 0.9f);
 	const int32 NoiseSeed = OwnerProj->GetClientSimNoiseSeed();
-	const float N = GetDeterministicNoise(T, NoiseFreq, NoiseSeed);
+	const float N = GetTornadoEnhancedDeterministicNoise(T, NoiseFreq, NoiseSeed);
 
 	const FVector Offset =
 		Right * (S1 * SwirlAmp + N * NoiseAmp) +
