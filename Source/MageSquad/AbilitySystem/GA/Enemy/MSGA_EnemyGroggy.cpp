@@ -23,7 +23,7 @@ UMSGA_EnemyGroggy::UMSGA_EnemyGroggy()
 
 	// 활성화 시 Owner에게 부여되는 Tag
 	ActivationOwnedTags.AddTag(MSGameplayTags::Enemy_State_Groggy);
-	
+
 	ActivationBlockedTags.AddTag(MSGameplayTags::Enemy_Ability_Groggy);
 	BlockAbilitiesWithTag.AddTag(MSGameplayTags::Enemy_Ability_Dead);
 }
@@ -34,7 +34,7 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                         const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	
+
 	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
 	{
 		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
@@ -84,8 +84,8 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 	{
 		if (UCharacterMovementComponent* CMC = CharacterOwner->GetCharacterMovement())
 		{
-			CMC->SetMovementMode(MOVE_Walking); 
-        
+			CMC->SetMovementMode(MOVE_Walking);
+
 			CMC->StopMovementImmediately();
 			CMC->Velocity = FVector::ZeroVector;
 		}
@@ -93,62 +93,100 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 
 	if (AMSBossAIController* EnemyAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
+		// 필요한 정보를 미리 캡처
+		TWeakObjectPtr<UGameplayAbility> WeakThis = this;
+		TWeakObjectPtr<AMSBossEnemy> WeakOwner = Owner;
+		TWeakObjectPtr<AMSBossAIController> WeakAIController = EnemyAIController;
+
+		// Activation 정보는 값으로 복사 (구조체이므로)
+		FGameplayAbilityActivationInfo CachedActivationInfo = CurrentActivationInfo;
+		FGameplayAbilityActorInfo CachedActorInfo = *CurrentActorInfo;
+
+		// RecoveryEffectClass도 미리 캡처 (TSubclassOf는 안전)
+		TSubclassOf<UGameplayEffect> CachedRecoveryEffectClass = RecoveryEffectClass;
+
 		// 람다를 사용해 다음 프레임에 실행되도록 예약
-		GetWorld()->GetTimerManager().SetTimerForNextTick([this, EnemyAIController]()
-		{
-			if (!IsValid(this) || !Owner || !Owner->GetMesh())
+		GetWorld()->GetTimerManager().SetTimerForNextTick([WeakThis, WeakOwner, WeakAIController,
+				CachedActivationInfo, CachedActorInfo, CachedRecoveryEffectClass]()
 			{
-				return;
-			}
-			
-			if (USkeletalMesh* NewMeshAsset = Owner->GetPhase2SkeletalMesh())
-			{
-				Owner->Multicast_TransitionToPhase2();
-				
-				if (HasAuthorityOrPredictionKey(CurrentActorInfo, &CurrentActivationInfo))
+				// 모든 약한 참조 유효성 검사
+				if (!WeakThis.IsValid() || !WeakOwner.IsValid() || !WeakAIController.IsValid())
 				{
-					if (RecoveryEffectClass == nullptr)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("RecoveryEffectClass is nullptr!"));
-						return;
-					}
-				
-					UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent();
-					// GameplayEffectSpec 생성
-					FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-					Context.AddSourceObject(this);
-
-					FGameplayEffectSpecHandle SpecHandle =
-						ASC->MakeOutgoingSpec(RecoveryEffectClass, 1.f, Context);
-
-					if (!SpecHandle.IsValid())
-					{
-						return;
-					}
-				
-					// GameplayEffect 적용
-					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
-					
-					UE_LOG(LogTemp, Warning, TEXT("[%s] ApplyGameplayEffectSpecToSelf"),
-						   HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"));
-					
-					EnemyAIController->GetBlackboardComponent()->SetValueAsBool(EnemyAIController->GetIsGroggyKey(), false);
-					Owner->GetAbilitySystemComponent()->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
-					Owner->SetActorEnableCollision(true);
+					return;
 				}
-			}
 
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Phase2SkeletalMesh is NOT assigned in Blueprint!"));
-			}
-		});
+				AMSBossEnemy* LambdaOwner = WeakOwner.Get();
+				AMSBossAIController* AIController = WeakAIController.Get();
+				UGameplayAbility* Ability = WeakThis.Get();
 
+				if (!LambdaOwner->GetMesh())
+				{
+					return;
+				}
+				USkeletalMesh* NewMeshAsset = LambdaOwner->GetPhase2SkeletalMesh();
+				if (!NewMeshAsset)
+				{
+					UE_LOG(LogTemp, Error, TEXT("Phase2SkeletalMesh is NOT assigned in Blueprint!"));
+					return;
+				}
+				LambdaOwner->Multicast_TransitionToPhase2();
+
+				// Authority 체크 (캡처된 정보 사용)
+				const bool bHasAuthority = CachedActorInfo.IsNetAuthority();
+				if (!bHasAuthority)
+				{
+					return;
+				}
+
+				if (!CachedRecoveryEffectClass)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("RecoveryEffectClass is nullptr!"));
+					return;
+				}
+
+				UAbilitySystemComponent* ASC = LambdaOwner->GetAbilitySystemComponent();
+				if (!ASC)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("ASC is nullptr!"));
+					return;
+				}
+
+				// GameplayEffectSpec 생성 및 적용
+				FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+				Context.AddSourceObject(Ability);
+
+				FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(
+					CachedRecoveryEffectClass, 1.f, Context);
+
+				if (!SpecHandle.IsValid())
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Failed to create EffectSpec!"));
+					return;
+				}
+
+				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+
+				UE_LOG(LogTemp, Log, TEXT("[Server] ApplyGameplayEffectSpecToSelf succeeded"));
+
+				// Blackboard 및 태그 업데이트
+				if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
+				{
+					BB->SetValueAsBool(AIController->GetIsGroggyKey(), false);
+				}
+
+				ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
+				LambdaOwner->SetActorEnableCollision(true);
+			});
 		UE_LOG(LogTemp, Warning, TEXT("[%s] TargetMesh: %s"),
 		       HasAuthority(&CurrentActivationInfo) ? TEXT("Server") : TEXT("Client"),
 		       Owner->GetMesh() ? *Owner->GetMesh()->GetName() : TEXT("NULL"));
 	}
 	
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(GroggyTimerHandle);
+	}
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 

@@ -53,4 +53,6 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayEffect", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class UGameplayEffect> RecoveryEffectClass;
+	
+	FTimerHandle GroggyTimerHandle;
 };
