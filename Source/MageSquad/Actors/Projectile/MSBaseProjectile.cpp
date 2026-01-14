@@ -159,6 +159,28 @@ bool AMSBaseProjectile::IsIgnoredActor(const AActor* Actor) const
 	return IgnoredActors.Contains(Actor);
 }
 
+void AMSBaseProjectile::AddSimPathPoint(const FVector& Point)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	SimPathPoints.Add(Point);
+	ForceNetUpdate();
+}
+
+void AMSBaseProjectile::ClearSimPathPoints()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	SimPathPoints.Reset();
+	ForceNetUpdate();
+}
+
 void AMSBaseProjectile::PlaySFXAtLocation(int32 Index)
 {
 	if (GetNetMode() == NM_Standalone)
@@ -623,6 +645,7 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(
 	DOREPLIFETIME(AMSBaseProjectile, SimDirection);
 	DOREPLIFETIME(AMSBaseProjectile, SimSpeed);
 	DOREPLIFETIME(AMSBaseProjectile, SimNoiseSeed);
+	DOREPLIFETIME(AMSBaseProjectile, SimPathPoints);
 	DOREPLIFETIME(AMSBaseProjectile, SimServerLocation);
 }
 

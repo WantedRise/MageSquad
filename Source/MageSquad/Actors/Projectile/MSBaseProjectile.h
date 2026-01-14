@@ -63,6 +63,9 @@ public:
 	void EnableCollision(bool bEnable);
 	void AddIgnoredActor(AActor* Actor);
 	bool IsIgnoredActor(const AActor* Actor) const;
+	void AddSimPathPoint(const FVector& Point);
+	void ClearSimPathPoints();
+	const TArray<FVector_NetQuantize>& GetSimPathPoints() const { return SimPathPoints; }
 
 	// RuntimeData.SFX 배열 인덱스로 SFX 재생.
 	void PlaySFXAtLocation(int32 Index);
@@ -229,6 +232,9 @@ protected:
 
 	UPROPERTY(Replicated)
 	int32 SimNoiseSeed = 0;
+
+	UPROPERTY(Replicated)
+	TArray<FVector_NetQuantize> SimPathPoints;
 
 	UPROPERTY(ReplicatedUsing = OnRep_SimServerLocation)
 	FVector_NetQuantize SimServerLocation = FVector::ZeroVector;

@@ -24,6 +24,7 @@ private:
 	void StartMove();
 	void StopMove();
 	void TickMove();
+	FVector GenerateNextTarget(const FVector& From);
 
 	void StartPeriodicDamage();
 	void StopPeriodicDamage();
@@ -45,12 +46,18 @@ private:
 	FVector StartLocation = FVector::ZeroVector;
 	FVector ForwardDir = FVector::ForwardVector;
 	float StartTime = 0.f;
+	int32 CurrentPathIndex = 0;
+	int32 LastPathCount = 0;
+	bool bHasTarget = false;
+	FVector CurrentTarget = FVector::ZeroVector;
 
 	float MoveSpeed = 500.f;
-	float SwirlAmp = 120.f;
+	float SwirlAmp = 180.f;
 	float SwirlFreq = 7.f;
-	float NoiseAmp = 60.f;
+	float NoiseAmp = 90.f;
 	float NoiseFreq = 1.3f;
+	FRandomStream PathStream;
+	bool bPathStreamInit = false;
 
 	float SplitInterval = 2.f;
 	float SplitRadiusScale = 0.9f;

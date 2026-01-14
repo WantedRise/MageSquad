@@ -14,23 +14,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/RandomStream.h"
 
-namespace
-{
-	float GetTornadoEnhancedDeterministicNoise(float Time, float Frequency, int32 Seed)
-	{
-		const float NoiseTime = Time * Frequency;
-		const int32 Step = FMath::FloorToInt(NoiseTime);
-		const float Alpha = NoiseTime - Step;
-		const int32 SeedA = Seed + Step * 92821;
-		const int32 SeedB = Seed + (Step + 1) * 92821;
-		FRandomStream StreamA(SeedA);
-		FRandomStream StreamB(SeedB);
-		const float V1 = StreamA.FRandRange(-1.f, 1.f);
-		const float V2 = StreamB.FRandRange(-1.f, 1.f);
-		return FMath::Lerp(V1, V2, Alpha);
-	}
-}
-
 void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 {
 	AMSBaseProjectile* OwnerProj = GetOwnerActor();
@@ -40,6 +23,9 @@ void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 	}
 
 	bEnded = false;
+	CurrentPathIndex = 0;
+	LastPathCount = 0;
+	bHasTarget = false;
 
 	if (OwnerProj->IsClientSimEnabled())
 	{
@@ -59,6 +45,14 @@ void UMSPB_TornadoEnhanced::OnBegin_Implementation()
 	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
 	{
 		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
+	}
+
+	if (OwnerProj->HasAuthority())
+	{
+		bPathStreamInit = true;
+		PathStream.Initialize(OwnerProj->GetClientSimNoiseSeed());
+		OwnerProj->ClearSimPathPoints();
+		OwnerProj->AddSimPathPoint(GenerateNextTarget(StartLocation));
 	}
 
 	StartMove();
@@ -125,27 +119,74 @@ void UMSPB_TornadoEnhanced::TickMove()
 		return;
 	}
 
-	const float Now = World->GetTimeSeconds();
-	const float T = Now - StartTime;
+	const TArray<FVector_NetQuantize>& Points = OwnerProj->GetSimPathPoints();
+	if (Points.Num() <= 0)
+	{
+		return;
+	}
 
-	const FVector Base = StartLocation + ForwardDir * (MoveSpeed * T);
+	if (Points.Num() != LastPathCount && CurrentPathIndex >= Points.Num())
+	{
+		CurrentPathIndex = Points.Num() - 1;
+		bHasTarget = false;
+	}
+	LastPathCount = Points.Num();
 
-	const FVector Right = OwnerProj->GetActorRightVector();
-	const FVector Up = OwnerProj->GetActorUpVector();
+	if (!bHasTarget)
+	{
+		CurrentPathIndex = FMath::Clamp(CurrentPathIndex, 0, Points.Num() - 1);
+		CurrentTarget = FVector(Points[CurrentPathIndex]);
+		bHasTarget = true;
+	}
 
-	const float S1 = FMath::Sin(T * SwirlFreq);
-	const float S2 = FMath::Cos(T * SwirlFreq * 0.9f);
-	const int32 NoiseSeed = OwnerProj->GetClientSimNoiseSeed();
-	const float N = GetTornadoEnhancedDeterministicNoise(T, NoiseFreq, NoiseSeed);
+	const int32 PendingPoints = Points.Num() - CurrentPathIndex;
+	const float SpeedScale = (PendingPoints >= 2) ? 1.5f : 1.f;
+	const float Step = MoveSpeed * SpeedScale * 0.016f;
 
-	const FVector Offset =
-		Right * (S1 * SwirlAmp + N * NoiseAmp) +
-		Up    * (S2 * (SwirlAmp * 0.25f));
+	const FVector CurrentLoc = OwnerProj->GetActorLocation();
+	const FVector ToTarget = CurrentTarget - CurrentLoc;
+	const float Dist = ToTarget.Size();
 
-	const FVector NewLoc = Base + Offset;
-	const FVector Correction = OwnerProj->GetClientSimCorrectionOffset(0.016f, NewLoc);
+	if (Dist <= Step)
+	{
+		OwnerProj->SetActorLocation(CurrentTarget, true);
+		CurrentPathIndex++;
+		bHasTarget = false;
 
-	OwnerProj->SetActorLocation(NewLoc + Correction, true);
+		if (OwnerProj->HasAuthority())
+		{
+			OwnerProj->AddSimPathPoint(GenerateNextTarget(CurrentTarget));
+		}
+		return;
+	}
+
+	const FVector NewLoc = CurrentLoc + (ToTarget / Dist) * Step;
+	OwnerProj->SetActorLocation(NewLoc, true);
+}
+
+FVector UMSPB_TornadoEnhanced::GenerateNextTarget(const FVector& From)
+{
+	AMSBaseProjectile* OwnerProj = GetOwnerActor();
+	if (!OwnerProj)
+	{
+		return From;
+	}
+
+	if (!bPathStreamInit)
+	{
+		bPathStreamInit = true;
+		PathStream.Initialize(OwnerProj->GetClientSimNoiseSeed());
+	}
+
+	const float TurnInterval = (SwirlFreq > 0.f) ? (PI / SwirlFreq) : 0.3f;
+	const float StepDistance = MoveSpeed * TurnInterval;
+
+	const FVector Forward = ForwardDir.GetSafeNormal();
+	const FVector Right = FVector::CrossProduct(FVector::UpVector, Forward).GetSafeNormal();
+	const float Lateral = PathStream.FRandRange(-SwirlAmp, SwirlAmp);
+	const float Noise = PathStream.FRandRange(-NoiseAmp, NoiseAmp);
+
+	return From + (Forward * StepDistance) + (Right * (Lateral + Noise));
 }
 
 void UMSPB_TornadoEnhanced::StartPeriodicDamage()
