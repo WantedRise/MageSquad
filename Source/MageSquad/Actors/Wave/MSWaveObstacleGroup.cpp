@@ -17,7 +17,7 @@ AMSWaveObstacleGroup::AMSWaveObstacleGroup()
 	PrimaryActorTick.bCanEverTick = true;
 	SetReplicateMovement(true);
 	SetNetUpdateFrequency(100.0f);
-	SetMinNetUpdateFrequency(60.f);
+	SetMinNetUpdateFrequency(2.f);
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
