@@ -19,9 +19,9 @@
  		return false;
  	}
  	
- 	UE_LOG(LogTemp, Error, TEXT("[AMSGC_Indicator %s] - HasAuthority: %s"),
-	   *GetName(),
-	   Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+ 	// UE_LOG(LogTemp, Error, TEXT("[AMSGC_Indicator %s] - HasAuthority: %s"),
+	 //   *GetName(),
+	 //   Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
  	
  	if (!GetOwner()->HasAuthority())
  	{
