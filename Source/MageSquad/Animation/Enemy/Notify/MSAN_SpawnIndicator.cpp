@@ -27,10 +27,9 @@ void UMSAN_SpawnIndicator::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
 
 	IndicatorCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.Indicator"));
     
-	// 디버그 추가
-	UE_LOG(LogTemp, Error, TEXT("[SpawnIndicator] Tag Valid: %s, Tag Name: %s"),
-		IndicatorCueTag.IsValid() ? TEXT("Yes") : TEXT("No"),
-		*IndicatorCueTag.ToString());
+	// UE_LOG(LogTemp, Error, TEXT("[SpawnIndicator] Tag Valid: %s, Tag Name: %s"),
+	// 	IndicatorCueTag.IsValid() ? TEXT("Yes") : TEXT("No"),
+	// 	*IndicatorCueTag.ToString());
     
 	if (!IndicatorCueTag.IsValid())
 	{
@@ -49,10 +48,10 @@ void UMSAN_SpawnIndicator::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
 		return;
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("[%s] - %s"),
-	       Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"),
-	       	*GetName()
-	      );
+	// UE_LOG(LogTemp, Error, TEXT("[%s] - %s"),
+	//        Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"),
+	//        	*GetName()
+	//       );
 
 	// 스폰 위치 계산
 	FVector SpawnLocation;

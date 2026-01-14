@@ -33,9 +33,9 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Start] %s , HasAuthority: %s"), 
-	*GetName(),
-	Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+	// UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Start] %s , HasAuthority: %s"), 
+	// *GetName(),
+	// Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
 	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
@@ -140,9 +140,9 @@ void UMSGA_EnemyNormalAttack::OnEventReceivedCallback(FGameplayTag EventTag, FGa
 	//    {
 	//     	 return;
 	//    }
-	UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Projectile Shoot] %s , HasAuthority: %s"), 
-		*GetName(),
-		Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+	// UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Projectile Shoot] %s , HasAuthority: %s"), 
+	// 	*GetName(),
+	// 	Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
 
 	Owner->FlushNetDormancy();
 	Owner->Multicast_SpawnProjectile();
