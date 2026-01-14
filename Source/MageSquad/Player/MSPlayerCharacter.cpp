@@ -58,7 +58,6 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	// 네트워크 설정
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	SetNetUpdateFrequency(30.f); // 기본값보다 낮춰서 대역폭 절약
 	SetMinNetUpdateFrequency(5.f);
 
 	// 캐릭터 & 카메라 설정
