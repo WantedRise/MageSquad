@@ -108,7 +108,7 @@ public:
 	void Multicast_PlaySFXAttached(int32 Index);
 
 	// VFX 재생 멀티캐스트.
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnVFXAtLocation(UNiagaraSystem* Vfx, const FVector& Location, float Scale);
 
 	// 클라 전용 투사체 스폰(서버는 스킵).

@@ -503,14 +503,6 @@ void AMSBaseProjectile::RequestDestroy()
 		SimServerLocation = GetActorLocation();
 		Multicast_ServerStop(SimServerLocation);
 		ForceNetUpdate();
-
-		// Replication for stop signal before destroy.
-		const float StopDelay = 0.2f;
-		if (GetLifeSpan() <= 0.f)
-		{
-			SetLifeSpan(StopDelay);
-			return;
-		}
 	}
 
 	Destroy();
