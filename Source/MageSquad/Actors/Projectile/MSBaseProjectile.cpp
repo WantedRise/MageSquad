@@ -183,16 +183,12 @@ void AMSBaseProjectile::ClearSimPathPoints()
 
 void AMSBaseProjectile::PlaySFXAtLocation(int32 Index)
 {
-	if (GetNetMode() == NM_Standalone)
+	if (GetNetMode() == NM_DedicatedServer)
 	{
-		Multicast_PlaySFXAtLocation(Index, GetActorLocation());
 		return;
 	}
 
-	if (HasAuthority())
-	{
-		Multicast_PlaySFXAtLocation(Index, GetActorLocation());
-	}
+	Multicast_PlaySFXAtLocation_Implementation(Index, GetActorLocation());
 }
 
 void AMSBaseProjectile::PlaySFXAttached(int32 Index, USceneComponent* AttachTo)
@@ -201,17 +197,12 @@ void AMSBaseProjectile::PlaySFXAttached(int32 Index, USceneComponent* AttachTo)
 	{
 		return;
 	}
-
-	if (GetNetMode() == NM_Standalone)
+	if (GetNetMode() == NM_DedicatedServer)
 	{
-		Multicast_PlaySFXAttached(Index);
 		return;
 	}
 
-	if (HasAuthority())
-	{
-		Multicast_PlaySFXAttached(Index);
-	}
+	Multicast_PlaySFXAttached_Implementation(Index);
 }
 
 void AMSBaseProjectile::Multicast_PlaySFXAtLocation_Implementation(
