@@ -95,22 +95,14 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 			const float DeltaHealth = NewHealth - CachedOldCurrentHealth;
 
 			// 이벤트 데이터에 이벤트 태그 + 최종 피해량 저장
-			FGameplayEventData Payload;
-			Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
-			Payload.EventMagnitude = DeltaHealth;
-
-			// 치명타 포함 추가 태그 확인
-			// EffectSpec에서 모든 태그를 가져와서 이벤트 데이터에 넘김
-			FGameplayTagContainer SpecAssetTags;
-			Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
-			Payload.InstigatorTags = SpecAssetTags;
-
-			// EffectContext도 함께 전달(가해자/히트 결과 등 확장 가능)
-			Payload.ContextHandle = Data.EffectSpec.GetEffectContext();
-
-			// 받은 피해량 출력 이벤트 전달
 			UAbilitySystemComponent* TargetASC = &Data.Target;
-			TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+			if (!FMath::IsNearlyZero(DeltaHealth))
+			{
+				FGameplayTagContainer SpecAssetTags;
+				Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
+				const bool bIsCritical = SpecAssetTags.HasTag(MSGameplayTags::Hit_Critical);
+				QueueDamageFloater(DeltaHealth, bIsCritical);
+			}
 
 			SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
 			if(Data.Target.GetAvatarActor()->IsA(AMSBossEnemy::StaticClass()))
@@ -143,4 +135,53 @@ void UMSEnemyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCal
 		}
 	}
 #pragma endregion
+}
+
+
+void UMSEnemyAttributeSet::QueueDamageFloater(float DeltaHealth, bool bIsCritical)
+{
+	PendingDamageFloater += DeltaHealth;
+	bPendingCritical |= bIsCritical;
+
+	AActor* OwnerActor = GetOwningActor();
+	UWorld* World = OwnerActor ? OwnerActor->GetWorld() : nullptr;
+	if (!World)
+	{
+		FlushDamageFloater();
+		return;
+	}
+
+	FTimerManager& TimerManager = World->GetTimerManager();
+	if (!TimerManager.IsTimerActive(DamageFloaterFlushHandle))
+	{
+		TimerManager.SetTimer(DamageFloaterFlushHandle, this, &UMSEnemyAttributeSet::FlushDamageFloater, DamageFloaterBatchInterval, false);
+	}
+}
+
+void UMSEnemyAttributeSet::FlushDamageFloater()
+{
+	if (FMath::IsNearlyZero(PendingDamageFloater))
+	{
+		PendingDamageFloater = 0.f;
+		bPendingCritical = false;
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
+	if (TargetASC)
+	{
+		FGameplayEventData Payload;
+		Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
+		Payload.EventMagnitude = PendingDamageFloater;
+
+		if (bPendingCritical)
+		{
+			Payload.InstigatorTags.AddTag(MSGameplayTags::Hit_Critical);
+		}
+
+		TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+	}
+
+	PendingDamageFloater = 0.f;
+	bPendingCritical = false;
 }

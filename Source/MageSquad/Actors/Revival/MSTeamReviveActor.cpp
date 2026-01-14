@@ -21,10 +21,6 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 	bReplicates = true;
 	SetReplicateMovement(false);
 
-	// 부활 진행도만 복제하면 되므로 네트워크 주기를 아낌
-	SetNetUpdateFrequency(30.f);
-	SetMinNetUpdateFrequency(2.f);
-
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
