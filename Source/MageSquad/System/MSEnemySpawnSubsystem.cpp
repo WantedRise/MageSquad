@@ -1024,7 +1024,7 @@ void UMSEnemySpawnSubsystem::InitializeEnemyFromData(AMSBaseEnemy* Enemy, const 
 				float FinalHealth = Data->MaxHealth;
 				if (AMSGameState* GS = GetWorld()->GetGameState<AMSGameState>())
 				{
-					constexpr float LevelScalePercent = 0.02f; // 레벨당 2%
+					constexpr float LevelScalePercent = 0.1f; // 레벨당 10%
 					constexpr float PlayerScalePercent = 0.5f; // 추가 플레이어당 50%
 					
 					int32 SharedLevel = GS->GetSharedLevel();
