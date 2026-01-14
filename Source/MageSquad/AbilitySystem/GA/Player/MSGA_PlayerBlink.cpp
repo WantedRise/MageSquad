@@ -132,11 +132,11 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 
 	// TeleportTo를 통해 이동
 	// TeleportTo는 서버에서 실행하면 캐릭터 이동이 네트워크로 복제됨
-	const bool bTeleported = Character->TeleportTo(FinalLocation, FacingRot, false, false);
+	/*const bool bTeleported = Character->TeleportTo(FinalLocation, FacingRot, false, false);
 	if (!bTeleported)
 	{
 		return false;
-	}
+	}*/
 
 	// 종료 VFX 재생 (GameplayCue)
 	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation, StartLocation, FinalLocation);
