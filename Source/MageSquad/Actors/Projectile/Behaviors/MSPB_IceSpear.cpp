@@ -307,7 +307,7 @@ bool UMSPB_IceSpear::TrySplitOnFirstHit(AActor* HitTarget, const FHitResult& Hit
 		}
 	}
 
-	const int32 NextPenetration = FMath::Max(RemainingPenetration - 1, 0);
+	const int32 NextPenetration = FMath::Max(RemainingPenetration, 0);
 
 	bool bSpawned = false;
 	if (BestTarget && SecondTarget)
