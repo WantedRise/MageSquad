@@ -15,12 +15,14 @@
 #include "Widgets/GameProgress/MSGameProgressWidget.h"
 #include "System/MSMissionDataSubsystem.h"
 #include "Widgets/LevelUp/MSLevelUpPanel.h"
+#include "Widgets/HUD/MSDamageFloaterWidget.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
 #include "MSFunctionLibrary.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 #include "EngineUtils.h"
@@ -838,6 +840,32 @@ void AMSPlayerController::ClientShowLoadingWidget_Implementation()
 	{
 		LevelManager->ShowLoadingWidget();
 	}
+}
+
+void AMSPlayerController::ClientRPCShowDamageFloater_Implementation(float DeltaHealth, bool bIsCritical, const FVector& WorldLocation)
+{
+	// 로컬 컨트롤러에서만 대미지 플로터를 띄움
+	if (!IsLocalController()) return;
+
+	if (!DamageFloaterWidgetClass) return;
+
+	const float Amount = FMath::Abs(DeltaHealth);
+	const bool bIsHeal = (DeltaHealth > 0.f);
+
+	const FVector OffsetLocation = WorldLocation + FVector(0.f, 0.f, DamageFloaterWorldZOffset);
+	FVector2D ScreenPos;
+	if (!UGameplayStatics::ProjectWorldToScreen(this, OffsetLocation, ScreenPos, true))
+	{
+		return;
+	}
+
+	UMSDamageFloaterWidget* Widget = UMSDamageFloaterWidget::Acquire(this, DamageFloaterWidgetClass);
+	if (!Widget)
+	{
+		return;
+	}
+
+	Widget->Start(Amount, bIsCritical, bIsHeal, ScreenPos + DamageFloaterScreenOffset);
 }
 
 void AMSPlayerController::ClientRPCShowEndGameWidget_Implementation(TSubclassOf<UUserWidget> WidgetClass, int32 ZOrder)

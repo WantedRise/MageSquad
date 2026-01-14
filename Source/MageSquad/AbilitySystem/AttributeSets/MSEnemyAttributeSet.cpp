@@ -11,8 +11,11 @@
 #include "Interfaces/MSHitReactableInterface.h"
 
 #include "MSGameplayTags.h"
+#include "Player/MSPlayerController.h"
 #include "Enemy/MSBossEnemy.h"
+#include "GameFramework/Pawn.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "EngineUtils.h"
 
 UMSEnemyAttributeSet::UMSEnemyAttributeSet()
 {
@@ -161,22 +164,35 @@ void UMSEnemyAttributeSet::FlushDamageFloater()
 		return;
 	}
 
-	UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
-	if (TargetASC)
+	// 대미지 플로터는 주변 플레이어에게만 전송
+	AActor* OwnerActor = GetOwningActor();
+	UWorld* World = OwnerActor ? OwnerActor->GetWorld() : nullptr;
+	if (!World || !OwnerActor)
 	{
-		// 대미지 플로터 이벤트 파라미터 설정 (피해량, 태그)
-		FGameplayEventData Payload;
-		Payload.EventTag = MSGameplayTags::Shared_Event_DrawDamageNumber;
-		Payload.EventMagnitude = PendingDamageFloater;
+		PendingDamageFloater = 0.f;
+		bPendingCritical = false;
+		return;
+	}
 
-		// 치명타 여부 적용
-		if (bPendingCritical)
+	const FVector SourceLocation = OwnerActor->GetActorLocation();
+	const float RangeSq = DamageFloaterRange * DamageFloaterRange;
+
+	// 월드 내 PlayerContoller 탐색
+	for (APlayerController* OtherPC : TActorRange<APlayerController>(GetWorld()))
+	{
+		AMSPlayerController* PC = Cast<AMSPlayerController>(OtherPC);
+		if (!PC) continue;
+
+		APawn* Pawn = PC->GetPawn();
+		if (!Pawn) continue;
+
+		// 거리 기반 필터로 네트워크 전송을 줄임
+		if (FVector::DistSquared(Pawn->GetActorLocation(), SourceLocation) > RangeSq)
 		{
-			Payload.InstigatorTags.AddTag(MSGameplayTags::Hit_Critical);
+			continue;
 		}
 
-		// 대미지 플로터 이벤트 호출
-		TargetASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+		PC->ClientRPCShowDamageFloater(PendingDamageFloater, bPendingCritical, SourceLocation);
 	}
 
 	PendingDamageFloater = 0.f;
