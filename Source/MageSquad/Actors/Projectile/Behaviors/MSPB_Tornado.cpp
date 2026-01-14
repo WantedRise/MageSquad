@@ -42,9 +42,12 @@ void UMSPB_Tornado::OnBegin_Implementation()
 			StartTime = World->GetTimeSeconds();
 		}
 	}
-	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0])
+	if (RuntimeData.SFX.IsValidIndex(0) && RuntimeData.SFX[0] && !LoopingSFX.IsValid())
 	{
-		LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
+		if (OwnerProj->GetNetMode() != NM_DedicatedServer)
+		{
+			LoopingSFX = UGameplayStatics::SpawnSoundAttached(RuntimeData.SFX[0], OwnerProj->GetRootComponent());
+		}
 	}
 
 	const float VfxScale = (RuntimeData.Radius > 0.f) ? (RuntimeData.Radius / 300.f) : 1.f;
