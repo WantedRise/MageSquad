@@ -876,6 +876,28 @@ void AMSBaseProjectile::OnRep_SimServerLocation()
 	bHasSimCorrection = true;
 }
 
+void AMSBaseProjectile::OnRep_ClientSimEnabled()
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	if (!bClientSimEnabled)
+	{
+		return;
+	}
+
+	SetReplicateMovement(false);
+
+	if (Behavior)
+	{
+		Behavior->OnEnd();
+		Behavior = nullptr;
+	}
+
+	EnsureBehavior();
+}
 void AMSBaseProjectile::OnRep_ServerStop()
 {
 	if (!bServerStop)

@@ -159,6 +159,9 @@ protected:
 	UFUNCTION()
 	void OnRep_SimServerLocation();
 
+	UFUNCTION()
+	void OnRep_ClientSimEnabled();
+
 protected:
 	// Behavior 생성/초기화 및 RuntimeData 반영.
 	void EnsureBehavior();
@@ -209,7 +212,7 @@ protected:
 	int32 LastHandledSplitEventId = 0;
 
 	// 클라 시뮬 파라미터 (서버가 설정, 클라가 재현).
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_ClientSimEnabled)
 	bool bClientSimEnabled = false;
 
 	UPROPERTY(Replicated)
