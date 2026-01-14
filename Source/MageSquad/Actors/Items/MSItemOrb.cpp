@@ -16,7 +16,11 @@ AMSItemOrb::AMSItemOrb()
 
 	// 네트워크 설정
 	bReplicates = true;
-	bAlwaysRelevant = true;
+
+	// CullDistance를 통해 네트워크 대역폭 최적화
+	bAlwaysRelevant = false;
+	SetNetCullDistanceSquared(225000000.f); // 15000 * 15000 = 150m
+
 	SetReplicateMovement(false);
 	SetNetUpdateFrequency(30.f); // 기본값보다 낮춰서 대역폭 절약
 	SetMinNetUpdateFrequency(5.f);
