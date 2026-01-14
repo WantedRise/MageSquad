@@ -37,10 +37,10 @@ private:
 public:
 	// 기본 파라미터(코드에서 필요하면 외부에서 수정 가능)
 	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI")
-	float LifeTime = 1.5f;
+	float LifeTime = 0.75f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Custom | UI")
-	float RiseSpeed = 60.0f; // px/s (위로 이동)
+	float RiseSpeed = 100.0f; // px/s (위로 이동)
 
 protected:
 	// 대미지 텍스트 위젯
