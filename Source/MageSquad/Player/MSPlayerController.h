@@ -51,6 +51,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
 	TSubclassOf<class UMSPlayerHUDWidget> HUDWidgetClass;
 
+	// 대미지 플로터 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
+	TSubclassOf<class UMSDamageFloaterWidget> DamageFloaterWidgetClass;
+
+	// 대미지 플로터 월드 Z 오프셋
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
+	float DamageFloaterWorldZOffset = 120.f;
+
+	// 대미지 플로터 화면 오프셋
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | UI")
+	FVector2D DamageFloaterScreenOffset = FVector2D(0.f, -20.f);
+
 protected:
 	// HUD 생성 함수. (로컬에서만 HUD를 생성/표시)
 	void EnsureHUDCreated();
@@ -76,10 +88,16 @@ private: /* 미션 */
 
 	// 현재 미션의 진행 상황을 추적하는 UI를 표시
 	void ShowMissionTracker(FMSMissionRow MissionData);
+
 public:
 	// 로딩 표시
 	UFUNCTION(Client, Reliable)
 	void ClientShowLoadingWidget();
+
+	// 대미지 플로터 클라이언트 전용 표시
+	UFUNCTION(Client, Unreliable)
+	void ClientRPCShowDamageFloater(float DeltaHealth, bool bIsCritical, const FVector& WorldLocation);
+
 protected:
 	// HUD 위젯 인스턴스
 	UPROPERTY(Transient)

@@ -95,7 +95,10 @@ private:
 
 private:
 	// 피해량 전송 주기
-	static constexpr float DamageFloaterBatchInterval = 0.1f;
+	static constexpr float DamageFloaterBatchInterval = 0.15f;
+
+	// 대미지 플로터 전송 거리
+	static constexpr float DamageFloaterRange = 4000.f;
 
 	// 누적된 받은 피해량
 	float PendingDamageFloater = 0.f;

@@ -29,12 +29,6 @@ bool UMSGC_PlayerBlinkEnd::OnExecute_Implementation(AActor* MyTarget, const FGam
 	const FVector BeamStart = ResolveSpawnLocation(MyTarget, Parameters);
 	const FVector BeamEnd = ResolveBeamEnd(MyTarget, Parameters);
 
-	// MyTarget을 ACharacter로 캐스팅하여 텔레포트 수행
-	if (ACharacter* TargetCharacter = Cast<ACharacter>(MyTarget))
-	{
-		TargetCharacter->TeleportTo(BeamEnd, TargetCharacter->GetActorRotation());
-	}
-
 	// 둘 중 하나라도 있으면 실행
 	if (!EndNiagaraA && !EndNiagaraB) return false;
 
