@@ -39,7 +39,7 @@ public:
 
 protected:
 	// 획득 연출 시작 함수. (Multicast를 통해 모든 클라이언트 연출 동기화)
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastRPCBeginAttract(AActor* InTargetActor);
 
 	// 서버: 지연 Destroy 함수 (연출을 위해 지연)
