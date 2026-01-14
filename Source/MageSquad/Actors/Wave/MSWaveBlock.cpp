@@ -18,7 +18,7 @@ AMSWaveBlock::AMSWaveBlock()
 	SetReplicateMovement(false);
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("Box");
 	RootComponent = BoxCollision;
-
+	BoxCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh1 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh1");
 	Mesh1->SetupAttachment(RootComponent);
 	Mesh2 = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh2");
@@ -41,12 +41,14 @@ void AMSWaveBlock::ActivateBlock()
 {
 	SetActorHiddenInGame(false);
 	SetActorEnableCollision(true);
+	BoxCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void AMSWaveBlock::DeactivateBlock()
 {
 	SetActorEnableCollision(false);
 	SetActorHiddenInGame(true);
+	BoxCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned
