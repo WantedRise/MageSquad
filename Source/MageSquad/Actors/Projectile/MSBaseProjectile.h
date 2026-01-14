@@ -127,6 +127,10 @@ public:
 		int32 StepId
 	);
 
+	// 서버 판정 종료 신호.
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ServerStop(const FVector& InLocation);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -195,6 +199,12 @@ protected:
 
 	UPROPERTY(Replicated)
 	int32 SplitEventId = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ServerStop)
+	bool bServerStop = false;
+
+	UFUNCTION()
+	void OnRep_ServerStop();
 
 	int32 LastHandledSplitEventId = 0;
 

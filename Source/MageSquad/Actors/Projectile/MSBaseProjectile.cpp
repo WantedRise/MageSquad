@@ -364,6 +364,19 @@ void AMSBaseProjectile::Multicast_ChainBoltStep_Implementation(
 		ChainBehavior->ClientReceiveChainStep(Start, Target, Speed, Interval, StepId);
 	}
 }
+
+void AMSBaseProjectile::Multicast_ServerStop_Implementation(const FVector& InLocation)
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	SetActorLocation(InLocation);
+	StopMovement();
+	EnableCollision(false);
+	SetActorHiddenInGame(true);
+}
 void AMSBaseProjectile::StopMovement()
 {
 	if (ProjectileMovementComponent)
@@ -461,6 +474,22 @@ void AMSBaseProjectile::RequestDestroy()
 		return;
 	}
 	bDestroyRequested = true;
+
+	if (HasAuthority())
+	{
+		bServerStop = true;
+		SimServerLocation = GetActorLocation();
+		Multicast_ServerStop(SimServerLocation);
+		ForceNetUpdate();
+
+		// Replication for stop signal before destroy.
+		const float StopDelay = 0.2f;
+		if (GetLifeSpan() <= 0.f)
+		{
+			SetLifeSpan(StopDelay);
+			return;
+		}
+	}
 
 	Destroy();
 }
@@ -587,6 +616,7 @@ void AMSBaseProjectile::GetLifetimeReplicatedProps(
 	DOREPLIFETIME(AMSBaseProjectile, ProjectileRuntimeData);
 	DOREPLIFETIME(AMSBaseProjectile, SplitEvent);
 	DOREPLIFETIME(AMSBaseProjectile, SplitEventId);
+	DOREPLIFETIME(AMSBaseProjectile, bServerStop);
 	DOREPLIFETIME(AMSBaseProjectile, bClientSimEnabled);
 	DOREPLIFETIME(AMSBaseProjectile, SimStartServerTime);
 	DOREPLIFETIME(AMSBaseProjectile, SimStartLocation);
@@ -666,7 +696,12 @@ void AMSBaseProjectile::OnProjectileStop(
 	const FHitResult& ImpactResult
 )
 {
-	if (HasAuthority() && Behavior)
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (Behavior)
 	{
 		Behavior->OnEnd();
 	}
@@ -839,6 +874,19 @@ void AMSBaseProjectile::OnRep_SimServerLocation()
 	SimCorrectionTarget = SimServerLocation;
 	SimCorrectionAlpha = 0.f;
 	bHasSimCorrection = true;
+}
+
+void AMSBaseProjectile::OnRep_ServerStop()
+{
+	if (!bServerStop)
+	{
+		return;
+	}
+
+	SetActorLocation(SimServerLocation);
+	StopMovement();
+	EnableCollision(false);
+	SetActorHiddenInGame(true);
 }
 
 

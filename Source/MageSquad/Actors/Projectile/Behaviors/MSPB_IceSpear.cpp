@@ -322,10 +322,8 @@ bool UMSPB_IceSpear::TrySplitOnFirstHit(AActor* HitTarget, const FHitResult& Hit
 		DirB.Z = 0.f;
 		DirB = DirB.GetSafeNormal();
 
-		OwnerActor->TriggerSplitEvent(Origin, DirA, DirB, NextPenetration);
-
-		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, false);
-		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, false);
+		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, true);
+		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, true);
 	}
 	else if (BestTarget)
 	{
@@ -343,19 +341,15 @@ bool UMSPB_IceSpear::TrySplitOnFirstHit(AActor* HitTarget, const FHitResult& Hit
 			DirB = -DirA;
 		}
 
-		OwnerActor->TriggerSplitEvent(Origin, DirA, DirB, NextPenetration);
-
-		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, false);
-		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, false);
+		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, true);
+		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, true);
 	}
 	else
 	{
 		const FVector DirA = BaseDir.RotateAngleAxis(90.f, FVector::UpVector);
 		const FVector DirB = BaseDir.RotateAngleAxis(-90.f, FVector::UpVector);
-		OwnerActor->TriggerSplitEvent(Origin, DirA, DirB, NextPenetration);
-
-		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, false);
-		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, false);
+		bSpawned |= SpawnSplitProjectileDir(DirA, Origin, NextPenetration, HitTarget, true);
+		bSpawned |= SpawnSplitProjectileDir(DirB, Origin, NextPenetration, HitTarget, true);
 	}
 
 	return bSpawned;
