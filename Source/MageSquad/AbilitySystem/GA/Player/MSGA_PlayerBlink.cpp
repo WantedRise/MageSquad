@@ -140,6 +140,9 @@ bool UMSGA_PlayerBlink::PerformBlink(ACharacter* Character, UAbilitySystemCompon
 
 	// 종료 VFX 재생 (GameplayCue)
 	ExecuteCue(ASC, Cue_BlinkEnd, FinalLocation, StartLocation, FinalLocation);
+
+	GetAvatarActorFromActorInfo()->ForceNetUpdate();
+
 	return true;
 }
 
@@ -287,7 +290,7 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 
 	// #1: 타입 체크 후 캐스팅
 	FGameplayEffectContextHandle CtxHandle = ASC->MakeEffectContext();
-	
+
 	FMSGameplayEffectContext* MSCtx = nullptr;
 	if (FGameplayEffectContext* BaseCtx = CtxHandle.Get())
 	{
@@ -296,7 +299,7 @@ void UMSGA_PlayerBlink::ExecuteCue(UAbilitySystemComponent* ASC, const FGameplay
 			MSCtx = static_cast<FMSGameplayEffectContext*>(BaseCtx);
 		}
 	}
-	
+
 	// #2: 커스텀 컨텍스트가 아니라면, 직접 파생 컨텍스트를 생성해서 교체
 	if (!MSCtx)
 	{

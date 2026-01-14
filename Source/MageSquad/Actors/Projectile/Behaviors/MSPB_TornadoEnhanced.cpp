@@ -120,6 +120,7 @@ void UMSPB_TornadoEnhanced::TickMove()
 	const FVector NewLoc = Base + Offset;
 
 	OwnerProj->SetActorLocation(NewLoc, true);
+	OwnerProj->ForceNetUpdate();
 }
 
 void UMSPB_TornadoEnhanced::StartPeriodicDamage()
