@@ -30,7 +30,7 @@ bool UMSGC_IndicatorComplete::OnExecute_Implementation(AActor* Target, const FGa
 		if (Context->ParticleAsset)
 		{
 			ParticleToPlay = Context->ParticleAsset;
-			UE_LOG(LogMSNetwork, Log, TEXT("ParticleToPlay = Context->ParticleAsset;"));
+			// UE_LOG(LogMSNetwork, Log, TEXT("ParticleToPlay = Context->ParticleAsset;"));
 		}
 		if (Context->SoundAsset)
 		{

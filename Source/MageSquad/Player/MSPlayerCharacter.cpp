@@ -34,6 +34,7 @@
 #include "DataAssets/Player/DA_PlayerStartUpData.h"
 
 #include "GameStates/MSGameState.h"
+#include "GameFramework/GameModeBase.h"
 
 #include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
@@ -1256,7 +1257,25 @@ void AMSPlayerCharacter::SetCharacterOnDead_Server()
 	{
 		// 즉시 부활
 		ResetCharacterOnRespawn();
-		SetActorLocation(DeathLocation);
+
+		// 안전한 부활 위치 찾기
+		if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+		{
+			if (AActor* PlayerStart = GameMode->FindPlayerStart(GetController()))
+			{
+				TeleportTo(PlayerStart->GetActorLocation(), PlayerStart->GetActorRotation());
+			}
+			else
+			{
+				// 플레이어 시작 지점을 찾지 못하면 사망 위치에서 부활
+				TeleportTo(DeathLocation, GetActorRotation());
+			}
+		}
+		else
+		{
+			// 게임 모드를 찾지 못하면 사망 위치에서 부활
+			TeleportTo(DeathLocation, GetActorRotation());
+		}
 		return;
 	}
 

@@ -10,6 +10,8 @@
 
 #include "GameStates/MSGameState.h"
 
+#include "GameFramework/GameModeBase.h"
+
 #include "Net/UnrealNetwork.h"
 #include "MSGameplayTags.h"
 
@@ -20,10 +22,6 @@ AMSTeamReviveActor::AMSTeamReviveActor()
 
 	bReplicates = true;
 	SetReplicateMovement(false);
-
-	// 부활 진행도만 복제하면 되므로 네트워크 주기를 아낌
-	SetNetUpdateFrequency(30.f);
-	SetMinNetUpdateFrequency(2.f);
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
@@ -297,7 +295,25 @@ void AMSTeamReviveActor::TryComplete_Server()
 			Destroy();
 			return;
 		}
+		
+		// 캐릭터 상태 리셋 (목숨 소모, 태그 정리, 충돌 활성화 등)
 		DownedCharacter->ResetCharacterOnRespawn();
+
+		// 안전한 부활 위치로 텔레포트
+		if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+		{
+			if (AController* PlayerController = DownedCharacter->GetController())
+			{
+				if (AActor* PlayerStart = GameMode->FindPlayerStart(PlayerController))
+				{
+					DownedCharacter->TeleportTo(PlayerStart->GetActorLocation(), PlayerStart->GetActorRotation());
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("AMSTeamReviveActor::TryComplete_Server: Cannot find PlayerStart, character may spawn at last location."));
+				}
+			}
+		}
 	}
 
 	Destroy();

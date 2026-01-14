@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
+#include "TimerManager.h"
 #include "MSEnemyAttributeSet.generated.h"
 
 /**
@@ -79,4 +80,14 @@ private:
 private:
 	// 이전 현재 체력 캐시
 	float CachedOldCurrentHealth = 0.f;
+
+private:
+	void QueueDamageFloater(float DeltaHealth, bool bIsCritical);
+	void FlushDamageFloater();
+
+	static constexpr float DamageFloaterBatchInterval = 0.1f;
+
+	float PendingDamageFloater = 0.f;
+	bool bPendingCritical = false;
+	FTimerHandle DamageFloaterFlushHandle;
 };
