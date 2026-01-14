@@ -51,7 +51,7 @@ private:
 	FVector CurrentTarget = FVector::ZeroVector;
 
 	// 이동 파라미터
-	float MoveSpeed = 500.f;     // 전진 속도
+	float MoveSpeed = 1000.f;     // 전진 속도
 	float SwirlAmp = 180.f;      // 흔들림 크기(좌우)
 	float SwirlFreq = 7.f;       // 흔들림 속도
 	float NoiseAmp = 90.f;       // 불규칙성 크기

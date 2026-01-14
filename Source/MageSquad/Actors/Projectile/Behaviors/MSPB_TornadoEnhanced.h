@@ -52,7 +52,7 @@ private:
 	bool bHasTarget = false;
 	FVector CurrentTarget = FVector::ZeroVector;
 
-	float MoveSpeed = 500.f;
+	float MoveSpeed = 1000.f;
 	float SwirlAmp = 180.f;
 	float SwirlFreq = 7.f;
 	float NoiseAmp = 90.f;
@@ -60,7 +60,7 @@ private:
 	FRandomStream PathStream;
 	bool bPathStreamInit = false;
 
-	float SplitInterval = 2.f;
+	float SplitInterval = 1.8f;
 	float SplitRadiusScale = 0.9f;
 	float SplitYawOffset = 30.f;
 
