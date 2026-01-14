@@ -14,11 +14,8 @@ AMSWaveBlock::AMSWaveBlock()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
-	bAlwaysRelevant = true;
-	SetReplicateMovement(true);
-	SetNetCullDistanceSquared(100000000.0f);
-	SetNetUpdateFrequency(100.0f);
-	SetMinNetUpdateFrequency(60.f);
+
+	SetReplicateMovement(false);
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("Box");
 	RootComponent = BoxCollision;
 
