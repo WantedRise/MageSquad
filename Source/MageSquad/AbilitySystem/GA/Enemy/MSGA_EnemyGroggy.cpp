@@ -114,8 +114,15 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 		}
 	}
 
+
 	if (AMSBossAIController* EnemyAIController = Cast<AMSBossAIController>(Owner->GetController()))
 	{
+		// Blackboard 및 태그 업데이트
+		if (UBlackboardComponent* BB = EnemyAIController->GetBlackboardComponent())
+		{
+			BB->SetValueAsBool(EnemyAIController->GetIsGroggyKey(), false);
+		}
+		
 		// 필요한 정보를 미리 캡처
 		TWeakObjectPtr<UGameplayAbility> WeakThis = this;
 		TWeakObjectPtr<AMSBossEnemy> WeakOwner = Owner;
@@ -190,12 +197,6 @@ void UMSGA_EnemyGroggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 
 				UE_LOG(LogTemp, Log, TEXT("[Server] ApplyGameplayEffectSpecToSelf succeeded"));
-
-				// Blackboard 및 태그 업데이트
-				if (UBlackboardComponent* BB = AIController->GetBlackboardComponent())
-				{
-					BB->SetValueAsBool(AIController->GetIsGroggyKey(), false);
-				}
 
 				ASC->AddLooseGameplayTag(MSGameplayTags::Enemy_State_Phase2);
 				LambdaOwner->SetActorEnableCollision(true);
