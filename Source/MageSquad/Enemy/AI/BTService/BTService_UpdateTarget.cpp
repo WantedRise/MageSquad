@@ -30,9 +30,29 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 		return;
 	}
 	
+	if (AMSBaseEnemy* Owner = Cast<AMSBaseEnemy>(AIController->GetPawn()))
+	{
+		if (UAbilitySystemComponent* ASC = Owner->GetAbilitySystemComponent())
+		{
+			if (ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Dead))
+			{
+				OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
+				UE_LOG(LogTemp, Warning, TEXT("%s is Dead State"), *Owner->GetName());
+				return;
+			}
+			
+			if (ASC->HasMatchingGameplayTag(MSGameplayTags::Enemy_State_Groggy))
+			{
+				OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
+				UE_LOG(LogTemp, Warning, TEXT("%s is Groggy State"), *Owner->GetName());
+				return;
+			}
+		}
+	}
+	
+#pragma region Lagacy
 	if (OwnerComp.GetBlackboardComponent()->GetValueAsBool(AIController->GetIsDeadKey()))
 	{
-		OwnerComp.GetBlackboardComponent()->SetValueAsBool(AIController->GetCanAttackKey(), false);
 		return;
 	}
 	
@@ -44,6 +64,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 			return;
 		}
 	}
+#pragma endregion
 	
 	AMSBaseEnemy* OwnerPawn = Cast<AMSBaseEnemy>(AIController->GetPawn());
 	if (!OwnerPawn)
@@ -79,6 +100,7 @@ void UBTService_UpdateTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 		{
 			if (ASC->HasMatchingGameplayTag(MSGameplayTags::Player_State_Dead))
 			{
+				UE_LOG(LogTemp, Warning, TEXT("%s is Dead State"), *PlayerCharacter->GetName());
 				continue;
 			}
 		}
