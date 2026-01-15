@@ -58,7 +58,6 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	// 네트워크 설정
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	SetMinNetUpdateFrequency(5.f);
 
 	// 캐릭터 & 카메라 설정
 	GetCapsuleComponent()->InitCapsuleSize(50.f, 100.f);
@@ -853,6 +852,8 @@ void AMSPlayerCharacter::TriggerAbilityEvent(const FGameplayTag& EventTag)
 		// 서버에게 트리거 요청
 		ServerRPCTriggerAbilityEvent(EventTag);
 	}
+
+	ForceNetUpdate();
 }
 
 void AMSPlayerCharacter::ClientRPCStartBlinkSkillCooldown_Implementation()
@@ -872,6 +873,8 @@ void AMSPlayerCharacter::ServerRPCTriggerAbilityEvent_Implementation(FGameplayTa
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 
 	ClientRPCStartBlinkSkillCooldown();
+
+	ForceNetUpdate();
 }
 
 void AMSPlayerCharacter::SetPlayerData(const FPlayerStartAbilityData& InPlayerData)
