@@ -51,36 +51,7 @@ protected:
 	// - BlinkStart/BlinkEnd: Beam 등 2점 연출용 세그먼트 데이터
 	void ExecuteCue(class UAbilitySystemComponent* ASC, const FGameplayTag& CueTag, const FVector& CueLocation, const FVector& BlinkStart, const FVector& BlinkEnd) const;
 
-	// ===== Animation / Montage Flow =====
-	UFUNCTION()
-	void OnBlinkStartMontageCompleted();
-
-	UFUNCTION()
-	void OnBlinkStartMontageBlendOut();
-
-	UFUNCTION()
-	void OnBlinkStartMontageInterrupted();
-
-	UFUNCTION()
-	void OnBlinkStartMontageCancelled();
-
-	/** 몽타주 종료 시점에 블링크를 수행하고 어빌리티를 종료 */
-	void TryPerformBlinkAndEnd(bool bWasCancelled);
-
 protected:
-	// 블링크 몽타주
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Animation")
-	TObjectPtr<class UAnimMontage> BlinkMontage;
-
-	// 내부 캐시: 몽타주 콜백에서 EndAbility/PerformBlink를 안정적으로 호출하기 위함
-	FGameplayAbilitySpecHandle CachedHandle;
-	FGameplayAbilityActivationInfo CachedActivationInfo;
-	TWeakObjectPtr<ACharacter> CachedCharacter;
-	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
-
-	// 블링크 수행 중 플래그
-	bool bBlinkPerformed = false;
-
 	// 점멸 최대 거리
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom | Ability")
 	float BlinkDistance = 500.0f;
