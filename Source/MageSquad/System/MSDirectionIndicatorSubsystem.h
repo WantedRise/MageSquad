@@ -9,6 +9,7 @@
 class UMSDirectionIndicatorComponent;
 
 /*
+ * 작성자: 김준형
  * 작성일: 26/01/01
  *
  * 방향 표시 인디케이터 관리를 위한 서브시스템
