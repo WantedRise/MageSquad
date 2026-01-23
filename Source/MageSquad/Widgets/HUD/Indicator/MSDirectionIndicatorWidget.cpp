@@ -115,7 +115,7 @@ void UMSDirectionIndicatorWidget::ReleaseItemWidget(UMSDirectionIndicatorItemWid
 void UMSDirectionIndicatorWidget::UpdateIndicator()
 {
 	// ============================================================
-	// #1: 위젯 가시성 업데이트 (위젯이 숨김 상태 여부에 따른 전체 ON/OFF)
+	// #1: 위젯 가시성 업데이트 (위젯의 숨김 상태 여부에 따른 전체 ON/OFF)
 	// ============================================================
 	if (GetVisibility() == ESlateVisibility::Collapsed)
 	{

@@ -14,7 +14,7 @@ class UMaterialInterface;
  * 작성자: 김준형
  * 작성일: 25/12/15
  *
- * MageSquad에 사용될 여러 타입 구조체들을 정의하는 클래스
+ * MageSquad에 사용될 여러 타입 구조체들을 정의하는 헤더
  */
 
 
