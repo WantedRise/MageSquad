@@ -32,7 +32,7 @@ TArray<AActor*> AMSTargetActor_Sphere::PerformOverlapCheck()
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			AActor* HitActor = Overlap.GetActor();
-			if (IsValidTarget(HitActor))
+			if (HitActor != nullptr)
 			{
 				HitActors.AddUnique(HitActor);
 			}

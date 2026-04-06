@@ -84,18 +84,3 @@ TArray<AActor*> AMSTargetActor_IndicatorBase::ExecuteTargetingAndDamage()
 	ApplyDamageToTargets(HitTargets);
 	return HitTargets;
 }
-
-bool AMSTargetActor_IndicatorBase::IsValidTarget(AActor* Actor) const
-{
-	if (!Actor)
-	{
-		return false;
-	}
-
-	if (Actor == GetOwner())
-	{
-		return false;
-	}
-	
-	return true;
-}

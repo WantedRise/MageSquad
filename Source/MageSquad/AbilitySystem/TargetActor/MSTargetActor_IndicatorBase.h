@@ -41,8 +41,6 @@ protected:
 	// 서브클래스에서 구현할 실제 충돌 검사 로직
 	virtual TArray<AActor*> PerformOverlapCheck() PURE_VIRTUAL(AMSTargetActor_IndicatorBase::PerformOverlapCheck, return TArray<AActor*>(););
 
-	virtual bool IsValidTarget(AActor* Actor) const;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Targeting")
 	FAttackIndicatorParams CachedParams;
 

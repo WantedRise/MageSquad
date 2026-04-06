@@ -37,7 +37,7 @@ TArray<AActor*> AMSTargetActor_Rectangle::PerformOverlapCheck()
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			AActor* HitActor = Overlap.GetActor();
-			if (IsValidTarget(HitActor) && IsActorInRectangle(HitActor))
+			if (HitActor != nullptr && IsActorInRectangle(HitActor))
 			{
 				HitActors.AddUnique(HitActor);
 			}

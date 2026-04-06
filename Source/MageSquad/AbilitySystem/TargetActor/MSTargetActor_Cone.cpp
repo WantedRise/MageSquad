@@ -36,8 +36,7 @@ TArray<AActor*> AMSTargetActor_Cone::PerformOverlapCheck()
         {
             AActor* HitActor = Overlap.GetActor();
             
-            // 유효성 검사 (BaseClass)
-            if (!IsValidTarget(HitActor)) 
+            if (HitActor == nullptr ) 
             {
                 continue;
             }
