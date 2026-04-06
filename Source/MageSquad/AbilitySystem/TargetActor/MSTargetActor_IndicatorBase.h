@@ -24,23 +24,12 @@ class MAGESQUAD_API AMSTargetActor_IndicatorBase : public AGameplayAbilityTarget
 
 public:
 	AMSTargetActor_IndicatorBase();
+	
+	virtual void InitializeFromIndicator(const FAttackIndicatorParams& Params, UAbilitySystemComponent* SourceASC, TSubclassOf<UGameplayEffect> DamageEffectClass);
 
-	/**
-	 * Indicator 파라미터로 초기화
-	 * @param Params - Indicator와 동일한 파라미터
-	 * @param SourceASC - 데미지를 가하는 ASC
-	 * @param DamageEffectClass - 적용할 GameplayEffect
-	 */
-	virtual void InitializeFromIndicator(
-		const FAttackIndicatorParams& Params,
-		UAbilitySystemComponent* SourceASC,
-		TSubclassOf<UGameplayEffect> DamageEffectClass);
-
-	// 즉시 충돌 검사 수행 후 결과 반환
 	UFUNCTION(BlueprintCallable, Category = "Targeting")
 	virtual TArray<AActor*> PerformTargeting();
 
-	// 감지된 대상에게 데미지 적용
 	UFUNCTION(BlueprintCallable, Category = "Targeting")
 	virtual void ApplyDamageToTargets(const TArray<AActor*>& Targets);
 
@@ -52,10 +41,8 @@ protected:
 	// 서브클래스에서 구현할 실제 충돌 검사 로직
 	virtual TArray<AActor*> PerformOverlapCheck() PURE_VIRTUAL(AMSTargetActor_IndicatorBase::PerformOverlapCheck, return TArray<AActor*>(););
 
-	// 유효한 타겟인지 필터링
 	virtual bool IsValidTarget(AActor* Actor) const;
 
-	// Indicator 파라미터
 	UPROPERTY(BlueprintReadOnly, Category = "Targeting")
 	FAttackIndicatorParams CachedParams;
 
@@ -65,19 +52,13 @@ protected:
 	UPROPERTY()
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
-	// 충돌 검사 대상 채널
+	// 충돌 검사 대상 채널 : Player 채널로 지정
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Collision")
-	TEnumAsByte<ECollisionChannel> TargetCollisionChannel = ECC_Pawn;
+	TEnumAsByte<ECollisionChannel> TargetCollisionChannel = ECC_GameTraceChannel1;
 
-	// 플레이어 태그 (충돌 필터링용)
-	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Collision")
-	FName PlayerTag = TEXT("Player");
-
-	// 디버그 드로우 활성화
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Debug")
 	bool bDrawDebug = false;
 
-	// 디버그 드로우 지속시간
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Debug", meta = (EditCondition = "bDrawDebug"))
 	float DebugDrawDuration = 2.f;
 };

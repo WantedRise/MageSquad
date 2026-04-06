@@ -12,17 +12,12 @@ TArray<AActor*> AMSTargetActor_Rectangle::PerformOverlapCheck()
 {
 	TArray<AActor*> HitActors;
 	TArray<FOverlapResult> Overlaps;
-
-	// const FVector OverlapLocation = GetActorLocation();
-	// const FQuat OverlapRotation = GetActorQuat();
 	
 	// Box Extent 계산 (Width = Y축, Length = X축)
 	const float HalfLength = CachedParams.Length * 0.5f;
 	const float HalfWidth = CachedParams.Width * 0.5f;
 	const FVector BoxExtent(HalfLength, HalfWidth, 100.f); // Z는 충분한 높이
 	
-	// 박스의 중심을 전방으로 HalfLength만큼 밀어줌
-	//const FVector OverlapLocation = GetActorLocation() + (GetActorForwardVector() * HalfLength);
 	const FVector OverlapLocation = GetActorLocation();
 	const FQuat OverlapRotation = GetActorQuat();
 
@@ -69,9 +64,8 @@ bool AMSTargetActor_Rectangle::IsActorInRectangle(const AActor* Actor) const
 	// 액터 기준 로컬 좌표로 변환
 	const FVector LocalPos = GetActorTransform().InverseTransformPosition(Actor->GetActorLocation());
 	
-	// [수정] X는 0(발밑) ~ Length(정면 끝), Y는 -HalfWidth ~ +HalfWidth
-	return (LocalPos.X >= 0.f && LocalPos.X <= CachedParams.Length) && 
-		   (FMath::Abs(LocalPos.Y) <= (CachedParams.Width * 0.5f));
+	//  X는 0(발밑) ~ Length(정면 끝), Y는 -HalfWidth ~ +HalfWidth
+	return (LocalPos.X >= 0.f && LocalPos.X <= CachedParams.Length) && (FMath::Abs(LocalPos.Y) <= (CachedParams.Width * 0.5f));
 }
 
 void AMSTargetActor_Rectangle::DrawDebugTargetArea(bool IsValid) const
@@ -88,7 +82,6 @@ void AMSTargetActor_Rectangle::DrawDebugTargetArea(bool IsValid) const
 
 	DrawDebugBox(
 	   GetWorld(),
-	   //DebugBoxCenter, // Location 대신 밀어준 중심점 사용
 	   Location,
 	   BoxExtent,
 	   FQuat(Rotation),

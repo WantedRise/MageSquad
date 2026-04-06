@@ -14,10 +14,7 @@ AMSTargetActor_IndicatorBase::AMSTargetActor_IndicatorBase()
 	bReplicates = false; // 서버에서만 동작
 }
 
-void AMSTargetActor_IndicatorBase::InitializeFromIndicator(
-	const FAttackIndicatorParams& Params,
-	UAbilitySystemComponent* SourceASC,
-	TSubclassOf<UGameplayEffect> InDamageEffectClass)
+void AMSTargetActor_IndicatorBase::InitializeFromIndicator(const FAttackIndicatorParams& Params, UAbilitySystemComponent* SourceASC, TSubclassOf<UGameplayEffect> InDamageEffectClass)
 {
 	CachedParams = Params;
 	SourceAbilitySystemComponent = SourceASC;
@@ -43,14 +40,8 @@ void AMSTargetActor_IndicatorBase::ApplyDamageToTargets(const TArray<AActor*>& T
 		{
 			continue;
 		}
-
-		// UAbilitySystemComponent* TargetASC = Target->FindComponentByClass<UAbilitySystemComponent>();
-		// if (!TargetASC)
-		// {
-		// 	continue;
-		// }
 		
-		// 수정: Player는 PlayerState에 ASC를 가지고 있어서 위의 방법으로는 가져오지 못함
+		// Player는 PlayerState에 ASC를 가지고 있어서 위의 방법으로는 가져오지 못함
 		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
         
 		if (!TargetASC)
@@ -61,7 +52,6 @@ void AMSTargetActor_IndicatorBase::ApplyDamageToTargets(const TArray<AActor*>& T
 
 		// GameplayEffect 적용
 		FGameplayEffectContextHandle EffectContext = SourceAbilitySystemComponent->MakeEffectContext();
-		//EffectContext.AddSourceObject(this);
 		EffectContext.AddSourceObject(SourceAbilitySystemComponent->GetOwner());
 		
 		FGameplayEffectSpecHandle SpecHandle = SourceAbilitySystemComponent->MakeOutgoingSpec(
@@ -76,8 +66,6 @@ void AMSTargetActor_IndicatorBase::ApplyDamageToTargets(const TArray<AActor*>& T
 		
 		const UMSEnemyAttributeSet* AttributeSet = Cast<UMSEnemyAttributeSet>(SourceAbilitySystemComponent->GetAttributeSet(UMSEnemyAttributeSet::StaticClass()));
 		
-		// @Todo : 시간이 지날수록 쎄짐
-		// @Todo : 플레이어 방어력도 계산해야됨
 		SpecHandle.Data->SetSetByCallerMagnitude(
 			MSGameplayTags::Data_Damage,
 			-AttributeSet->GetAttackDamage()
@@ -104,17 +92,10 @@ bool AMSTargetActor_IndicatorBase::IsValidTarget(AActor* Actor) const
 		return false;
 	}
 
-	// 자기 자신 제외
 	if (Actor == GetOwner())
 	{
 		return false;
 	}
-
-	// 플레이어 태그 체크
-	if (!Actor->ActorHasTag(PlayerTag))
-	{
-		return false;
-	}
-
+	
 	return true;
 }

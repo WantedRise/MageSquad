@@ -16,12 +16,16 @@ void UMSAN_SendGameplayEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 	Super::Notify(MeshComp, Animation, EventReference);
 	
 	AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr;
-	if (!Owner) return;
+	if (!Owner)
+	{
+		return;
+	}
 
-	UAbilitySystemComponent* ASC = 
-		UAbilitySystemBlueprintLibrary
-	::GetAbilitySystemComponent(Owner);
-	if (!ASC) return;
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Owner);
+	if (!ASC)
+	{
+		return;
+	}
 
 	FGameplayEventData Payload;
 	Payload.Instigator = Owner;

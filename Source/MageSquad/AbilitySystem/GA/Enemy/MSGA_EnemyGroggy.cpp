@@ -58,14 +58,6 @@ void UMSGA_EnemyGroggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		FGameplayTagContainer Tags;
 		Tags.AddTag(FGameplayTag::RequestGameplayTag("Enemy.Event.Groggy"));
-
-		// UMSAT_PlayMontageAndWaitForEvent* GroggyTask =
-		// 	UMSAT_PlayMontageAndWaitForEvent::CreateTask(this, GroggyMontage, Tags);
-		//
-		// GroggyTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
-		// GroggyTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyGroggy::OnInterruptedCallback);
-		// GroggyTask->OnEventReceived.AddDynamic(this, &UMSGA_EnemyGroggy::OnEventReceivedCallback);
-		// GroggyTask->ReadyForActivation();
 		
 		UAbilityTask_PlayMontageAndWait* EnemyDeadTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Groggy"), GroggyMontage);
 		EnemyDeadTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyGroggy::OnCompleteCallback);
