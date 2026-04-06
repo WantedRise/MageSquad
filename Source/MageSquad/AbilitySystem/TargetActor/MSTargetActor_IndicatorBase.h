@@ -59,7 +59,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Targeting")
 	FAttackIndicatorParams CachedParams;
 
-	// 데미지 처리용
 	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> SourceAbilitySystemComponent;
 

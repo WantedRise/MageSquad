@@ -175,8 +175,6 @@ void AMSSpawnTileMap::GenerateTileMap()
 				bool bSpawnable = (GroundHeight <= MaxSpawnableHeight);
 				FIntPoint GridIndex(X, Y);
 
-				//AllTiles.Add(FMSSpawnTile(FinalLocation, GroundHeight, bSpawnable, GridIndex));
-				
 				FMSSpawnTile NewTile(FinalLocation, GroundHeight, bSpawnable, GridIndex);
 
 				// 안전 스폰 높이 계산 (캡슐 반높이 + 여유분)
@@ -338,9 +336,6 @@ void AMSSpawnTileMap::BuildSpawnableTileCache()
 	SpawnableTileIndices.Empty();
 	CachedSpawnableTiles.Empty();
 
-	constexpr float CapsuleHalfHeight = 88.f;
-	constexpr float SafetyMargin = 12.f;
-
 	for (int32 i = 0; i < AllTiles.Num(); ++i)
 	{
 		if (AllTiles[i].bIsSpawnable)
@@ -352,6 +347,8 @@ void AMSSpawnTileMap::BuildSpawnableTileCache()
 			// SafeSpawnZ가 계산되지 않은 경우 (기존 데이터 호환)
 			if (TileCopy.SafeSpawnZ == 0.f)
 			{
+				constexpr float SafetyMargin = 12.f;
+				constexpr float CapsuleHalfHeight = 88.f;
 				TileCopy.SafeSpawnZ = TileCopy.GroundHeight + CapsuleHalfHeight + SafetyMargin;
 			}
             
@@ -454,17 +451,6 @@ bool AMSSpawnTileMap::IsLocationInPlayerFrustum(APlayerController* PC, const FVe
 	}
 
 	APlayerCameraManager* CameraManager = PC->PlayerCameraManager;
-	// 디버그: CameraManager 상태 확인
-	// UE_LOG(LogTemp, Log, TEXT("[Frustum] PC: %s, CameraManager: %s"), 
-	// 	*PC->GetName(),
-	// 	CameraManager ? TEXT("Valid") : TEXT("NULL"));
- //    
-	// if (CameraManager)
-	// {
-	// 	UE_LOG(LogTemp, Log, TEXT("[Frustum] CameraLocation: %s, CameraRotation: %s"),
-	// 		*CameraManager->GetCameraLocation().ToString(),
-	// 		*CameraManager->GetCameraRotation().ToString());
-	// }
 	
 	if (!CameraManager)
 	{

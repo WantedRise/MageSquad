@@ -62,21 +62,31 @@ TArray<AActor*> AMSTargetActor_Cone::PerformOverlapCheck()
 
 bool AMSTargetActor_Cone::IsActorInCone(const AActor* Actor) const
 {
-    if (!Actor) return false;
-
+    if (!Actor)
+    {
+        return false;
+    }
+    
     const FVector ConeOrigin = GetActorLocation();
     const FVector ActorLocation = Actor->GetActorLocation();
     const FVector ToActor = ActorLocation - ConeOrigin;
 
     // 거리 체크 (2D)
     const float DistanceSq2D = ToActor.SizeSquared2D();
-    if (DistanceSq2D > FMath::Square(CachedParams.Radius)) return false;
-    if (DistanceSq2D < KINDA_SMALL_NUMBER) return true;
+    if (DistanceSq2D > FMath::Square(CachedParams.Radius))
+    {
+        return false;
+    }
+    
+    if (DistanceSq2D < KINDA_SMALL_NUMBER)
+    {
+        return true;
+    }
 
     // 회전 문제 방지: 액터의 3D Forward가 아니라, Yaw만 반영된 2D Forward를 강제로 구함
     FRotator Rotation = GetActorRotation();
-    Rotation.Pitch = 0.f; // Pitch 강제 0
-    Rotation.Roll = 0.f;  // Roll 강제 0
+    Rotation.Pitch = 0.f;
+    Rotation.Roll = 0.f; 
     const FVector ForwardDir = Rotation.Vector().GetSafeNormal2D();
     
     const FVector ToActorDir = ToActor.GetSafeNormal2D();

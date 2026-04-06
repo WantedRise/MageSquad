@@ -74,12 +74,6 @@ void AMSIndicatorActor::Multicast_PlayIndicatorCompleteCue_Implementation(UAbili
 	Params.EffectContext = ContextHandle;
 	Params.Location = GetActorLocation(); // 재생될 위치
 	Params.RawMagnitude = 1.0f; // 필요시 강도 전달
-
-
-	// ASC->ExecuteGameplayCue(
-	// 	FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"),
-	// 	Params
-	// );
 	
 	 ASC->InvokeGameplayCueEvent(FGameplayTag::RequestGameplayTag("GameplayCue.IndicatorComplete"), EGameplayCueEvent::Executed, Params);
 }
@@ -138,7 +132,6 @@ void AMSIndicatorActor::ApplyMaterialParams()
 		break;
 
 	case EIndicatorShape::Cone:
-		// Angle을 라디안으로 변환하여 전달
 		DynamicMaterial->SetScalarParameterValue(TEXT("Angle"), CachedParams.Angle);
 		DecalComponent->DecalSize = FVector(CachedParams.Radius);
 		break;
@@ -148,6 +141,7 @@ void AMSIndicatorActor::ApplyMaterialParams()
 		float HalfLength = CachedParams.Length * 0.5f;
 		float HalfWidth = CachedParams.Width * 0.5f;
 
+		// 땅에 뭍히는 상황이 연출되어 방어용 코드
 		DecalComponent->DecalSize = FVector(500.f, HalfWidth, HalfLength);
 		break;
 	}
@@ -224,7 +218,6 @@ TArray<AActor*> AMSIndicatorActor::SpawnTargetActorAndPerformTargeting()
 		return HitActors;
 	}
 
-	// TargetActor 스폰
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	

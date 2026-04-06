@@ -32,9 +32,7 @@ void UMSEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		return;
 	}
 	
-	const FString WorldName = GetWorld()->GetName();
-	bShouldSkipInitialization = WorldName.Contains(TEXT("LobbyLevel")) 
-							  || WorldName.Contains(TEXT("MainmenuLevel"));
+	const FString WorldName = GetWorld()->GetName(); bShouldSkipInitialization = WorldName.Contains(TEXT("LobbyLevel")) || WorldName.Contains(TEXT("MainmenuLevel"));
 	
 	if (bShouldSkipInitialization)
 	{
@@ -112,16 +110,14 @@ void UMSEnemySpawnSubsystem::InitializePool()
 		PrewarmPools();
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"),
-		   HasAuthority() ? TEXT("YES") : TEXT("NO"));
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Subsystem Initialized - Server: %s"), HasAuthority() ? TEXT("YES") : TEXT("NO"));
 }
 
 void UMSEnemySpawnSubsystem::LoadMonsterDataTable()
 {
 	if (!MonsterStaticDataTable)
 	{
-		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,
-		                                                TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
+		MonsterStaticDataTable = LoadObject<UDataTable>(nullptr,TEXT("/Game/Data/Enemy/DT/DT_MonsterStaticData"));
 
 		if (!MonsterStaticDataTable)
 		{
@@ -258,17 +254,13 @@ void UMSEnemySpawnSubsystem::PrewarmPool(FMSEnemyPool& Pool)
 
 		if (Enemy)
 		{
-			//  풀링 모드 설정
-
-			// 풀링된 Enemy는 DORM_Initial로 설정하여 클라이언트에 리플리케이트되지 않도록 함
 			Enemy->SetNetDormancy(DORM_Initial);
 			DeactivateEnemy(Enemy);
 			Pool.FreeEnemies.Add(Enemy);
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Prewarmed pool: %s (%d enemies)"),
-	       *Pool.EnemyClass->GetName(), Pool.InitialPoolSize);
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Prewarmed pool: %s (%d enemies)"), *Pool.EnemyClass->GetName(), Pool.InitialPoolSize);
 }
 
 void UMSEnemySpawnSubsystem::StartSpawning()
@@ -312,8 +304,7 @@ void UMSEnemySpawnSubsystem::StartSpawning()
 		true // Loop
 	);
 
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawning started - Interval: %.2fs, Max: %d"),
-	       SpawnInterval, MaxActiveMonsters);
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawning started - Interval: %.2fs, Max: %d"), SpawnInterval, MaxActiveMonsters);
 }
 
 void UMSEnemySpawnSubsystem::StopSpawning()
@@ -505,7 +496,6 @@ void UMSEnemySpawnSubsystem::SpawnEliteMonsterTick()
 			const FName MonsterID = CachedNormalMonsterKeys[FMath::RandRange(0, CachedNormalMonsterKeys.Num() - 1)];
 			const FName EliteMonsterID = FName(*MonsterID.ToString().Replace(TEXT("Normal"), TEXT("Elite")));
 			
-			//SpawnMonsterInternal(EliteMonsterID, SpawnLocation); // EliteMonster는 한 마리니까 바로 스폰
 			QueueSpawnRequest(EliteMonsterID, SpawnLocation);
 		}
 	}
@@ -560,8 +550,7 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 			return nullptr;
 		}
 
-		UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Pool exhausted, created new enemy (Type: %s)"),
-		       *MonsterID.ToString());
+		UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Pool exhausted, created new enemy (Type: %s)"), *MonsterID.ToString());
 	}
 
 
@@ -584,160 +573,10 @@ AMSBaseEnemy* UMSEnemySpawnSubsystem::SpawnMonsterInternal(const FName& MonsterI
 	// 사망 이벤트 바인딩
 	BindEnemyDeathEvent(Enemy);
 
-	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"),
-	       *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
+	UE_LOG(LogTemp, Log, TEXT("[MonsterSpawn] Spawned: %s at %s (Active: %d)"), *MonsterID.ToString(), *Location.ToString(), CurrentActiveCount);
 
 	return Enemy;
 }
-
-// bool UMSEnemySpawnSubsystem::GetRandomSpawnLocation(const APlayerController* TargetPlayer, const TArray<APlayerController*>& AllPlayers, FVector& OutLocation)
-// {
-	// if (!TargetPlayer)
-	// {
-	// 	return false;
-	// }
-	//
-	// APawn* PlayerPawn = TargetPlayer->GetPawn();
-	// if (!PlayerPawn)
-	// {
-	// 	return false;
-	// }
-	//
-	// // 타일맵 시도
-	// if (AMSSpawnTileMap* TileMap = GetSpawnTileMap())
-	// {
-	// 	// 모든 플레이어에게 안 보이는 타일들 가져오기
-	// 	TArray<FMSSpawnTile> InvisibleTiles = TileMap->GetSpawnableTilesNotVisibleToPlayers(AllPlayers);
-	//
-	// 	if (InvisibleTiles.Num() == 0)
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No invisible spawnable tiles"));
-	// 		return false;
-	// 	}
-	//
-	// 	const FVector PlayerLocation = PlayerPawn->GetActorLocation();
-	//
-	// 	// 사방에서 스폰되도록 4방향으로 분류
-	// 	TArray<FMSSpawnTile> NorthTiles;  // +Y
-	// 	TArray<FMSSpawnTile> SouthTiles;  // -Y
-	// 	TArray<FMSSpawnTile> EastTiles;   // +X
-	// 	TArray<FMSSpawnTile> WestTiles;   // -X
-	// 	
-	// 	for (const FMSSpawnTile& Tile : InvisibleTiles)
-	// 	{
-	// 		FVector ToTile = Tile.Location - PlayerLocation;
-	// 		
-	// 		// 주요 방향 판별
-	// 		if (FMath::Abs(ToTile.X) > FMath::Abs(ToTile.Y))
-	// 		{
-	// 			// 동서 방향
-	// 			if (ToTile.X > 0)
-	// 			{
-	// 				EastTiles.Add(Tile);
-	// 			}
-	// 			else
-	// 			{
-	// 				WestTiles.Add(Tile);
-	// 			}
-	// 		}
-	// 		else
-	// 		{
-	// 			// 남북 방향
-	// 			if (ToTile.Y > 0)
-	// 			{
-	// 				NorthTiles.Add(Tile);
-	// 			}
-	// 			else
-	// 			{
-	// 				SouthTiles.Add(Tile);
-	// 			}
-	// 		}
-	// 	}
-	// 	
-	// 	// 비어있지 않은 방향들 수집
-	// 	TArray<TArray<FMSSpawnTile>*> ValidDirections;
-	// 	if (NorthTiles.Num() > 0)
-	// 	{
-	// 		ValidDirections.Add(&NorthTiles);
-	// 	}
-	// 	if (SouthTiles.Num() > 0)
-	// 	{
-	// 		ValidDirections.Add(&SouthTiles);
-	// 	}
-	// 	if (EastTiles.Num() > 0)
-	// 	{
-	// 		ValidDirections.Add(&EastTiles);
-	// 	}
-	// 	if (WestTiles.Num() > 0)
-	// 	{
-	// 		ValidDirections.Add(&WestTiles);
-	// 	}
-	//
-	// 	if (ValidDirections.Num() == 0)
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] No valid directions"));
-	// 		return false;
-	// 	}
-	//
-	// 	// 랜덤 방향 선택
-	// 	TArray<FMSSpawnTile>* SelectedDirection = ValidDirections[FMath::RandRange(0, ValidDirections.Num() - 1)];
-	//
-	// 	// 선택된 방향에서 랜덤 타일 선택
-	// 	int32 RandomIndex = FMath::RandRange(0, SelectedDirection->Num() - 1);
-	// 	OutLocation = (*SelectedDirection)[RandomIndex].Location;
-	// 	return true;
-	// }
-
-#pragma region Non Tilemap
-	// 타일맵이 없을때는 기존 NavMesh 방식 
-	// 나중에 껐을 때 스폰이 제대로 이루어지지 않는 현상 테스트용으로 남겨둠
-
-	// if (!NavSystem)
-	// {
-	// 	NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-	// 	if (!NavSystem)
-	// 	{
-	// 		return false;
-	// 	}
-	// }
-	//
-	// int32 ViewportSizeX, ViewportSizeY;
-	// TargetPlayer->GetViewportSize(ViewportSizeX, ViewportSizeY);
-	//
-	// constexpr int32 MaxAttempts = 30;
-	//
-	// for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
-	// {
-	// 	constexpr float OffScreenMargin = 1000.f;
-	// 	FVector2D ScreenEdgePoint = GetRandomScreenEdgePoint(ViewportSizeX, ViewportSizeY, OffScreenMargin);
-	//
-	// 	FVector WorldLocation, WorldDirection;
-	// 	if (TargetPlayer->DeprojectScreenPositionToWorld(ScreenEdgePoint.X, ScreenEdgePoint.Y, WorldLocation, WorldDirection))
-	// 	{
-	// 		const float SpawnDistance = FMath::FRandRange(4000.0f, 5000.0f);
-	// 		FVector CandidateLocation = WorldLocation + WorldDirection * SpawnDistance;
-	// 		CandidateLocation.Z = PlayerPawn->GetActorLocation().Z;
-	//
-	// 		// 다른 플레이어에게도 안 보이는지 체크
-	// 		if (IsLocationVisibleToAnyPlayer(CandidateLocation))
-	// 		{
-	// 			continue;
-	// 		}
-	//
-	// 		FNavLocation NavLoc;
-	// 		if (NavSystem->ProjectPointToNavigation(CandidateLocation, NavLoc, FVector(1000.0f, 1000.0f, 1000.0f)))
-	// 		{
-	// 			OutLocation = NavLoc.Location;
-	// 			OutLocation.Z = 92.f;
-	// 			return true;
-	// 		}
-	// 	}
-	// }
-	//
-	// UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Failed to find valid spawn location after %d attempts"), MaxAttempts);
-	// return false;
-#pragma endregion 
-// }
 
 bool UMSEnemySpawnSubsystem::GetRandomSpawnLocationFromTiles(const TArray<FMSSpawnTile>& InvisibleTiles,
 	const FVector& PlayerLocation, FVector& OutLocation)
@@ -796,102 +635,11 @@ bool UMSEnemySpawnSubsystem::GetRandomSpawnLocationFromTiles(const TArray<FMSSpa
 	return true;
 }
 
-// bool UMSEnemySpawnSubsystem::IsLocationVisibleToPlayer(const APlayerController* PC, const FVector& Location)
-// {
-// 	if (!PC)
-// 	{
-// 		return false;
-// 	}
-//
-// 	FVector CameraLocation;
-// 	FRotator CameraRotation;
-// 	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-//
-// 	// 스크린 좌표 변환
-// 	FVector2D ScreenPosition;
-// 	if (PC->ProjectWorldLocationToScreen(Location, ScreenPosition, false))
-// 	{
-// 		// 뷰포트 크기 획득
-// 		int32 ViewportSizeX, ViewportSizeY;
-// 		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-//
-// 		// 화면 경계에 마진 추가 (선택적 - 완전히 화면 밖을 원할 경우)
-// 		constexpr float Margin = 100.0f; // 픽셀 단위
-//
-// 		// 화면 내부에 있는지 체크
-// 		if (ScreenPosition.X >= -Margin && ScreenPosition.X <= ViewportSizeX + Margin &&
-// 			ScreenPosition.Y >= -Margin && ScreenPosition.Y <= ViewportSizeY + Margin)
-// 		{
-// 			return true; // 화면에 보임
-// 		}
-// 	}
-//
-// 	return false; // 화면 밖
-// }
-//
-// bool UMSEnemySpawnSubsystem::IsLocationVisibleToAnyPlayer(const FVector& Location)
-// {
-// 	// 모든 플레이어 컨트롤러 체크
-// 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-// 	{
-// 		APlayerController* PC = It->Get();
-// 		if (PC && IsLocationVisibleToPlayer(PC, Location))
-// 		{
-// 			return true; // 한 명이라도 보고 있으면 true
-// 		}
-// 	}
-//
-// 	return false; // 모든 플레이어 시야 밖
-// }
-
-// FVector2D UMSEnemySpawnSubsystem::GetRandomScreenEdgePoint(int32 ViewportSizeX, int32 ViewportSizeY,
-//                                                            float Margin)
-// {
-// 	// 4개 가장자리 중 하나 선택: 0=상단, 1=하단, 2=좌측, 3=우측
-// 	int32 Edge = FMath::RandRange(0, 3);
-//
-// 	FVector2D ScreenPoint;
-//
-// 	switch (Edge)
-// 	{
-// 	case 0: // 상단
-// 		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
-// 		ScreenPoint.Y = -Margin;
-// 		break;
-//
-// 	case 1: // 하단
-// 		ScreenPoint.X = FMath::FRandRange(0.0f, ViewportSizeX);
-// 		ScreenPoint.Y = ViewportSizeY + Margin;
-// 		break;
-//
-// 	case 2: // 좌측
-// 		ScreenPoint.X = -Margin;
-// 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
-// 		break;
-//
-// 	case 3: // 우측
-// 		ScreenPoint.X = ViewportSizeX + Margin;
-// 		ScreenPoint.Y = FMath::FRandRange(0.0f, ViewportSizeY);
-// 		break;
-// 		
-// 	default:
-// 		break;
-// 	}
-//
-// 	return ScreenPoint;
-// }
-
 void UMSEnemySpawnSubsystem::QueueSpawnRequest(const FName& MonsterID, const FVector& Location)
 {
-	
-	TRACE_CPUPROFILER_EVENT_SCOPE(Queue_Spawn_Request);
-	
 	PendingSpawnQueue.Emplace(MonsterID, Location);
 	
-	UE_LOG(LogTemp, Log, TEXT("[SpawnQueue] Queued: %s, Queue Size: %d, Timer Valid: %s"),
-	*MonsterID.ToString(), 
-	PendingSpawnQueue.Num(),
-	SpawnQueueTimerHandle.IsValid() ? TEXT("YES") : TEXT("NO"));
+	UE_LOG(LogTemp, Log, TEXT("[SpawnQueue] Queued: %s, Queue Size: %d, Timer Valid: %s"), *MonsterID.ToString(), PendingSpawnQueue.Num(), SpawnQueueTimerHandle.IsValid() ? TEXT("YES") : TEXT("NO"));
 
 	// 타이머가 없으면 시작
 	if (!SpawnQueueTimerHandle.IsValid())
@@ -908,8 +656,8 @@ void UMSEnemySpawnSubsystem::QueueSpawnRequest(const FName& MonsterID, const FVe
 
 void UMSEnemySpawnSubsystem::ProcessSpawnQueue()
 {
-	UE_LOG(LogTemp, Log, TEXT("[SpawnQueue] Processing... Queue: %d, Active: %d"),
-	   PendingSpawnQueue.Num(), CurrentActiveCount);
+	UE_LOG(LogTemp, Log, TEXT("[SpawnQueue] Processing... Queue: %d, Active: %d"), PendingSpawnQueue.Num(), CurrentActiveCount);
+	
 	TRACE_CPUPROFILER_EVENT_SCOPE(Spawn_Queue);
 	
 	if (PendingSpawnQueue.Num() == 0)
@@ -930,7 +678,7 @@ void UMSEnemySpawnSubsystem::ProcessSpawnQueue()
 		{
 			PendingSpawnQueue.Empty();
 			GetWorld()->GetTimerManager().ClearTimer(SpawnQueueTimerHandle);
-			SpawnQueueTimerHandle.Invalidate();  // <-- 이 줄도 추가
+			SpawnQueueTimerHandle.Invalidate();
 			return;
 		}
 
@@ -1094,7 +842,6 @@ void UMSEnemySpawnSubsystem::ActivateEnemy(AMSBaseEnemy* Enemy, const FVector& L
 	}
 
 	// 리플리케이션 활성화
-	//Enemy->SetReplicates(true);
 	Enemy->SetReplicateMovement(true);
 	Enemy->SetNetDormancy(DORM_Awake);
 	Enemy->FlushNetDormancy();
@@ -1161,7 +908,6 @@ void UMSEnemySpawnSubsystem::DeactivateEnemy(AMSBaseEnemy* Enemy)
 	//  모든 Ability 취소
 	ASC->CancelAllAbilities();
 	
-	// Enemy->SetActorHiddenInGame(true);
 	Enemy->GetMesh()->SetVisibility(false);
 	
 	// 리플리케이션 완전히 끄기
@@ -1232,12 +978,7 @@ void UMSEnemySpawnSubsystem::UnbindEnemyDeathEvent(AMSBaseEnemy* Enemy)
 
 void UMSEnemySpawnSubsystem::OnEnemyDeathTagChanged(const FGameplayTag Tag, int32 NewCount, AMSBaseEnemy* Enemy)
 {
-	if (NewCount > 0)
-	{
-		// HandleEnemyDeath(Enemy);
-	}
-
-	else
+	if (NewCount == 0)
 	{
 		HandleEnemyDeath(Enemy);
 	}
@@ -1271,23 +1012,6 @@ void UMSEnemySpawnSubsystem::HandleEnemyDeath(AMSBaseEnemy* Enemy)
 	ReturnEnemyToPoolInternal(Enemy, OwningPool);
 }
 
-void UMSEnemySpawnSubsystem::ReturnEnemyToPool(AMSBaseEnemy* Enemy)
-{
-	if (!Enemy)
-	{
-		return;
-	}
-
-	FMSEnemyPool* OwningPool = FindPoolForEnemy(Enemy);
-	if (!OwningPool)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MonsterSpawn] Cannot return enemy: pool not found"));
-		return;
-	}
-
-	ReturnEnemyToPoolInternal(Enemy, OwningPool);
-}
-
 void UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSEnemyPool* Pool)
 {
 	if (!Enemy || !Pool)
@@ -1307,8 +1031,7 @@ void UMSEnemySpawnSubsystem::ReturnEnemyToPoolInternal(AMSBaseEnemy* Enemy, FMSE
 	// Free 풀에 추가
 	Pool->FreeEnemies.Add(Enemy);
 
-	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Enemy returned to pool (Free: %d, Active: %d)"),
-	       Pool->FreeEnemies.Num(), Pool->ActiveEnemies.Num());
+	UE_LOG(LogTemp, Verbose, TEXT("[MonsterSpawn] Enemy returned to pool (Free: %d, Active: %d)"),Pool->FreeEnemies.Num(), Pool->ActiveEnemies.Num());
 }
 
 void UMSEnemySpawnSubsystem::SetSpawnInterval(float NewInterval)

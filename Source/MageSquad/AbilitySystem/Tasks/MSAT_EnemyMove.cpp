@@ -301,7 +301,7 @@ void UMSAT_EnemyMove::UpdateCachedPath(const APawn* OwnerPawn, const AActor* Tar
 			CachedPathPoints.Add(Point);
             
 			// 디버그
-			// DrawDebugSphere(GetWorld(), Point, 30.f, 8, FColor::Yellow, false, PathUpdateInterval);
+			DrawDebugSphere(GetWorld(), Point, 30.f, 8, FColor::Yellow, false, PathUpdateInterval);
 		}
 		//UE_LOG(LogTemp, Warning, TEXT("[Path] Generated %d points"), CachedPathPoints.Num());
 	}

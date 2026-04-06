@@ -43,7 +43,7 @@ void UMSGA_EnemyMove::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (UAnimMontage* MoveMontage = Owner->GetMoveMontage())
 	{
 		UAbilityTask_PlayMontageAndWait* EnemyMoveTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("Move"), MoveMontage);
-		EnemyMoveTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyMove::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수
+		EnemyMoveTask->OnCompleted.AddDynamic(this, &UMSGA_EnemyMove::OnCompleteCallback); // 몽타주가 끝나면 호출될 함수   
 		EnemyMoveTask->OnInterrupted.AddDynamic(this, &UMSGA_EnemyMove::OnInterruptedCallback); // 몽타주가 중단되면 호출될 함수
 		EnemyMoveTask->ReadyForActivation();
 	}

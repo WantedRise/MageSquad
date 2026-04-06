@@ -63,6 +63,7 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 		AttackTask->OnEventReceived.AddDynamic(this, &UMSGA_EnemyNormalAttack::OnEventReceivedCallback);
 		AttackTask->ReadyForActivation();
 	}
+	
 }
 
 void UMSGA_EnemyNormalAttack::CancelAbility(const FGameplayAbilitySpecHandle Handle,
