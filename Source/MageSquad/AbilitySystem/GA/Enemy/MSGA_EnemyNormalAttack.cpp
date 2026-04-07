@@ -33,10 +33,6 @@ void UMSGA_EnemyNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	// UE_LOG(LogTemp, Error, TEXT("[MSGA_EnemyNormalAttack : Start] %s , HasAuthority: %s"), 
-	// *GetName(),
-	// Owner->HasAuthority() ? TEXT("Server") : TEXT("Client"));
-	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

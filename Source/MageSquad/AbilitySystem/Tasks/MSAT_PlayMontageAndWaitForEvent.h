@@ -29,8 +29,7 @@ public:
 	UMSAT_PlayMontageAndWaitForEvent();
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks",
-		meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "TRUE"))
+	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "TRUE"))
 	static UMSAT_PlayMontageAndWaitForEvent* CreateTask(
 		UGameplayAbility* OwningAbility,
 		UAnimMontage* Montage,

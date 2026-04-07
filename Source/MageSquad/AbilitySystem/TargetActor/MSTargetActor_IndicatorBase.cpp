@@ -41,7 +41,6 @@ void AMSTargetActor_IndicatorBase::ApplyDamageToTargets(const TArray<AActor*>& T
 			continue;
 		}
 		
-		// Player는 PlayerState에 ASC를 가지고 있어서 위의 방법으로는 가져오지 못함
 		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
         
 		if (!TargetASC)
@@ -50,7 +49,6 @@ void AMSTargetActor_IndicatorBase::ApplyDamageToTargets(const TArray<AActor*>& T
 			continue;
 		}
 
-		// GameplayEffect 적용
 		FGameplayEffectContextHandle EffectContext = SourceAbilitySystemComponent->MakeEffectContext();
 		EffectContext.AddSourceObject(SourceAbilitySystemComponent->GetOwner());
 		
